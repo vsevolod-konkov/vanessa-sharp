@@ -8,9 +8,16 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
     /// <summary>Прокси глобального контекста информационной базы 1С.</summary>
     internal sealed class GlobalContext : IDisposable
     {
+        /// <summary>Коннектор к информационной базе 1С.</summary>
         private readonly V8.COMConnectorClass _connector;
+
+        /// <summary>COM-объект глобального контекста информационной базы 1С.</summary>
         private readonly object _global;
+
+        /// <summary>Закэшированный тип объект глобального контекста.</summary>
         private readonly Type _typeGlobal;
+
+        /// <summary>Признак, того что неуправляемые ресурсы очищены.</summary>
         private bool _disposed;
 
         /// <summary>Конструктор.</summary>
@@ -86,6 +93,29 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
             {
                 InvokeMethod("SetExclusiveMode", value);
             }
+        }
+
+        /// <summary>Начать транзакцию.</summary>
+        public void BeginTransaction()
+        {
+            InvokeMethod("BeginTransaction");
+        }
+
+        /// <summary>Принятие транзакции.</summary>
+        public void CommitTransaction()
+        {
+            InvokeMethod("CommitTransaction");
+        }
+
+        /// <summary>Отмена транзакции.</summary>
+        public void RollbackTransaction()
+        {
+            InvokeMethod("RollbackTransaction");
+        }
+
+        public OneSObjectProxy CreateQuery()
+        {
+            return new OneSObjectProxy(InvokeMethod("NewObject", "Query"));
         }
         
         /// <summary>Освобождения ресурсов.</summary>

@@ -50,6 +50,8 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="TestsBase.cs" />
+    <Compile Include="TransactionTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneSSharp.Data\OneSSharp.Data.csproj">

@@ -52,7 +52,43 @@ namespace VsevolodKonkov.OneSSharp.Data
         /// </exception>
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            throw new System.NotImplementedException();
+            if (isolationLevel != IsolationLevel.Unspecified)
+            {
+                throw new ArgumentException(
+                    string.Format(
+                        "Неподдерживается уровень изоляции транзакции \"{0}\".", 
+                        isolationLevel));
+            }
+
+            ChangeState(_state.BeginTransaction(this));
+            return _state.CurrentTransaction;
+        }
+
+        /// <summary>Начало транзакции.</summary>
+        /// <returns>
+        /// Возвращает объект транзакции.
+        /// </returns>
+        public new OneSTransaction BeginTransaction()
+        {
+            return (OneSTransaction)base.BeginTransaction();
+        }
+
+        /// <summary>Объект текущей транзакции.</summary>
+        public OneSTransaction CurrentTransaction
+        {
+            get { return _state.CurrentTransaction; }
+        }
+
+        /// <summary>Принятие транзакции.</summary>
+        internal void CommitTransaction()
+        {
+            ChangeState(_state.CommitTransaction());
+        }
+
+        /// <summary>Отмена транзакции.</summary>
+        internal void RollbackTransaction()
+        {
+            ChangeState(_state.RollbackTransaction());
         }
 
         /// <summary>Изменение информационной базы 1С.</summary>
@@ -182,10 +218,18 @@ namespace VsevolodKonkov.OneSSharp.Data
             {
                 var oldState = _state;
                 _state = newState;
-                var args = new StateChangeEventArgs(oldState.ConnectionState, newState.ConnectionState);
-                oldState.Dispose();
-
-                OnStateChange(args);
+                try
+                {
+                    if (oldState.ConnectionState != newState.ConnectionState)
+                    {
+                        var args = new StateChangeEventArgs(oldState.ConnectionState, newState.ConnectionState);
+                        OnStateChange(args);
+                    }
+                }
+                finally
+                {
+                    oldState.Dispose();
+                }
             }
         }
 
@@ -245,6 +289,29 @@ namespace VsevolodKonkov.OneSSharp.Data
                     return false;
 
                 return GetType() == other.GetType();
+            }
+
+            /// <summary>Начало транзакции.</summary>
+            public abstract StateObject BeginTransaction(OneSConnection connection);
+
+            /// <summary>Принятие транзакции.</summary>
+            public virtual StateObject CommitTransaction()
+            {
+                throw new InvalidOperationException(
+                    "Зафиксировать транзакцию нельзя, так как соединение не находится в состоянии транзакции.");
+            }
+
+            /// <summary>Отмена транзакции.</summary>
+            public virtual StateObject RollbackTransaction()
+            {
+                throw new InvalidOperationException(
+                    "Отменить транзакцию нельзя, так как соединение не находится в состоянии транзакции.");
+            }
+
+            /// <summary>Текущая транзакция.</summary>
+            public virtual OneSTransaction CurrentTransaction
+            {
+                get { return null; }
             }
 
             /// <summary>Создание объекта состояния по умолчанию.</summary>
@@ -315,33 +382,33 @@ namespace VsevolodKonkov.OneSSharp.Data
                         "Свойство IsExclusiveMode недоступно в при закрытом соединении.");
                 }
             }
+
+            public override StateObject BeginTransaction(OneSConnection connection)
+            {
+                throw new InvalidOperationException(
+                    "Нельзя начать транзакцию, если соединение не открыто."); 
+            }
         }
 
-        /// <summary>Состояние открытого соединения.</summary>
-        private sealed class OpenStateObject : StateObject
+        /// <summary>Базовый класс открытого состояния.</summary>
+        private abstract class OpenStateObjectBase : StateObject
         {
-            private readonly Proxies.GlobalContext _global;
+            private readonly Proxies.GlobalContext _globalContext;
+            private bool _sharedGlobalContext;
 
-            private OpenStateObject(Proxies.GlobalContext globalCtx)
+            protected OpenStateObjectBase(Proxies.GlobalContext globalContext)
             {
-                _global = globalCtx;
+                ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
+                
+                _globalContext = globalContext;
             }
 
-            public static StateObject Create(Proxies.ConnectionParameters parameters)
+            protected Proxies.GlobalContext GlobalContext
             {
-                var globalCtx = Proxies.GlobalContext.Connect(parameters);
-                try
-                {
-                    return new OpenStateObject(globalCtx);
-                }
-                catch
-                {
-                    globalCtx.Dispose();
-                    throw;
-                }
+                get { return _globalContext; }
             }
 
-            public override StateObject OpenConnection(Proxies.ConnectionParameters parameters)
+            public sealed override StateObject OpenConnection(Proxies.ConnectionParameters parameters)
             {
                 throw new InvalidOperationException("Соединение уже открыто.");
             }
@@ -355,59 +422,167 @@ namespace VsevolodKonkov.OneSSharp.Data
                 return result;
             }
 
-            public override ConnectionState ConnectionState
+            public sealed override ConnectionState ConnectionState
             {
                 get { return ConnectionState.Open; }
             }
 
-            public override void CheckCanChangeConnectionString()
+            public sealed override void CheckCanChangeConnectionString()
             {
                 throw new InvalidOperationException("Нельзя менять строку соединения, когда оно открыто.");
             }
 
-            protected override void InternalDisposed()
+            protected sealed override void InternalDisposed()
             {
-                _global.Dispose();
+                if (!_sharedGlobalContext)
+                    _globalContext.Dispose();
             }
 
-            public override int? PoolTimeout
+            public sealed override int? PoolTimeout
             {
                 get
                 {
-                    return _global.PoolTimeout;
+                    return _globalContext.PoolTimeout;
                 }
                 set
                 {
                     if (value.HasValue)
-                        _global.PoolTimeout = value.Value;
+                        _globalContext.PoolTimeout = value.Value;
                 }
             }
 
-            public override int? PoolCapacity
+            public sealed override int? PoolCapacity
             {
-                get 
+                get
                 {
-                    return _global.PoolCapacity;
+                    return _globalContext.PoolCapacity;
                 }
 
                 set
                 {
                     if (value.HasValue)
-                        _global.PoolCapacity = value.Value;
+                        _globalContext.PoolCapacity = value.Value;
                 }
             }
 
-            public override bool IsExclusiveMode
+            public sealed override bool IsExclusiveMode
             {
                 get
                 {
-                    return _global.IsExclusiveMode;
+                    return _globalContext.IsExclusiveMode;
                 }
 
                 set
                 {
-                    _global.IsExclusiveMode = value;
+                    _globalContext.IsExclusiveMode = value;
                 }
+            }
+
+            protected void UseGlobalContext()
+            {
+                _sharedGlobalContext = true;
+            }
+        }
+
+        /// <summary>Состояние открытого соединения.</summary>
+        private sealed class OpenStateObject : OpenStateObjectBase
+        {
+            public OpenStateObject(Proxies.GlobalContext globalContext)
+                : base(globalContext)
+            {}
+
+            public static StateObject Create(Proxies.ConnectionParameters parameters)
+            {
+                var globalContext = Proxies.GlobalContext.Connect(parameters);
+                try
+                {
+                    return new OpenStateObject(globalContext);
+                }
+                catch
+                {
+                    globalContext.Dispose();
+                    throw;
+                }
+            }
+
+            public override StateObject BeginTransaction(OneSConnection connection)
+            {
+                ChecksHelper.CheckArgumentNotNull(connection, "connection");
+
+                var result = TransactionStateObject.Create(GlobalContext, connection);
+                UseGlobalContext();
+                return result;
+            }
+        }
+
+        /// <summary>Состояние, когда соединение находится в транзакции.</summary>
+        private sealed class TransactionStateObject : OpenStateObjectBase
+        {
+            /// <summary>Объект транзакции.</summary>
+            private readonly OneSTransaction _transaction;
+
+            private TransactionStateObject(Proxies.GlobalContext globalContext, OneSTransaction transaction)
+                : base(globalContext)
+            {
+                ChecksHelper.CheckArgumentNotNull(transaction, "transaction");
+                
+                _transaction = transaction;
+            }
+
+            /// <summary>Создание транзакицонного состояния.</summary>
+            /// <param name="globalContext">Глобальный контекст 1С.</param>
+            /// <param name="connection">Соединение.</param>
+            public static StateObject Create(Proxies.GlobalContext globalContext, OneSConnection connection)
+            {
+                ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
+                ChecksHelper.CheckArgumentNotNull(connection, "connection");    
+                
+                globalContext.BeginTransaction();
+                try
+                {
+                    return new TransactionStateObject(globalContext, new OneSTransaction(connection));
+                }
+                catch
+                {
+                    globalContext.RollbackTransaction();
+                    throw;
+                }
+            }
+
+            public override StateObject CloseConnection(Proxies.ConnectionParameters parameters)
+            {
+                GlobalContext.RollbackTransaction();
+                return base.CloseConnection(parameters);
+            }
+
+            public override StateObject BeginTransaction(OneSConnection connection)
+            {
+                throw new InvalidOperationException(
+                    "Соединение уже находится в состоянии транзакции. 1С не поддерживает вложенные транзакции");
+            }
+
+            public override StateObject CommitTransaction()
+            {
+                GlobalContext.CommitTransaction();
+                return CreateOpenState();
+            }
+
+            public override StateObject RollbackTransaction()
+            {
+                GlobalContext.RollbackTransaction();
+                return CreateOpenState();
+            }
+
+            private StateObject CreateOpenState()
+            {
+                var result = new OpenStateObject(GlobalContext);
+                UseGlobalContext();
+                return result;
+            }
+
+            public override OneSTransaction CurrentTransaction
+            {
+                get { return _transaction; }
             }
         }
 

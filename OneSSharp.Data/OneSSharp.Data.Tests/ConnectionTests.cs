@@ -8,7 +8,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
 {
     /// <summary>Тестирование класса <see cref="OneSConnection"/>.</summary>
     [TestFixture]
-    public sealed class ConnectionTests
+    public sealed class ConnectionTests : TestsBase
     {
         /// <summary>Тестирование инициализации соединения.</summary>
         [Test(Description = "Тестирование инициализации соединения")]
@@ -116,20 +116,6 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 });
 
                 ChecksHelper.AssertException<InvalidOperationException>(connection.Open);
-            }
-        }
-
-        /// <summary>Тестирование метода <see cref="DbConnection.BeginTransaction()"/>.</summary>
-        [Test(Description="Тестирование метода BeginTransaction")]
-        public void TestBeginTransaction()
-        {
-            using (var connection = new OneSConnection(TestConnectionString))
-            {
-                // пока не реализовано
-                ChecksHelper.AssertException<NotImplementedException>(() =>
-                {
-                    var transaction = connection.BeginTransaction();
-                });
             }
         }
 
@@ -241,25 +227,6 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 connection.IsExclusiveMode = false;
                 var connection3 = new OneSConnection(builder.ConnectionString);
                 connection3.Dispose();
-            }
-        }
-
-        /// <summary>Настройки.</summary>
-        private Properties.Settings Settings
-        {
-            get { return Properties.Settings.Default; }
-        }
-
-        /// <summary>Строка соединения с тестовой информационной базой 1С.</summary>
-        private string TestConnectionString
-        {
-            get
-            {
-                var builder = new OneSConnectionStringBuilder();
-                builder.Catalog = Settings.TestCatalog;
-                builder.User = Settings.TestUser;
-
-                return builder.ConnectionString;
             }
         }
     }

@@ -54,5 +54,33 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 globalContext3.Dispose();
             }
         }
+
+        /// <summary>Тестирование создания запроса.</summary>
+        [Test(Description = "Тестирование создания запроса")]
+        public void TestCreateQuery()
+        {
+            var parameters = new Proxies.ConnectionParameters();
+            parameters.ConnectionString = string.Format("File={0};Usr=Иванов", Properties.Settings.Default.TestCatalog);
+            using (var globalContext = Proxies.GlobalContext.Connect(parameters))
+            {
+                using (var query = globalContext.CreateQuery())
+                {
+                    Assert.IsNotNull(query);
+                    var sql = "ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты";
+                    query.SetProperty("Text", sql);
+                    using (var result = new Proxies.OneSObjectProxy(query.InvokeMethod("Execute")))
+                    using (var selection = new Proxies.OneSObjectProxy(result.InvokeMethod("Choose")))
+                    {
+                        while ((bool)selection.InvokeMethod("Next"))
+                        {
+                            const string format = "Код \"{0}\"; Наименование \"{1}\"";
+                            object code = selection.InvokeMethod("Get", 0);
+                            object name = selection.InvokeMethod("Get", 1);
+                            System.Diagnostics.Trace.WriteLine(string.Format(format, code, name));
+                        }
+                    }
+                }
+            }
+        }
     }
 }
