@@ -10,8 +10,6 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
     [TestFixture]
     public sealed class ConnectorTests
     {
-        private const string CATALOG = @"C:\Users\Мастер\Documents\1C\DemoTrd";
-        
         /// <summary>
         /// Тестирование правильности построения строки соединения для метода 
         /// <see cref="V8.COMConnectorClass.Connect"/>.
@@ -21,7 +19,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
         {
             {
                 var builder = new OneSConnectionStringBuilder();
-                builder.Catalog = CATALOG;
+                builder.Catalog = Properties.Settings.Default.TestCatalog;
                 builder.User = "Иванов";
 
                 CheckConnect(builder);
@@ -30,35 +28,21 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
             {
                 var builder = new OneSConnectionStringBuilder();
                 builder.User = "Иванов";
-                builder.Catalog = CATALOG;
+                builder.Catalog = Properties.Settings.Default.TestCatalog;
 
                 CheckConnect(builder);
             }
 
             {
                 var builder = new OneSConnectionStringBuilder();
-                builder.ConnectionString = string.Format("File={0};Usr=Иванов", CATALOG);
+                builder.ConnectionString = string.Format("File={0};Usr=Иванов", Properties.Settings.Default.TestCatalog);
                 builder.Password = string.Empty;
 
                 CheckConnect(builder);
             }
         }
 
-        /// <summary>Тестирование глобального контекста.</summary>
-        [Test(Description="Тестирование глобального контекста")]
-        public void TestGlobalContext()
-        {
-            var parameters = new Proxies.ConnectionParameters();
-            parameters.ConnectionString = string.Format("File={0};Usr=Иванов", CATALOG);
-            parameters.PoolTimeout = 2000;
-            parameters.PoolCapacity = 10;
-
-            using (var globalContext = Proxies.GlobalContext.Connect(parameters))
-            {
-                Assert.AreEqual(2000, globalContext.PoolTimeout);
-                Assert.AreEqual(10, globalContext.PoolCapacity);
-            }
-        }
+        
 
         /// <summary>Проверка соединения.</summary>
         /// <param name="builder">Построитель строки.</param>

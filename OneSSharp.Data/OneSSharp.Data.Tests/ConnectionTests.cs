@@ -201,6 +201,49 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
             }
         }
 
+        /// <summary>Тестирование свойства <see cref="OneSConnection.IsExclusiveMode"/>.</summary>
+        [Test(Description="Тестирование монопольного доступа")]
+        public void TestIsExclusiveMode()
+        {
+            using (var connection = new OneSConnection(TestConnectionString))
+            {
+                // Если соединение не открыто, то свойство IsExclusiveMode недоступно
+                ChecksHelper.AssertException<InvalidOperationException>(() =>
+                {
+                    var value = connection.IsExclusiveMode;
+                });
+
+                ChecksHelper.AssertException<InvalidOperationException>(() =>
+                {
+                    connection.IsExclusiveMode = true;
+                });
+
+                // Открываем соединение, свойство становится доступно.
+                connection.Open();
+
+                // По умолчанию немонопольный режим
+                Assert.IsFalse(connection.IsExclusiveMode);
+                connection.IsExclusiveMode = true;
+                Assert.IsTrue(connection.IsExclusiveMode);
+
+                var builder = new OneSConnectionStringBuilder();
+                builder.ConnectionString = TestConnectionString;
+                builder.User = "Петров";
+                using (var connection2 = new OneSConnection(builder.ConnectionString))
+                {
+                    ChecksHelper.AssertException<InvalidOperationException>(() =>
+                    {
+                        connection2.Open();
+                    });
+                }
+
+                // Монопольный режим сняли и второе соединение становится возможным.
+                connection.IsExclusiveMode = false;
+                var connection3 = new OneSConnection(builder.ConnectionString);
+                connection3.Dispose();
+            }
+        }
+
         /// <summary>Настройки.</summary>
         private Properties.Settings Settings
         {

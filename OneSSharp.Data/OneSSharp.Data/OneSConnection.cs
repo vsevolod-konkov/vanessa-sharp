@@ -156,6 +156,13 @@ namespace VsevolodKonkov.OneSSharp.Data
             set { _state.PoolCapacity = value; }
         }
 
+        /// <summary>Признак монопольного доступа к информационной базе 1С.</summary>
+        public bool IsExclusiveMode
+        {
+            get { return _state.IsExclusiveMode; }
+            set { _state.IsExclusiveMode = value; }
+        }
+
         /// <summary>Получение параметров соединения.</summary>
         private Proxies.ConnectionParameters GetParameters()
         {
@@ -229,6 +236,9 @@ namespace VsevolodKonkov.OneSSharp.Data
             /// <summary>Мощность пула соединения.</summary>
             public abstract int? PoolCapacity { get; set; }
 
+            /// <summary>Признак режима монопольного доступа.</summary>
+            public abstract bool IsExclusiveMode { get; set; }
+
             public bool Equals(StateObject other)
             {
                 if (other == null)
@@ -290,6 +300,20 @@ namespace VsevolodKonkov.OneSSharp.Data
             public override int? PoolCapacity
             {
                 get; set;
+            }
+
+            public override bool IsExclusiveMode
+            {
+                get
+                {
+                    throw new InvalidOperationException(
+                        "Свойство IsExclusiveMode недоступно в при закрытом соединении.");
+                }
+                set
+                {
+                    throw new InvalidOperationException(
+                        "Свойство IsExclusiveMode недоступно в при закрытом соединении.");
+                }
             }
         }
 
@@ -370,6 +394,19 @@ namespace VsevolodKonkov.OneSSharp.Data
                 {
                     if (value.HasValue)
                         _global.PoolCapacity = value.Value;
+                }
+            }
+
+            public override bool IsExclusiveMode
+            {
+                get
+                {
+                    return _global.IsExclusiveMode;
+                }
+
+                set
+                {
+                    _global.IsExclusiveMode = value;
                 }
             }
         }

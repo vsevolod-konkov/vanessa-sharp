@@ -73,6 +73,20 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
             get { return (int)_connector.PoolCapacity; }
             set { _connector.PoolCapacity = (uint)value; }
         }
+
+        /// <summary>Признак монопольного режима.</summary>
+        public bool IsExclusiveMode
+        {
+            get 
+            {
+                return (bool)InvokeMethod("ExclusiveMode");
+            }
+
+            set 
+            {
+                InvokeMethod("SetExclusiveMode", value);
+            }
+        }
         
         /// <summary>Освобождения ресурсов.</summary>
         public void Dispose()
@@ -83,6 +97,20 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
                 Marshal.FinalReleaseComObject(_connector);
                 _disposed = true;
             }
+        }
+
+        /// <summary>Выполнение метода глобального контекста.</summary>
+        /// <param name="methodName">Имя метода.</param>
+        /// <param name="args">Аргументы метода</param>
+        /// <returns>Результат выполнения метода.</returns>
+        private object InvokeMethod(string methodName, params object[] args)
+        {
+            return _typeGlobal.InvokeMember(
+                methodName,
+                BindingFlags.Default | BindingFlags.InvokeMethod,
+                null,
+                _global,
+                args);
         }
     }
 }
