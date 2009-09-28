@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="TestCatalog" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Users\Мастер\Documents\1C\DemoTrd</Value>
+      <Value Profile="(Default)">D:\1C\DemoTrd</Value>
     </Setting>
   </Settings>
 </SettingsFile>

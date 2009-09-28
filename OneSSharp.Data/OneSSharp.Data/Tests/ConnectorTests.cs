@@ -53,6 +53,8 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
             {
                 Assert.IsNotNull(connector);
 
+                Console.WriteLine("Строка подключения к 1С : {0}", builder.ConnectionString);
+
                 var root = connector.Connect(builder.ConnectionString);
                 try
                 {
