@@ -17,7 +17,6 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
             {
                 Assert.IsNull(connection.CurrentTransaction);
 
-                // пока не реализовано
                 ChecksHelper.AssertException<InvalidOperationException>(() =>
                 {
                     var transaction = connection.BeginTransaction();

@@ -229,5 +229,40 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 connection3.Dispose();
             }
         }
+
+        /// <summary>Тестирование метода <see cref="OneSConnection.CreateCommand"/>.</summary>
+        [Test(Description = "Тестирование типизированного метода создания команды")]
+        public void TestTypedCreateCommand()
+        {
+            using (var connection = new OneSConnection(TestConnectionString))
+            {
+                var command = connection.CreateCommand();
+                Assert.IsNotNull(command);
+                Assert.AreSame(connection, command.Connection);
+            }
+        }
+
+        /// <summary>Тестирование метода <see cref="DbConnection.CreateCommand"/>.</summary>
+        [Test(Description = "Тестирование реализации обобщенного метода создания команды")]
+        public void TestUntypedCreateCommand()
+        {
+            using (DbConnection connection = new OneSConnection(TestConnectionString))
+            {
+                var command = connection.CreateCommand();
+                Assert.IsNotNull(command);
+                Assert.AreSame(connection, command.Connection);
+            }
+        }
+
+        /// <summary>Тестирование метода <see cref="OneSConnection.ToString()"/>.</summary>
+        [Test(Description = "Тестирование перегрузки метода ToString")]
+        public void TestToString()
+        {
+            using (var connection = new OneSConnection())
+                Assert.AreEqual("Несвязанное соединение к 1С", connection.ToString());
+
+            using (var connection = new OneSConnection(TestConnectionString))
+                Assert.AreEqual(string.Format("Соединение к 1С: {0}", connection.ConnectionString), connection.ToString());
+        }
     }
 }

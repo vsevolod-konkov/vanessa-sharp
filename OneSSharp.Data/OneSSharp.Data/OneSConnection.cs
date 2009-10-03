@@ -126,9 +126,16 @@ namespace VsevolodKonkov.OneSSharp.Data
 
         /// <summary>Создание команды для выполнения запроса к информационной базе 1С.</summary>
         /// <returns>Созданная команда.</returns>
+        public new OneSCommand CreateCommand()
+        {
+            return new OneSCommand(this);
+        }
+
+        /// <summary>Создание команды для выполнения запроса к информационной базе 1С.</summary>
+        /// <returns>Созданная команда.</returns>
         protected override DbCommand CreateDbCommand()
         {
-            throw new System.NotImplementedException();
+            return CreateCommand();
         }
 
         /// <summary>Каталог в котором находится информационная база 1С.</summary>
@@ -250,6 +257,14 @@ namespace VsevolodKonkov.OneSSharp.Data
             }
 
             return builder.Catalog;
+        }
+
+        /// <summary>Строковое представление.</summary>
+        public override string ToString()
+        {
+            return string.IsNullOrEmpty(ConnectionString)
+                ? "Несвязанное соединение к 1С"
+                : string.Format("Соединение к 1С: {0}", ConnectionString);
         }
 
         #endregion

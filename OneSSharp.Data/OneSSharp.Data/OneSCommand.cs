@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using System;
+using System.Data.Common;
 using System.Data;
 
 namespace VsevolodKonkov.OneSSharp.Data
@@ -6,122 +7,221 @@ namespace VsevolodKonkov.OneSSharp.Data
     /// <summary>Команда запроса к 1С.</summary>
     public sealed class OneSCommand : DbCommand
     {
-        public override void Cancel()
+        /// <summary>Конструктор без аргументов.</summary>
+        public OneSCommand() : this(null)
+        {}
+
+        /// <summary>Конструктор принимающий соединение.</summary>
+        /// <param name="connection">Соединение к 1С.</param>
+        public OneSCommand(OneSConnection connection) : this(connection, null)
+        {}
+
+        /// <summary>Конструктор принимающий соединение и строку запроса.</summary>
+        /// <param name="connection">Соединение.</param>
+        /// <param name="commandText">Строка запроса.</param>
+        public OneSCommand(OneSConnection connection, string commandText)
         {
-            throw new System.NotImplementedException();
+            Connection = connection;
+            CommandText = commandText;
         }
 
+        /// <summary>Пытается отменить выполнение запроса.</summary>
+        /// <remarks>Не поддерживается 1С.</remarks>
+        public override void Cancel()
+        {
+            throw new NotSupportedException("Метод отмены выполнения запроса (Cancel) не поддерживается 1С.");
+        }
+
+        /// <summary>Строка запроса данных к информационной базе 1С.</summary>
         public override string CommandText
         {
             get
             {
-                throw new System.NotImplementedException();
+                return _commandText;
             }
             set
             {
-                throw new System.NotImplementedException();
+                _commandText = value;
             }
         }
+        private string _commandText;
 
+        /// <summary>Получает или задает время ожидания перед завершением попытки выполнить команду и генерацией ошибки.</summary>
+        /// <remarks>Не поддерживается 1С.</remarks>
         public override int CommandTimeout
         {
             get
             {
-                throw new System.NotImplementedException();
+                return 0;
             }
             set
             {
-                throw new System.NotImplementedException();
+                throw new NotSupportedException("Настройка времени ожидания выполнения команды не поддерживается 1С.");
             }
         }
 
+        /// <summary>Получает или задает значение, указывающее, как будет интерпретироваться свойство <see cref="CommandText"/>.</summary>
+        /// <remarks>В текущей версии поддерживается только <see cref="CommandType.Text"/>.</remarks>
         public override CommandType CommandType
         {
             get
             {
-                throw new System.NotImplementedException();
+                return CommandType.Text;
             }
             set
             {
-                throw new System.NotImplementedException();
+                if (value != CommandType.Text)
+                {
+                    throw new NotSupportedException(string.Format(
+                        "Значение типа команды отличное от {0} не поддерживается в текущей версии."));
+                }
             }
         }
 
+        /// <summary>Создает экземпляр параметра запроса типа <see cref="OneSParameter"/>.</summary>
+        public new OneSParameter CreateParameter()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>Создает экземпляр параметра запроса.</summary>
         protected override DbParameter CreateDbParameter()
         {
             throw new System.NotImplementedException();
         }
 
+        /// <summary>Получает и устанавливает соединение с информационной базой 1С.</summary>
+        public new OneSConnection Connection
+        {
+            get
+            {
+                return _connection;
+            }
+
+            set
+            {
+                _connection = value;
+            }
+        }
+        private OneSConnection _connection;
+
+        /// <summary>Получает и устанавливает соединение с информационной базой 1С.</summary>
         protected override DbConnection DbConnection
         {
             get
             {
-                throw new System.NotImplementedException();
+                return Connection;
             }
             set
             {
-                throw new System.NotImplementedException();
+                Connection = (OneSConnection)value;
             }
         }
 
+        /// <summary>Коллекция параметров запроса к информационной базе 1С.</summary>
+        public new OneSParameterCollection Parameters
+        {
+            get
+            {
+                return _parameters;
+            }
+        }
+        private readonly OneSParameterCollection _parameters = new OneSParameterCollection();
+
+        /// <summary>Коллекция параметров запроса к информационной базе 1С.</summary>
         protected override DbParameterCollection DbParameterCollection
         {
-            get { throw new System.NotImplementedException(); }
+            get { return Parameters; }
         }
 
+        /// <summary>Текущая транзакция в которой будет выполняться запрос.</summary>
+        public new OneSTransaction Transaction
+        {
+            get
+            {
+                return (Connection == null)
+                    ? null
+                    : Connection.CurrentTransaction;
+            }
+        }
+        
+        /// <summary>Получает и устанавливает транзакцию в которой будет выполняться запрос.</summary>
+        /// <remarks>Установка транзакции отличной от текущей транзакции соединения не поддерживается.</remarks>
         protected override DbTransaction DbTransaction
         {
             get
             {
-                throw new System.NotImplementedException();
+                return Transaction;
             }
             set
             {
-                throw new System.NotImplementedException();
+                throw new NotSupportedException(
+                    "Установка транзакции для команды не поддерживается. Команда всегда выполняется в рамках текущей транзакции соединения.");
             }
         }
 
+        /// <summary>
+        /// Получает или задает значение, указывающее, будет ли объект команды видимым в элементе управления Windows Forms Designer.
+        /// </summary>
         public override bool DesignTimeVisible
         {
             get
             {
-                throw new System.NotImplementedException();
+                return _designTimeVisible;
             }
             set
             {
-                throw new System.NotImplementedException();
+                _designTimeVisible = value;
             }
         }
+        private bool _designTimeVisible;
 
+        /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
+        /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
+        /// <returns>Читатель данных.</returns>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             throw new System.NotImplementedException();
         }
 
+        /// <summary>Выполняет для запрос и возвращает количество задействованных в инструкции строк.</summary>
+        /// <returns>
+        /// Язык запросов 1С не поддерживает манипуляции данными, поэтому данный метод не поддерживается.
+        /// </returns>
         public override int ExecuteNonQuery()
         {
             throw new System.NotImplementedException();
         }
 
+        /// <summary>
+        /// Выполняет запрос и возвращает первый столбец первой строки результирующего набора, возвращаемого запросом. 
+        /// Дополнительные столбцы и строки игнорируются.
+        /// </summary>
+        /// <returns></returns>
         public override object ExecuteScalar()
         {
             throw new System.NotImplementedException();
         }
 
+        /// <summary>Создает подготовленную версию команды в информационной базе 1С.</summary>
         public override void Prepare()
         {
             throw new System.NotImplementedException();
         }
 
+        /// <summary>
+        /// Получает или задает способ применения результатов команды к объекту <see cref="DataRow"/>
+        /// при использовании методом <see cref="DbDataAdapter.Update"/> объекта <see cref="DbDataAdapter"/>.
+        /// </summary>
         public override UpdateRowSource UpdatedRowSource
         {
             get
             {
-                throw new System.NotImplementedException();
+                return UpdateRowSource.None;
             }
             set
             {
-                throw new System.NotImplementedException();
+                throw new NotSupportedException("Настройка свойства UpdatedRowSource не поддерживается.");
             }
         }
     }
