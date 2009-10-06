@@ -61,7 +61,7 @@ namespace VsevolodKonkov.OneSSharp.Data
         }
 
         /// <summary>Получает или задает значение, указывающее, как будет интерпретироваться свойство <see cref="CommandText"/>.</summary>
-        /// <remarks>В текущей версии поддерживается только <see cref="CommandType.Text"/>.</remarks>
+        /// <remarks>В текущей версии поддерживается только <see cref="System.Data.CommandType.Text"/>.</remarks>
         public override CommandType CommandType
         {
             get
@@ -73,7 +73,7 @@ namespace VsevolodKonkov.OneSSharp.Data
                 if (value != CommandType.Text)
                 {
                     throw new NotSupportedException(string.Format(
-                        "Значение типа команды отличное от {0} не поддерживается в текущей версии."));
+                        "Значение типа команды отличное от {0} не поддерживается в текущей версии.", CommandType.Text));
                 }
             }
         }
@@ -211,7 +211,7 @@ namespace VsevolodKonkov.OneSSharp.Data
 
         /// <summary>
         /// Получает или задает способ применения результатов команды к объекту <see cref="DataRow"/>
-        /// при использовании методом <see cref="DbDataAdapter.Update"/> объекта <see cref="DbDataAdapter"/>.
+        /// при использовании методом <see cref="System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)"/> объекта <see cref="DbDataAdapter"/>.
         /// </summary>
         public override UpdateRowSource UpdatedRowSource
         {

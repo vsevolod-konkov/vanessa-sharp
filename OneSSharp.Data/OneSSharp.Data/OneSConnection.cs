@@ -267,6 +267,15 @@ namespace VsevolodKonkov.OneSSharp.Data
                 : string.Format("Соединение к 1С: {0}", ConnectionString);
         }
 
+        /// <summary>Освобождение ресурсов.</summary>
+        /// <param name="disposing"></param>
+        protected override void Dispose(bool disposing)
+        {
+            Close();
+            
+            base.Dispose(disposing);
+        }
+
         #endregion
 
         #region Внутренние типы
@@ -389,12 +398,12 @@ namespace VsevolodKonkov.OneSSharp.Data
                 get
                 {
                     throw new InvalidOperationException(
-                        "Свойство IsExclusiveMode недоступно в при закрытом соединении.");
+                        "Свойство IsExclusiveMode недоступно при закрытом соединении.");
                 }
                 set
                 {
                     throw new InvalidOperationException(
-                        "Свойство IsExclusiveMode недоступно в при закрытом соединении.");
+                        "Свойство IsExclusiveMode недоступно при закрытом соединении.");
                 }
             }
 

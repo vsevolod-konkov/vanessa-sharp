@@ -264,5 +264,19 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
             using (var connection = new OneSConnection(TestConnectionString))
                 Assert.AreEqual(string.Format("Соединение к 1С: {0}", connection.ConnectionString), connection.ToString());
         }
+
+        /// <summary>Тестирование того что вызов метода <see cref="OneSConnection.Dispose()"/> для открытого соединения приведет к его закрытию.</summary>
+        [Test(Description = "Тестирование того, что вызов Dispose у открытого соединения, закроет его.")]
+        public void TestCallDisposeCloseConnection()
+        {
+            using (var testConnection = new OneSConnection(TestConnectionString))
+            {
+                testConnection.Open();
+                Assert.AreEqual(ConnectionState.Open, testConnection.State);
+
+                testConnection.Dispose();
+                Assert.AreEqual(ConnectionState.Closed, testConnection.State);
+            }
+        }
     }
 }

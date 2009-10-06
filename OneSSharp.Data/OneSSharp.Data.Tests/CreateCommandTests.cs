@@ -4,17 +4,10 @@ using System.Data;
 
 namespace VsevolodKonkov.OneSSharp.Data.Tests
 {
-    /// <summary>Тестирование класса <see cref="OneSCommand"/>.</summary>
-    [TestFixture(Description="Тестирование класса команды запроса")]
-    public sealed class CommandTests : TestsBase
+    /// <summary>Тестирование создания экземпляра класса <see cref="OneSCommand"/>.</summary>
+    [TestFixture(Description="Тестирование создания экземпляра класса команды запроса")]
+    public sealed class CreateCommandTests : ConnectedTestsBase
     {
-        /// <summary>Тестовое соединение.</summary>
-        private OneSConnection Connection 
-        {
-            get { return _connection; }
-        }
-        private OneSConnection _connection;
-
         /// <summary>Проверка значений свойств по умолчанию.</summary>
         /// <param name="command">Тестируемая команда.</param>
         private void AssertDefaultProperties(OneSCommand command)
@@ -25,20 +18,6 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
             Assert.IsNotNull(command.Parameters);
             Assert.AreEqual(null, command.Transaction);
             Assert.AreEqual(UpdateRowSource.None, command.UpdatedRowSource);
-        }
-
-        /// <summary>Установка тестового окружения.</summary>
-        [SetUp]
-        public void SetUp()
-        {
-            _connection = new OneSConnection(TestConnectionString);
-        }
-
-        /// <summary>Очистка тестового окружения.</summary>
-        [TearDown]
-        public void TearDown()
-        {
-            _connection = null;
         }
 
         /// <summary>Тестирование конструктора без аргументов.</summary>
@@ -86,22 +65,6 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                         Assert.AreEqual(commandText, command.CommandText);
                         AssertDefaultProperties(command);
                     }
-                }
-            }
-        }
-
-        /// <summary>Тестирование свойства <see cref="OneSCommand.CommandText"/>.</summary>
-        [Test(Description = "Тестирование свойства CommandText")]
-        public void TestCommandTextProperty()
-        {
-            string[] commandTexts = new string[] { null, string.Empty, "SELECT Справочник.Валюты" };
-
-            using (var command = new OneSCommand(Connection))
-            {
-                foreach (var commandText in commandTexts)
-                {
-                    command.CommandText = commandText;
-                    Assert.AreEqual(commandText, command.CommandText);
                 }
             }
         }
