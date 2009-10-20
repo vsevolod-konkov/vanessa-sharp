@@ -113,9 +113,19 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
             InvokeMethod("RollbackTransaction");
         }
 
+        /// <summary>Создание объекта 1С обернутого прокси.</summary>
+        /// <param name="typeName">Имя типа объекта 1С.</param>
+        private OneSObjectProxy CreateObject(string typeName)
+        {
+            ChecksHelper.CheckArgumentNotEmpty(typeName, "typeName");
+
+            return new OneSObjectProxy(InvokeMethod("NewObject", typeName));
+        }
+
+        /// <summary>Создание объекта запроса.</summary>
         public OneSObjectProxy CreateQuery()
         {
-            return new OneSObjectProxy(InvokeMethod("NewObject", "Query"));
+            return CreateObject("Query");
         }
         
         /// <summary>Освобождения ресурсов.</summary>

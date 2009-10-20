@@ -77,6 +77,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
 
         /// <summary>Тестирование метода <see cref="OneSCommand.CreateParameter"/>.</summary>
         [Test(Description = "Тестирование метода CreateParameter")]
+        [Ignore("Реализация параметризованных тестов отложена")]
         public void TestCreateParameter()
         {
             Assert.IsNotNull(TestCommand.CreateParameter());
@@ -84,6 +85,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
 
         /// <summary>Тестирование метода <see cref="DbCommand.CreateParameter"/>.</summary>
         [Test(Description = "Тестирование метода DbCommand.CreateParameter")]
+        [Ignore("Реализация параметризованных тестов отложена")]
         public void TestDbCommandCreateParameter()
         {
             DbCommand dbCommand = TestCommand;

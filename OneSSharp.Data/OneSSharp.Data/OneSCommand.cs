@@ -114,7 +114,20 @@ namespace VsevolodKonkov.OneSSharp.Data
             }
             set
             {
-                Connection = (OneSConnection)value;
+                OneSConnection typedValue = null;
+
+                if (value != null)
+                {
+                    typedValue = value as OneSConnection;
+                    if (typedValue == null)
+                    {
+                        throw new ArgumentException(string.Format(
+                            "Ожидалось значение подключения типа \"{0}\", а было значение \"{1}\" типа \"{2}\".", 
+                            typeof(OneSConnection), value, value.GetType()), "value");
+                    }
+                }
+                
+                Connection = typedValue;
             }
         }
 
@@ -181,7 +194,33 @@ namespace VsevolodKonkov.OneSSharp.Data
         /// <returns>Читатель данных.</returns>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            throw new System.NotImplementedException();
+            if (behavior != CommandBehavior.Default)
+            {
+                throw new NotSupportedException(string.Format(
+                    "Значение поведения для команды выполнения запроса выборки \"{0}\" не поддерживается, так как не является значением по умолчанию.",
+                    behavior));
+            }
+
+            if (Connection == null)
+            {
+                throw new InvalidOperationException(
+                    "Выполнение команды запроса невозможно так как не задано подключение к информационной базе.");
+            }
+
+            // Получение контекста
+            var globalCtx = Connection.LockContext();
+            try
+            {
+                var query = globalCtx.CreateQuery();
+                query.Text = CommandText;
+                query.Execute();
+            }
+            finally
+            {
+                globalCtx.Unlock();
+            }
+
+            return null;
         }
 
         /// <summary>Выполняет для запрос и возвращает количество задействованных в инструкции строк.</summary>

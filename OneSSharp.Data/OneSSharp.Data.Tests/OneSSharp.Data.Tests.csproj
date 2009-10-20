@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandExecuteTests.cs" />
     <Compile Include="CommandTests.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
     <Compile Include="ConnectionTests.cs" />

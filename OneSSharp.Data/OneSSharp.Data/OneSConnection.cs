@@ -276,6 +276,19 @@ namespace VsevolodKonkov.OneSSharp.Data
             base.Dispose(disposing);
         }
 
+        /// <summary>
+        /// Передача ответственности работы с глобальным контекстом другому объекту.
+        /// </summary>
+        /// <remarks>
+        /// После вызова данного метода нельзя менять состояние соединения,
+        /// вплоть до вызова метода <see cref="IGlobalContext.Unlock"/>.
+        /// Повторный вызов метода запрещен.
+        /// </remarks>
+        internal IGlobalContext LockContext()
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
         #region Внутренние типы
