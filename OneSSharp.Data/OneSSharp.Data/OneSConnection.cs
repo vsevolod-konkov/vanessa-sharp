@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace VsevolodKonkov.OneSSharp.Data
@@ -23,6 +24,7 @@ namespace VsevolodKonkov.OneSSharp.Data
         /// <summary>Конструктор.</summary>
         public OneSConnection()
         {
+            _lockContextDelegate = InternalLockContext;
             _state = StateObject.CreateDefault();
         }
 
@@ -286,8 +288,21 @@ namespace VsevolodKonkov.OneSSharp.Data
         /// </remarks>
         internal IGlobalContext LockContext()
         {
-            throw new NotImplementedException();
+            Trace.Assert(_lockContextDelegate != null, "_lockContextDelegate != null");
+            return _lockContextDelegate();
         }
+
+        /// <summary>Внутренняя реализация блокироваки глобального контекста подключения к информационной базе 1С.</summary>
+        private IGlobalContext InternalLockContext()
+        {
+            return new GlobalContextImpl();
+        }
+
+        internal Func<IGlobalContext> LockContextDelegate
+        {
+            set { _lockContextDelegate = value; }
+        }
+        private Func<IGlobalContext> _lockContextDelegate;
 
         #endregion
 

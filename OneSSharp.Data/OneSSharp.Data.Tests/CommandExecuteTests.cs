@@ -11,6 +11,8 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
     [TestFixture]
     public sealed class CommandExecuteTests : ConnectedTestsBase
     {
+        /// <summary>Установка окружения тестов.</summary>
+        /// <remarks>Точка расширения для наследных классов.</remarks>
         protected override void InternalSetUp()
         {
             base.InternalSetUp();
@@ -21,6 +23,8 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
             _testCommand.CommandText = sql;
         }
 
+        /// <summary>Очистка окружения тестов.</summary>
+        /// <remarks>Точка расширения для наследных классов.</remarks>
         protected override void InternalTearDown()
         {
             _testCommand.Dispose();

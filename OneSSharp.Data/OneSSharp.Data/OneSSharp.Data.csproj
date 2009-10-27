@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChecksHelper.cs" />
+    <Compile Include="GlobalContextImpl.cs" />
     <Compile Include="IGlobalContext.cs" />
     <Compile Include="IQuery.cs" />
     <Compile Include="OneSCommand.cs">
@@ -68,8 +69,11 @@
     <Compile Include="Proxies\ConnectionParameters.cs" />
     <Compile Include="Proxies\GlobalContext.cs" />
     <Compile Include="Proxies\OneSObjectProxy.cs" />
+    <Compile Include="Tests\InternalCommandExecuteTests.cs" />
     <Compile Include="Tests\ConnectorTests.cs" />
     <Compile Include="Tests\GlobalContextsTests.cs" />
+    <Compile Include="Tests\InternalConnectionTests.cs" />
+    <Compile Include="Tests\InternalTestBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

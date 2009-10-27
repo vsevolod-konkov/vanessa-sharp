@@ -265,7 +265,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 Assert.AreEqual(string.Format("Соединение к 1С: {0}", connection.ConnectionString), connection.ToString());
         }
 
-        /// <summary>Тестирование того что вызов метода <see cref="OneSConnection.Dispose()"/> для открытого соединения приведет к его закрытию.</summary>
+        /// <summary>Тестирование того, что вызов метода <see cref="IDisposable.Dispose()"/> для открытого соединения приведет к его закрытию.</summary>
         [Test(Description = "Тестирование того, что вызов Dispose у открытого соединения, закроет его.")]
         public void TestCallDisposeCloseConnection()
         {
