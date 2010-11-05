@@ -9,7 +9,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
     internal sealed class GlobalContext : IDisposable
     {
         /// <summary>Коннектор к информационной базе 1С.</summary>
-        private readonly V8.COMConnectorClass _connector;
+        private readonly V82.COMConnectorClass _connector;
 
         /// <summary>COM-объект глобального контекста информационной базы 1С.</summary>
         private readonly object _global;
@@ -23,7 +23,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
         /// <summary>Конструктор.</summary>
         /// <param name="connector">COM-объект устанавливающий соединение.</param>
         /// <param name="globalCtx">COM-объект глобального контекста инфомационной базы 1С.</param>
-        private GlobalContext(V8.COMConnectorClass connector, object globalCtx)
+        private GlobalContext(V82.COMConnectorClass connector, object globalCtx)
         {
             _connector = connector;
             _global = globalCtx;
@@ -37,7 +37,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Proxies
         {
             ChecksHelper.CheckArgumentNotNull(parameters.ConnectionString, "connectionString");
             
-            var connector = new V8.COMConnectorClass();
+            var connector = new V82.COMConnectorClass();
             try
             {
                 if (parameters.PoolTimeout.HasValue)
