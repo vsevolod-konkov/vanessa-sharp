@@ -83,7 +83,7 @@
     <Compile Include="TransactionTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OneSSharp.Data\OneSSharp.Data.csproj">
+    <ProjectReference Include="..\VanessaSharp.Data\VanessaSharp.Data.csproj">
       <Project>{F159DEE7-6216-4335-82DF-556FF74084A1}</Project>
       <Name>OneSSharp.Data</Name>
     </ProjectReference>

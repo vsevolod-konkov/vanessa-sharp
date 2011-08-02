@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.V82.Tests", "VanessaSharp.Proxy.V82.Tests\VanessaSharp.Proxy.V82.Tests.csproj", "{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data", "OneSSharp.Data\VanessaSharp.Data\VanessaSharp.Data.csproj", "{F159DEE7-6216-4335-82DF-556FF74084A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.Tests", "OneSSharp.Data\VanessaSharp.Data.Tests\VanessaSharp.Data.Tests.csproj", "{92889CB5-EDD2-4AA7-9030-C1D9B9B40FA9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +34,14 @@ Global
 		{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F159DEE7-6216-4335-82DF-556FF74084A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F159DEE7-6216-4335-82DF-556FF74084A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F159DEE7-6216-4335-82DF-556FF74084A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F159DEE7-6216-4335-82DF-556FF74084A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92889CB5-EDD2-4AA7-9030-C1D9B9B40FA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92889CB5-EDD2-4AA7-9030-C1D9B9B40FA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92889CB5-EDD2-4AA7-9030-C1D9B9B40FA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92889CB5-EDD2-4AA7-9030-C1D9B9B40FA9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
