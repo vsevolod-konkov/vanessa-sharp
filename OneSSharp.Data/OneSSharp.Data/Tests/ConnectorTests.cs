@@ -12,7 +12,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
     {
         /// <summary>
         /// Тестирование правильности построения строки соединения для метода 
-        /// <see cref="V8.COMConnectorClass.Connect"/>.
+        /// <see cref="V82.COMConnectorClass.Connect"/>.
         /// </summary>
         [Test(Description="Тестирование подключения к 1С по построенной строке")]
         public void TestValidBuildsConnectionString()
@@ -48,7 +48,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
         /// <param name="builder">Построитель строки.</param>
         private static void CheckConnect(OneSConnectionStringBuilder builder)
         {
-            var connector = new V8.COMConnectorClass();
+            var connector = new V82.COMConnectorClass();
             try
             {
                 Assert.IsNotNull(connector);

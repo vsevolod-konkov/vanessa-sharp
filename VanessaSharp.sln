@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.Common", "VanessaSharp.Proxy.Common\VanessaSharp.Proxy.Common.csproj", "{F584A6A1-469D-4755-9BE0-26241F56E452}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.V82", "VanessaSharp.Proxy.V82\VanessaSharp.Proxy.V82.csproj", "{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EF47D692-349F-46E2-9725-C3EBF2165820}"
+	ProjectSection(SolutionItems) = preProject
+		ProductInfo.cs = ProductInfo.cs
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.V82.Tests", "VanessaSharp.Proxy.V82.Tests\VanessaSharp.Proxy.V82.Tests.csproj", "{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F584A6A1-469D-4755-9BE0-26241F56E452}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F584A6A1-469D-4755-9BE0-26241F56E452}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F584A6A1-469D-4755-9BE0-26241F56E452}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F584A6A1-469D-4755-9BE0-26241F56E452}.Release|Any CPU.Build.0 = Release|Any CPU
+		{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DDE8B82-8C78-4F85-8392-B3E2AA46E600}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
