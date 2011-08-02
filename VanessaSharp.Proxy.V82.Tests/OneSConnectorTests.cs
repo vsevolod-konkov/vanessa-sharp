@@ -93,7 +93,7 @@ namespace VanessaSharp.Proxy.V82.Tests
         }
 
         /// <summary>
-        /// Тестирование установки значения свойства <see cref="IV8COMConnector2.PoolTimeout"/> у коннектора 1С.
+        /// Тестирование установки значения свойства <see cref="OneSConnector.PoolTimeout"/> у коннектора 1С.
         /// </summary>
         [Test(Description = "Тестирование установки значения свойства PoolTimeout у коннектора 1С")]
         public void TestSetPoolTimeout()
@@ -106,7 +106,7 @@ namespace VanessaSharp.Proxy.V82.Tests
         }
 
         /// <summary>
-        /// Тестирование установки значения свойства <see cref="IV8COMConnector2.PoolCapacity"/> у коннектора 1С.
+        /// Тестирование установки значения свойства <see cref="OneSConnector.PoolCapacity"/> у коннектора 1С.
         /// </summary>
         [Test(Description = "Тестирование установки значения свойства PoolCapacity у коннектора 1С")]
         public void TestSetPoolCapacity()
