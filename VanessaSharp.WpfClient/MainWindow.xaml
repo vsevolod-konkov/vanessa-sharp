@@ -1,0 +1,44 @@
+﻿<Window x:Class="VanessaSharp.WpfClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Тестирование запросов к 1С">
+    
+    <Window.Resources>
+        <Style x:Key="WindowPanel" TargetType="{x:Type Border}">
+            <Setter Property="BorderBrush" Value="SteelBlue"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Background" Value="LightGray"/>
+        </Style>
+        
+    </Window.Resources>
+    
+    <Grid Background="LightBlue">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource ResourceKey=WindowPanel}">
+            <TextBox TextWrapping="Wrap" AutoWordSelection="True" IsReadOnlyCaretVisible="False">
+                ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты
+            </TextBox>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource ResourceKey=WindowPanel}">
+            <StackPanel Orientation="Horizontal">
+                <Button Margin="5" Padding="5" IsDefault="True">Выполнить</Button> 
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource ResourceKey=WindowPanel}">
+            <ListView>
+                
+            </ListView>
+        </Border>
+
+    </Grid>
+</Window>

@@ -67,6 +67,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\ProductInfo.cs">
+      <Link>Properties\ProductInfo.cs</Link>
+    </Compile>
     <Compile Include="CommandExecuteTests.cs" />
     <Compile Include="CommandTests.cs" />
     <Compile Include="ConnectedTestsBase.cs" />

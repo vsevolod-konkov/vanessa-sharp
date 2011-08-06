@@ -1,4 +1,4 @@
 ﻿using System.Reflection;
 
-[assembly: AssemblyTitle("OneSSharp.Data.Tests")]
-[assembly: AssemblyDescription("unit-тесты на OneSSharp.Data")]
+[assembly: AssemblyTitle("VanessaSharp.Data.Tests")]
+[assembly: AssemblyDescription("unit-тесты на VanessaSharp.Data")]
