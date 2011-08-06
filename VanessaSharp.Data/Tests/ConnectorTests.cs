@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Тестмрование коннектора.</summary>
     [TestFixture]
@@ -19,23 +19,23 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
         {
             {
                 var builder = new OneSConnectionStringBuilder();
-                builder.Catalog = Properties.Settings.Default.TestCatalog;
-                builder.User = "Иванов";
+                builder.Catalog = Constants.TestCatalog;
+                builder.User = Constants.TestUser;
 
                 CheckConnect(builder);
             }
 
             {
                 var builder = new OneSConnectionStringBuilder();
-                builder.User = "Иванов";
-                builder.Catalog = Properties.Settings.Default.TestCatalog;
+                builder.User = Constants.TestUser;
+                builder.Catalog = Constants.TestCatalog;
 
                 CheckConnect(builder);
             }
 
             {
                 var builder = new OneSConnectionStringBuilder();
-                builder.ConnectionString = string.Format("File={0};Usr=Иванов", Properties.Settings.Default.TestCatalog);
+                builder.ConnectionString = string.Format("File={0};Usr={1}", Constants.TestCatalog, Constants.TestUser);
                 builder.Password = string.Empty;
 
                 CheckConnect(builder);

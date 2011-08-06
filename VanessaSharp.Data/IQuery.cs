@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Интерфейс запроса к информационной базе 1С.</summary>
     internal interface IQuery

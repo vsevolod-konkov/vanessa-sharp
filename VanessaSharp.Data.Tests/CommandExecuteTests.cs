@@ -5,7 +5,7 @@ using System.Text;
 using NUnit.Framework;
 using System.Data;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Тесты проверяющие правильность выполнения запросов команды.</summary>
     [TestFixture]

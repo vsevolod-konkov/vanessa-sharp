@@ -2,7 +2,7 @@
 using System.Data.Common;
 using NUnit.Framework;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Тестирование класса <see cref="OneSConnectionStringBuilder"/>.</summary>
     [TestFixture]

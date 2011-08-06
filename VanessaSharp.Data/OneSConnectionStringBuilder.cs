@@ -2,7 +2,7 @@
 using System.Data.Common;
 using System.Text;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Построитель строки соединения с базой 1С.</summary>
     public sealed class OneSConnectionStringBuilder : DbConnectionStringBuilder

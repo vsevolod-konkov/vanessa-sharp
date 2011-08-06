@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using NUnit.Framework;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Тестирование класса <see cref="OneSConnection"/>.</summary>
     [TestFixture]
@@ -83,8 +83,8 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 connection.ConnectionString = TestConnectionString;
 
                 Assert.AreEqual(TestConnectionString, connection.ConnectionString);
-                Assert.AreEqual(Settings.TestCatalog, connection.Database);
-                Assert.AreEqual(Settings.TestCatalog, connection.DataSource);
+                Assert.AreEqual(Constants.TestCatalog, connection.Database);
+                Assert.AreEqual(Constants.TestCatalog, connection.DataSource);
                 Assert.IsNotEmpty(connection.ServerVersion);
                 Assert.AreEqual(0, connection.ConnectionTimeout);
                 
@@ -92,8 +92,8 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 connection.Open();
 
                 Assert.AreEqual(TestConnectionString, connection.ConnectionString);
-                Assert.AreEqual(Settings.TestCatalog, connection.Database);
-                Assert.AreEqual(Settings.TestCatalog, connection.DataSource);
+                Assert.AreEqual(Constants.TestCatalog, connection.Database);
+                Assert.AreEqual(Constants.TestCatalog, connection.DataSource);
                 Assert.IsNotEmpty(connection.ServerVersion);
                 Assert.AreEqual(0, connection.ConnectionTimeout);
             }
@@ -129,7 +129,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 ChecksHelper.AssertException<NotSupportedException>(() =>
                 {
                     // Не поддерживается, даже если передать тот же самый каталог.
-                    connection.ChangeDatabase(Settings.TestCatalog);
+                    connection.ChangeDatabase(Constants.TestCatalog);
                 });
             }
         }

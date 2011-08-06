@@ -7,7 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.OleDb;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Тестирование создания экземпляра класса <see cref="OneSCommand"/>.</summary>
     [TestFixture(false, Description = "Тестирование команды запроса без открытия соединения")]

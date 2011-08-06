@@ -4,7 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Соединение с базой 1С.</summary>
     public sealed class OneSConnection : DbConnection

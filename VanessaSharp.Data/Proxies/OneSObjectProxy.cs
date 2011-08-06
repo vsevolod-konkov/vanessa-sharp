@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace VsevolodKonkov.OneSSharp.Data.Proxies
+namespace VanessaSharp.Data.Proxies
 {
     /// <summary>Объект-обертка объекта 1С.</summary>
     /// <remarks>Временный вариант.</remarks>

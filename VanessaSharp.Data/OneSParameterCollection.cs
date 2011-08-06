@@ -2,7 +2,7 @@
 using System.Data.Common;
 using System.Collections;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Коллекция парамтеров команды запроса к 1С.</summary>
     public sealed class OneSParameterCollection : DbParameterCollection

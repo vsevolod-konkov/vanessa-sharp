@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Интерфейс к глобальному контексту информационной базы 1С.</summary>
     internal interface IGlobalContext

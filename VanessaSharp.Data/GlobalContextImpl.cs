@@ -1,4 +1,4 @@
-﻿namespace VsevolodKonkov.OneSSharp.Data
+﻿namespace VanessaSharp.Data
 {
     /// <summary>Реализация интерфейса <see cref="IGlobalContext"/>.</summary>
     internal sealed class GlobalContextImpl : IGlobalContext

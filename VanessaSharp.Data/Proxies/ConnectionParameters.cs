@@ -1,4 +1,4 @@
-﻿namespace VsevolodKonkov.OneSSharp.Data.Proxies
+﻿namespace VanessaSharp.Data.Proxies
 {
     /// <summary>Параметры соединения с информационной базой 1С.</summary>
     internal sealed class ConnectionParameters

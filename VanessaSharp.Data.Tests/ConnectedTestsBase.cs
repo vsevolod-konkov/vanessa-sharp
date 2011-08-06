@@ -1,7 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Базовый класс тестов требующие подключения.</summary>
     public abstract class ConnectedTestsBase : TestsBase

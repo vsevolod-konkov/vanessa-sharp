@@ -1,24 +1,18 @@
 ﻿using NUnit.Framework;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Базовый класс тестов.</summary>
     public class InternalTestBase
     {
-        /// <summary>Настройки.</summary>
-        internal Properties.Settings Settings
-        {
-            get { return Properties.Settings.Default; }
-        }
-
         /// <summary>Строка соединения с тестовой информационной базой 1С.</summary>
         protected string ConnectionString
         {
             get
             {
                 var builder = new OneSConnectionStringBuilder();
-                builder.Catalog = Settings.TestCatalog;
-                builder.User = Settings.TestUser;
+                builder.Catalog = Constants.TestCatalog;
+                builder.User = Constants.TestUser;
 
                 return builder.ConnectionString;
             }

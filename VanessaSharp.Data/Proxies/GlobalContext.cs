@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 
-namespace VsevolodKonkov.OneSSharp.Data.Proxies
+namespace VanessaSharp.Data.Proxies
 {
     /// <summary>Прокси глобального контекста информационной базы 1С.</summary>
     internal sealed class GlobalContext : IDisposable

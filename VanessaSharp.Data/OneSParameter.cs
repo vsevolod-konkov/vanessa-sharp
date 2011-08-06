@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
 using System.Data;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Параметр к команде запроса в 1С.</summary>
     public sealed class OneSParameter : DbParameter

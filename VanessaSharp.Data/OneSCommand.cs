@@ -2,7 +2,7 @@
 using System.Data.Common;
 using System.Data;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Команда запроса к 1С.</summary>
     public sealed class OneSCommand : DbCommand

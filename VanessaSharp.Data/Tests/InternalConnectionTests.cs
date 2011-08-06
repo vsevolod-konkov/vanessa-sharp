@@ -1,7 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Тестирование внутреннего состояния <see cref="OneSConnection"/>.</summary>
     [TestFixture]

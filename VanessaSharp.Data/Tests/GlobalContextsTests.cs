@@ -1,7 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 
-namespace VsevolodKonkov.OneSSharp.Data.Tests
+namespace VanessaSharp.Data.Tests
 {
     /// <summary>Тестирование класса <see cref="Proxies.GlobalContext"/>.</summary>
     [TestFixture]
@@ -12,7 +12,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
         public void TestGetGlobalContext()
         {
             var parameters = new Proxies.ConnectionParameters();
-            parameters.ConnectionString = string.Format("File={0};Usr=Иванов", Properties.Settings.Default.TestCatalog);
+            parameters.ConnectionString = string.Format("File=\"{0}\";Usr=\"{1}\"", Constants.TestCatalog, Constants.TestUser);
             parameters.PoolTimeout = 2000;
             parameters.PoolCapacity = 10;
 
@@ -27,11 +27,11 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
         [Test(Description="Тестирование монопольного доступа")]
         public void TestIsExclusiveMode()
         {
-            const string connectionStringFormat = "File={0};Usr={1}";
+            const string connectionStringFormat = "File=\"{0}\";Usr=\"{1}\"";
 
             var parameters = new Proxies.ConnectionParameters();
-            parameters.ConnectionString = string.Format(connectionStringFormat, 
-                                Properties.Settings.Default.TestCatalog, "Иванов");
+            parameters.ConnectionString = string.Format(connectionStringFormat,
+                                Constants.TestCatalog, Constants.TestUser);
 
             using (var globalContext = Proxies.GlobalContext.Connect(parameters))
             {
@@ -40,7 +40,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
                 Assert.IsTrue(globalContext.IsExclusiveMode);
 
                 parameters.ConnectionString = string.Format(connectionStringFormat,
-                                Properties.Settings.Default.TestCatalog, "Петров");
+                                Constants.TestCatalog, Constants.AlternativeTestUser);
                 ChecksHelper.AssertException<InvalidOperationException>(() => 
                 {
                     var globalContext2 = Proxies.GlobalContext.Connect(parameters);
@@ -60,7 +60,7 @@ namespace VsevolodKonkov.OneSSharp.Data.Tests
         public void TestCreateQuery()
         {
             var parameters = new Proxies.ConnectionParameters();
-            parameters.ConnectionString = string.Format("File={0};Usr=Иванов", Properties.Settings.Default.TestCatalog);
+            parameters.ConnectionString = string.Format("File=\"{0}\";Usr=\"{1}\"", Constants.TestCatalog, Constants.TestUser);
             using (var globalContext = Proxies.GlobalContext.Connect(parameters))
             {
                 using (var query = globalContext.CreateQuery())

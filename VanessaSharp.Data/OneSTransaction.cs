@@ -2,7 +2,7 @@
 using System.Data;
 using System.Data.Common;
 
-namespace VsevolodKonkov.OneSSharp.Data
+namespace VanessaSharp.Data
 {
     /// <summary>Объект транзакции к информационной базе 1С.</summary>
     public sealed class OneSTransaction : DbTransaction

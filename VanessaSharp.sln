@@ -16,6 +16,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data", "Vaness
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.Tests", "VanessaSharp.Data.Tests\VanessaSharp.Data.Tests.csproj", "{92889CB5-EDD2-4AA7-9030-C1D9B9B40FA9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Db", "Db", "{D231F52C-1650-4523-A365-7AB2009A6BF7}"
+	ProjectSection(SolutionItems) = preProject
+		Db\1Cv8.1CD = Db\1Cv8.1CD
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,5 +50,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D231F52C-1650-4523-A365-7AB2009A6BF7} = {EF47D692-349F-46E2-9725-C3EBF2165820}
 	EndGlobalSection
 EndGlobal
