@@ -10,18 +10,15 @@ namespace VanessaSharp.Proxy.V82
     public sealed class OneSConnector : IOneSConnector
     {
         /// <summary>COM-соединитель с 1С.</summary>
-        private readonly IV8COMConnector2 _comConnector;
+        private readonly DisposableWrapper<IV8COMConnector2> _comConnector;
 
-        /// <summary>Признак освобождения ресурсов.</summary>
-        private bool _disposed;
-        
         /// <summary>Конструктор принимающий COM-объект соединителя к 1С.</summary>
         /// <param name="comConnector">COM-объект соединителя к 1С.</param>
         internal OneSConnector(IV8COMConnector2 comConnector)
         {
             Contract.Requires<ArgumentNullException>(comConnector != null, "comConnector не может быть null");
 
-            _comConnector = comConnector;
+            _comConnector = comConnector.WrapToDisposable();
         }
 
         /// <summary>Создание COM-соединителя с 1С.</summary>
@@ -53,7 +50,15 @@ namespace VanessaSharp.Proxy.V82
             if (result == null)
                 throw new InvalidOperationException("Соединитель к 1С вернул null при соединении.");
 
-            return result;
+            return OneSObject.Wrap(result);
+        }
+
+        /// <summary>
+        /// Нижележащий объект.
+        /// </summary>
+        private IV8COMConnector2 ComConnector
+        {
+            get { return _comConnector.Object; }
         }
 
         /// <summary>
@@ -67,7 +72,7 @@ namespace VanessaSharp.Proxy.V82
 
             try
             {
-                return _comConnector.Connect(connectString);
+                return ComConnector.Connect(connectString);
             }
             catch (COMException e)
             {
@@ -83,11 +88,11 @@ namespace VanessaSharp.Proxy.V82
         {
             get
             {
-                return _comConnector.PoolTimeout;
+                return ComConnector.PoolTimeout;
             }
             set
             {
-                _comConnector.PoolTimeout = value;
+                ComConnector.PoolTimeout = value;
             }
         }
 
@@ -96,41 +101,18 @@ namespace VanessaSharp.Proxy.V82
         {
             get
             {
-                return _comConnector.PoolCapacity;
+                return ComConnector.PoolCapacity;
             }
             set
             {
-                _comConnector.PoolCapacity = value;
+                ComConnector.PoolCapacity = value;
             }
-        }
-
-        /// <summary>Очистка неуправляемых ресурсов.</summary>
-        private void ReleaseUnmanagedResources()
-        {
-            if (Marshal.IsComObject(_comConnector))
-                Marshal.FinalReleaseComObject(_comConnector);
         }
 
         /// <summary>Освобождение ресурсов.</summary>
         public void Dispose()
         {
-            if (!_disposed)
-            {
-                var disposable = _comConnector as IDisposable;
-                if (disposable != null)
-                    disposable.Dispose();
-
-                ReleaseUnmanagedResources();
-                
-                _disposed = true;
-            }
-        }
-
-        /// <summary>Финализатор.</summary>
-        ~OneSConnector()
-        {
-            if (!_disposed)
-                ReleaseUnmanagedResources();
+            _comConnector.Dispose();
         }
     }
 }

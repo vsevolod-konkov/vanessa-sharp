@@ -23,32 +23,12 @@ namespace VanessaSharp.Proxy.V82.Tests
                 var connectString = string.Format(
                     "File=\"{0}\";Usr=\"{1}\";", Path.Combine(Environment.CurrentDirectory, "DbExample"), userName);
 
-                var context = testingInstance.Connect(connectString);
-                try
+                using (var context = testingInstance.Connect(connectString))
+                using (var sessionParameters = context.SessionParameters)
+                using (var currentUser = sessionParameters.ТекущийПользователь)
                 {
-                    Assert.NotNull(context);
-                    var sessionParameters = context.SessionParameters;
-                    try
-                    {
-                        var currentUser = sessionParameters.ТекущийПользователь;
-                        try
-                        {
-                            string currentUserName = currentUser.Code;
-                            Assert.AreEqual(userName, currentUserName.Trim());
-                        }
-                        finally
-                        {
-                            Marshal.ReleaseComObject(currentUser);
-                        }
-                    }
-                    finally
-                    {
-                        Marshal.ReleaseComObject(sessionParameters);
-                    }
-                }
-                finally
-                {
-                    Marshal.FinalReleaseComObject(context);
+                    string currentUserName = currentUser.Code;
+                    Assert.AreEqual(userName, currentUserName.Trim());
                 }
             }
         }

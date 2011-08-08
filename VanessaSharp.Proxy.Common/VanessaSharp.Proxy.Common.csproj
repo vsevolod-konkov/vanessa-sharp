@@ -64,8 +64,11 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="DisposableWrapper.cs" />
     <Compile Include="IOneSConnector.cs" />
     <Compile Include="IOneSConnectorContract.cs" />
+    <Compile Include="OneSObject.cs" />
+    <Compile Include="OneSProxyHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
