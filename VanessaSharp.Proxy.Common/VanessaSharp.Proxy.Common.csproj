@@ -58,6 +58,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
@@ -65,10 +66,16 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="DisposableWrapper.cs" />
+    <Compile Include="IGlobalContext.cs" />
+    <Compile Include="IGlobalContextContract.cs" />
     <Compile Include="IOneSConnector.cs" />
     <Compile Include="IOneSConnectorContract.cs" />
+    <Compile Include="IOneSProxy.cs" />
+    <Compile Include="IOneSProxyWrapper.cs" />
+    <Compile Include="OneSGlobalContext.cs" />
     <Compile Include="OneSObject.cs" />
     <Compile Include="OneSProxyHelper.cs" />
+    <Compile Include="OneSProxyWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,4 +1,7 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 
 [assembly: AssemblyTitle("VanessaSharp.Proxy.Common")]
-[assembly: AssemblyDescription("Библиотека описание интерфейсов прокси к 1С")]
+[assembly: AssemblyDescription("Библиотека прокси-объектов и контрактов к 1С")]
+
+[assembly: InternalsVisibleTo("VanessaSharp.Proxy.Common.Tests")]

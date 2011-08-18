@@ -11,7 +11,7 @@ namespace VanessaSharp.Proxy.Common
         /// <summary>Соединение с информационной базой.</summary>
         /// <param name="connectString">Строка соединения.</param>
         /// <returns>Возвращает объект глобального контекста.</returns>
-        dynamic Connect(string connectString);
+        IGlobalContext Connect(string connectString);
         
         /// <summary>Время ожидания подключения.</summary>
         uint PoolTimeout { get; set; }

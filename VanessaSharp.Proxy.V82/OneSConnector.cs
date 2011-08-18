@@ -44,7 +44,7 @@ namespace VanessaSharp.Proxy.V82
         /// <summary>Соединение с информационной базой.</summary>
         /// <param name="connectString">Строка соединения.</param>
         /// <returns>Возвращает объект глобального контекста.</returns>
-        public dynamic Connect(string connectString)
+        public IGlobalContext Connect(string connectString)
         {
             var result = InvokeConnect(connectString);
             if (result == null)

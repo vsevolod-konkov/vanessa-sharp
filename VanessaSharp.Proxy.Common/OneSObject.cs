@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Dynamic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -6,29 +7,39 @@ using System.Runtime.CompilerServices;
 namespace VanessaSharp.Proxy.Common
 {
     /// <summary>Базовый класс над объектами 1С.</summary>
-    public sealed class OneSObject : DynamicObject, IDisposable
+    public class OneSObject : DynamicObject, IOneSProxy, IDisposable
     {
         /// <summary>Обертка над нижележащим объектом.</summary>
         private readonly DisposableWrapper<object> _disposableWrapper;
 
-        /// <summary>Конструктор принимающий RCW-обертку COM-объекта 1C.</summary>
+        /// <summary>Обертыватель объекта.</summary>
+        private readonly IOneSProxyWrapper _proxyWrapper;
+
+        /// <summary>
+        /// Базовый конструктор.
+        /// </summary>
         /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
-        public OneSObject(object comObject)
+        /// <param name="proxyWrapper">Обертыватель объекта.</param>
+        internal OneSObject(object comObject, IOneSProxyWrapper proxyWrapper)
         {
+            Contract.Requires<ArgumentNullException>(
+                comObject != null, "comObject не может быть равен null");
+            Contract.Requires<ArgumentNullException>(
+                proxyWrapper != null, "proxyWrapper не может быть равен null");
+
             _disposableWrapper = comObject.WrapToDisposable();
+            _proxyWrapper = proxyWrapper;
         }
 
         /// <summary>Обертка над объектом.</summary>
         /// <param name="obj">Объект.</param>
-        public static object Wrap(object obj)
+        private object Wrap(object obj)
         {
-            return (OneSProxyHelper.IsOneSObject(obj))
-                ? new OneSObject(obj)
-                : obj;
+            return _proxyWrapper.Wrap(obj);
         }
 
         /// <summary>Снятие обертки с нижележащего объекта.</summary>
-        private object Unwrap()
+        object IOneSProxy.Unwrap()
         {
             return _disposableWrapper.Object;
         }
@@ -37,10 +48,10 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="obj">Объект с которого снимается обертка 1С.</param>
         private static object Unwrap(object obj)
         {
-            var oneSObject = obj as OneSObject;
-            return oneSObject == null
+            var oneSProxy = obj as IOneSProxy;
+            return oneSProxy == null
                 ? obj
-                : oneSObject.Unwrap();
+                : oneSProxy.Unwrap();
         }
 
         /// <summary>Снятие обертки с массива объектов.</summary>
@@ -200,6 +211,14 @@ namespace VanessaSharp.Proxy.Common
         public void Dispose()
         {
             _disposableWrapper.Dispose();
+        }
+
+        /// <summary>
+        /// Прокси с динамическим поведением.
+        /// </summary>
+        protected dynamic DynamicProxy
+        {
+            get { return this; }
         }
 
         #region Вспомогательные типы
