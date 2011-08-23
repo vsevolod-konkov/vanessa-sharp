@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using VanessaSharp.Proxy.V82;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Proxy.V82.Tests
 {
@@ -23,12 +24,14 @@ namespace VanessaSharp.Proxy.V82.Tests
                 var connectString = string.Format(
                     "File=\"{0}\";Usr=\"{1}\";", Path.Combine(Environment.CurrentDirectory, "DbExample"), userName);
 
-                using (var context = testingInstance.Connect(connectString))
-                using (var sessionParameters = context.SessionParameters)
-                using (var currentUser = sessionParameters.ТекущийПользователь)
+                using (dynamic context = testingInstance.Connect(connectString))
                 {
-                    string currentUserName = currentUser.Code;
-                    Assert.AreEqual(userName, currentUserName.Trim());
+                    using (var sessionParameters = context.SessionParameters)
+                    using (var currentUser = sessionParameters.ТекущийПользователь)
+                    {
+                        string currentUserName = currentUser.Code;
+                        Assert.AreEqual(userName, currentUserName.Trim());
+                    }
                 }
             }
         }

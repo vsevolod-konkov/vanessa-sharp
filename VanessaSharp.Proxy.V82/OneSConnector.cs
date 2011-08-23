@@ -50,7 +50,7 @@ namespace VanessaSharp.Proxy.V82
             if (result == null)
                 throw new InvalidOperationException("Соединитель к 1С вернул null при соединении.");
 
-            return OneSObject.Wrap(result);
+            return new OneSGlobalContext(result);
         }
 
         /// <summary>

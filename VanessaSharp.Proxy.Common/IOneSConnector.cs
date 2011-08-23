@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Proxy.Common
 {
     /// <summary>Интерфейс соединителя с информационной базой 1С.</summary>
+    [ContractClass(typeof(IOneSConnectorContract))]
     public interface IOneSConnector : IDisposable
     {
         /// <summary>Соединение с информационной базой.</summary>

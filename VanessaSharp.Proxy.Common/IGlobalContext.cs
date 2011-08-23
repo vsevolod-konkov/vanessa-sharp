@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Proxy.Common
 {
     /// <summary>Интерфейс глобального контекста.</summary>
+    [ContractClass(typeof(IGlobalContextContract))]
     public interface IGlobalContext
     {
         /// <summary>Создание объекта.</summary>

@@ -7,10 +7,10 @@ namespace VanessaSharp.Proxy.Common
     [ContractClassFor(typeof(IOneSConnector))]
     internal abstract class IOneSConnectorContract : IOneSConnector
     {
-        dynamic IOneSConnector.Connect(string connectString)
+        IGlobalContext IOneSConnector.Connect(string connectString)
         {
             Contract.Requires<ArgumentException>(!string.IsNullOrEmpty(connectString), "Строка соединения не может быть пустой.");
-            Contract.Ensures(Contract.Result<object>() != null);
+            Contract.Ensures(Contract.Result<IGlobalContext>() != null);
 
             return null;
         }
