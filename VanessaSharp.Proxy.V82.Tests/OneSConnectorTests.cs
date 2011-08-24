@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using VanessaSharp.Proxy.V82;
 using V82;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Proxy.V82.Tests
 {
@@ -47,7 +48,10 @@ namespace VanessaSharp.Proxy.V82.Tests
             Mock<IV8COMConnector2> mockComConnector;
             var testingInstance = InitTestingInstanceForConnect(s => s.Returns(result), out mockComConnector);
 
-            Assert.AreEqual(result, testingInstance.Connect(CONNECT_STRING));
+            var actualResult = testingInstance.Connect(CONNECT_STRING);
+            Assert.IsInstanceOf<OneSGlobalContext>(actualResult);
+
+            Assert.AreSame(result, ((IOneSProxy)actualResult).Unwrap());
             mockComConnector.Verify(c => c.Connect(CONNECT_STRING), Times.Once());
         }
 
