@@ -24,7 +24,24 @@ namespace VanessaSharp.Proxy.Common
             Contract.Requires<ArgumentNullException>(
                 proxyWrapper != null, "proxyWrapper не может быть равен null");
 
-            _proxy = new OneSProxy(comObject, proxyWrapper);
+            _proxy = new OneSProxy(comObject, GetOneSProxyWrapper(proxyWrapper));
+        }
+
+        /// <summary>Получение реального обертывателя.</summary>
+        /// <param name="originWrapper">Исходный обертыватель.</param>
+        internal virtual IOneSProxyWrapper GetOneSProxyWrapper(IOneSProxyWrapper originWrapper)
+        {
+            return originWrapper;
+        }
+
+        /// <summary>Попытка конвертации в требуемый тип.</summary>
+        /// <param name="binder">Привязчик.</param>
+        /// <param name="result">Результат конвертации.</param>
+        public override bool TryConvert(ConvertBinder binder, out object result)
+        {
+            Contract.Requires<ArgumentNullException>(binder != null);
+
+            return _proxy.TryConvert(binder, out result);
         }
 
         /// <summary>Попытка получения элемента по индексу.</summary>

@@ -1,10 +1,11 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Proxy.Common
 {
     /// <summary>Интерфейс глобального контекста.</summary>
     [ContractClass(typeof(IGlobalContextContract))]
-    public interface IGlobalContext
+    public interface IGlobalContext : IDisposable
     {
         /// <summary>Создание объекта.</summary>
         /// <param name="typeName">Имя типа.</param>

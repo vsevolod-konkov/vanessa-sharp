@@ -39,9 +39,12 @@ namespace VanessaSharp.Proxy.Common
 
         /// <summary>Обертка над объектом.</summary>
         /// <param name="obj">Объект.</param>
-        private object Wrap(object obj)
+        /// <param name="type">Тип интерфейса, который должен поддерживаться оберткой.</param>
+        private object Wrap(object obj, Type type)
         {
-            return _proxyWrapper.Wrap(obj);
+            Contract.Requires<ArgumentNullException>(type != null);
+
+            return _proxyWrapper.Wrap(obj, type);
         }
 
         /// <summary>Снятие обертки с нижележащего объекта.</summary>
@@ -73,14 +76,28 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="binder">Биндер.</param>
         /// <param name="argumentsCount">Количество аргументов функции.</param>
         /// <param name="args">Аргументы.</param>
-        private object InvokeFunc(CallSiteBinder binder, int argumentsCount, object[] args)
+        /// <param name="returnType">Тип возвращаемого объекта.</param>
+        private object InvokeFunc(CallSiteBinder binder, int argumentsCount, object[] args, Type returnType)
         {
             Contract.Requires<ArgumentNullException>(binder != null);
             Contract.Requires<ArgumentNullException>(args != null);
+            Contract.Requires<ArgumentNullException>(returnType != null);
 
             return Wrap(
                      CreateFuncCaller(_disposableWrapper, binder, argumentsCount)
-                        .Invoke(Unwrap(args)));
+                        .Invoke(Unwrap(args)),
+                     returnType);
+        }
+
+        /// <summary>Попытка конвертации в требуемый тип.</summary>
+        /// <param name="binder">Привязчик.</param>
+        /// <param name="result">Результат конвертации.</param>
+        public override bool TryConvert(ConvertBinder binder, out object result)
+        {
+            Contract.Requires<ArgumentNullException>(binder != null);
+
+            result = Wrap(Unwrap(), binder.ReturnType);
+            return true;
         }
 
         /// <summary>Попытка получения элемента по индексу.</summary>
@@ -92,7 +109,7 @@ namespace VanessaSharp.Proxy.Common
             Contract.Requires<ArgumentNullException>(binder != null);
             Contract.Requires<ArgumentNullException>(indexes != null);
             
-            result = InvokeFunc(binder, binder.CallInfo.ArgumentCount, indexes);
+            result = InvokeFunc(binder, binder.CallInfo.ArgumentCount, indexes, binder.ReturnType);
             return true;
         }
 
@@ -103,7 +120,7 @@ namespace VanessaSharp.Proxy.Common
         {
             Contract.Requires<ArgumentNullException>(binder != null);
 
-            result = InvokeFunc(binder, 0, _emptyObjectsArray);
+            result = InvokeFunc(binder, 0, _emptyObjectsArray, binder.ReturnType);
             return true;
         }
         
@@ -116,7 +133,7 @@ namespace VanessaSharp.Proxy.Common
             Contract.Requires<ArgumentNullException>(binder != null);
             Contract.Requires<ArgumentNullException>(args != null);
 
-            result = InvokeFunc(binder, binder.CallInfo.ArgumentCount, args);
+            result = InvokeFunc(binder, binder.CallInfo.ArgumentCount, args, binder.ReturnType);
             return true;
         }
 

@@ -67,16 +67,21 @@
     </Compile>
     <Compile Include="DisposableWrapper.cs" />
     <Compile Include="IGlobalContext.cs" />
+    <Compile Include="IGlobalContextBound.cs" />
+    <Compile Include="IGlobalContextBoundContract.cs" />
     <Compile Include="IGlobalContextContract.cs" />
     <Compile Include="IOneSConnector.cs" />
     <Compile Include="IOneSConnectorContract.cs" />
     <Compile Include="IOneSProxy.cs" />
     <Compile Include="IOneSProxyWrapper.cs" />
+    <Compile Include="IOneSProxyWrapperContract.cs" />
+    <Compile Include="OneSContextBoundObject.cs" />
     <Compile Include="OneSGlobalContext.cs" />
     <Compile Include="OneSObject.cs" />
     <Compile Include="OneSProxy.cs" />
     <Compile Include="OneSProxyHelper.cs" />
     <Compile Include="OneSProxyWrapper.cs" />
+    <Compile Include="OneSProxyWrapperWithGlobalContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

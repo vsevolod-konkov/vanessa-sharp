@@ -38,7 +38,6 @@ namespace VanessaSharp.Proxy.Common.Tests
             _shouldBeWrap = shouldBeWrap;
         }
 
-
         /// <summary>
         /// Общая инициализация тестов.
         /// </summary>
@@ -57,8 +56,9 @@ namespace VanessaSharp.Proxy.Common.Tests
             Assert.IsNotNull(_mockComObject);
 
             var mockWrapper = new Mock<IOneSProxyWrapper>();
-            mockWrapper.Setup(w => w.Wrap(It.IsAny<object>()))
-                       .Returns<object>(o => new TestProxy(o));
+            mockWrapper.Setup(w => w.Wrap(It.IsAny<object>(), It.IsAny<Type>()))
+                       .Returns<object, Type>((o, t) => 
+                           (t == typeof(ISomeInterface)) ? new TestProxySupportInterface(o) : new TestProxy(o));
 
             _testingObject = new OneSObject(_mockComObject.Object, mockWrapper.Object);
         }
@@ -253,6 +253,48 @@ namespace VanessaSharp.Proxy.Common.Tests
             _mockComObject.VerifySet(c => c[_argument] = newValue, Times.Once());
         }
 
+        /// <summary>
+        /// Тестирование динамической конвертации экземпляра объекта <see cref="OneSObject"/>.
+        /// </summary>
+        [Test(Description = "Тестирование динамической конвертации экземпляра объекта.")]
+        public void TestConvert()
+        {
+            // Подготовка окружения
+            InitTestingObject();
+
+            // Выполнение
+            ISomeInterface actualResult = _testingObject;
+
+            // Проверка
+
+            // Проверка полученного результата
+            Assert.IsInstanceOf<TestProxySupportInterface>(actualResult);
+            Assert.AreSame(_mockComObject.Object, ((IOneSProxy)actualResult).Unwrap());
+        }
+
+        /// <summary>
+        /// Тестирование динамической конвертации экземпляра объекта <see cref="OneSObject"/>
+        /// к типу который поддерживается исходным экземпляром.
+        /// </summary>
+        /// <remarks>
+        /// Проверяется, что если исходный экземпляр приводим к конвертированному типу,
+        /// то возвращается как результат конвертации исходный экземпляр.
+        /// </remarks>
+        [Test(Description = "Тестирование динамической конвертации экземпляра объекта к типу который поддерживается исходным экземпляром.")]
+        public void TestTrivialConvert()
+        {
+            // Подготовка окружения
+            InitTestingObject();
+
+            // Выполнение
+            OneSObject actualResult = _testingObject;
+
+            // Проверка
+
+            // Проверка полученного результата
+            Assert.AreSame(_testingObject, actualResult);
+        }
+
         #region Вспомогательные типы
 
         /// <summary>
@@ -286,7 +328,7 @@ namespace VanessaSharp.Proxy.Common.Tests
         }
 
         /// <summary>Тестовый прокси.</summary>
-        private sealed class TestProxy : IOneSProxy
+        private class TestProxy : IOneSProxy
         {
             /// <summary>
             /// Оригинальный объект.
@@ -308,6 +350,24 @@ namespace VanessaSharp.Proxy.Common.Tests
             {
                 return _originObject;
             }
+        }
+
+        /// <summary>Некоторый интерфейс.</summary>
+        private interface ISomeInterface
+        {}
+
+        /// <summary>Тестовый прокси поддерживающий интерфейс <see cref="ISomeInterface"/>.</summary>
+        private class TestProxySupportInterface : TestProxy, ISomeInterface
+        {
+            /// <summary>
+            /// Конструктор принимающий оригинальный объект.
+            /// </summary>
+            /// <param name="originObject">
+            /// Оригинальный объект
+            /// </param>
+            public TestProxySupportInterface(object originObject)
+                : base(originObject)
+            {}
         }
 
         #endregion

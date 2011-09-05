@@ -16,5 +16,8 @@ namespace VanessaSharp.Proxy.Common
 
             return null;
         }
+
+        void IDisposable.Dispose()
+        { }
     }
 }

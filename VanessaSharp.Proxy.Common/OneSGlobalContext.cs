@@ -16,6 +16,15 @@ namespace VanessaSharp.Proxy.Common
             : base(comObject, new OneSProxyWrapper())
         {}
 
+        /// <summary>Получение реального обертывателя.</summary>
+        /// <param name="originWrapper">Исходный обертыватель.</param>
+        internal override IOneSProxyWrapper GetOneSProxyWrapper(IOneSProxyWrapper originWrapper)
+        {
+            return new OneSProxyWrapperWithGlobalContext(this);
+        }
+
+        /// <summary>Создание нового объекта.</summary>
+        /// <param name="typeName">Имя типа создаваемого объекта.</param>
         public dynamic NewObject(string typeName)
         {
             return DynamicProxy.NewObject(typeName);

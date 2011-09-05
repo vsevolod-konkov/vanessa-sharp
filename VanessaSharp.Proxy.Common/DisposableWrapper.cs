@@ -46,7 +46,6 @@ namespace VanessaSharp.Proxy.Common
         }
 
         /// <summary>Реальное освобождение ресурсов нижележащего объекта.</summary>
-        /// <param name="obj"></param>
         protected abstract void InternalDispose();
 
         /// <summary>Фабричный метод создания обертки.</summary>
