@@ -29,5 +29,24 @@ namespace VanessaSharp.Proxy.Common
         {
             return DynamicProxy.NewObject(typeName);
         }
+
+        /// <summary>
+        /// Получение признака - монопольный ли режим.
+        /// </summary>
+        public bool ExclusiveMode()
+        {
+            return DynamicProxy.ExclusiveMode();
+        }
+
+        /// <summary>
+        /// Установка монопольного режима.
+        /// </summary>
+        /// <param name="value">
+        /// Если передать <c>true</c>, то установится монопольный режим в ином случае нет.
+        /// </param>
+        public void SetExclusiveMode(bool value)
+        {
+            DynamicProxy.SetExclusiveMode(value);
+        }
     }
 }

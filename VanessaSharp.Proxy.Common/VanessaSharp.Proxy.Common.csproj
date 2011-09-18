@@ -48,6 +48,7 @@
     <CodeContractsReferenceAssembly>Build</CodeContractsReferenceAssembly>
     <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
     <DocumentationFile>bin\Debug\VanessaSharp.Proxy.Common.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -72,9 +73,12 @@
     <Compile Include="IGlobalContextContract.cs" />
     <Compile Include="IOneSConnector.cs" />
     <Compile Include="IOneSConnectorContract.cs" />
+    <Compile Include="IOneSConnectorFactory.cs" />
+    <Compile Include="IOneSConnectorFactoryContract.cs" />
     <Compile Include="IOneSProxy.cs" />
     <Compile Include="IOneSProxyWrapper.cs" />
     <Compile Include="IOneSProxyWrapperContract.cs" />
+    <Compile Include="OneSConnectorFactory.cs" />
     <Compile Include="OneSContextBoundObject.cs" />
     <Compile Include="OneSGlobalContext.cs" />
     <Compile Include="OneSObject.cs" />
