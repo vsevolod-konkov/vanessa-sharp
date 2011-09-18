@@ -17,7 +17,7 @@ namespace VanessaSharp.Data.Tests
             {
                 Assert.IsNull(connection.CurrentTransaction);
 
-                ChecksHelper.AssertException<InvalidOperationException>(() =>
+                Assert.Throws<InvalidOperationException>(() =>
                 {
                     var transaction = connection.BeginTransaction();
                 });

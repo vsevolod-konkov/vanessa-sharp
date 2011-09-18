@@ -105,17 +105,17 @@ namespace VanessaSharp.Data.Tests
         {
             using (var connection = new OneSConnection("белеберда"))
             {
-                ChecksHelper.AssertException<InvalidOperationException>(() =>
+                Assert.Throws<InvalidOperationException>(() =>
                 {
                     var catalog = connection.Database;
                 });
 
-                ChecksHelper.AssertException<InvalidOperationException>(() =>
+                Assert.Throws<InvalidOperationException>(() =>
                 {
                     var catalog = connection.DataSource;
                 });
 
-                ChecksHelper.AssertException<InvalidOperationException>(connection.Open);
+                Assert.Throws<InvalidOperationException>(connection.Open);
             }
         }
 
@@ -126,7 +126,7 @@ namespace VanessaSharp.Data.Tests
             using (var connection = new OneSConnection(TestConnectionString))
             {
                 // пока не реализовано
-                ChecksHelper.AssertException<NotSupportedException>(() =>
+                Assert.Throws<NotSupportedException>(() =>
                 {
                     // Не поддерживается, даже если передать тот же самый каталог.
                     connection.ChangeDatabase(Constants.TestCatalog);
@@ -152,17 +152,9 @@ namespace VanessaSharp.Data.Tests
                 Assert.AreEqual(2000, connection.PoolTimeout);
                 Assert.AreEqual(2000, connection.ConnectionTimeout);
 
-                connection.PoolTimeout = null;
-                Assert.AreEqual(2000, connection.PoolTimeout);
-                Assert.AreEqual(2000, connection.ConnectionTimeout);
-
                 connection.Close();
                 Assert.AreEqual(2000, connection.PoolTimeout);
                 Assert.AreEqual(2000, connection.ConnectionTimeout);
-
-                connection.PoolTimeout = null;
-                Assert.IsNull(connection.PoolTimeout);
-                Assert.AreEqual(0, connection.ConnectionTimeout);
             }
 
             using (var connection = new OneSConnection(TestConnectionString))
@@ -176,14 +168,8 @@ namespace VanessaSharp.Data.Tests
                 connection.PoolCapacity = 10;
                 Assert.AreEqual(10, connection.PoolCapacity);
 
-                connection.PoolCapacity = null;
-                Assert.AreEqual(10, connection.PoolCapacity);
-            
                 connection.Close();
                 Assert.AreEqual(10, connection.PoolCapacity);
-
-                connection.PoolCapacity = null;
-                Assert.IsNull(connection.PoolCapacity);
             }
         }
 
@@ -194,12 +180,12 @@ namespace VanessaSharp.Data.Tests
             using (var connection = new OneSConnection(TestConnectionString))
             {
                 // Если соединение не открыто, то свойство IsExclusiveMode недоступно
-                ChecksHelper.AssertException<InvalidOperationException>(() =>
+                Assert.Throws<InvalidOperationException>(() =>
                 {
                     var value = connection.IsExclusiveMode;
                 });
 
-                ChecksHelper.AssertException<InvalidOperationException>(() =>
+                Assert.Throws<InvalidOperationException>(() =>
                 {
                     connection.IsExclusiveMode = true;
                 });
@@ -217,7 +203,7 @@ namespace VanessaSharp.Data.Tests
                 builder.User = "Петров";
                 using (var connection2 = new OneSConnection(builder.ConnectionString))
                 {
-                    ChecksHelper.AssertException<InvalidOperationException>(() =>
+                    Assert.Throws<InvalidOperationException>(() =>
                     {
                         connection2.Open();
                     });

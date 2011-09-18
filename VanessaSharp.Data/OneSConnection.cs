@@ -2,7 +2,9 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
 {
@@ -24,7 +26,6 @@ namespace VanessaSharp.Data
         /// <summary>Конструктор.</summary>
         public OneSConnection()
         {
-            _lockContextDelegate = InternalLockContext;
             _state = StateObject.CreateDefault();
         }
 
@@ -37,6 +38,12 @@ namespace VanessaSharp.Data
             : this()
         {
             ConnectionString = connectionString;
+        }
+
+        /// <summary>Глобальный контекст.</summary>
+        internal IGlobalContext GlobalContext
+        {
+            get { return _state.GlobalContext; }
         }
         
         /// <summary>Начало транзакции.</summary>
@@ -184,18 +191,18 @@ namespace VanessaSharp.Data
         /// <summary>Время ожидания соединения.</summary>
         public override int ConnectionTimeout
         {
-            get { return PoolTimeout ?? 0; }
+            get { return PoolTimeout; }
         }
 
         /// <summary>Время ожидания соединения.</summary>
-        public int? PoolTimeout
+        public int PoolTimeout
         {
             get { return _state.PoolTimeout; }
             set { _state.PoolTimeout = value; }
         }
 
         /// <summary>Мощность пула соединений.</summary>
-        public int? PoolCapacity
+        public int PoolCapacity
         {
             get { return _state.PoolCapacity; }
             set { _state.PoolCapacity = value; }
@@ -209,14 +216,14 @@ namespace VanessaSharp.Data
         }
 
         /// <summary>Получение параметров соединения.</summary>
-        private Proxies.ConnectionParameters GetParameters()
+        private ConnectionParameters GetParameters()
         {
-            var result = new Proxies.ConnectionParameters();
-            result.ConnectionString = ConnectionString;
-            result.PoolTimeout = PoolTimeout;
-            result.PoolCapacity = PoolCapacity;
-
-            return result;
+            return new ConnectionParameters
+            {
+                ConnectionString = ConnectionString,
+                PoolTimeout = PoolTimeout,
+                PoolCapacity = PoolCapacity
+            };
         }
 
         private void ChangeState(StateObject newState)
@@ -278,47 +285,44 @@ namespace VanessaSharp.Data
             base.Dispose(disposing);
         }
 
-        /// <summary>
-        /// Передача ответственности работы с глобальным контекстом другому объекту.
-        /// </summary>
-        /// <remarks>
-        /// После вызова данного метода нельзя менять состояние соединения,
-        /// вплоть до вызова метода <see cref="IGlobalContext.Unlock"/>.
-        /// Повторный вызов метода запрещен.
-        /// </remarks>
-        internal IGlobalContext LockContext()
-        {
-            Trace.Assert(_lockContextDelegate != null, "_lockContextDelegate != null");
-            return _lockContextDelegate();
-        }
-
-        /// <summary>Внутренняя реализация блокироваки глобального контекста подключения к информационной базе 1С.</summary>
-        private IGlobalContext InternalLockContext()
-        {
-            return new GlobalContextImpl();
-        }
-
-        internal Func<IGlobalContext> LockContextDelegate
-        {
-            set { _lockContextDelegate = value; }
-        }
-        private Func<IGlobalContext> _lockContextDelegate;
-
         #endregion
 
         #region Внутренние типы
 
+        /// <summary>Параметры соединения с информационной базой 1С.</summary>
+        private sealed class ConnectionParameters
+        {
+            /// <summary>Строка соединения.</summary>
+            public string ConnectionString { get; set; }
+
+            /// <summary>Время ожидания подключения.</summary>
+            public int PoolTimeout { get; set; }
+
+            /// <summary>Мощность подключения.</summary>
+            public int PoolCapacity { get; set; }
+        }
+
         /// <summary>Базовый класс объекта состояния.</summary>
         private abstract class StateObject : IDisposable
         {
+            /// <summary>Объект глобального контекста 1С.</summary>
+            public virtual IGlobalContext GlobalContext
+            {
+                get
+                {
+                    throw new InvalidOperationException(
+                        "Нельзя получить глобальный контекст при закрытом соединении.");
+                }
+            }
+            
             /// <summary>Открытие соединение.</summary>
             /// <param name="parameters">Параметры соединения.</param>
             /// <returns>Объект состояния открытого соединения.</returns>
-            public abstract StateObject OpenConnection(Proxies.ConnectionParameters parameters);
+            public abstract StateObject OpenConnection(ConnectionParameters parameters);
 
             /// <summary>Закрытие соединения.</summary>
             /// <returns>Объект закрытого состояния.</returns>
-            public abstract StateObject CloseConnection(Proxies.ConnectionParameters parameters);
+            public abstract StateObject CloseConnection(ConnectionParameters parameters);
 
             /// <summary>Состояние соединения.</summary>
             public abstract ConnectionState ConnectionState { get; }
@@ -327,10 +331,10 @@ namespace VanessaSharp.Data
             public abstract void CheckCanChangeConnectionString();
 
             /// <summary>Время ожидания соединения.</summary>
-            public abstract int? PoolTimeout { get; set; }
+            public abstract int PoolTimeout { get; set; }
 
             /// <summary>Мощность пула соединения.</summary>
-            public abstract int? PoolCapacity { get; set; }
+            public abstract int PoolCapacity { get; set; }
 
             /// <summary>Признак режима монопольного доступа.</summary>
             public abstract bool IsExclusiveMode { get; set; }
@@ -393,12 +397,12 @@ namespace VanessaSharp.Data
         /// <summary>Состояние закрытого соединения.</summary>
         private sealed class ClosedStateObject : StateObject
         {
-            public override StateObject OpenConnection(Proxies.ConnectionParameters parameters)
+            public override StateObject OpenConnection(ConnectionParameters parameters)
             {
                 return OpenStateObject.Create(parameters);
             }
 
-            public override StateObject CloseConnection(Proxies.ConnectionParameters parameters)
+            public override StateObject CloseConnection(ConnectionParameters parameters)
             {
                 return this;
             }
@@ -411,12 +415,12 @@ namespace VanessaSharp.Data
             public override void CheckCanChangeConnectionString()
             {}
 
-            public override int? PoolTimeout
+            public override int PoolTimeout
             {
                 get; set;
             }
 
-            public override int? PoolCapacity
+            public override int PoolCapacity
             {
                 get; set;
             }
@@ -445,27 +449,27 @@ namespace VanessaSharp.Data
         /// <summary>Базовый класс открытого состояния.</summary>
         private abstract class OpenStateObjectBase : StateObject
         {
-            private readonly Proxies.GlobalContext _globalContext;
+            private readonly IGlobalContext _globalContext;
             private bool _sharedGlobalContext;
 
-            protected OpenStateObjectBase(Proxies.GlobalContext globalContext)
+            protected OpenStateObjectBase(IGlobalContext globalContext)
             {
                 ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
                 
                 _globalContext = globalContext;
             }
 
-            protected Proxies.GlobalContext GlobalContext
+            public override IGlobalContext GlobalContext
             {
                 get { return _globalContext; }
             }
 
-            public sealed override StateObject OpenConnection(Proxies.ConnectionParameters parameters)
+            public sealed override StateObject OpenConnection(ConnectionParameters parameters)
             {
                 throw new InvalidOperationException("Соединение уже открыто.");
             }
 
-            public override StateObject CloseConnection(Proxies.ConnectionParameters parameters)
+            public override StateObject CloseConnection(ConnectionParameters parameters)
             {
                 var result = new ClosedStateObject();
                 result.PoolTimeout = parameters.PoolTimeout;
@@ -490,43 +494,30 @@ namespace VanessaSharp.Data
                     _globalContext.Dispose();
             }
 
-            public sealed override int? PoolTimeout
+            public sealed override int PoolTimeout
             {
-                get
-                {
-                    return _globalContext.PoolTimeout;
-                }
-                set
-                {
-                    if (value.HasValue)
-                        _globalContext.PoolTimeout = value.Value;
-                }
+                get { return _poolTimeout; }
+                set { _poolTimeout = value; }
             }
+            private int _poolTimeout;
 
-            public sealed override int? PoolCapacity
+            public sealed override int PoolCapacity
             {
-                get
-                {
-                    return _globalContext.PoolCapacity;
-                }
-
-                set
-                {
-                    if (value.HasValue)
-                        _globalContext.PoolCapacity = value.Value;
-                }
+                get { return _poolCapacity; }
+                set { _poolCapacity = value; }
             }
+            private int _poolCapacity;
 
             public sealed override bool IsExclusiveMode
             {
                 get
                 {
-                    return _globalContext.IsExclusiveMode;
+                    return _globalContext.ExclusiveMode();
                 }
 
                 set
                 {
-                    _globalContext.IsExclusiveMode = value;
+                    _globalContext.SetExclusiveMode(value);
                 }
             }
 
@@ -539,13 +530,28 @@ namespace VanessaSharp.Data
         /// <summary>Состояние открытого соединения.</summary>
         private sealed class OpenStateObject : OpenStateObjectBase
         {
-            public OpenStateObject(Proxies.GlobalContext globalContext)
+            public OpenStateObject(IGlobalContext globalContext)
                 : base(globalContext)
             {}
 
-            public static StateObject Create(Proxies.ConnectionParameters parameters)
+            private static IGlobalContext Connect(ConnectionParameters parameters)
             {
-                var globalContext = Proxies.GlobalContext.Connect(parameters);
+                Contract.Requires<ArgumentNullException>(parameters != null);
+
+                using (var connector = OneSConnectorFactory.Create())
+                {
+                    connector.PoolTimeout = (uint)parameters.PoolTimeout;
+                    connector.PoolCapacity = (uint)parameters.PoolCapacity;
+
+                    return connector.Connect(parameters.ConnectionString);
+                }
+            }
+
+            public static StateObject Create(ConnectionParameters parameters)
+            {
+                Contract.Requires<ArgumentNullException>(parameters != null);
+
+                var globalContext = Connect(parameters);
                 try
                 {
                     return new OpenStateObject(globalContext);
@@ -573,7 +579,7 @@ namespace VanessaSharp.Data
             /// <summary>Объект транзакции.</summary>
             private readonly OneSTransaction _transaction;
 
-            private TransactionStateObject(Proxies.GlobalContext globalContext, OneSTransaction transaction)
+            private TransactionStateObject(IGlobalContext globalContext, OneSTransaction transaction)
                 : base(globalContext)
             {
                 ChecksHelper.CheckArgumentNotNull(transaction, "transaction");
@@ -584,7 +590,7 @@ namespace VanessaSharp.Data
             /// <summary>Создание транзакицонного состояния.</summary>
             /// <param name="globalContext">Глобальный контекст 1С.</param>
             /// <param name="connection">Соединение.</param>
-            public static StateObject Create(Proxies.GlobalContext globalContext, OneSConnection connection)
+            public static StateObject Create(IGlobalContext globalContext, OneSConnection connection)
             {
                 ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
                 ChecksHelper.CheckArgumentNotNull(connection, "connection");    
@@ -601,7 +607,7 @@ namespace VanessaSharp.Data
                 }
             }
 
-            public override StateObject CloseConnection(Proxies.ConnectionParameters parameters)
+            public override StateObject CloseConnection(ConnectionParameters parameters)
             {
                 GlobalContext.RollbackTransaction();
                 return base.CloseConnection(parameters);

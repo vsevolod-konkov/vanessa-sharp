@@ -208,17 +208,9 @@ namespace VanessaSharp.Data
             }
 
             // Получение контекста
-            var globalCtx = Connection.LockContext();
-            try
-            {
-                var query = globalCtx.CreateQuery();
-                query.Text = CommandText;
-                query.Execute();
-            }
-            finally
-            {
-                globalCtx.Unlock();
-            }
+            dynamic query = Connection.GlobalContext.NewObject("Query");
+            query.Text = CommandText;
+            query.Execute();
 
             return null;
         }

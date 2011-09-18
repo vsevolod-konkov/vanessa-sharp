@@ -48,5 +48,33 @@ namespace VanessaSharp.Proxy.Common
         {
             DynamicProxy.SetExclusiveMode(value);
         }
+
+        /// <summary>
+        /// Открывает транзакцию.
+        /// Транзакция предназначена для записи в информационную базу согласованных изменений.
+        /// Все изменения, внесенные в информационную базу после начала транзакции, будут затем либо целиком записаны, либо целиком отменены.
+        /// </summary>
+        public void BeginTransaction()
+        {
+            DynamicProxy.BeginTransaction();
+        }
+
+        /// <summary>
+        /// Завершает успешную транзакцию.
+        /// Все изменения, внесенные в информационную базу в процессе транзакции, будут записаны.
+        /// </summary>
+        public void CommitTransaction()
+        {
+            DynamicProxy.CommitTransaction();
+        }
+
+        /// <summary>
+        /// Отменяет открытую ранее транзакцию.
+        /// Все изменения, внесенные в информационную базу в процессе транзакции, будут отменены.
+        /// </summary>
+        public void RollbackTransaction()
+        {
+            DynamicProxy.RollbackTransaction();
+        }
     }
 }

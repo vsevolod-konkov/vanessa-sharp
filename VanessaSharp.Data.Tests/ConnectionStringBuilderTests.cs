@@ -102,7 +102,7 @@ namespace VanessaSharp.Data.Tests
         public void TestInvalidConnectionString()
         {
             var builder = new OneSConnectionStringBuilder();
-            ChecksHelper.AssertException<ArgumentException>(() =>
+            Assert.Throws<ArgumentException>(() =>
             {
                 builder.ConnectionString = "белеберда";
             });

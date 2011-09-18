@@ -86,6 +86,10 @@
       <Project>{F159DEE7-6216-4335-82DF-556FF74084A1}</Project>
       <Name>VanessaSharp.Data</Name>
     </ProjectReference>
+    <ProjectReference Include="..\VanessaSharp.Proxy.V82\VanessaSharp.Proxy.V82.csproj">
+      <Project>{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}</Project>
+      <Name>VanessaSharp.Proxy.V82</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

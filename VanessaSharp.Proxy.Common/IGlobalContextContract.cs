@@ -27,6 +27,21 @@ namespace VanessaSharp.Proxy.Common
             throw new NotImplementedException();
         }
 
+        void IGlobalContext.BeginTransaction()
+        {
+            throw new NotImplementedException();
+        }
+
+        void IGlobalContext.CommitTransaction()
+        {
+            throw new NotImplementedException();
+        }
+
+        void IGlobalContext.RollbackTransaction()
+        {
+            throw new NotImplementedException();
+        }
+
         void IDisposable.Dispose()
         { }
     }
