@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C# Express 2010
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.Common", "VanessaSharp.Proxy.Common\VanessaSharp.Proxy.Common.csproj", "{F584A6A1-469D-4755-9BE0-26241F56E452}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.V82", "VanessaSharp.Proxy.V82\VanessaSharp.Proxy.V82.csproj", "{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}"
@@ -24,6 +24,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.WpfClient", "VanessaSharp.WpfClient\VanessaSharp.WpfClient.csproj", "{A3B0B184-809D-409C-9031-0082A9C58A10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.Common.Tests", "VanessaSharp.Proxy.Common.Tests\VanessaSharp.Proxy.Common.Tests.csproj", "{1C35C29A-094A-4F16-924F-C5FDE187D96D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.AcceptanceTests", "VanessaSharp.Data.AcceptanceTests\VanessaSharp.Data.AcceptanceTests.csproj", "{6615CF08-B47C-42AF-877F-00A13943CA86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,6 +107,16 @@ Global
 		{1C35C29A-094A-4F16-924F-C5FDE187D96D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{1C35C29A-094A-4F16-924F-C5FDE187D96D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{1C35C29A-094A-4F16-924F-C5FDE187D96D}.Release|x86.ActiveCfg = Release|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

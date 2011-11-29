@@ -27,6 +27,16 @@ namespace VanessaSharp.Proxy.Common
             set {}
         }
 
+        string IOneSConnector.Version
+        {
+            get 
+            {
+                Contract.Ensures(!string.IsNullOrEmpty(Contract.Result<string>()));
+                
+                throw new NotImplementedException(); 
+            }
+        }
+
         void IDisposable.Dispose()
         {}
     }

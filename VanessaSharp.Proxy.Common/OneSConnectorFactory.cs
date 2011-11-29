@@ -17,10 +17,16 @@ namespace VanessaSharp.Proxy.Common
         }
         private static readonly IOneSConnectorFactory _default = new OneSConnectorFactory();
 
+        /// <summary>Версия 1С по умолчанию.</summary>
+        public static string DefaultVersion
+        {
+            get { return VERSION_8_2; }
+        }
+
         /// <summary>Создание соединителя по умолчанию.</summary>
         public static IOneSConnector Create()
         {
-            return Default.Create(VERSION_8_2);
+            return Default.Create(DefaultVersion);
         }
         
         /// <summary>Создание соединения в зависимости от версии.</summary>

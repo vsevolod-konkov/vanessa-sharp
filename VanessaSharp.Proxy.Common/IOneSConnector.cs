@@ -17,5 +17,8 @@ namespace VanessaSharp.Proxy.Common
 
         /// <summary>Мощность подключения.</summary>
         uint PoolCapacity { get; set; }
+
+        /// <summary>Версия.</summary>
+        string Version { get; }
     }
 }

@@ -14,13 +14,9 @@ namespace VanessaSharp.Data.Tests
         [Test(Description = "Тестирование инициализации соединения")]
         public void TestInitConnection()
         {
-            const string catalog = @"C:\1C";
-
             // По умолчанию строка равна null
             using (var connection = new OneSConnection())
             {
-                Trace.WriteLine(connection.ConnectionString);
-                
                 Assert.IsNull(connection.ConnectionString);
                 Assert.AreEqual(ConnectionState.Closed, connection.State);
             }
@@ -28,7 +24,7 @@ namespace VanessaSharp.Data.Tests
             // Проверка задания нормальной строки соединения
             {
                 var builder = new OneSConnectionStringBuilder();
-                builder.Catalog = catalog;
+                builder.Catalog = @"C:\1C";
                 using(var connection = new OneSConnection(builder.ConnectionString))
                 {
                    Assert.AreEqual(builder.ConnectionString, connection.ConnectionString);
@@ -85,7 +81,6 @@ namespace VanessaSharp.Data.Tests
                 Assert.AreEqual(TestConnectionString, connection.ConnectionString);
                 Assert.AreEqual(Constants.TestCatalog, connection.Database);
                 Assert.AreEqual(Constants.TestCatalog, connection.DataSource);
-                Assert.IsNotEmpty(connection.ServerVersion);
                 Assert.AreEqual(0, connection.ConnectionTimeout);
                 
                 // Открываем соединение
@@ -148,11 +143,13 @@ namespace VanessaSharp.Data.Tests
                 Assert.AreEqual(1000, connection.PoolTimeout);
                 Assert.AreEqual(1000, connection.ConnectionTimeout);
 
-                connection.PoolTimeout = 2000;
-                Assert.AreEqual(2000, connection.PoolTimeout);
-                Assert.AreEqual(2000, connection.ConnectionTimeout);
+                Assert.Throws<InvalidOperationException>(() =>
+                    connection.PoolTimeout = 2000);
+                Assert.AreEqual(1000, connection.PoolTimeout);
+                Assert.AreEqual(1000, connection.ConnectionTimeout);
 
                 connection.Close();
+                connection.PoolTimeout = 2000;
                 Assert.AreEqual(2000, connection.PoolTimeout);
                 Assert.AreEqual(2000, connection.ConnectionTimeout);
             }
@@ -165,10 +162,12 @@ namespace VanessaSharp.Data.Tests
                 connection.Open();
                 Assert.AreEqual(20, connection.PoolCapacity);
 
-                connection.PoolCapacity = 10;
-                Assert.AreEqual(10, connection.PoolCapacity);
+                Assert.Throws<InvalidOperationException>(() =>
+                    connection.PoolCapacity = 10);
+                Assert.AreEqual(20, connection.PoolCapacity);
 
                 connection.Close();
+                connection.PoolCapacity = 10;
                 Assert.AreEqual(10, connection.PoolCapacity);
             }
         }

@@ -114,5 +114,11 @@ namespace VanessaSharp.Proxy.V82
         {
             _comConnector.Dispose();
         }
+
+        /// <summary>Версия 1С.</summary>
+        string IOneSConnector.Version
+        {
+            get { return "8.2"; }
+        }
     }
 }

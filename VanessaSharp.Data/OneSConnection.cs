@@ -179,7 +179,7 @@ namespace VanessaSharp.Data
         /// </remarks>
         public override string ServerVersion
         {
-            get { return "8"; }
+            get { return _state.Version; }
         }
 
         /// <summary>Состояние соединения.</summary>
@@ -392,6 +392,9 @@ namespace VanessaSharp.Data
             /// <summary>Собственно освобождения ресурсов.</summary>
             protected virtual void InternalDisposed()
             {}
+
+            /// <summary>Версия 1С.</summary>
+            public abstract string Version { get; }
         }
 
         /// <summary>Состояние закрытого соединения.</summary>
@@ -444,25 +447,38 @@ namespace VanessaSharp.Data
                 throw new InvalidOperationException(
                     "Нельзя начать транзакцию, если соединение не открыто."); 
             }
+
+            public override string Version
+            {
+                get
+                {
+                    throw new InvalidOperationException(
+                    "Нельзя получить версию сервера 1С в закрытом состоянии соединения."); 
+                }
+            }
         }
 
         /// <summary>Базовый класс открытого состояния.</summary>
         private abstract class OpenStateObjectBase : StateObject
         {
-            private readonly IGlobalContext _globalContext;
             private bool _sharedGlobalContext;
 
-            protected OpenStateObjectBase(IGlobalContext globalContext)
+            protected OpenStateObjectBase(IGlobalContext globalContext, int poolTimeout, int poolCapacity, string version)
             {
                 ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
+                ChecksHelper.CheckArgumentNotEmpty(version, "version");
                 
                 _globalContext = globalContext;
+                _poolTimeout = poolTimeout;
+                _poolCapacity = poolCapacity;
+                _version = version;
             }
 
             public override IGlobalContext GlobalContext
             {
                 get { return _globalContext; }
             }
+            private readonly IGlobalContext _globalContext;
 
             public sealed override StateObject OpenConnection(ConnectionParameters parameters)
             {
@@ -497,16 +513,31 @@ namespace VanessaSharp.Data
             public sealed override int PoolTimeout
             {
                 get { return _poolTimeout; }
-                set { _poolTimeout = value; }
+                set
+                {
+                    if (PoolTimeout != value)
+                    {
+                        throw new InvalidOperationException(
+                            "В состоянии Open соединения нельзя изменить свойство PoolTimeout.");
+                    }
+                }
             }
-            private int _poolTimeout;
+            private readonly int _poolTimeout;
 
             public sealed override int PoolCapacity
             {
                 get { return _poolCapacity; }
-                set { _poolCapacity = value; }
+
+                set
+                {
+                    if (PoolCapacity != value)
+                    {
+                        throw new InvalidOperationException(
+                            "В состоянии Open соединения нельзя изменить свойство PoolCapacity.");
+                    }
+                }
             }
-            private int _poolCapacity;
+            private readonly int _poolCapacity;
 
             public sealed override bool IsExclusiveMode
             {
@@ -525,16 +556,22 @@ namespace VanessaSharp.Data
             {
                 _sharedGlobalContext = true;
             }
+
+            public override string Version
+            {
+                get { return _version; }
+            }
+            private readonly string _version;
         }
 
         /// <summary>Состояние открытого соединения.</summary>
         private sealed class OpenStateObject : OpenStateObjectBase
         {
-            public OpenStateObject(IGlobalContext globalContext)
-                : base(globalContext)
+            public OpenStateObject(IGlobalContext globalContext, int poolTimeout, int poolCapacity, string version)
+                : base(globalContext, poolTimeout, poolCapacity, version)
             {}
 
-            private static IGlobalContext Connect(ConnectionParameters parameters)
+            private static IGlobalContext Connect(ConnectionParameters parameters, out string version)
             {
                 Contract.Requires<ArgumentNullException>(parameters != null);
 
@@ -542,6 +579,7 @@ namespace VanessaSharp.Data
                 {
                     connector.PoolTimeout = (uint)parameters.PoolTimeout;
                     connector.PoolCapacity = (uint)parameters.PoolCapacity;
+                    version = connector.Version;
 
                     return connector.Connect(parameters.ConnectionString);
                 }
@@ -551,10 +589,11 @@ namespace VanessaSharp.Data
             {
                 Contract.Requires<ArgumentNullException>(parameters != null);
 
-                var globalContext = Connect(parameters);
+                string version;
+                var globalContext = Connect(parameters, out version);
                 try
                 {
-                    return new OpenStateObject(globalContext);
+                    return new OpenStateObject(globalContext, parameters.PoolTimeout, parameters.PoolCapacity, version);
                 }
                 catch
                 {
@@ -567,7 +606,7 @@ namespace VanessaSharp.Data
             {
                 ChecksHelper.CheckArgumentNotNull(connection, "connection");
 
-                var result = TransactionStateObject.Create(GlobalContext, connection);
+                var result = TransactionStateObject.Create(GlobalContext, PoolTimeout, PoolCapacity, Version, connection);
                 UseGlobalContext();
                 return result;
             }
@@ -579,8 +618,8 @@ namespace VanessaSharp.Data
             /// <summary>Объект транзакции.</summary>
             private readonly OneSTransaction _transaction;
 
-            private TransactionStateObject(IGlobalContext globalContext, OneSTransaction transaction)
-                : base(globalContext)
+            private TransactionStateObject(IGlobalContext globalContext, int poolTimeout, int poolCapacity, string version, OneSTransaction transaction)
+                : base(globalContext, poolTimeout, poolCapacity, version)
             {
                 ChecksHelper.CheckArgumentNotNull(transaction, "transaction");
                 
@@ -590,15 +629,16 @@ namespace VanessaSharp.Data
             /// <summary>Создание транзакицонного состояния.</summary>
             /// <param name="globalContext">Глобальный контекст 1С.</param>
             /// <param name="connection">Соединение.</param>
-            public static StateObject Create(IGlobalContext globalContext, OneSConnection connection)
+            public static StateObject Create(IGlobalContext globalContext, int poolTimeout, int poolCapacity, string version, OneSConnection connection)
             {
                 ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
+                ChecksHelper.CheckArgumentNotEmpty(version, "version");
                 ChecksHelper.CheckArgumentNotNull(connection, "connection");    
                 
                 globalContext.BeginTransaction();
                 try
                 {
-                    return new TransactionStateObject(globalContext, new OneSTransaction(connection));
+                    return new TransactionStateObject(globalContext, poolTimeout, poolCapacity, version, new OneSTransaction(connection));
                 }
                 catch
                 {
@@ -633,7 +673,7 @@ namespace VanessaSharp.Data
 
             private StateObject CreateOpenState()
             {
-                var result = new OpenStateObject(GlobalContext);
+                var result = new OpenStateObject(GlobalContext, PoolTimeout, PoolCapacity, Version);
                 UseGlobalContext();
                 return result;
             }
