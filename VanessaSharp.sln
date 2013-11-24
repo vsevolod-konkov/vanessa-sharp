@@ -17,9 +17,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.Tests", "VanessaSharp.Data.Tests\VanessaSharp.Data.Tests.csproj", "{92889CB5-EDD2-4AA7-9030-C1D9B9B40FA9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Db", "Db", "{D231F52C-1650-4523-A365-7AB2009A6BF7}"
-	ProjectSection(SolutionItems) = preProject
-		Db\1Cv8.1CD = Db\1Cv8.1CD
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.WpfClient", "VanessaSharp.WpfClient\VanessaSharp.WpfClient.csproj", "{A3B0B184-809D-409C-9031-0082A9C58A10}"
 EndProject

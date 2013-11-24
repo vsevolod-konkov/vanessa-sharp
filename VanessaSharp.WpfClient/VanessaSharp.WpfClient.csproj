@@ -56,7 +56,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="MainWindow.xaml">
+    <Compile Include="DataSource.cs" />
+    <Compile Include="DataSourceSelector\DataSourceConnectionBuilder.cs" />
+    <Compile Include="DataSourceSelector\DbConnectionPropertiesCollectionView.cs" />
+    <Compile Include="DataSourceSelector\DbConnectionPropertyView.cs" />
+    <Compile Include="DataSourceSelector\Window.xaml.cs">
+      <DependentUpon>Window.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DataSourceSelector\ViewModel.cs" />
+    <Page Include="Main\Window.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -67,12 +75,17 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="Main\Window.xaml.cs">
+      <DependentUpon>Window.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="DataSourceSelector\Window.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Main\ViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
