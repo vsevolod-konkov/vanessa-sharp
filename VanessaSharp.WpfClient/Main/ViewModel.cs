@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Windows;
 
@@ -7,21 +8,57 @@ namespace VanessaSharp.WpfClient.Main
     /// <summary>View Model для <see cref="Main.Window"/>.</summary>
     internal sealed class ViewModel : DependencyObject
     {
-        #region DataSourceString
-
-        private static readonly DependencyPropertyKey _dataSourceStringPropertyKey 
-            = DependencyProperty.RegisterReadOnly("DataSourceString", typeof(string), typeof(ViewModel), new PropertyMetadata("Источник не выбран"));
-
-        /// <summary>Строка соединения к источнику данных.</summary>
-        public static readonly DependencyProperty DataSourceStringProperty =
-            _dataSourceStringPropertyKey.DependencyProperty;
-
-        /// <summary>Строка соединения к источнику данных.</summary>
-        public string DataSourceString
+        /// <summary>Конструктор для инициализации некоторых свойств.</summary>
+        public ViewModel()
         {
-            get { return (string)GetValue(DataSourceStringProperty); }
+            DataSources = new ObservableCollection<DataSourceInfo>(DataSourceStorage.Load());
+        }
+        
+        #region DataSources
 
-            private set { SetValue(_dataSourceStringPropertyKey, value); }
+        public static readonly DependencyPropertyKey DataSourcesPropertyKey
+            = DependencyProperty.RegisterReadOnly("DataSources", typeof(ObservableCollection<DataSourceInfo>), typeof(ViewModel), new PropertyMetadata(null));
+
+        public static readonly DependencyProperty DataSourcesProperty = DataSourcesPropertyKey.DependencyProperty;
+
+        /// <summary>Использованные источники данных.</summary>
+        public ObservableCollection<DataSourceInfo> DataSources
+        {
+            get { return (ObservableCollection<DataSourceInfo>)GetValue(DataSourcesProperty); }
+            private set { SetValue(DataSourcesPropertyKey, value); }
+        }
+
+        #endregion
+
+        #region SelectedDataSource
+
+        public static readonly DependencyProperty SelectedDataSourceProperty
+            = DependencyProperty.Register("SelectedDataSource", typeof(DataSourceInfo), typeof(ViewModel), new PropertyMetadata(SelectedDataSourceChangeCallback));
+
+        /// <summary>Выбранный источник данных.</summary>
+        public DataSourceInfo SelectedDataSource
+        {
+            get { return (DataSourceInfo)GetValue(SelectedDataSourceProperty); }
+            set { SetValue(SelectedDataSourceProperty, value);}
+        }
+
+        private static void SelectedDataSourceChangeCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            ((ViewModel)d).OnSelectedDataSourceChange((DataSourceInfo)e.NewValue);
+        }
+
+        private void OnSelectedDataSourceChange(DataSourceInfo newDataSourceInfo)
+        {
+            if (!IsDataSourceEquals(newDataSourceInfo))
+                _dataSource = newDataSourceInfo.CreateDataSource();
+
+            IsDataSourceEnabled = true;
+        }
+
+        private bool IsDataSourceEquals(DataSourceInfo newDataSourceInfo)
+        {
+            return _dataSource != null 
+                && DataSourceInfo.From(_dataSource).Equals(newDataSourceInfo);
         }
 
         #endregion
@@ -80,8 +117,13 @@ namespace VanessaSharp.WpfClient.Main
         {
             _dataSource = dataSource;
 
-            DataSourceString = dataSource.ToString();
-            IsDataSourceEnabled = true;
+            var dataSourceInfo = DataSourceInfo.From(dataSource);
+            if (DataSources.IndexOf(dataSourceInfo) < 0)
+            {
+                DataSources.Add(dataSourceInfo);
+                DataSourceStorage.Save(DataSources);
+            }
+            SelectedDataSource = dataSourceInfo;
         }
 
         /// <summary>Выполнение запроса.</summary>

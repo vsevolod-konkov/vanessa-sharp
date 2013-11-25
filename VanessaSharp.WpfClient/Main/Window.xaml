@@ -63,12 +63,12 @@
             <TextBlock Grid.Column="0" Grid.Row="0" 
                        Style="{StaticResource LabelStyle}" 
                        VerticalAlignment="Center">Источник данных:</TextBlock>
-            <TextBox Name="DataSourceStringLabel" Grid.Column="1" Grid.Row="0" 
-                        Style="{StaticResource TextBoxStyle}"
-                        VerticalAlignment="Center" 
-                        IsReadOnly="True"
-                        IsReadOnlyCaretVisible="True"
-                        Text="{Binding Path=DataSourceString, Mode=OneWay}"/>
+            <ComboBox Name="DataSourceBox" Grid.Column="1" Grid.Row="0"
+                      Style="{StaticResource TextBoxStyle}"
+                      VerticalAlignment="Center"
+                      IsEditable="False"
+                      ItemsSource="{Binding Path=DataSources}"
+                      SelectedItem="{Binding Path=SelectedDataSource}"/>
             <Button Name="SelectDataSourceButton" Grid.Column="2" Grid.Row="0"
                     Style="{StaticResource ButtonStyle}"
                     ToolTip="Выбрать источник данных"

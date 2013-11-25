@@ -7,20 +7,19 @@ namespace VanessaSharp.WpfClient
     /// <summary>Источник данных.</summary>
     internal sealed class DataSource
     {
-        /// <summary>Наименование ADO.Net провайдера источника данных.</summary>
-        private readonly string _dbProviderName;
-
         /// <summary>Фабрика объектов ADO.Net провайдера источника данных.</summary>
         private readonly DbProviderFactory _dbProviderFactory;
 
         /// <summary>Подключение к источнику данных.</summary>
         private readonly DbConnection _dbConnection;
-        
-        public static DataSource Create(string dbProviderName,
+
+        public static DataSource Create(string dbProviderInvariantName,
+                                        string dbProviderName,
                                         DbProviderFactory dbProviderFactory,
                                         string dbConnectionString)
         {
             return new DataSource(
+                dbProviderInvariantName,
                 dbProviderName,
                 dbProviderFactory,
                 CreateConnection(dbProviderName, dbProviderFactory, dbConnectionString));
@@ -44,13 +43,35 @@ namespace VanessaSharp.WpfClient
         }
 
         private DataSource(
+            string dbProviderInvariantName,
             string dbProviderName,
             DbProviderFactory dbProviderFactory,
             DbConnection dbConnection)
         {
+            _dbProviderInvariantName = dbProviderInvariantName;
             _dbProviderName = dbProviderName;
             _dbProviderFactory = dbProviderFactory;
             _dbConnection = dbConnection;
+        }
+
+        /// <summary>Ключ ADO.Net провайдера источника данных.</summary>
+        public string DbProviderInvariantName
+        {
+            get { return _dbProviderInvariantName; }
+        }
+        private readonly string _dbProviderInvariantName;
+
+        /// <summary>Наименование ADO.Net провайдера источника данных.</summary>
+        public string DbProviderName
+        {
+            get { return _dbProviderName; }
+        }
+        private readonly string _dbProviderName;
+
+        /// <summary>Строка подключения.</summary>
+        public string DbConnectionString
+        {
+            get { return _dbConnection.ConnectionString; }
         }
 
         public DataTable ExecuteQuery(string queryText)

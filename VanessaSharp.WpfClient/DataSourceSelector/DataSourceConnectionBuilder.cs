@@ -32,7 +32,7 @@ namespace VanessaSharp.WpfClient.DataSourceSelector
             {
                 throw new ApplicationException(
                     string.Format("Ошибка при создании фабрики объектов ADO.Net провайдера \"{0}\". {1}", 
-                        GetDbProviderName(dbProviderDescription), 
+                        DbFactoriesHelper.GetDbProviderName(dbProviderDescription), 
                         e.Message),
                     e);
             }
@@ -43,7 +43,7 @@ namespace VanessaSharp.WpfClient.DataSourceSelector
                 throw new ApplicationException(
                     string.Format(
                         "Для данного ADO.Net провайдера (\"{0}\") невозможна настройка строки подключения, так как он вернул пустой построитель строки подключения.",
-                        GetDbProviderName(dbProviderDescription)));
+                        DbFactoriesHelper.GetDbProviderName(dbProviderDescription)));
             }
 
             return new DataSourceConnectionBuilder(
@@ -72,11 +72,11 @@ namespace VanessaSharp.WpfClient.DataSourceSelector
         private readonly DbConnectionStringBuilder _dbConnectionStringBuilder;
 
         /// <summary>
-        /// Имя провайдера ADO.Net к источнику данных.
+        /// Ключ провайдера ADO.Net к источнику данных.
         /// </summary>
-        private static string GetDbProviderName(DataRow dbProviderDescription)
+        private string GetDbProviderInvariantName()
         {
-            return (string)dbProviderDescription["Name"];
+            return DbFactoriesHelper.GetDbProviderInvariantName(_dbProviderDescription);
         }
 
         /// <summary>
@@ -84,13 +84,14 @@ namespace VanessaSharp.WpfClient.DataSourceSelector
         /// </summary>
         private string GetDbProviderName()
         {
-            return GetDbProviderName(_dbProviderDescription);
+            return DbFactoriesHelper.GetDbProviderName(_dbProviderDescription);
         }
 
         /// <summary>Создание источника данных.</summary>
         public DataSource CreateDataSource()
         {
             return DataSource.Create(
+                GetDbProviderInvariantName(),
                 GetDbProviderName(),
                 _dbProviderFactory,
                 DbConnectionStringBuilder.ToString());
