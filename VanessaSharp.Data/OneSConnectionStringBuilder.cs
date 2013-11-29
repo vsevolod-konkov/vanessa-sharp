@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Data.Common;
-using System.Text;
+using System.Collections.ObjectModel;
+using System.Linq;
+using VanessaSharp.Data.Utility;
 
 namespace VanessaSharp.Data
 {
@@ -11,6 +13,10 @@ namespace VanessaSharp.Data
         private const string USER_KEY = "Usr";
         private const string PASSWORD_KEY = "Pwd";
         
+        /// <summary>Ключи подключения.</summary>
+        private static readonly ReadOnlyCollection<string> _keywords 
+            = new ReadOnlyCollection<string>(new[]{CATALOG_KEY, USER_KEY, PASSWORD_KEY});
+
         /// <summary>Полный путь к каталогу 1С базы.</summary>
         public string Catalog
         {
@@ -60,6 +66,31 @@ namespace VanessaSharp.Data
                 return null;
 
             return (string)obj;
+        }
+
+        /// <summary>Получение ключей строки подключения.</summary>
+        private ReadOnlyCollection<string> GetKeys()
+        {
+            return (base.Keys == null)
+                           ? _keywords
+                           : base.Keys.OfType<string>().Union(_keywords).ToReadOnly();
+        }
+
+        public override ICollection Keys
+        {
+            get { return GetKeys(); }
+        }
+
+        public override ICollection Values
+        {
+            get
+            {
+                return (
+                           from key in GetKeys()
+                           select (object)GetValue(key)
+                       )
+                    .ToReadOnly();
+            }
         }
     }
 }

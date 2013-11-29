@@ -3,6 +3,7 @@ using System.Diagnostics;
 
 namespace VanessaSharp.Data
 {
+    // TODO : Перейти на контракты
     /// <summary>Вспомогательные методы проверки.</summary>
     public static class ChecksHelper
     {
