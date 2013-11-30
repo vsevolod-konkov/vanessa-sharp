@@ -94,7 +94,7 @@ namespace VanessaSharp.WpfClient.DataSourceSelector
                 GetDbProviderInvariantName(),
                 GetDbProviderName(),
                 _dbProviderFactory,
-                DbConnectionStringBuilder.ToString());
+                DbConnectionStringBuilder.ConnectionString);
         }
     }
 }

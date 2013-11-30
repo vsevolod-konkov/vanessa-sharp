@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Data.Common;
 using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
@@ -27,6 +28,35 @@ namespace VanessaSharp.Data.AcceptanceTests
             _testingInstance = new OneSConnectionStringBuilder();
         }
 
+        /// <summary>Тестирование свойства <see cref="DbConnectionStringBuilder.IsFixedSize"/>.</summary>
+        [Test]
+        public void TestIsFixedSize()
+        {
+            Assert.IsFalse(_testingInstance.IsFixedSize);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSConnectionStringBuilder.Item"/>
+        /// после инициализации для известных полей.
+        /// </summary>
+        /// <param name="fieldKey">Ключ поля.</param>
+        [Test]
+        public void TestKnownFieldAfterInit([Values(FILE_KEY, USER_KEY, PASSWORD_KEY)] string fieldKey)
+        {
+            Assert.AreEqual(string.Empty, _testingInstance[fieldKey]);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSConnectionStringBuilder.Item"/>
+        /// после инициализации для неизвестных полей.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestUnknownFieldAfterInit()
+        {
+            var result = _testingInstance["Timeout"];
+        }
+
         /// <summary>
         /// Тестирование <see cref="OneSConnectionStringBuilder.Keys"/>, после инициализации.
         /// </summary>
@@ -45,16 +75,16 @@ namespace VanessaSharp.Data.AcceptanceTests
         public void TestValuesAfterInit()
         {
             CollectionAssert.AreEqual(
-                expected: Enumerable.Repeat<object>(null, _knownKeys.Count),
+                expected: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count),
                 actual: _testingInstance.Values);
         }
 
         /// <summary>
-        /// Тестирование строки подключения <see cref="OneSConnectionStringBuilder.ToString"/>
+        /// Тестирование строки подключения <see cref="DbConnectionStringBuilder.ConnectionString"/>
         /// после инициализации.
         /// </summary>
         [Test]
-        public void TestToStringAfterInit()
+        public void TestConnectionStringAfterInit()
         {
             Assert.IsEmpty(_testingInstance.ToString());
         }
@@ -73,7 +103,7 @@ namespace VanessaSharp.Data.AcceptanceTests
                 expectedKeys: _knownKeys,
 
                 // Одно значение не должно быть пустым
-                expectedValues: Enumerable.Repeat<object>(null, _knownKeys.Count - 1).Concat(Enumerable.Repeat<object>(FILE_NAME, 1)));
+                expectedValues: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count - 1).Concat(Enumerable.Repeat<object>(FILE_NAME, 1)));
         }
 
 
@@ -96,7 +126,7 @@ namespace VanessaSharp.Data.AcceptanceTests
                 expectedKeys: _knownKeys.Concat(Enumerable.Repeat(TIMEOUT_KEY, 1)),
 
                 // Одно значение не должно быть пустым
-                expectedValues: Enumerable.Repeat<object>(null, _knownKeys.Count).Concat(Enumerable.Repeat<object>(TIMEOUT, 1))
+                expectedValues: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count).Concat(Enumerable.Repeat<object>(TIMEOUT, 1))
                 );
         }
 
@@ -136,7 +166,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         /// <param name="fieldValue">Ключ значения.</param>
         private void TestConnectionString(string fieldKey, string fieldValue)
         {
-            Assert.AreEqual(string.Format("{0}={1}", fieldKey, fieldValue), _testingInstance.ToString());
+            Assert.AreEqual(string.Format("{0}={1}", fieldKey, fieldValue), _testingInstance.ConnectionString);
         }
 
         /// <summary>Тестирование <see cref="OneSConnectionStringBuilder.Catalog"/>.</summary>

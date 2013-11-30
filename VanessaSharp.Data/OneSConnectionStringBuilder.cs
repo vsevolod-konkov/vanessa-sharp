@@ -17,12 +17,26 @@ namespace VanessaSharp.Data
         private static readonly ReadOnlyCollection<string> _keywords 
             = new ReadOnlyCollection<string>(new[]{CATALOG_KEY, USER_KEY, PASSWORD_KEY});
 
+        public override object this[string keyword]
+        {
+            get
+            {
+                return (_keywords.Contains(keyword))
+                           ? GetKnownFieldValue(keyword)
+                           : base[keyword];
+            }
+            set
+            {
+                base[keyword] = value;
+            }
+        }
+
         /// <summary>Полный путь к каталогу 1С базы.</summary>
         public string Catalog
         {
             get
             {
-                return GetValue(CATALOG_KEY);
+                return GetKnownFieldValue(CATALOG_KEY);
             }
 
             set
@@ -36,7 +50,7 @@ namespace VanessaSharp.Data
         {
             get
             {
-                return GetValue(USER_KEY);
+                return GetKnownFieldValue(USER_KEY);
             }
 
             set
@@ -50,7 +64,7 @@ namespace VanessaSharp.Data
         {
             get
             {
-                return GetValue(PASSWORD_KEY);
+                return GetKnownFieldValue(PASSWORD_KEY);
             }
 
             set
@@ -59,11 +73,11 @@ namespace VanessaSharp.Data
             }
         }
 
-        private string GetValue(string key)
+        private string GetKnownFieldValue(string key)
         {
             object obj;
             if (!TryGetValue(key, out obj))
-                return null;
+                return string.Empty;
 
             return (string)obj;
         }
@@ -79,18 +93,6 @@ namespace VanessaSharp.Data
         public override ICollection Keys
         {
             get { return GetKeys(); }
-        }
-
-        public override ICollection Values
-        {
-            get
-            {
-                return (
-                           from key in GetKeys()
-                           select (object)GetValue(key)
-                       )
-                    .ToReadOnly();
-            }
         }
     }
 }

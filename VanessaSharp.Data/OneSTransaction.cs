@@ -1,5 +1,4 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
 
 namespace VanessaSharp.Data
@@ -9,14 +8,14 @@ namespace VanessaSharp.Data
     {
         /// <summary>Соединение с информационной базой 1С.</summary>
         private readonly OneSConnection _connection;
-        
+
         /// <summary>Конструктор.</summary>
         /// <param name="connection">Соединение с информационной базой 1С.</param>
         internal OneSTransaction(OneSConnection connection)
         {
             _connection = connection;
         }
-        
+
         /// <summary>Принять транзакцию.</summary>
         public override void Commit()
         {
