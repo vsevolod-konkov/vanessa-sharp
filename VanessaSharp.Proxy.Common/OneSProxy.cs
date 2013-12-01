@@ -94,7 +94,7 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="result">Результат конвертации.</param>
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            Contract.Requires<ArgumentNullException>(binder != null);
+            Contract.Assert(binder != null);
 
             result = Wrap(Unwrap(), binder.ReturnType);
             return true;
@@ -106,8 +106,8 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="result">Получаемый элемент.</param>
         public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
-            Contract.Requires<ArgumentNullException>(binder != null);
-            Contract.Requires<ArgumentNullException>(indexes != null);
+            Contract.Assert(binder != null);
+            Contract.Assert(indexes != null);
             
             result = InvokeFunc(binder, binder.CallInfo.ArgumentCount, indexes, binder.ReturnType);
             return true;
@@ -118,7 +118,7 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="result">Значение члена.</param>
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            Contract.Requires<ArgumentNullException>(binder != null);
+            Contract.Assert(binder != null);
 
             result = InvokeFunc(binder, 0, _emptyObjectsArray, binder.ReturnType);
             return true;
@@ -130,8 +130,8 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="result">Результат вычисления.</param>
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
-            Contract.Requires<ArgumentNullException>(binder != null);
-            Contract.Requires<ArgumentNullException>(args != null);
+            Contract.Assert(binder != null);
+            Contract.Assert(args != null);
 
             result = InvokeFunc(binder, binder.CallInfo.ArgumentCount, args, binder.ReturnType);
             return true;
@@ -156,9 +156,9 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="value">Значение, которое необходимо установить.</param>
         public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
         {
-            Contract.Requires<ArgumentNullException>(binder != null);
-            Contract.Requires<ArgumentNullException>(indexes != null);
-
+            Contract.Assert(binder != null);
+            Contract.Assert(indexes != null);
+            
             if (indexes.Length != binder.CallInfo.ArgumentCount)
             {
                 throw new ArgumentException(string.Format(
@@ -193,7 +193,7 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="value">Устанавливаемое значение.</param>
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            Contract.Requires<ArgumentNullException>(binder != null);
+            Contract.Assert(binder != null);
 
             InvokeAction(binder, 1, new[] { value });
             return true;

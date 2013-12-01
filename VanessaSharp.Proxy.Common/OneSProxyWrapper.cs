@@ -13,8 +13,6 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="type">Тип интерфейса, который должен поддерживаться оберткой.</param>
         public object Wrap(object obj, Type type)
         {
-            Contract.Requires<ArgumentNullException>(type != null);
-            
             if (obj == null)
                 return null;
 

@@ -23,9 +23,6 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="type">Тип к которому можно привести возвращаемую обертку.</param>
         protected override OneSObject WrapOneSObject(object obj, Type type)
         {
-            Contract.Requires<ArgumentNullException>(obj != null);
-            Contract.Requires<ArgumentNullException>(type != null);
-            
             return new OneSContextBoundObject(obj, this, _globalContext);
         }
     }

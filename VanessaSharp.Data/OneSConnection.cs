@@ -628,7 +628,10 @@ namespace VanessaSharp.Data
 
             /// <summary>Создание транзакицонного состояния.</summary>
             /// <param name="globalContext">Глобальный контекст 1С.</param>
+            /// <param name="version">Версия сервера.</param>
             /// <param name="connection">Соединение.</param>
+            /// <param name="poolTimeout">Время ожидания ответа от соединения.</param>
+            /// <param name="poolCapacity">Мощность пула соединения.</param>
             public static StateObject Create(IGlobalContext globalContext, int poolTimeout, int poolCapacity, string version, OneSConnection connection)
             {
                 ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");

@@ -5,6 +5,7 @@ namespace VanessaSharp.WpfClient.DataSourceSelector
     /// <summary>Окно выборщика источника данных.</summary>
     public partial class Window : System.Windows.Window
     {
+        /// <summary>Конструктор.</summary>
         public Window()
         {
             InitializeComponent();

@@ -6,6 +6,7 @@ namespace VanessaSharp.WpfClient.Main
     [XmlRoot("data-sources")]
     public sealed class XmlDataSourceCollection
     {
+        /// <summary>Источники данных.</summary>
         [XmlElement("data-source")]
         public XmlDataSource[] DataSources;
     }

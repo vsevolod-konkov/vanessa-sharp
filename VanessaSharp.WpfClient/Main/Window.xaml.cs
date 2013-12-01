@@ -1,11 +1,11 @@
 ﻿using System.Windows;
-using VanessaSharp.WpfClient.DataSourceSelector;
 
 namespace VanessaSharp.WpfClient.Main
 {
     /// <summary>Главное окно.</summary>
     public partial class Window : System.Windows.Window
     {
+        /// <summary>Конструктор.</summary>
         public Window()
         {
             InitializeComponent();

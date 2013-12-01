@@ -17,6 +17,19 @@ namespace VanessaSharp.Data
         private static readonly ReadOnlyCollection<string> _keywords 
             = new ReadOnlyCollection<string>(new[]{CATALOG_KEY, USER_KEY, PASSWORD_KEY});
 
+        /// <summary>
+        /// Gets or sets the value associated with the specified key.
+        /// </summary>
+        /// <returns>
+        /// The value associated with the specified key. If the specified key is not found, trying to get it returns a null reference (Nothing in Visual Basic), and trying to set it creates a new element using the specified key.Passing a null (Nothing in Visual Basic) key throws an <see cref="T:System.ArgumentNullException"/>. Assigning a null value removes the key/value pair.
+        /// </returns>
+        /// <param name="keyword">The key of the item to get or set.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="keyword"/> is a null reference (Nothing in Visual Basic).</exception>
+        /// <exception cref="T:System.NotSupportedException">The property is set, and the <see cref="T:System.Data.Common.DbConnectionStringBuilder"/> is read-only. -or-The property is set, <paramref name="keyword"/> does not exist in the collection, and the <see cref="T:System.Data.Common.DbConnectionStringBuilder"/> has a fixed size.</exception>
+        /// <filterpriority>1</filterpriority>
+        /// <PermissionSet>
+        /// <IPermission class="System.Security.Permissions.FileIOPermission, mscorlib, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" version="1" PathDiscovery="*AllFiles*"/>
+        /// </PermissionSet>
         public override object this[string keyword]
         {
             get
@@ -76,10 +89,10 @@ namespace VanessaSharp.Data
         private string GetKnownFieldValue(string key)
         {
             object obj;
-            if (!TryGetValue(key, out obj))
-                return string.Empty;
+            if (TryGetValue(key, out obj))
+                return (string)obj;
 
-            return (string)obj;
+            return string.Empty;
         }
 
         /// <summary>Получение ключей строки подключения.</summary>
@@ -90,6 +103,16 @@ namespace VanessaSharp.Data
                            : base.Keys.OfType<string>().Union(_keywords).ToReadOnly();
         }
 
+        /// <summary>
+        /// Gets an <see cref="T:System.Collections.ICollection"/> that contains the keys in the <see cref="T:System.Data.Common.DbConnectionStringBuilder"/>.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="T:System.Collections.ICollection"/> that contains the keys in the <see cref="T:System.Data.Common.DbConnectionStringBuilder"/>.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
+        /// <PermissionSet>
+        /// <IPermission class="System.Security.Permissions.FileIOPermission, mscorlib, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" version="1" PathDiscovery="*AllFiles*"/>
+        /// </PermissionSet>
         public override ICollection Keys
         {
             get { return GetKeys(); }

@@ -90,7 +90,7 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// Тест проверяет, что при вызове метода у аргументов метода вызывается
         /// метод <see cref="IOneSProxy.Unwrap"/>, если они поддерживают интерфейс
         /// <see cref="IOneSProxy"/>.
-        /// Кроме этого проверяется вызов метода <see cref="IOnesWrapper.Wrap"/>
+        /// Кроме этого проверяется вызов метода <see cref="IOneSProxyWrapper.Wrap"/>
         /// у экземпляра обертывателя.
         /// </remarks>
         [Test(Description = "Тестирование вызова метода возвращающего значение с проверкой разупаковки аргумента.")]
@@ -146,7 +146,7 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// Тестирование получения значения свойства у экземпляра объекта <see cref="OneSObject"/>.
         /// </summary>
         /// <remarks>
-        /// Кроме этого проверяется вызов метода <see cref="IOnesWrapper.Wrap"/>
+        /// Кроме этого проверяется вызов метода <see cref="IOneSProxyWrapper.Wrap"/>
         /// у экземпляра обертывателя.
         /// </remarks>
         [Test(Description = "Тестирование получения значения свойства.")]
@@ -202,7 +202,7 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// Тест проверяет, что при вызове индекатора у аргументов индекса вызывается
         /// метод <see cref="IOneSProxy.Unwrap"/>, если они поддерживают интерфейс
         /// <see cref="IOneSProxy"/>.
-        /// Кроме этого проверяется вызов метода <see cref="IOnesWrapper.Wrap"/>
+        /// Кроме этого проверяется вызов метода <see cref="IOneSProxyWrapper.Wrap"/>
         /// у экземпляра обертывателя.
         /// </remarks>
         [Test(Description = "Тестирование получения значения индексатора.")]
