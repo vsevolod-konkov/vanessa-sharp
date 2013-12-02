@@ -49,7 +49,7 @@ namespace VanessaSharp.WpfClient.DataSourceSelector
             }
             catch (ApplicationException e)
             {
-                App.ShowError(e.Message, "Ошибка при выборе источника данных");
+                App.ShowErrorWithStack("Ошибка при выборе источника данных", "Ошибка при выборе источника данных", e);
                 SetDataSourceConnectionBuilder(null);
                 
                 return;

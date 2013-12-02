@@ -74,9 +74,9 @@
     <Compile Include="CommandTests.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
     <Compile Include="ConnectionTests.cs" />
-    <Compile Include="ConnectionStringBuilderTests.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="CreateCommandTests.cs" />
+    <Compile Include="KnownKeywordsCollectionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestsBase.cs" />
     <Compile Include="TransactionTests.cs" />

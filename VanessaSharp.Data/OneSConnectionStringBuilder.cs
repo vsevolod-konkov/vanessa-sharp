@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -14,8 +16,8 @@ namespace VanessaSharp.Data
         private const string PASSWORD_KEY = "Pwd";
         
         /// <summary>Ключи подключения.</summary>
-        private static readonly ReadOnlyCollection<string> _keywords 
-            = new ReadOnlyCollection<string>(new[]{CATALOG_KEY, USER_KEY, PASSWORD_KEY});
+        private static readonly KnownKeywordsCollection _knownKeywords
+            = new KnownKeywordsCollection(CATALOG_KEY, USER_KEY, PASSWORD_KEY);
 
         /// <summary>
         /// Gets or sets the value associated with the specified key.
@@ -34,13 +36,15 @@ namespace VanessaSharp.Data
         {
             get
             {
-                return (_keywords.Contains(keyword))
-                           ? GetKnownFieldValue(keyword)
-                           : base[keyword];
+                string normalizeKeyword;
+                
+                return (_knownKeywords.Contains(keyword, out normalizeKeyword))
+                           ? GetKnownFieldValue(normalizeKeyword)
+                           : base[normalizeKeyword];
             }
             set
             {
-                base[keyword] = value;
+                base[_knownKeywords.GetNormalizeKeyword(keyword)] = value;
             }
         }
 
@@ -99,8 +103,8 @@ namespace VanessaSharp.Data
         private ReadOnlyCollection<string> GetKeys()
         {
             return (base.Keys == null)
-                           ? _keywords
-                           : base.Keys.OfType<string>().Union(_keywords).ToReadOnly();
+                           ? _knownKeywords.Collection
+                           : base.Keys.Cast<string>().Union(_knownKeywords.Collection).ToReadOnly();
         }
 
         /// <summary>
@@ -117,5 +121,82 @@ namespace VanessaSharp.Data
         {
             get { return GetKeys(); }
         }
+
+        #region Вспомогательные типы
+
+        /// <summary>Коллекция ключей известных полей.</summary>
+        /// <remarks>
+        /// Инкапсулирует работу с ключами известными полей в строке подключения.
+        /// Структура немутабельна.
+        /// </remarks>
+        internal sealed class KnownKeywordsCollection
+        {
+            /// <summary>Сравнитель ключей.</summary>
+            private static readonly IComparer<string> _keywordsComparer = StringComparer.OrdinalIgnoreCase;
+
+            /// <summary>Отсортированные ключи.</summary>
+            private readonly string[] _sortedKeywords;
+
+            /// <summary>Коллекция ключей.</summary>
+            private readonly ReadOnlyCollection<string> _keywordsCollection; 
+            
+            /// <summary>Конструктор принимающий массив ключей.</summary>
+            /// <param name="normalizeKeywords">
+            /// Массив ключей, которые будут в коллекции.
+            /// Строки ключи проверяются на эквивалентность игнорируя регистр.
+            /// Вид заданный в конструкторе считается "нормализованным".
+            /// </param>
+            public KnownKeywordsCollection(params string[] normalizeKeywords)
+            {
+                _sortedKeywords = normalizeKeywords.ToArray();
+                Array.Sort(_sortedKeywords, _keywordsComparer);
+
+                _keywordsCollection = new ReadOnlyCollection<string>(_sortedKeywords);
+            }
+
+            /// <summary>
+            /// Проверяется есть ли ключ в коллекции.
+            /// Сравнение идет с игнорированием регистров символов.
+            /// Если ключ есть, то возвращается его нормализованный вид,
+            /// В ином случае возвращается исходный ключ.
+            /// </summary>
+            /// <param name="keyword">Исходный ключ.</param>
+            /// <param name="normalizeKeyword">Нормализованный ключ.</param>
+            public bool Contains(string keyword, out string normalizeKeyword)
+            {
+                var index = Array.BinarySearch(_sortedKeywords, keyword, _keywordsComparer);
+                
+                if (index < 0)
+                {
+                    normalizeKeyword = keyword;
+                    return false;    
+                }
+                
+                normalizeKeyword = _sortedKeywords[index];
+                return true;
+            }
+
+            /// <summary>Возвращает нормализованный ключ.</summary>
+            /// <remarks>
+            /// Если ключ есть в коллекции возвращает его нормализованный вид.
+            /// В ином случае возвращается исходный ключ.
+            /// </remarks>
+            /// <param name="keyword">Исходный ключ.</param>
+            public string GetNormalizeKeyword(string keyword)
+            {
+                string result;
+                Contains(keyword, out result);
+
+                return result;
+            }
+
+            /// <summary>Коллекция нормализованных ключей заданных в конструкторе.</summary>
+            public ReadOnlyCollection<string> Collection
+            {
+                get { return _keywordsCollection; }
+            }
+        }
+
+        #endregion
     }
 }

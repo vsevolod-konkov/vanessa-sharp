@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Runtime.InteropServices;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data

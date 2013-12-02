@@ -13,21 +13,27 @@ namespace VanessaSharp.WpfClient
         private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             // TODO Перейти на log4net
-            var message = string.Format("Возникла непредвиденная ошибка: {0}{1}{2}", 
-                e.Exception.Message, Environment.NewLine, e.Exception.StackTrace);
-
-            ShowError(message, "Непредвиденная ошибка");
+            ShowErrorWithStack("Непредвиденная ошибка", "Возникла непредвиденная ошибка", e.Exception);
         }
 
         /// <summary>Показывает ошибку пользователю.</summary>
-        public static void ShowError(string message, string caption)
+        public static void ShowErrorWithStack(string caption, string message, Exception exception)
         {
+            ShowError(caption, "{0}: {1}{2}{3}", 
+                message, exception.Message, Environment.NewLine, exception.StackTrace);
+        }
+
+        /// <summary>Показывает ошибку пользователю.</summary>
+        public static void ShowError(string caption, string messageFormat, params object[] args)
+        {
+            var message = string.Format(messageFormat, args);
+
             Clipboard.SetText(message);
-            ShowErrorDialog(Current.MainWindow, message, caption);
+            ShowErrorDialog(Current.MainWindow, caption, message);
         }
 
         /// <summary>Показывает диалоговое окно с ошибкой.</summary>
-        private static void ShowErrorDialog(Window owner, string message, string caption)
+        private static void ShowErrorDialog(Window owner, string caption, string message)
         {
             if (owner == null)
                 MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Exclamation);

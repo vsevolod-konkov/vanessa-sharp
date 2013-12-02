@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
 
 namespace VanessaSharp.Data.AcceptanceTests
@@ -20,8 +22,73 @@ namespace VanessaSharp.Data.AcceptanceTests
         private static readonly ReadOnlyCollection<string> _knownKeys
             = new ReadOnlyCollection<string>(new[] { FILE_KEY, USER_KEY, PASSWORD_KEY });
 
+        #region Вспомогательные методы
+
+        /// <summary>Формирование строки подключения.</summary>
+        private static string GetConnectionString(IEnumerable<KeyValuePair<string, string>> keyValuePairs)
+        {
+            const string SEPARATOR = ";";
+
+            var stringBuilder = new StringBuilder();
+
+            foreach (var pair in keyValuePairs.Where(pair => pair.Value != null))
+            {
+                if (stringBuilder.Length > 0)
+                    stringBuilder.Append(SEPARATOR);
+
+                stringBuilder.AppendFormat("{0}={1}", pair.Key, pair.Value);
+            }
+
+            return stringBuilder.ToString();
+        }
+
+        /// <summary>Формирование строки подключения для известных полей.</summary>
+        private static string GetConnectionStringFromKnownFields(string file = null, string user = null, string password = null)
+        {
+            var dictionary = new Dictionary<string, string>
+                {
+                    { FILE_KEY, file },
+                    { USER_KEY, user},
+                    { PASSWORD_KEY, password}
+                };
+
+            return GetConnectionString(dictionary);
+        }
+
+        /// <summary>Проверка строки подключения.</summary>
+        private void AssertConnectionString(string expectedConnectionString)
+        {
+            Assert.AreEqual(
+                expectedConnectionString,
+                _testingInstance.ConnectionString
+                );
+        }
+
+        /// <summary>Проверка строки подключения состоящей из одного поля.</summary>
+        /// <param name="fieldKey">Ключ поля.</param>
+        /// <param name="fieldValue">Ключ значения.</param>
+        private void AssertConnectionStringOneField(string fieldKey, string fieldValue)
+        {
+            var dictionary = new Dictionary<string, string>
+                {
+                    { fieldKey, fieldValue }
+                };
+            
+            AssertConnectionString(GetConnectionString(dictionary));
+        }
+
+        /// <summary>Проверка строки подключения состоящей из известных полей.</summary>
+        private void AssertConnectionStringKnownFields(string file = null, string user = null, string password = null)
+        {
+            AssertConnectionString(GetConnectionStringFromKnownFields(file, user, password));
+        }
+
+        #endregion
+
+        /// <summary>Тестируемый экземпляр.</summary>
         private OneSConnectionStringBuilder _testingInstance;
 
+        /// <summary>Инициализация тестов.</summary>
         [SetUp]
         public void SetUp()
         {
@@ -86,48 +153,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         [Test]
         public void TestConnectionStringAfterInit()
         {
-            Assert.IsEmpty(_testingInstance.ToString());
-        }
-
-        /// <summary>Тестирование после добавления известного поля.</summary>
-        [Test]
-        public void TestAfterAppendKnownField()
-        {
-            const string FILE_NAME = @"C:\1C";
-
-            TestAfterAppendField(
-                fieldKey: FILE_KEY, 
-                fieldValue: FILE_NAME,
- 
-                // Ключи не должны измениться
-                expectedKeys: _knownKeys,
-
-                // Одно значение не должно быть пустым
-                expectedValues: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count - 1).Concat(Enumerable.Repeat<object>(FILE_NAME, 1)));
-        }
-
-
-        /// <summary>Тестирование после добавление неизвестного поля.</summary>
-        /// <remarks>
-        /// Сделана возможность добавления любых полей на случай,
-        /// если появилось новое поле в строке подключения к 1С, но провайдер еще не успел его поддержать.
-        /// </remarks>
-        [Test]
-        public void TestAfterAppendUnknownField()
-        {
-            const int TIMEOUT = 1000;
-            const string TIMEOUT_KEY = "Timeout";
-
-            TestAfterAppendField(
-                fieldKey: TIMEOUT_KEY,
-                fieldValue: TIMEOUT,
-
-                // Ключи не должны измениться
-                expectedKeys: _knownKeys.Concat(Enumerable.Repeat(TIMEOUT_KEY, 1)),
-
-                // Одно значение не должно быть пустым
-                expectedValues: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count).Concat(Enumerable.Repeat<object>(TIMEOUT, 1))
-                );
+            AssertConnectionString(string.Empty);
         }
 
         /// <summary>
@@ -155,18 +181,69 @@ namespace VanessaSharp.Data.AcceptanceTests
             CollectionAssert.AreEquivalent(expectedKeys, _testingInstance.Keys);
 
             // Проверка значений
-            CollectionAssert.AreEquivalent(expectedValues.Cast<IConvertible>().Select(c => c == null ? null : c.ToString(CultureInfo.InvariantCulture)) , _testingInstance.Values);
+            CollectionAssert.AreEquivalent(expectedValues.Cast<IConvertible>().Select(c => c == null ? null : c.ToString(CultureInfo.InvariantCulture)), _testingInstance.Values);
 
             // Проверка получаемой строки подключений
-            TestConnectionString(fieldKey, strFieldValue);
+            AssertConnectionStringOneField(fieldKey, strFieldValue);
         }
 
-        /// <summary>Тестирование строки подключений.</summary>
-        /// <param name="fieldKey">Ключ поля.</param>
-        /// <param name="fieldValue">Ключ значения.</param>
-        private void TestConnectionString(string fieldKey, string fieldValue)
+        /// <summary>Тестирование после добавления известного поля.</summary>
+        [Test]
+        public void TestAfterAppendKnownField()
         {
-            Assert.AreEqual(string.Format("{0}={1}", fieldKey, fieldValue), _testingInstance.ConnectionString);
+            const string FILE_NAME = @"C:\1C";
+
+            TestAfterAppendField(
+                fieldKey: FILE_KEY, 
+                fieldValue: FILE_NAME,
+ 
+                // Ключи не должны измениться
+                expectedKeys: _knownKeys,
+
+                // Одно значение не должно быть пустым
+                expectedValues: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count - 1).Concat(Enumerable.Repeat<object>(FILE_NAME, 1)));
+        }
+
+        /// <summary>Тестирование после добавление неизвестного поля.</summary>
+        /// <remarks>
+        /// Сделана возможность добавления любых полей на случай,
+        /// если появилось новое поле в строке подключения к 1С, но провайдер еще не успел его поддержать.
+        /// </remarks>
+        [Test]
+        public void TestAfterAppendUnknownField()
+        {
+            const int TIMEOUT = 1000;
+            const string TIMEOUT_KEY = "Timeout";
+
+            TestAfterAppendField(
+                fieldKey: TIMEOUT_KEY,
+                fieldValue: TIMEOUT,
+
+                // Ключи не должны измениться
+                expectedKeys: _knownKeys.Concat(Enumerable.Repeat(TIMEOUT_KEY, 1)),
+
+                // Одно значение не должно быть пустым
+                expectedValues: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count).Concat(Enumerable.Repeat<object>(TIMEOUT, 1))
+                );
+        }
+
+        /// <summary>
+        /// Тестирование поля строки подключений, являющиейся специальным свойством <see cref="OneSConnectionStringBuilder"/>.
+        /// </summary>
+        /// <param name="fieldKey">Ключ поля.</param>
+        /// <param name="fieldValue">Значение поля.</param>
+        /// <param name="propertyGetter">Получатель значения свойства.</param>
+        /// <param name="propertySetter">Установщик значения свойства.</param>
+        private void TestTypedField(string fieldKey, string fieldValue,
+            Func<OneSConnectionStringBuilder, string> propertyGetter, Action<OneSConnectionStringBuilder, string> propertySetter)
+        {
+            // Act
+            propertySetter(_testingInstance, fieldValue);
+
+            // Assert
+            Assert.AreEqual(fieldValue, propertyGetter(_testingInstance));
+            Assert.AreEqual(fieldValue, _testingInstance[fieldKey]);
+            AssertConnectionStringOneField(fieldKey, fieldValue);
         }
 
         /// <summary>Тестирование <see cref="OneSConnectionStringBuilder.Catalog"/>.</summary>
@@ -191,22 +268,68 @@ namespace VanessaSharp.Data.AcceptanceTests
         }
 
         /// <summary>
-        /// Тестирование поля строки подключений, являющиейся специальным свойством <see cref="OneSConnectionStringBuilder"/>.
+        /// Тестирование генерации значения свойства <see cref="DbConnectionStringBuilder.ConnectionString"/>.
         /// </summary>
-        /// <param name="fieldKey">Ключ поля.</param>
-        /// <param name="fieldValue">Значение поля.</param>
-        /// <param name="propertyGetter">Получатель значения свойства.</param>
-        /// <param name="propertySetter">Установщик значения свойства.</param>
-        private void TestTypedField(string fieldKey, string fieldValue,
-            Func<OneSConnectionStringBuilder, string> propertyGetter, Action<OneSConnectionStringBuilder, string> propertySetter)
+        [Test]
+        public void TestBuildConnectionString()
         {
-            // Act
-            propertySetter(_testingInstance, fieldValue);
+            const string FILE_NAME = @"C:\1CData";
+            const string USER_NAME = "Иванов";
+            const string PASSWORD = "12345";
 
-            // Assert
-            Assert.AreEqual(fieldValue, propertyGetter(_testingInstance));
-            Assert.AreEqual(fieldValue, _testingInstance[fieldKey]);
-            TestConnectionString(fieldKey, fieldValue);
+            _testingInstance.Catalog = FILE_NAME;
+            _testingInstance.User = USER_NAME;
+
+            AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_NAME);
+
+            _testingInstance.Password = PASSWORD;
+            AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_NAME, password: PASSWORD);
+        }
+
+        /// <summary>Тестирование поведения построителя при задании некорректной строки соединения.</summary>
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestInvalidConnectionString()
+        {
+            _testingInstance.ConnectionString = "белеберда";
+        }
+
+        /// <summary>Тестирование парсинга строки соединения.</summary>
+        [Test]
+        public void TestParse()
+        {
+            const string FILE_NAME = @"C:\1CData";
+            const string USER_NAME = "Иванов";
+            const string PASSWORD = "12345";
+
+            _testingInstance.ConnectionString = GetConnectionStringFromKnownFields(file: FILE_NAME, user: USER_NAME, password: PASSWORD);
+
+            Assert.AreEqual(FILE_NAME, _testingInstance[FILE_KEY]);
+            Assert.AreEqual(FILE_NAME, _testingInstance.Catalog);
+
+            Assert.AreEqual(USER_NAME, _testingInstance[USER_KEY]);
+            Assert.AreEqual(USER_NAME, _testingInstance.User);
+
+            Assert.AreEqual(PASSWORD, _testingInstance[PASSWORD_KEY]);
+            Assert.AreEqual(PASSWORD, _testingInstance.Password);
+        }
+
+        /// <summary>Тестирование совместного использования <see cref="DbConnectionStringBuilder.ConnectionString"/> и других свойств.</summary>
+        [Test]
+        public void TestUseConnectionString()
+        {
+            const string FILE_NAME = @"C:\1CData";
+            const string USER_1_NAME = "Иванов";
+
+            _testingInstance.ConnectionString = GetConnectionStringFromKnownFields(file: FILE_NAME, user: USER_1_NAME);
+
+            const string PASSWORD = "12345";
+            _testingInstance.Password = PASSWORD;
+            AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_1_NAME, password: PASSWORD);
+
+            const string USER_2_NAME = "Петров";
+            _testingInstance.User = USER_2_NAME;
+            AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_2_NAME, password: PASSWORD);
         }
     }
 }

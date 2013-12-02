@@ -135,9 +135,9 @@ namespace VanessaSharp.WpfClient.Main
             }
             catch (Exception e)
             {
-                App.ShowError(
-                    string.Format("Возникла ошибка при выполнении запроса : {0}.", e.Message),
-                    "Ошибка при выполнении запроса");
+                App.ShowErrorWithStack(
+                    "Ошибка при выполнении запроса",
+                    "Возникла ошибка при выполнении запроса", e);
             }
         }
     }

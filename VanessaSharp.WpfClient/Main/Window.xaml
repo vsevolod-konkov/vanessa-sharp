@@ -81,13 +81,13 @@
             <TextBox Name="QueryTextBox" Grid.Column="1" Grid.Row="1" 
                         Style="{StaticResource TextBoxStyle}"
                         VerticalAlignment="Stretch"
-                        Text="{Binding Path=QueryText}"/>
+                        Text="{Binding Path=QueryText}" TextWrapping="Wrap" />
             <Button Name="ExecuteQueryButton" Grid.Column="2" Grid.Row="1" 
                     Style="{StaticResource ButtonStyle}"
                     VerticalAlignment="Top"
                     ToolTip="Выполнить запрос"
                     IsEnabled="{Binding Path=IsDataSourceEnabled}"
-                    IsDefault="True"
+                    IsDefault="False"
                     Click="ExecuteQueryButton_Click">&gt;</Button>
         </Grid>
         
