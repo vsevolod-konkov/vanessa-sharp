@@ -9,6 +9,7 @@ namespace VanessaSharp.Data.AcceptanceTests
     // TODO: Требуется написать нормальные приемочные тесты
     /// <summary>Приемочные тесты на <see cref="OneSCommand"/>.</summary>
     [TestFixture]
+    [Ignore]
     public sealed class OneSCommandTests
     {
         /// <summary>Тестирование простого запроса.</summary>

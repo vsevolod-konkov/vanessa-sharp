@@ -60,7 +60,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         {
             Assert.AreEqual(
                 expectedConnectionString,
-                _testingInstance.ConnectionString
+                _testedInstance.ConnectionString
                 );
         }
 
@@ -86,20 +86,20 @@ namespace VanessaSharp.Data.AcceptanceTests
         #endregion
 
         /// <summary>Тестируемый экземпляр.</summary>
-        private OneSConnectionStringBuilder _testingInstance;
+        private OneSConnectionStringBuilder _testedInstance;
 
         /// <summary>Инициализация тестов.</summary>
         [SetUp]
         public void SetUp()
         {
-            _testingInstance = new OneSConnectionStringBuilder();
+            _testedInstance = new OneSConnectionStringBuilder();
         }
 
         /// <summary>Тестирование свойства <see cref="DbConnectionStringBuilder.IsFixedSize"/>.</summary>
         [Test]
         public void TestIsFixedSize()
         {
-            Assert.IsFalse(_testingInstance.IsFixedSize);
+            Assert.IsFalse(_testedInstance.IsFixedSize);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         [Test]
         public void TestKnownFieldAfterInit([Values(FILE_KEY, USER_KEY, PASSWORD_KEY)] string fieldKey)
         {
-            Assert.AreEqual(string.Empty, _testingInstance[fieldKey]);
+            Assert.AreEqual(string.Empty, _testedInstance[fieldKey]);
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         [ExpectedException(typeof(ArgumentException))]
         public void TestUnknownFieldAfterInit()
         {
-            var result = _testingInstance["Timeout"];
+            var result = _testedInstance["Timeout"];
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         {
             CollectionAssert.AreEquivalent(
                 expected: _knownKeys,
-                actual: _testingInstance.Keys);
+                actual: _testedInstance.Keys);
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         {
             CollectionAssert.AreEqual(
                 expected: Enumerable.Repeat<object>(string.Empty, _knownKeys.Count),
-                actual: _testingInstance.Values);
+                actual: _testedInstance.Values);
         }
 
         /// <summary>
@@ -169,19 +169,19 @@ namespace VanessaSharp.Data.AcceptanceTests
         where TValue : IConvertible
         {
             // Act
-            _testingInstance[fieldKey] = fieldValue;
+            _testedInstance[fieldKey] = fieldValue;
             var strFieldValue = fieldValue.ToString(CultureInfo.InvariantCulture);
 
             // Assert
 
             // Проверка того, что поле добавилось
-            Assert.AreEqual(strFieldValue, _testingInstance[fieldKey]);
+            Assert.AreEqual(strFieldValue, _testedInstance[fieldKey]);
 
             // Проверка ключей
-            CollectionAssert.AreEquivalent(expectedKeys, _testingInstance.Keys);
+            CollectionAssert.AreEquivalent(expectedKeys, _testedInstance.Keys);
 
             // Проверка значений
-            CollectionAssert.AreEquivalent(expectedValues.Cast<IConvertible>().Select(c => c == null ? null : c.ToString(CultureInfo.InvariantCulture)), _testingInstance.Values);
+            CollectionAssert.AreEquivalent(expectedValues.Cast<IConvertible>().Select(c => c == null ? null : c.ToString(CultureInfo.InvariantCulture)), _testedInstance.Values);
 
             // Проверка получаемой строки подключений
             AssertConnectionStringOneField(fieldKey, strFieldValue);
@@ -238,11 +238,11 @@ namespace VanessaSharp.Data.AcceptanceTests
             Func<OneSConnectionStringBuilder, string> propertyGetter, Action<OneSConnectionStringBuilder, string> propertySetter)
         {
             // Act
-            propertySetter(_testingInstance, fieldValue);
+            propertySetter(_testedInstance, fieldValue);
 
             // Assert
-            Assert.AreEqual(fieldValue, propertyGetter(_testingInstance));
-            Assert.AreEqual(fieldValue, _testingInstance[fieldKey]);
+            Assert.AreEqual(fieldValue, propertyGetter(_testedInstance));
+            Assert.AreEqual(fieldValue, _testedInstance[fieldKey]);
             AssertConnectionStringOneField(fieldKey, fieldValue);
         }
 
@@ -277,12 +277,12 @@ namespace VanessaSharp.Data.AcceptanceTests
             const string USER_NAME = "Иванов";
             const string PASSWORD = "12345";
 
-            _testingInstance.Catalog = FILE_NAME;
-            _testingInstance.User = USER_NAME;
+            _testedInstance.Catalog = FILE_NAME;
+            _testedInstance.User = USER_NAME;
 
             AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_NAME);
 
-            _testingInstance.Password = PASSWORD;
+            _testedInstance.Password = PASSWORD;
             AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_NAME, password: PASSWORD);
         }
 
@@ -291,7 +291,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         [ExpectedException(typeof(ArgumentException))]
         public void TestInvalidConnectionString()
         {
-            _testingInstance.ConnectionString = "белеберда";
+            _testedInstance.ConnectionString = "белеберда";
         }
 
         /// <summary>Тестирование парсинга строки соединения.</summary>
@@ -302,16 +302,16 @@ namespace VanessaSharp.Data.AcceptanceTests
             const string USER_NAME = "Иванов";
             const string PASSWORD = "12345";
 
-            _testingInstance.ConnectionString = GetConnectionStringFromKnownFields(file: FILE_NAME, user: USER_NAME, password: PASSWORD);
+            _testedInstance.ConnectionString = GetConnectionStringFromKnownFields(file: FILE_NAME, user: USER_NAME, password: PASSWORD);
 
-            Assert.AreEqual(FILE_NAME, _testingInstance[FILE_KEY]);
-            Assert.AreEqual(FILE_NAME, _testingInstance.Catalog);
+            Assert.AreEqual(FILE_NAME, _testedInstance[FILE_KEY]);
+            Assert.AreEqual(FILE_NAME, _testedInstance.Catalog);
 
-            Assert.AreEqual(USER_NAME, _testingInstance[USER_KEY]);
-            Assert.AreEqual(USER_NAME, _testingInstance.User);
+            Assert.AreEqual(USER_NAME, _testedInstance[USER_KEY]);
+            Assert.AreEqual(USER_NAME, _testedInstance.User);
 
-            Assert.AreEqual(PASSWORD, _testingInstance[PASSWORD_KEY]);
-            Assert.AreEqual(PASSWORD, _testingInstance.Password);
+            Assert.AreEqual(PASSWORD, _testedInstance[PASSWORD_KEY]);
+            Assert.AreEqual(PASSWORD, _testedInstance.Password);
         }
 
         /// <summary>Тестирование совместного использования <see cref="DbConnectionStringBuilder.ConnectionString"/> и других свойств.</summary>
@@ -321,14 +321,14 @@ namespace VanessaSharp.Data.AcceptanceTests
             const string FILE_NAME = @"C:\1CData";
             const string USER_1_NAME = "Иванов";
 
-            _testingInstance.ConnectionString = GetConnectionStringFromKnownFields(file: FILE_NAME, user: USER_1_NAME);
+            _testedInstance.ConnectionString = GetConnectionStringFromKnownFields(file: FILE_NAME, user: USER_1_NAME);
 
             const string PASSWORD = "12345";
-            _testingInstance.Password = PASSWORD;
+            _testedInstance.Password = PASSWORD;
             AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_1_NAME, password: PASSWORD);
 
             const string USER_2_NAME = "Петров";
-            _testingInstance.User = USER_2_NAME;
+            _testedInstance.User = USER_2_NAME;
             AssertConnectionStringKnownFields(file: FILE_NAME, user: USER_2_NAME, password: PASSWORD);
         }
     }
