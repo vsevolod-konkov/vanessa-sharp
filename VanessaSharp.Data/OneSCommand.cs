@@ -192,12 +192,14 @@ namespace VanessaSharp.Data
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
         /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
         /// <returns>Читатель данных.</returns>
-        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        public new OneSDataReader ExecuteReader(CommandBehavior behavior)
         {
-            if (behavior != CommandBehavior.Default)
+            const CommandBehavior NOT_SUPPORT_BEHAVIOR = ~(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+
+            if ((behavior & NOT_SUPPORT_BEHAVIOR) != CommandBehavior.Default)
             {
                 throw new NotSupportedException(string.Format(
-                    "Значение поведения для команды выполнения запроса выборки \"{0}\" не поддерживается, так как не является значением по умолчанию.",
+                    "Значение поведения для команды выполнения запроса выборки \"{0}\" не поддерживается.",
                     behavior));
             }
 
@@ -208,11 +210,29 @@ namespace VanessaSharp.Data
             }
 
             // Получение контекста
-            dynamic query = Connection.GlobalContext.NewObject("Query");
+            var globalContext = Connection.GlobalContext;
+            dynamic query = globalContext.NewObject("Query");
             query.Text = CommandText;
-            query.Execute();
+            dynamic queryResult = query.Execute();
+            dynamic columns = queryResult.Columns;
+            dynamic queryResultSelection = queryResult.Choose();
 
-            return null;
+            return new OneSDataReader(globalContext, columns, queryResultSelection);
+        }
+
+        /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
+        /// <returns>Читатель данных.</returns>
+        public new OneSDataReader ExecuteReader()
+        {
+            return ExecuteReader(CommandBehavior.Default);
+        }
+
+        /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
+        /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
+        /// <returns>Читатель данных.</returns>
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        {
+            return ExecuteReader(behavior);
         }
 
         /// <summary>Выполняет для запрос и возвращает количество задействованных в инструкции строк.</summary>

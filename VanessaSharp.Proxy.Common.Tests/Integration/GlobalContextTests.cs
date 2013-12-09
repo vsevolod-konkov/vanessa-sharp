@@ -62,6 +62,7 @@ namespace VanessaSharp.Proxy.Common.Tests.Integration
         public void TestCreateQuery()
         {
              var connectString = string.Format("File=\"{0}\";Usr=\"{1}\"", Constants.TestCatalog, Constants.TestUser);
+            
             using (var globalContext = _connector.Connect(connectString))
             {
                 using (var query = globalContext.NewObject("Query"))
@@ -80,6 +81,37 @@ namespace VanessaSharp.Proxy.Common.Tests.Integration
                             Trace.WriteLine(string.Format(format, code, name));
                         }
                     }
+                }
+            }
+        }
+
+        /// <summary>Тестирование создания запроса.</summary>
+        [Test(Description = "Тестирование создания запроса")]
+        public void TestCreateQuery2()
+        {
+            var connectString = string.Format("File=\"{0}\";Usr=\"{1}\"", Constants.TestCatalog, Constants.TestUser);
+
+            using (var globalContextProxy = _connector.Connect(connectString))
+            {
+                dynamic globalContext = ((IOneSProxy)globalContextProxy).Unwrap();
+                Assert.IsNotNull(globalContext);
+                dynamic byGroups = globalContext.QueryResultIteration.ByGroups;
+                
+                IOneSProxy queryProxy = globalContextProxy.NewObject("Query");
+                dynamic queryCom = queryProxy.Unwrap();
+
+                Assert.IsNotNull(queryCom);
+                var sql = "ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты";
+                queryCom.Text = sql;
+                dynamic result = queryCom.Execute();
+                dynamic selection = result.Choose(byGroups);
+                
+                while ((bool)selection.Next())
+                {
+                    const string format = "Код \"{0}\"; Наименование \"{1}\"";
+                    object code = selection.Get(0);
+                    object name = selection.Get(1);
+                    Trace.WriteLine(string.Format(format, code, name));
                 }
             }
         }

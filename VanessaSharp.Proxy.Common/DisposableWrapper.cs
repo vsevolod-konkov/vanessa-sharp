@@ -37,12 +37,12 @@ namespace VanessaSharp.Proxy.Common
         /// <summary>Освобождение ресурсов.</summary>
         public void Dispose()
         {
-            if (!_disposed)
-            {
-                InternalDispose();
-                _obj = default(T);
-                _disposed = true;
-            }
+            if (_disposed) 
+                return;
+            
+            InternalDispose();
+            _obj = default(T);
+            _disposed = true;
         }
 
         /// <summary>Реальное освобождение ресурсов нижележащего объекта.</summary>

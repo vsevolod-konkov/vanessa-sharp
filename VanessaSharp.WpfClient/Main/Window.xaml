@@ -81,7 +81,7 @@
             <TextBox Name="QueryTextBox" Grid.Column="1" Grid.Row="1" 
                         Style="{StaticResource TextBoxStyle}"
                         VerticalAlignment="Stretch"
-                        Text="{Binding Path=QueryText}" TextWrapping="Wrap" />
+                        Text="{Binding Path=QueryText}" TextWrapping="Wrap" AcceptsReturn="True" />
             <Button Name="ExecuteQueryButton" Grid.Column="2" Grid.Row="1" 
                     Style="{StaticResource ButtonStyle}"
                     VerticalAlignment="Top"

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Dynamic;
 using System.Linq;
@@ -68,7 +69,7 @@ namespace VanessaSharp.Proxy.Common
         private static object[] Unwrap(object[] objects)
         {
             return objects
-                .Select(o => Unwrap(o))
+                .Select(Unwrap)
                 .ToArray();
         }
 
@@ -273,7 +274,7 @@ namespace VanessaSharp.Proxy.Common
             protected readonly CallSite<T> _callSite;
 
             /// <summary>Обертка над объектом для которого делаются вызовы.</summary>
-            private DisposableWrapper<object> _disposableWrapper;
+            private readonly DisposableWrapper<object> _disposableWrapper;
 
             /// <summary>Конструктор.</summary>
             /// <param name="disposableWrapper">Обертка над объектом для которого делаются вызовы.</param>

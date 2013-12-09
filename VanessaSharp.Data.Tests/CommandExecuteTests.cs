@@ -27,8 +27,11 @@ namespace VanessaSharp.Data.Tests
         /// <remarks>Точка расширения для наследных классов.</remarks>
         protected override void InternalTearDown()
         {
-            _testCommand.Dispose();
-            _testCommand = null;
+            if (_testCommand != null)
+            {
+                _testCommand.Dispose();
+                _testCommand = null;    
+            }
 
             base.InternalTearDown();
         }

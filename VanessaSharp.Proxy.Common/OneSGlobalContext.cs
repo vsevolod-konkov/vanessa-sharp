@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace VanessaSharp.Proxy.Common
+﻿namespace VanessaSharp.Proxy.Common
 {
     /// <summary>
     /// Прокси к глобальному контексту 1С.
