@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using System.Reflection;
 
 namespace VanessaSharp.Proxy.Common
 {

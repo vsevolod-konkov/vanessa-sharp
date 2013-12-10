@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDescription("Библиотека ADO.Net провайдера к 1С")]
 
 [assembly: InternalsVisibleTo("VanessaSharp.Data.Tests")]
+[assembly: InternalsVisibleTo("VanessaSharp.Data.UnitTests")]

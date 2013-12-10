@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Proxy.Common.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.AcceptanceTests", "VanessaSharp.Data.AcceptanceTests\VanessaSharp.Data.AcceptanceTests.csproj", "{6615CF08-B47C-42AF-877F-00A13943CA86}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.UnitTests", "VanessaSharp.Data.UnitTests\VanessaSharp.Data.UnitTests.csproj", "{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -114,6 +116,16 @@ Global
 		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{6615CF08-B47C-42AF-877F-00A13943CA86}.Release|x86.ActiveCfg = Release|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

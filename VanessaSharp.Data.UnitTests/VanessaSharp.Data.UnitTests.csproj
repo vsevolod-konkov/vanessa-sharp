@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{6615CF08-B47C-42AF-877F-00A13943CA86}</ProjectGuid>
+    <ProjectGuid>{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>VanessaSharp.Data.AcceptanceTests</RootNamespace>
-    <AssemblyName>VanessaSharp.Data.AcceptanceTests</AssemblyName>
+    <RootNamespace>VanessaSharp.Data.UnitTests</RootNamespace>
+    <AssemblyName>VanessaSharp.Data.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -21,7 +21,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,43 +31,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework">
-      <HintPath>..\externals\NUnit\framework\nunit.framework.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
-    <Compile Include="Constants.cs" />
-    <Compile Include="OneSCommandTests.cs" />
-    <Compile Include="OneSConnectionStringBuilderTests.cs" />
-    <Compile Include="OneSConnectionTests\ClosedStateTests.cs" />
-    <Compile Include="OneSConnectionTests\IndependentStatesTests.cs" />
-    <Compile Include="OneSConnectionTests\InitTests.cs" />
-    <Compile Include="OneSConnectionTests\OneSConnectionOpeningTestsBase.cs" />
-    <Compile Include="OneSConnectionTests\OneSConnectionTestsBase.cs" />
-    <Compile Include="OneSConnectionTests\OpenStateTests.cs" />
-    <Compile Include="OneSConnectionTests\TransitionTests.cs" />
-    <Compile Include="OneSProviderFactoryTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestsBase.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\VanessaSharp.Data\VanessaSharp.Data.csproj">
-      <Project>{F159DEE7-6216-4335-82DF-556FF74084A1}</Project>
-      <Name>VanessaSharp.Data</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\VanessaSharp.Proxy.V82\VanessaSharp.Proxy.V82.csproj">
-      <Project>{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}</Project>
-      <Name>VanessaSharp.Proxy.V82</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

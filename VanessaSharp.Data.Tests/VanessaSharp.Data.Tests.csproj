@@ -73,7 +73,6 @@
     <Compile Include="CommandExecuteTests.cs" />
     <Compile Include="CommandTests.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
-    <Compile Include="ConnectionTests.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="CreateCommandTests.cs" />
     <Compile Include="KnownKeywordsCollectionTests.cs" />
