@@ -15,6 +15,12 @@ namespace VanessaSharp.Data
         /// <summary>Состояние соединения.</summary>
         private StateObject _state;
 
+        [ContractInvariantMethod]
+        private void Invariant()
+        {
+            Contract.Invariant(_state != null);
+        }
+
         #endregion
 
         #region Внутренние интерфейсы

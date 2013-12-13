@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Diagnostics.Contracts;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
@@ -7,6 +8,7 @@ namespace VanessaSharp.Data
     partial class OneSConnection
     {
         /// <summary>Базовый класс объекта состояния.</summary>
+        [ContractClass(typeof(StateObjectContract))]
         internal abstract class StateObject : IDisposable
         {
             /// <summary>Конструктор принимающий фабрику подключений.</summary>
@@ -28,6 +30,8 @@ namespace VanessaSharp.Data
             {
                 get
                 {
+                    Contract.Ensures(Contract.Result<IGlobalContext>() != null);
+                    
                     throw new InvalidOperationException(
                         "Нельзя получить глобальный контекст при закрытом соединении.");
                 }
@@ -62,6 +66,8 @@ namespace VanessaSharp.Data
             /// <summary>Принятие транзакции.</summary>
             public virtual StateObject CommitTransaction()
             {
+                Contract.Ensures(Contract.Result<StateObject>() != null);
+
                 throw new InvalidOperationException(
                     "Зафиксировать транзакцию нельзя, так как соединение не находится в состоянии транзакции.");
             }
@@ -69,6 +75,8 @@ namespace VanessaSharp.Data
             /// <summary>Отмена транзакции.</summary>
             public virtual StateObject RollbackTransaction()
             {
+                Contract.Ensures(Contract.Result<StateObject>() != null);
+                
                 throw new InvalidOperationException(
                     "Отменить транзакцию нельзя, так как соединение не находится в состоянии транзакции.");
             }
@@ -104,6 +112,49 @@ namespace VanessaSharp.Data
 
             /// <summary>Версия 1С.</summary>
             public abstract string Version { get; }
+
+            /// <summary>Получение параметров соединения.</summary>
+            protected ConnectionParameters GetConnectionParameters()
+            {
+                return new ConnectionParameters
+                    {
+                        ConnectorFactory = ConnectorFactory,
+                        ConnectionString = ConnectionString,
+                        PoolCapacity = PoolCapacity,
+                        PoolTimeout = PoolTimeout
+                    };
+            }
+        }
+
+        /// <summary>Класс контракта <see cref="StateObject"/>.</summary>
+        [ContractClassFor(typeof(StateObject))]
+        private abstract class StateObjectContract : StateObject
+        {
+            protected StateObjectContract(IOneSConnectorFactory connectorFactory)
+                : base(connectorFactory)
+            { }
+
+            public override StateObject OpenConnection()
+            {
+                Contract.Ensures(Contract.Result<StateObject>() != null);
+
+                return default(StateObject);
+            }
+
+            public override StateObject CloseConnection()
+            {
+                Contract.Ensures(Contract.Result<StateObject>() != null);
+
+                return default(StateObject);
+            }
+
+            public override StateObject BeginTransaction(OneSConnection connection)
+            {
+                Contract.Requires<ArgumentNullException>(connection != null);
+                Contract.Ensures(Contract.Result<StateObject>() != null);
+
+                return default(StateObject);
+            }
         }
     }
 }

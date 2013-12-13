@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace VanessaSharp.Data.Tests
+namespace VanessaSharp.Data.UnitTests
 {
     /// <summary>Тестирование <see cref="OneSConnectionStringBuilder.KnownKeywordsCollection"/>.</summary>
     [TestFixture]

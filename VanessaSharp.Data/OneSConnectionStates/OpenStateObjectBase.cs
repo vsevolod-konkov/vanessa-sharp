@@ -8,42 +8,60 @@ namespace VanessaSharp.Data
     partial class OneSConnection
     {
         /// <summary>Базовый класс открытого состояния.</summary>
-        private abstract class OpenStateObjectBase : StateObject
+        internal abstract class OpenStateObjectBase : StateObject
         {
-            private bool _sharedGlobalContext;
+            /// <summary>
+            /// Используется ли экземпляр <see cref="IGlobalContext"/>
+            /// между несколькими объектами.
+            /// </summary>
+            private bool _isSharedGlobalContext;
 
+            /// <summary>Конструктор.</summary>
+            /// <param name="parameters">Параметры подключения.</param>
+            /// <param name="globalContext">Глобальный контекст 1C.</param>
+            /// <param name="version">Версия 1С.</param>
             protected OpenStateObjectBase(
-                IOneSConnectorFactory connectorFactory,
+                ConnectionParameters parameters,
                 IGlobalContext globalContext, 
-                string connectionString, 
-                int poolTimeout, 
-                int poolCapacity, 
                 string version)
-                : base(connectorFactory)
+                : base(SafeGetConnectorFactory(parameters))
             {
-                Contract.Requires<ArgumentException>(!string.IsNullOrEmpty(connectionString));
-
-                ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
-                ChecksHelper.CheckArgumentNotEmpty(version, "version");
+                Contract.Requires<ArgumentNullException>(parameters != null);
+                Contract.Requires<ArgumentException>(!string.IsNullOrEmpty(parameters.ConnectionString));
+                Contract.Requires<ArgumentNullException>(globalContext != null);
 
                 _globalContext = globalContext;
-                _connectionString = connectionString;
-                _poolTimeout = poolTimeout;
-                _poolCapacity = poolCapacity;
+                _connectionString = parameters.ConnectionString;
+                _poolTimeout = parameters.PoolTimeout;
+                _poolCapacity = parameters.PoolCapacity;
                 _version = version;
             }
 
+            /// <summary>Безопасное получение коннектора.</summary>
+            /// <param name="parameters">Параметры.</param>
+            private static IOneSConnectorFactory SafeGetConnectorFactory(ConnectionParameters parameters)
+            {
+                Contract.Requires<ArgumentNullException>(parameters != null);
+
+                return parameters.ConnectorFactory;
+            }
+
+            /// <summary>Объект глобального контекста 1С.</summary>
             public override IGlobalContext GlobalContext
             {
                 get { return _globalContext; }
             }
             private readonly IGlobalContext _globalContext;
 
+            /// <summary>Открытие соединение.</summary>
+            /// <returns>Объект состояния открытого соединения.</returns>
             public sealed override StateObject OpenConnection()
             {
                 throw new InvalidOperationException("Соединение уже открыто.");
             }
 
+            /// <summary>Закрытие соединения.</summary>
+            /// <returns>Объект закрытого состояния.</returns>
             public override StateObject CloseConnection()
             {
                 return new ClosedStateObject(ConnectorFactory)
@@ -54,11 +72,13 @@ namespace VanessaSharp.Data
                 };
             }
 
+            /// <summary>Состояние соединения.</summary>
             public sealed override ConnectionState ConnectionState
             {
                 get { return ConnectionState.Open; }
             }
 
+            /// <summary>Строка подключения к 1С.</summary>
             public override string ConnectionString
             {
                 get { return _connectionString; }
@@ -69,12 +89,14 @@ namespace VanessaSharp.Data
             }
             private readonly string _connectionString;
 
+            /// <summary>Собственно освобождения ресурсов.</summary>
             protected sealed override void InternalDisposed()
             {
-                if (!_sharedGlobalContext)
+                if (!_isSharedGlobalContext)
                     _globalContext.Dispose();
             }
 
+            /// <summary>Время ожидания соединения.</summary>
             public sealed override int PoolTimeout
             {
                 get { return _poolTimeout; }
@@ -89,6 +111,7 @@ namespace VanessaSharp.Data
             }
             private readonly int _poolTimeout;
 
+            /// <summary>Мощность пула соединения.</summary>
             public sealed override int PoolCapacity
             {
                 get { return _poolCapacity; }
@@ -104,6 +127,7 @@ namespace VanessaSharp.Data
             }
             private readonly int _poolCapacity;
 
+            /// <summary>Признак режима монопольного доступа.</summary>
             public sealed override bool IsExclusiveMode
             {
                 get
@@ -117,11 +141,15 @@ namespace VanessaSharp.Data
                 }
             }
 
+            /// <summary>
+            /// Маркировка того, что глобальный контекст будет использован и другими объектами.
+            /// </summary>
             protected void UseGlobalContext()
             {
-                _sharedGlobalContext = true;
+                _isSharedGlobalContext = true;
             }
 
+            /// <summary>Версия 1С.</summary>
             public override string Version
             {
                 get { return _version; }

@@ -7,12 +7,19 @@ namespace VanessaSharp.Data
     partial class OneSConnection
     {
         /// <summary>Состояние открытого соединения.</summary>
-        private sealed class OpenStateObject : OpenStateObjectBase
+        internal sealed class OpenStateObject : OpenStateObjectBase
         {
-            public OpenStateObject(IOneSConnectorFactory connectorFactory, IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version)
-                : base(connectorFactory, globalContext, connectionString, poolTimeout, poolCapacity, version)
+            /// <summary>Конструктор.</summary>
+            /// <param name="parameters">Параметры подключения.</param>
+            /// <param name="globalContext">Глобальный контекст.</param>
+            /// <param name="version">Версия 1С.</param>
+            public OpenStateObject(ConnectionParameters parameters, IGlobalContext globalContext, string version)
+                : base(parameters, globalContext, version)
             { }
 
+            /// <summary>Подключение к базе 1С.</summary>
+            /// <param name="parameters">Параметры подключения.</param>
+            /// <param name="version">Версия.</param>
             private static IGlobalContext Connect(ConnectionParameters parameters, out string version)
             {
                 Contract.Requires<ArgumentNullException>(parameters != null);
@@ -29,6 +36,8 @@ namespace VanessaSharp.Data
                 }
             }
 
+            /// <summary>Создание экземпляра состояния.</summary>
+            /// <param name="parameters">Параметры подключения.</param>
             public static StateObject Create(ConnectionParameters parameters)
             {
                 Contract.Requires<ArgumentNullException>(parameters != null);
@@ -37,7 +46,7 @@ namespace VanessaSharp.Data
                 var globalContext = Connect(parameters, out version);
                 try
                 {
-                    return new OpenStateObject(parameters.ConnectorFactory, globalContext, parameters.ConnectionString, parameters.PoolTimeout, parameters.PoolCapacity, version);
+                    return new OpenStateObject(parameters, globalContext, version);
                 }
                 catch
                 {
@@ -46,11 +55,12 @@ namespace VanessaSharp.Data
                 }
             }
 
+            /// <summary>Начало транзакции.</summary>
             public override StateObject BeginTransaction(OneSConnection connection)
             {
                 ChecksHelper.CheckArgumentNotNull(connection, "connection");
 
-                var result = TransactionStateObject.Create(ConnectorFactory, GlobalContext, ConnectionString, PoolTimeout, PoolCapacity, Version, connection);
+                var result = TransactionStateObject.Create(GetConnectionParameters(), GlobalContext, Version, connection);
                 UseGlobalContext();
                 return result;
             }
