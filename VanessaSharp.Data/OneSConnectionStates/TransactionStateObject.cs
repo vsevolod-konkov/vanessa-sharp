@@ -11,8 +11,8 @@ namespace VanessaSharp.Data
             /// <summary>Объект транзакции.</summary>
             private readonly OneSTransaction _transaction;
 
-            private TransactionStateObject(IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version, OneSTransaction transaction)
-                : base(globalContext, connectionString, poolTimeout, poolCapacity, version)
+            private TransactionStateObject(IOneSConnectorFactory connectorFactory, IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version, OneSTransaction transaction)
+                : base(connectorFactory, globalContext, connectionString, poolTimeout, poolCapacity, version)
             {
                 ChecksHelper.CheckArgumentNotNull(transaction, "transaction");
 
@@ -20,13 +20,14 @@ namespace VanessaSharp.Data
             }
 
             /// <summary>Создание транзакицонного состояния.</summary>
+            /// <param name="connectorFactory"></param>
             /// <param name="globalContext">Глобальный контекст 1С.</param>
             /// <param name="version">Версия сервера.</param>
             /// <param name="connection">Соединение.</param>
             /// <param name="connectionString">Строка подключения к 1С.</param>
             /// <param name="poolTimeout">Время ожидания ответа от соединения.</param>
             /// <param name="poolCapacity">Мощность пула соединения.</param>
-            public static StateObject Create(IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version, OneSConnection connection)
+            public static StateObject Create(IOneSConnectorFactory connectorFactory, IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version, OneSConnection connection)
             {
                 ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
                 ChecksHelper.CheckArgumentNotEmpty(version, "version");
@@ -35,7 +36,7 @@ namespace VanessaSharp.Data
                 globalContext.BeginTransaction();
                 try
                 {
-                    return new TransactionStateObject(globalContext, connectionString, poolTimeout, poolCapacity, version, new OneSTransaction(connection));
+                    return new TransactionStateObject(connectorFactory, globalContext, connectionString, poolTimeout, poolCapacity, version, new OneSTransaction(connection));
                 }
                 catch
                 {
@@ -70,7 +71,7 @@ namespace VanessaSharp.Data
 
             private StateObject CreateOpenState()
             {
-                var result = new OpenStateObject(GlobalContext, ConnectionString, PoolTimeout, PoolCapacity, Version);
+                var result = new OpenStateObject(ConnectorFactory, GlobalContext, ConnectionString, PoolTimeout, PoolCapacity, Version);
                 UseGlobalContext();
                 return result;
             }

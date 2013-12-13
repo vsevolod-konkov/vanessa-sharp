@@ -12,7 +12,14 @@ namespace VanessaSharp.Data
         {
             private bool _sharedGlobalContext;
 
-            protected OpenStateObjectBase(IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version)
+            protected OpenStateObjectBase(
+                IOneSConnectorFactory connectorFactory,
+                IGlobalContext globalContext, 
+                string connectionString, 
+                int poolTimeout, 
+                int poolCapacity, 
+                string version)
+                : base(connectorFactory)
             {
                 Contract.Requires<ArgumentException>(!string.IsNullOrEmpty(connectionString));
 
@@ -39,7 +46,7 @@ namespace VanessaSharp.Data
 
             public override StateObject CloseConnection()
             {
-                return new ClosedStateObject
+                return new ClosedStateObject(ConnectorFactory)
                 {
                     ConnectionString = ConnectionString,
                     PoolTimeout = PoolTimeout,

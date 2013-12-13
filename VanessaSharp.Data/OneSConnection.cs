@@ -51,15 +51,21 @@ namespace VanessaSharp.Data
 
         #region Интерфейс использования
         
+        /// <summary>Конструктор принимающий фабрику подключений.</summary>
+        /// <param name="connectorFactory">Фабрика подключений.</param>
+        public OneSConnection(IOneSConnectorFactory connectorFactory)
+            : this(StateObject.CreateDefault(connectorFactory))
+        {}
+
         /// <summary>Конструктор.</summary>
         public OneSConnection()
-            : this(StateObject.CreateDefault())
+            : this((IOneSConnectorFactory)null)
         {}
 
         /// <summary>Конструктор.</summary>
         /// <param name="connectionString">
         /// Строка соединения с информационной базой 1С.
-        /// Используется для устанавливки свойства <see cref="ConnectionString"/>.
+        /// Используется для установки свойства <see cref="ConnectionString"/>.
         /// </param>
         public OneSConnection(string connectionString)
             : this()
@@ -273,6 +279,9 @@ namespace VanessaSharp.Data
         /// <summary>Параметры соединения с информационной базой 1С.</summary>
         internal sealed class ConnectionParameters
         {
+            /// <summary>Фабрика подключений к 1С.</summary>
+            public IOneSConnectorFactory ConnectorFactory { get; set; }
+            
             /// <summary>Строка соединения.</summary>
             public string ConnectionString { get; set; }
 

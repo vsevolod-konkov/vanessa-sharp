@@ -9,9 +9,18 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
     /// когда он находится в открытом состоянии, т.е. значение его свойства
     /// <see cref="OneSConnection.State"/> равно <see cref="ConnectionState.Open"/>.
     /// </summary>
-    [TestFixture]
+    #if REAL_MODE
+    [TestFixture(TestMode.Real)]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated)]
+    #endif
     public sealed class OpenStateTests : OneSConnectionOpeningTestsBase
     {
+        public OpenStateTests(TestMode testMode)
+            : base(testMode)
+        {}
+
         /// <summary>
         /// Значение устанавляиваемое для <see cref="OneSConnection.PoolTimeout"/>.
         /// </summary>

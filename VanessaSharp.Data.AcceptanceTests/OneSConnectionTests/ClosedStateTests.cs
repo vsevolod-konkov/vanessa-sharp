@@ -8,33 +8,26 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
     /// Тесты на случаи когда экземпляр 
     /// <see cref="OneSConnection"/> имеет 
     /// состояние <see cref="OneSConnection.State"/>
-    /// в значении <see cref="ConnectionState.Closed"/>.
+    /// в значении <see cref="ConnectionState.Closed"/>
+    /// в любом тестовом режиме.
     /// </summary>
-    [TestFixture(false)]
-    [TestFixture(true)]
-    public sealed class ClosedStateTests : OneSConnectionOpeningTestsBase
+    #if REAL_MODE
+    [TestFixture(TestMode.Real, false)]
+    [TestFixture(TestMode.Real, true)]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated, false)]
+    [TestFixture(TestMode.Isolated, true)]
+    #endif
+    public sealed class ClosedStateTests : ClosedStateTestsBase
     {
-        /// <summary>Соединение было открыто, а потом закрыто.</summary>
-        private readonly bool _hadOpened;
-
         /// <summary>Параметрический конструктор.</summary>
+        /// <param name="testMode">Режим тестирования.</param>
         /// <param name="hadOpened">Было ли открыто соединение.</param>
-        public ClosedStateTests(bool hadOpened)
-        {
-            _hadOpened = hadOpened;
-        }
+        public ClosedStateTests(TestMode testMode, bool hadOpened)
+            : base(testMode, hadOpened)
+        {}
 
-        /// <summary>Действия выполняемые перед тестом.</summary>
-        [SetUp]
-        public void OnAfterInitConnection()
-        {
-            if (_hadOpened)
-            {
-                TestedInstance.Open();
-                TestedInstance.Close();
-            }
-        }
-        
         /// <summary>
         /// Тесты на общие свойства.
         /// </summary>
@@ -72,18 +65,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
         }
 
         /// <summary>
-        /// Тестирование действия,
-        /// в случае передачи невалидной строки соединения.
-        /// </summary>
-        /// <param name="action">Действие.</param>
-        private void TestActionWhenInvalidConnectionString(
-            TestDelegate action)
-        {
-            TestedInstance.ConnectionString = "белеберда";
-            Assert.Throws<InvalidOperationException>(action);
-        }
-
-        /// <summary>
         /// Тестирование получения свойства,
         /// в случае передачи невалидной строки соединения.
         /// </summary>
@@ -113,16 +94,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
         public void TestDataSourceWhenInvalidConnectionString()
         {
             TestGetPropertyWhenInvalidConnectionString(c => c.DataSource);
-        }
-
-        /// <summary>
-        /// Тестирование метода <see cref="OneSConnection.Open"/>
-        /// в случае передачи невалидной строки соединения.
-        /// </summary>
-        [Test]
-        public void TestOpenWhenInvalidConnectionString()
-        {
-            TestActionWhenInvalidConnectionString(TestedInstance.Open);
         }
 
         /// <summary>Тестирование свойства <see cref="OneSConnection.PoolTimeout"/>.</summary>

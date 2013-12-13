@@ -9,15 +9,17 @@ namespace VanessaSharp.Data
         /// <summary>Состояние открытого соединения.</summary>
         private sealed class OpenStateObject : OpenStateObjectBase
         {
-            public OpenStateObject(IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version)
-                : base(globalContext, connectionString, poolTimeout, poolCapacity, version)
+            public OpenStateObject(IOneSConnectorFactory connectorFactory, IGlobalContext globalContext, string connectionString, int poolTimeout, int poolCapacity, string version)
+                : base(connectorFactory, globalContext, connectionString, poolTimeout, poolCapacity, version)
             { }
 
             private static IGlobalContext Connect(ConnectionParameters parameters, out string version)
             {
                 Contract.Requires<ArgumentNullException>(parameters != null);
 
-                using (var connector = OneSConnectorFactory.Create())
+                var connectorFactory = parameters.ConnectorFactory ?? OneSConnectorFactory.Default;
+
+                using (var connector = connectorFactory.Create(OneSConnectorFactory.DefaultVersion))
                 {
                     connector.PoolTimeout = (uint)parameters.PoolTimeout;
                     connector.PoolCapacity = (uint)parameters.PoolCapacity;
@@ -35,7 +37,7 @@ namespace VanessaSharp.Data
                 var globalContext = Connect(parameters, out version);
                 try
                 {
-                    return new OpenStateObject(globalContext, parameters.ConnectionString, parameters.PoolTimeout, parameters.PoolCapacity, version);
+                    return new OpenStateObject(parameters.ConnectorFactory, globalContext, parameters.ConnectionString, parameters.PoolTimeout, parameters.PoolCapacity, version);
                 }
                 catch
                 {
@@ -48,7 +50,7 @@ namespace VanessaSharp.Data
             {
                 ChecksHelper.CheckArgumentNotNull(connection, "connection");
 
-                var result = TransactionStateObject.Create(GlobalContext, ConnectionString, PoolTimeout, PoolCapacity, Version, connection);
+                var result = TransactionStateObject.Create(ConnectorFactory, GlobalContext, ConnectionString, PoolTimeout, PoolCapacity, Version, connection);
                 UseGlobalContext();
                 return result;
             }

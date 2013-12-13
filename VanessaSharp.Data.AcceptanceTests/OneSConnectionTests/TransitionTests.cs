@@ -8,9 +8,18 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
     /// Тесты экземпляра <see cref="OneSConnection"/>
     /// на переходы между состояниями <see cref="OneSConnection.State"/>.
     /// .</summary>
-    [TestFixture]
+    #if REAL_MODE
+    [TestFixture(TestMode.Real)]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated)]
+    #endif
     public sealed class TransitionTests : OneSConnectionOpeningTestsBase
     {
+        public TransitionTests(TestMode testMode)
+            : base(testMode)
+        {}
+
         /// <summary>
         /// Тестирование метода <see cref="OneSConnection.Open"/>
         /// после инициализации.

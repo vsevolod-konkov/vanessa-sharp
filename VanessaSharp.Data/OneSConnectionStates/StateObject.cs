@@ -9,6 +9,20 @@ namespace VanessaSharp.Data
         /// <summary>Базовый класс объекта состояния.</summary>
         internal abstract class StateObject : IDisposable
         {
+            /// <summary>Конструктор принимающий фабрику подключений.</summary>
+            /// <param name="connectorFactory">Фабрика подключений.</param>
+            protected StateObject(IOneSConnectorFactory connectorFactory)
+            {
+                _connectorFactory = connectorFactory;
+            }
+
+            /// <summary>Фабрика подключений.</summary>
+            protected IOneSConnectorFactory ConnectorFactory
+            {
+                get { return _connectorFactory; }
+            }
+            private readonly IOneSConnectorFactory _connectorFactory;
+            
             /// <summary>Объект глобального контекста 1С.</summary>
             public virtual IGlobalContext GlobalContext
             {
@@ -66,9 +80,9 @@ namespace VanessaSharp.Data
             }
 
             /// <summary>Создание объекта состояния по умолчанию.</summary>
-            public static StateObject CreateDefault()
+            public static StateObject CreateDefault(IOneSConnectorFactory connectorFactory)
             {
-                return new ClosedStateObject();
+                return new ClosedStateObject(connectorFactory);
             }
 
             /// <summary>Освобождение ресурсов, удерживаемых объектом-состоянием.</summary>

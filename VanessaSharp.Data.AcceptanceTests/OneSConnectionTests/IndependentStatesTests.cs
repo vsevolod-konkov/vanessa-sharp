@@ -8,9 +8,18 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
     /// Тесты на поведение экземпляра <see cref="OneSConnection"/>
     /// независмые от его состояния.
     /// </summary>
-    [TestFixture]
+    #if REAL_MODE
+    [TestFixture(TestMode.Real)]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated)]
+    #endif
     public sealed class IndependentStatesTests : OneSConnectionOpeningTestsBase
     {
+        public IndependentStatesTests(TestMode testMode)
+                : base(testMode)
+        {}
+        
         /// <summary>Тестирование метода <see cref="OneSConnection.ChangeDatabase"/>.</summary>
         [Test]
         [ExpectedException(typeof(NotSupportedException))]

@@ -366,6 +366,10 @@ namespace VanessaSharp.Data.UnitTests
         internal abstract class MockConnectionState 
             : OneSConnection.StateObject
         {
+            protected MockConnectionState()
+                : base(null)
+            {}
+            
             // Запечатывание метода, чтобы не было проблем с работой Moq
             protected sealed override void InternalDisposed()
             {

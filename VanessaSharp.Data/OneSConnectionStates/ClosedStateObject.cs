@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
 {
@@ -8,6 +9,10 @@ namespace VanessaSharp.Data
         /// <summary>Состояние закрытого соединения.</summary>
         private sealed class ClosedStateObject : StateObject
         {
+            public ClosedStateObject(IOneSConnectorFactory connectorFactory)
+                    : base(connectorFactory)
+            {}
+            
             public override StateObject OpenConnection()
             {
                 if (string.IsNullOrEmpty(ConnectionString))
@@ -16,6 +21,7 @@ namespace VanessaSharp.Data
                 return OpenStateObject.Create(
                     new ConnectionParameters
                         {
+                            ConnectorFactory = ConnectorFactory,
                             ConnectionString = ConnectionString,
                             PoolCapacity = PoolCapacity,
                             PoolTimeout = PoolTimeout
