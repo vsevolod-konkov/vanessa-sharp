@@ -16,10 +16,16 @@ namespace VanessaSharp.Data
             _connection = connection;
         }
 
+        /// <summary>Менеджер транзакций.</summary>
+        private ITransactionManager TransactionManager
+        {
+            get { return _connection; }
+        }
+
         /// <summary>Принять транзакцию.</summary>
         public override void Commit()
         {
-            _connection.CommitTransaction();
+            TransactionManager.CommitTransaction();
         }
 
         /// <summary>Объект соединения с информационной базой 1С.</summary>
@@ -47,7 +53,7 @@ namespace VanessaSharp.Data
         /// <summary>Отмена транзакции.</summary>
         public override void Rollback()
         {
-            _connection.RollbackTransaction();
+            TransactionManager.RollbackTransaction();
         }
     }
 }

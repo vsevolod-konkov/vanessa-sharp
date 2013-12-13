@@ -6,3 +6,4 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("VanessaSharp.Data.Tests")]
 [assembly: InternalsVisibleTo("VanessaSharp.Data.UnitTests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

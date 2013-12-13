@@ -189,6 +189,12 @@ namespace VanessaSharp.Data
         }
         private bool _designTimeVisible;
 
+        /// <summary>Поставщик глобального контекста.</summary>
+        private IGlobalContextProvider GlobalContextProvider
+        {
+            get { return Connection; }
+        }
+
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
         /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
         /// <returns>Читатель данных.</returns>
@@ -210,7 +216,7 @@ namespace VanessaSharp.Data
             }
 
             // Получение контекста
-            var globalContext = Connection.GlobalContext;
+            var globalContext = GlobalContextProvider.GlobalContext;
             dynamic query = globalContext.NewObject("Query");
             query.Text = CommandText;
             dynamic queryResult = query.Execute();
