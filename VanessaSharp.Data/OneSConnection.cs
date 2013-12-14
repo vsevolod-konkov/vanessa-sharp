@@ -249,7 +249,7 @@ namespace VanessaSharp.Data
 
         private void ChangeState(StateObject newState)
         {
-            ChecksHelper.CheckArgumentNotNull(newState, "newState");
+            Contract.Requires<ArgumentNullException>(newState != null);
 
             if (newState == _state)
                 return;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
@@ -11,10 +12,10 @@ namespace VanessaSharp.Data
             /// <summary>Объект транзакции.</summary>
             private readonly OneSTransaction _transaction;
 
-            private TransactionStateObject(ConnectionParameters parameters, IGlobalContext globalContext, string version, OneSTransaction transaction)
+            internal TransactionStateObject(ConnectionParameters parameters, IGlobalContext globalContext, string version, OneSTransaction transaction)
                 : base(parameters, globalContext, version)
             {
-                ChecksHelper.CheckArgumentNotNull(transaction, "transaction");
+                Contract.Requires<ArgumentNullException>(transaction != null);
 
                 _transaction = transaction;
             }
@@ -26,9 +27,9 @@ namespace VanessaSharp.Data
             /// <param name="connection">Соединение.</param>
             public static StateObject Create(ConnectionParameters parameters, IGlobalContext globalContext, string version, OneSConnection connection)
             {
-                ChecksHelper.CheckArgumentNotNull(globalContext, "globalContext");
-                ChecksHelper.CheckArgumentNotEmpty(version, "version");
-                ChecksHelper.CheckArgumentNotNull(connection, "connection");
+                Contract.Requires<ArgumentNullException>(globalContext != null);
+                Contract.Requires<ArgumentException>(!string.IsNullOrEmpty(version));
+                Contract.Requires<ArgumentNullException>(connection != null);
 
                 globalContext.BeginTransaction();
                 try
@@ -42,30 +43,38 @@ namespace VanessaSharp.Data
                 }
             }
 
+            /// <summary>Закрытие соединения.</summary>
+            /// <returns>Объект закрытого состояния.</returns>
             public override StateObject CloseConnection()
             {
                 GlobalContext.RollbackTransaction();
                 return base.CloseConnection();
             }
 
+            /// <summary>Начало транзакции.</summary>
             public override StateObject BeginTransaction(OneSConnection connection)
             {
                 throw new InvalidOperationException(
                     "Соединение уже находится в состоянии транзакции. 1С не поддерживает вложенные транзакции");
             }
 
+            /// <summary>Принятие транзакции.</summary>
             public override StateObject CommitTransaction()
             {
                 GlobalContext.CommitTransaction();
                 return CreateOpenState();
             }
 
+            /// <summary>Отмена транзакции.</summary>
             public override StateObject RollbackTransaction()
             {
                 GlobalContext.RollbackTransaction();
                 return CreateOpenState();
             }
 
+            /// <summary>
+            /// Создание состояния открытого соединения без транзакции.
+            /// </summary>
             private StateObject CreateOpenState()
             {
                 var result = new OpenStateObject(GetConnectionParameters(), GlobalContext, Version);
@@ -73,6 +82,7 @@ namespace VanessaSharp.Data
                 return result;
             }
 
+            /// <summary>Текущая транзакция.</summary>
             public override OneSTransaction CurrentTransaction
             {
                 get { return _transaction; }

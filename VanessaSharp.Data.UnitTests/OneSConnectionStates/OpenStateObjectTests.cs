@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Proxy.Common;
@@ -10,162 +9,29 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
     /// Тесты на <see cref="OneSConnection.OpenStateObject"/>.
     /// </summary>
     [TestFixture]
-    public sealed class OpenStateObjectTests
+    public sealed class OpenStateObjectTests : OpenStateObjectTestsBase
     {
-        private const string TEST_CONNECTION_STRING = @"File=C:\1C\Db";
-        private const int TEST_POOL_TIMEOUT = 4000;
-        private const int TEST_POOL_CAPACITY = 20;
-        private const string TEST_VERSION = "10.X";
-
-        /// <summary>Ссылка на мок глобального контекста.</summary>
-        private Mock<IGlobalContext> _globalContextMock; 
-
-        /// <summary>Ссылка на глобальный контекст.</summary>
-        private IGlobalContext _globalContext;
-
         /// <summary>Тестируемый экземпляр.</summary>
+        internal override OneSConnection.OpenStateObjectBase TestedInstance
+        {
+            get { return _testedInstance; }
+        }
         private OneSConnection.OpenStateObject _testedInstance;
 
-        /// <summary>Проверка параметров подключения у состояния.</summary>
-        private static void AssertConnectionParameters(OneSConnection.StateObject state)
+        /// <summary>Инициализация тестируемого экземпляра состояния.</summary>
+        /// <param name="parameters">Параметры подключения.</param>
+        /// <param name="globalContext">Глобальный контекст.</param>
+        /// <param name="version">Версия.</param>
+        internal override void InitTestedInstance(
+            OneSConnection.ConnectionParameters parameters, IGlobalContext globalContext, string version)
         {
-            Assert.AreEqual(TEST_CONNECTION_STRING, state.ConnectionString);
-            Assert.AreEqual(TEST_POOL_TIMEOUT, state.PoolTimeout);
-            Assert.AreEqual(TEST_POOL_CAPACITY, state.PoolCapacity);
-        }
-
-        /// <summary>Инициализация теста.</summary>
-        [SetUp]
-        public void SetUp()
-        {
-            _globalContextMock = new Mock<IGlobalContext>(MockBehavior.Strict);
-            _globalContext = _globalContextMock.Object;
-
-            var parameters = new OneSConnection.ConnectionParameters
-                {
-                    ConnectorFactory = null,
-                    ConnectionString = TEST_CONNECTION_STRING,
-                    PoolTimeout = TEST_POOL_TIMEOUT,
-                    PoolCapacity = TEST_POOL_CAPACITY
-                };
-
             _testedInstance = new OneSConnection.OpenStateObject(
-                parameters, _globalContext, TEST_VERSION);
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="OneSConnection.StateObject.GlobalContext"/>.
-        /// </summary>
-        [Test]
-        public void TestGlobalContext()
-        {
-            Assert.AreSame(_globalContext, _testedInstance.GlobalContext);
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="OneSConnection.StateObject.OpenConnection"/>.
-        /// </summary>
-        [Test]
-        public void TestOpenConnection()
-        {
-            Assert.Throws<InvalidOperationException>(() => _testedInstance.OpenConnection());
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="OneSConnection.StateObject.CloseConnection"/>.
-        /// </summary>
-        [Test]
-        public void TestCloseConnection()
-        {
-            // Act
-            var closedState = _testedInstance.CloseConnection();
-
-            // Assert
-            Assert.IsNotNull(closedState);
-            Assert.IsInstanceOf<OneSConnection.ClosedStateObject>(closedState);
-            AssertConnectionParameters(closedState);
+                parameters, globalContext, version);
         }
 
         /// <summary>
         /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.ConnectionState"/>
-        /// </summary>
-        [Test]
-        public void TestConnectionState()
-        {
-            Assert.AreEqual(ConnectionState.Open, _testedInstance.ConnectionState);
-        }
-
-        /// <summary>
-        /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.ConnectionString"/>.
-        /// </summary>
-        [Test]
-        public void TestConnectionString()
-        {
-            Assert.AreEqual(TEST_CONNECTION_STRING, _testedInstance.ConnectionString);
-        }
-
-        /// <summary>
-        /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.PoolTimeout"/>.
-        /// </summary>
-        [Test]
-        public void TestPoolTimeout()
-        {
-            Assert.AreEqual(TEST_POOL_TIMEOUT, _testedInstance.PoolTimeout);
-        }
-
-        /// <summary>
-        /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.PoolCapacity"/>.
-        /// </summary>
-        [Test]
-        public void TestPoolCapacity()
-        {
-            Assert.AreEqual(TEST_POOL_CAPACITY, _testedInstance.PoolCapacity);
-        }
-
-        /// <summary>
-        /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.get_IsExclusiveMode"/>.
-        /// </summary>
-        [Test]
-        public void TestGetIsExclusiveMode([Values(false, true)] bool exclusiveMode)
-        {
-            // Arrange
-            _globalContextMock
-                .Setup(ctx => ctx.ExclusiveMode())
-                .Returns(exclusiveMode)
-                .Verifiable();
-
-            // Act & Assert
-            Assert.AreEqual(exclusiveMode, _testedInstance.IsExclusiveMode);
-            _globalContextMock.Verify(ctx => ctx.ExclusiveMode(), Times.Once());
-        }
-
-        /// <summary>
-        /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.set_IsExclusiveMode"/>.
-        /// </summary>
-        [Test]
-        public void TestSetIsExclusiveMode([Values(false, true)] bool isExclusiveMode)
-        {
-            // Arrange
-            _globalContextMock
-                .Setup(ctx => ctx.SetExclusiveMode(It.IsAny<bool>()))
-                .Verifiable();
-
-            // Act
-            _testedInstance.IsExclusiveMode = isExclusiveMode;
-
-            // Assert
-            _globalContextMock.Verify(ctx => ctx.SetExclusiveMode(isExclusiveMode), Times.Once());
-        }
-
-        /// <summary>
-        /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.BeginTransaction"/>.
+        /// <see cref="OneSConnection.StateObject.BeginTransaction"/>.
         /// </summary>
         [Test]
         public void TestBeginTransaction()
@@ -173,7 +39,7 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
             // Arrange
             var connection = new OneSConnection();
 
-            _globalContextMock
+            GlobalContextMock
                 .Setup(ctx => ctx.BeginTransaction())
                 .Verifiable();
 
@@ -183,16 +49,16 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
             // Assert
             Assert.IsNotNull(newState);
             Assert.IsInstanceOf<OneSConnection.TransactionStateObject>(newState);
-            Assert.AreSame(_globalContext, newState.GlobalContext);
+            AssertGlobalContext(newState);
             AssertConnectionParameters(newState);
-            Assert.AreEqual(TEST_VERSION, newState.Version);
+            AssertVersion(newState);
 
-            _globalContextMock.Verify(ctx => ctx.BeginTransaction(), Times.Once());
+            GlobalContextMock.Verify(ctx => ctx.BeginTransaction(), Times.Once());
         }
 
         /// <summary>
         /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.CommitTransaction"/>.
+        /// <see cref="OneSConnection.StateObject.CommitTransaction"/>.
         /// </summary>
         [Test]
         public void TestCommitTransaction()
@@ -218,16 +84,6 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
         public void TestCurrentTransaction()
         {
             Assert.IsNull(_testedInstance.CurrentTransaction);
-        }
-
-        /// <summary>
-        /// Тестирование
-        /// <see cref="OneSConnection.ClosedStateObject.get_Version"/>.
-        /// </summary>
-        [Test]
-        public void TestGetVersion()
-        {
-            Assert.AreEqual(TEST_VERSION, _testedInstance.Version);
         }
     }
 }

@@ -58,10 +58,9 @@ namespace VanessaSharp.Data
             /// <summary>Начало транзакции.</summary>
             public override StateObject BeginTransaction(OneSConnection connection)
             {
-                ChecksHelper.CheckArgumentNotNull(connection, "connection");
-
                 var result = TransactionStateObject.Create(GetConnectionParameters(), GlobalContext, Version, connection);
                 UseGlobalContext();
+                
                 return result;
             }
         }

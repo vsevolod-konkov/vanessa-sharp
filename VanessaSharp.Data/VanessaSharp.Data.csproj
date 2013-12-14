@@ -95,7 +95,6 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
-    <Compile Include="ChecksHelper.cs" />
     <Compile Include="IGlobalContextProvider.cs" />
     <Compile Include="ITransactionManager.cs" />
     <Compile Include="OneSCommand.cs">

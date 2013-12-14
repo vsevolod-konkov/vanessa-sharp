@@ -51,6 +51,8 @@
     <Compile Include="KnownKeywordsCollectionTests.cs" />
     <Compile Include="OneSConnectionStates\ClosedStateObjectTests.cs" />
     <Compile Include="OneSConnectionStates\OpenStateObjectTests.cs" />
+    <Compile Include="OneSConnectionStates\OpenStateObjectTestsBase.cs" />
+    <Compile Include="OneSConnectionStates\TransactionStateObjectTests.cs" />
     <Compile Include="OneSConnectionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
