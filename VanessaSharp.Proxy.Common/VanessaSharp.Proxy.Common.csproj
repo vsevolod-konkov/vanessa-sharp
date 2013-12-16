@@ -78,6 +78,10 @@
     <Compile Include="IOneSProxy.cs" />
     <Compile Include="IOneSProxyWrapper.cs" />
     <Compile Include="IOneSProxyWrapperContract.cs" />
+    <Compile Include="IQuery.cs" />
+    <Compile Include="IQueryResult.cs" />
+    <Compile Include="IQueryResultColumnsCollection.cs" />
+    <Compile Include="IQueryResultSelection.cs" />
     <Compile Include="OneSConnectorFactory.cs" />
     <Compile Include="OneSContextBoundObject.cs" />
     <Compile Include="OneSGlobalContext.cs" />

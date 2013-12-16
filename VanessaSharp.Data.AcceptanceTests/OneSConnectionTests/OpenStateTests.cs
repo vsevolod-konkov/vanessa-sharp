@@ -15,7 +15,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
     #if ISOLATED_MODE
     [TestFixture(TestMode.Isolated)]
     #endif
-    public sealed class OpenStateTests : OneSConnectionOpeningTestsBase
+    public sealed class OpenStateTests : OneSConnectionTestsBase
     {
         public OpenStateTests(TestMode testMode)
             : base(testMode)

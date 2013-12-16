@@ -25,6 +25,13 @@
             return DynamicProxy.NewObject(typeName);
         }
 
+        /// <summary>Создание объекта.</summary>
+        /// <typeparam name="T">Тип интерфейса соответствующего типу объекта 1С.</typeparam>
+        public T NewObject<T>() where T : IGlobalContextBound
+        {
+            throw new System.NotImplementedException();
+        }
+
         /// <summary>
         /// Получение признака - монопольный ли режим.
         /// </summary>

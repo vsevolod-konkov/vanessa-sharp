@@ -17,6 +17,13 @@ namespace VanessaSharp.Proxy.Common
             return null;
         }
 
+        T IGlobalContext.NewObject<T>()
+        {
+            Contract.Ensures(Contract.Result<object>() != null);
+
+            return default(T);
+        }
+
         bool IGlobalContext.ExclusiveMode()
         {
             throw new NotImplementedException();

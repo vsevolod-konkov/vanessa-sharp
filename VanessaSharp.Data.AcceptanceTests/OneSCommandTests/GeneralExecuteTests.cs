@@ -1,51 +1,42 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using System.Data;
 
-namespace VanessaSharp.Data.Tests
+namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
 {
-    /// <summary>Тесты проверяющие правильность выполнения запросов команды.</summary>
-    [TestFixture]
-    public sealed class CommandExecuteTests : ConnectedTestsBase
+    /// <summary>Тесты проверяющие правильность поведения выполнения запросов команды.</summary>
+    #if REAL_MODE
+    [TestFixture(TestMode.Real, Description = "Тестирование метода Execute для реального режима.")]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated, Description = "Тестирование метода Execute для изоляционного режима.")]
+    #endif
+    public sealed class GeneralExecuteTests : CommandTestsBase
     {
-        /// <summary>Установка окружения тестов.</summary>
-        /// <remarks>Точка расширения для наследных классов.</remarks>
-        protected override void InternalSetUp()
+        private const string TEST_SQL = "ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты";
+
+        /// <summary>Параметрический конструктор.</summary>
+        /// <param name="testMode">Режим тестирования.</param>
+        public GeneralExecuteTests(TestMode testMode)
+            : base(testMode, true)
+        {}
+
+        /// <summary>Установка текста запроса.</summary>
+        [SetUp]
+        public void SetUpCommandText()
         {
-            base.InternalSetUp();
-
-            const string sql = "ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты";
-
-            _testCommand = new OneSCommand(Connection);
-            _testCommand.CommandText = sql;
+            base.TestedCommand.CommandText = TEST_SQL;
         }
-
-        /// <summary>Очистка окружения тестов.</summary>
-        /// <remarks>Точка расширения для наследных классов.</remarks>
-        protected override void InternalTearDown()
-        {
-            if (_testCommand != null)
-            {
-                _testCommand.Dispose();
-                _testCommand = null;    
-            }
-
-            base.InternalTearDown();
-        }
-
-        /// <summary>Тестовая команда.</summary>
-        private OneSCommand _testCommand;
-
+        
         /// <summary>
         /// Тестирование выполнения простого запроса.
         /// </summary>
         [Test(Description="Тестирование выполнения простого запроса")]
+        [Ignore("Тест имеет неприятный побочный эффект")]
         public void TestCommandSimpleExecute()
         {
-            _testCommand.ExecuteReader();
+            using (TestedCommand.ExecuteReader())
+            {}
         }
 
         /// <summary>
@@ -55,11 +46,18 @@ namespace VanessaSharp.Data.Tests
         [Test(Description="Проверка того что поведение команды не по умолчанию не поддерживается")]
         [ExpectedException(typeof(NotSupportedException))]
         public void TestNotSupportedNonDefaultCommandBehavior(
-            [Values(CommandBehavior.SingleRow, CommandBehavior.SingleResult, CommandBehavior.SequentialAccess, 
-                    CommandBehavior.SchemaOnly, CommandBehavior.KeyInfo, CommandBehavior.CloseConnection)]
+            [Values(
+                    CommandBehavior.SingleRow, 
+                    //CommandBehavior.SingleResult, 
+                    //CommandBehavior.SequentialAccess, 
+                    CommandBehavior.SchemaOnly, 
+                    CommandBehavior.KeyInfo, 
+                    CommandBehavior.CloseConnection
+                    )]
             CommandBehavior behavior)
         {
-            _testCommand.ExecuteReader(behavior);
+            using (TestedCommand.ExecuteReader(behavior))
+            {}
         }
 
         /// <summary>
@@ -70,8 +68,8 @@ namespace VanessaSharp.Data.Tests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestInvalidOperationIfNullConnection()
         {
-            _testCommand.Connection = null;
-            _testCommand.ExecuteReader();
+            TestedCommand.Connection = null;
+            TestedCommand.ExecuteReader();
         }
 
         /// <summary>
@@ -83,8 +81,8 @@ namespace VanessaSharp.Data.Tests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestInvalidOperationIfClosedConnection()
         {
-            _testCommand.Connection.Close();
-            _testCommand.ExecuteReader();
+            TestedCommand.Connection.Close();
+            TestedCommand.ExecuteReader();
         }
     }
 }

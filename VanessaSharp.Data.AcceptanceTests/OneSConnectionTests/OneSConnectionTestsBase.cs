@@ -4,11 +4,11 @@
     /// Базовый класс для тестов экземпляра <see cref="OneSConnection"/>
     /// с возможностью открытия соединения с тестовой БД 1С.
     /// </summary>
-    public class OneSConnectionOpeningTestsBase : ConnectedTestsBase
+    public class OneSConnectionTestsBase : ConnectedTestsBase
     {
         /// <summary>Конструктор с передачей режима.</summary>
         /// <param name="testMode">Режим тестирования.</param>
-        protected OneSConnectionOpeningTestsBase(TestMode testMode)
+        protected OneSConnectionTestsBase(TestMode testMode)
             : base(testMode, false)
         {}
 

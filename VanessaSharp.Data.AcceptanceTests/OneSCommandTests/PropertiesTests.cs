@@ -7,13 +7,21 @@ using System.Data.OleDb;
 namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
 {
     /// <summary>Тестирование свойств экземпляра класса <see cref="OneSCommand"/>.</summary>
-    [TestFixture(false, Description = "Тестирование команды запроса без открытия соединения")]
-    [TestFixture(true, Description = "Тестирование команды запроса с открытием соединения")]
+    #if REAL_MODE
+    [TestFixture(TestMode.Real, false, Description = "Тестирование команды запроса без открытия соединения в реальном режиме")]
+    [TestFixture(TestMode.Real, true, Description = "Тестирование команды запроса с открытием соединения в реальном режиме")]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated, false, Description = "Тестирование команды запроса без открытия соединения в изоляционном режиме")]
+    [TestFixture(TestMode.Isolated, true, Description = "Тестирование команды запроса с открытием соединения в изоляционном режиме")]
+    #endif
     public sealed class PropertiesTests : CommandTestsBase
     {
         /// <summary>Конструктор.</summary>
+        /// <param name="testMode">Режим тестирования.</param>
         /// <param name="shouldBeOpen">Признак необходимости открытия соединения.</param>
-        public PropertiesTests(bool shouldBeOpen) : base(shouldBeOpen)
+        public PropertiesTests(TestMode testMode, bool shouldBeOpen) 
+            : base(testMode, shouldBeOpen)
         {}
 
         /// <summary>Тестирование свойства <see cref="OneSCommand.CommandText"/>.</summary>

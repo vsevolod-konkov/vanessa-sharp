@@ -9,13 +9,26 @@ namespace VanessaSharp.Data.AcceptanceTests
     // TODO: Требуется написать нормальные приемочные тесты
     /// <summary>Приемочные тесты на <see cref="OneSCommand"/>.</summary>
     [TestFixture]
-    [Ignore]
     public sealed class TempOneSCommandTests
     {
         /// <summary>Тестирование простого запроса.</summary>
         [Test]
         public void TestSimpleExecuteReader()
         {
+            var expectedRecords = new[]
+                {
+                    new[]
+                        {
+                            "852500102", "АКБ \"АВТ-БАНК\"", "10805202301222054654", "Г.МОСКВА",
+                            "101511 Г.МОСКВА УЛ.ЛУГОВАЯ,41", "112-90-08"
+                        },
+                    new[]
+                        {
+                            "852304412", "АКБ \"ТОРГБАНК\"", "40712300045600065502", "Г.МОСКВА",
+                            "109094 Г.МОСКВА ГЛУБИНЫЙ ПЕР.,2", "223-322"
+                        }
+                };
+            
             var connectionBuilder = new OneSConnectionStringBuilder
                 {
                     Catalog = Path.Combine(Environment.CurrentDirectory, @"..\..\..\Db"),
@@ -35,6 +48,8 @@ namespace VanessaSharp.Data.AcceptanceTests
 
                 using (var reader = command.ExecuteReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult))
                 {
+                    
+
                     const string FORMAT = "Код \"{0}\"; Наименование \"{1}\"; Корр. Счет \"{2}\"; Город \"{3}\"; Адрес \"{4}\"; Телефоны \"{5}\"";
 
                     Assert.AreEqual(6, reader.FieldCount);
@@ -55,18 +70,22 @@ namespace VanessaSharp.Data.AcceptanceTests
 
                     var values = new object[6];
 
+                    var recordCounter = 0;
+
                     while (reader.Read())
                     {
+                        Assert.Less(recordCounter, expectedRecords.Length);
+                        
                         Assert.AreEqual(6, reader.GetValues(values));
-                        //var code = reader.GetString(0);
-                        //var name = reader.GetString(1);
-                        //var account = reader.GetString(2);
-                        //var city = reader.GetString(3);
-                        //var address = reader.GetString(4);
-                        //var phones = reader.GetString(5);
 
-                        //Trace.WriteLine(string.Format(FORMAT, code, name, account, city, address, phones));   
-                        Trace.WriteLine(string.Format(FORMAT, values));   
+                        Trace.WriteLine(string.Format(FORMAT, values));
+
+                        var expectedRecord = expectedRecords[recordCounter];
+
+                        for (var fieldIndex = 0; fieldIndex < expectedRecord.Length; fieldIndex++)
+                            Assert.AreEqual(expectedRecord[fieldIndex], values[fieldIndex]);
+
+                        ++recordCounter;
                     }
                 }
             }

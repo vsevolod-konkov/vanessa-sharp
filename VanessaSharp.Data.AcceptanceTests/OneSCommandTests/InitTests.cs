@@ -4,11 +4,18 @@ using System.Data;
 namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
 {
     /// <summary>Тестирование создания экземпляра класса <see cref="OneSCommand"/>.</summary>
-    [TestFixture(Description="Тестирование создания экземпляра класса команды запроса")]
+    #if REAL_MODE
+    [TestFixture(TestMode.Real, Description="Тестирование создания экземпляра класса команды запроса в реальном режиме")]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated, Description = "Тестирование создания экземпляра класса команды запроса в изоляционном режиме")]
+    #endif
     public sealed class InitTests : ConnectedTestsBase
     {
-        public InitTests()
-            : base(TestMode.Real)
+        /// <summary>Конструктор, принимающий режим тестирования.</summary>
+        /// <param name="testMode">Режим тестирования.</param>
+        public InitTests(TestMode testMode)
+            : base(testMode)
         {}
         
         /// <summary>Проверка значений свойств по умолчанию.</summary>

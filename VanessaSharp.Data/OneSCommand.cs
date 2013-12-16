@@ -1,12 +1,51 @@
 ﻿using System;
 using System.Data.Common;
 using System.Data;
+using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Data
 {
     /// <summary>Команда запроса к 1С.</summary>
     public sealed class OneSCommand : DbCommand
     {
+        /// <summary>Поставщик глобального контекста 1С.</summary>
+        private IGlobalContextProvider _globalContextProvider;
+
+        /// <summary>Объект соединения.</summary>
+        private OneSConnection _connection;
+
+        /// <summary>Установка соединения.</summary>
+        /// <param name="connection">Соединение</param>
+        /// <param name="globalContextProvider">Поставщик глобального контекста.</param>
+        private void SetConnection(OneSConnection connection, IGlobalContextProvider globalContextProvider)
+        {
+            _connection = connection;
+            _globalContextProvider = globalContextProvider;
+        }
+
+        /// <summary>Установка соединения.</summary>
+        /// <param name="connection">Соединение</param>
+        private void SetConnection(OneSConnection connection)
+        {
+            SetConnection(connection, connection);
+        }
+
+        [ContractInvariantMethod]
+        private void Invariant()
+        {
+            Contract.Invariant(
+                (_connection == null && _globalContextProvider == null)
+                ||
+                (_connection != null && _globalContextProvider != null)
+                );
+        }
+
+        /// <summary>Конструктор принимающий поставщика глобального контекста.</summary>
+        internal OneSCommand(IGlobalContextProvider globalContextProvider, OneSConnection connection)
+        {
+            SetConnection(connection, globalContextProvider);
+        }
+        
         /// <summary>Конструктор без аргументов.</summary>
         public OneSCommand() : this(null)
         {}
@@ -82,7 +121,11 @@ namespace VanessaSharp.Data
         }
 
         /// <summary>Получает и устанавливает соединение с информационной базой 1С.</summary>
-        public new OneSConnection Connection { get; set; }
+        public new OneSConnection Connection
+        {
+            get { return _connection; }
+            set { SetConnection(value);}
+        }
 
         /// <summary>Получает и устанавливает соединение с информационной базой 1С.</summary>
         protected override DbConnection DbConnection
@@ -115,6 +158,8 @@ namespace VanessaSharp.Data
         {
             get
             {
+                Contract.Ensures(Contract.Result<OneSParameterCollection>() != null);
+                
                 return _parameters;
             }
         }
@@ -157,12 +202,6 @@ namespace VanessaSharp.Data
         /// </summary>
         public override bool DesignTimeVisible { get; set; }
 
-        /// <summary>Поставщик глобального контекста.</summary>
-        private IGlobalContextProvider GlobalContextProvider
-        {
-            get { return Connection; }
-        }
-
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
         /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
         /// <returns>Читатель данных.</returns>
@@ -170,7 +209,7 @@ namespace VanessaSharp.Data
         {
             const CommandBehavior NOT_SUPPORT_BEHAVIOR = ~(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
 
-            if ((behavior & NOT_SUPPORT_BEHAVIOR) != CommandBehavior.Default)
+            if ((behavior & NOT_SUPPORT_BEHAVIOR) != default(CommandBehavior))
             {
                 throw new NotSupportedException(string.Format(
                     "Значение поведения для команды выполнения запроса выборки \"{0}\" не поддерживается.",
@@ -184,7 +223,7 @@ namespace VanessaSharp.Data
             }
 
             // Получение контекста
-            var globalContext = GlobalContextProvider.GlobalContext;
+            var globalContext = _globalContextProvider.GlobalContext;
             dynamic query = globalContext.NewObject("Query");
             query.Text = CommandText;
             dynamic queryResult = query.Execute();

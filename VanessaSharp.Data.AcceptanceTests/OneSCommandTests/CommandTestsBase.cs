@@ -8,9 +8,10 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
     public abstract class CommandTestsBase : ConnectedTestsBase
     {
         /// <summary>Конструктор.</summary>
+        /// <param name="testMode">Режим тестирования.</param>
         /// <param name="shouldBeOpen">Признак необходимости открытия соединения.</param>
-        protected CommandTestsBase(bool shouldBeOpen)
-            : base(TestMode.Real, shouldBeOpen)
+        protected CommandTestsBase(TestMode testMode, bool shouldBeOpen)
+            : base(testMode, shouldBeOpen)
         {}
 
         /// <summary>Тестовый экземпляр команды.</summary>

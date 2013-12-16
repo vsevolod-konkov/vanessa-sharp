@@ -11,7 +11,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
     /// состояние <see cref="OneSConnection.State"/>
     /// в значении <see cref="ConnectionState.Closed"/>.
     /// </summary>
-    public abstract class ClosedStateTestsBase : OneSConnectionOpeningTestsBase
+    public abstract class ClosedStateTestsBase : OneSConnectionTestsBase
     {
         /// <summary>Соединение было открыто, а потом закрыто.</summary>
         private readonly bool _hadOpened;

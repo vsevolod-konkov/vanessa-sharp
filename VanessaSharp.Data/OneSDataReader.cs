@@ -3,6 +3,7 @@ using System.Collections;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
 {
@@ -22,6 +23,17 @@ namespace VanessaSharp.Data
 
         private States _states = States.Open;
 
+        internal OneSDataReader(IQueryResult queryResult)
+        {
+            Contract.Requires<ArgumentNullException>(queryResult != null);
+        }
+
+        internal IQueryResult QueryResult
+        {
+            get { throw new NotImplementedException();}
+        }
+
+        [Obsolete]
         internal OneSDataReader(dynamic globalContext, dynamic columns, dynamic queryResultSelection)
         {
             _globalContext = globalContext;

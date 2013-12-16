@@ -49,6 +49,11 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
                 throw new NotImplementedException("Метод NewObject не поддерживается.");
             }
 
+            public T NewObject<T>() where T : IGlobalContextBound
+            {
+                throw new NotImplementedException();
+            }
+
             public bool ExclusiveMode()
             {
                 return _isExclusiveMode;

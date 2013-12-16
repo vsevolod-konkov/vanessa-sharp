@@ -47,13 +47,13 @@ namespace VanessaSharp.Proxy.Common.Tests.Integration
                 var alternativeConnectString = string.Format(connectionStringFormat, Constants.TestCatalog, Constants.AlternativeTestUser);
                 Assert.Throws<InvalidOperationException>(() =>
                 {
-                    using(var globalContext2 = _connector.Connect(alternativeConnectString));
+                    using(var globalContext2 = _connector.Connect(alternativeConnectString)) {}
                 });
 
                 globalContext.SetExclusiveMode(false);
                 Assert.IsFalse(globalContext.ExclusiveMode());
 
-                using (var globalContext3 = _connector.Connect(alternativeConnectString));
+                using (var globalContext3 = _connector.Connect(alternativeConnectString)) {}
             }
         }
 

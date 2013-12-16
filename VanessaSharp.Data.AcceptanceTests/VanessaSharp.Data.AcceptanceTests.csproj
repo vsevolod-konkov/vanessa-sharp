@@ -47,6 +47,7 @@
     <Compile Include="Constants.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
     <Compile Include="Mocks\OneSConnectorFactoryMock.cs" />
+    <Compile Include="OneSCommandTests\GeneralExecuteTests.cs" />
     <Compile Include="OneSCommandTests\ParametersTests.cs" />
     <Compile Include="OneSCommandTests\PropertiesTests.cs" />
     <Compile Include="OneSCommandTests\InitTests.cs" />
@@ -57,7 +58,7 @@
     <Compile Include="OneSConnectionTests\ClosedStateTestsBase.cs" />
     <Compile Include="OneSConnectionTests\IndependentStatesTests.cs" />
     <Compile Include="OneSConnectionTests\InitTests.cs" />
-    <Compile Include="OneSConnectionTests\OneSConnectionOpeningTestsBase.cs" />
+    <Compile Include="OneSConnectionTests\OneSConnectionTestsBase.cs" />
     <Compile Include="OneSConnectionTests\OnlyRealModeClosedStateTests.cs" />
     <Compile Include="OneSConnectionTests\OpenStateTests.cs" />
     <Compile Include="OneSConnectionTests\TransitionTests.cs" />

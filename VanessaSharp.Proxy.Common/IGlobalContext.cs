@@ -9,7 +9,12 @@ namespace VanessaSharp.Proxy.Common
     {
         /// <summary>Создание объекта.</summary>
         /// <param name="typeName">Имя типа.</param>
+        [Obsolete]
         dynamic NewObject(string typeName);
+
+        /// <summary>Создание объекта.</summary>
+        /// <typeparam name="T">Тип интерфейса соответствующего типу объекта 1С.</typeparam>
+        T NewObject<T>() where T : IGlobalContextBound;
 
         /// <summary>
         /// Получение признака - монопольный ли режим.
