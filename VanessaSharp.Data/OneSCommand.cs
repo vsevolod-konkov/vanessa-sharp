@@ -33,18 +33,7 @@ namespace VanessaSharp.Data
         }
 
         /// <summary>Строка запроса данных к информационной базе 1С.</summary>
-        public override string CommandText
-        {
-            get
-            {
-                return _commandText;
-            }
-            set
-            {
-                _commandText = value;
-            }
-        }
-        private string _commandText;
+        public override string CommandText { get; set; }
 
         /// <summary>Получает или задает время ожидания перед завершением попытки выполнить команду и генерацией ошибки.</summary>
         /// <remarks>Не поддерживается 1С.</remarks>
@@ -56,7 +45,8 @@ namespace VanessaSharp.Data
             }
             set
             {
-                throw new NotSupportedException("Настройка времени ожидания выполнения команды не поддерживается 1С.");
+                throw new NotSupportedException(
+                    "Настройка времени ожидания выполнения команды не поддерживается 1С.");
             }
         }
 
@@ -73,7 +63,8 @@ namespace VanessaSharp.Data
                 if (value != CommandType.Text)
                 {
                     throw new NotSupportedException(string.Format(
-                        "Значение типа команды отличное от {0} не поддерживается в текущей версии.", CommandType.Text));
+                        "Значение типа команды отличное от {0} не поддерживается в текущей версии.",
+                        CommandType.Text));
                 }
             }
         }
@@ -87,23 +78,11 @@ namespace VanessaSharp.Data
         /// <summary>Создает экземпляр параметра запроса.</summary>
         protected override DbParameter CreateDbParameter()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         /// <summary>Получает и устанавливает соединение с информационной базой 1С.</summary>
-        public new OneSConnection Connection
-        {
-            get
-            {
-                return _connection;
-            }
-
-            set
-            {
-                _connection = value;
-            }
-        }
-        private OneSConnection _connection;
+        public new OneSConnection Connection { get; set; }
 
         /// <summary>Получает и устанавливает соединение с информационной базой 1С.</summary>
         protected override DbConnection DbConnection
@@ -176,18 +155,7 @@ namespace VanessaSharp.Data
         /// <summary>
         /// Получает или задает значение, указывающее, будет ли объект команды видимым в элементе управления Windows Forms Designer.
         /// </summary>
-        public override bool DesignTimeVisible
-        {
-            get
-            {
-                return _designTimeVisible;
-            }
-            set
-            {
-                _designTimeVisible = value;
-            }
-        }
-        private bool _designTimeVisible;
+        public override bool DesignTimeVisible { get; set; }
 
         /// <summary>Поставщик глобального контекста.</summary>
         private IGlobalContextProvider GlobalContextProvider

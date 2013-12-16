@@ -71,10 +71,8 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="CommandExecuteTests.cs" />
-    <Compile Include="CommandTests.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="CreateCommandTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestsBase.cs" />
     <Compile Include="TransactionTests.cs" />

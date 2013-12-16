@@ -1,16 +1,19 @@
-﻿using System;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Data;
 
-namespace VanessaSharp.Data.Tests
+namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
 {
     /// <summary>Тестирование создания экземпляра класса <see cref="OneSCommand"/>.</summary>
     [TestFixture(Description="Тестирование создания экземпляра класса команды запроса")]
-    public sealed class CreateCommandTests : ConnectedTestsBase
+    public sealed class InitTests : ConnectedTestsBase
     {
+        public InitTests()
+            : base(TestMode.Real)
+        {}
+        
         /// <summary>Проверка значений свойств по умолчанию.</summary>
         /// <param name="command">Тестируемая команда.</param>
-        private void AssertDefaultProperties(OneSCommand command)
+        private static void AssertDefaultProperties(OneSCommand command)
         {
             Assert.AreEqual(0, command.CommandTimeout);
             Assert.AreEqual(CommandType.Text, command.CommandType);

@@ -10,7 +10,7 @@ namespace VanessaSharp.Data.AcceptanceTests
     /// <summary>Приемочные тесты на <see cref="OneSCommand"/>.</summary>
     [TestFixture]
     [Ignore]
-    public sealed class OneSCommandTests
+    public sealed class TempOneSCommandTests
     {
         /// <summary>Тестирование простого запроса.</summary>
         [Test]

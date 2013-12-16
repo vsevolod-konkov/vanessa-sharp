@@ -1,7 +1,7 @@
 ﻿using System;
 using VanessaSharp.Proxy.Common;
 
-namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
+namespace VanessaSharp.Data.AcceptanceTests.Mocks
 {
     /// <summary>
     /// Моковая реализация <see cref="IOneSConnectorFactory"/>.
