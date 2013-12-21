@@ -90,10 +90,12 @@ namespace VanessaSharp.Proxy.Common.Tests
             CreateWrapParameters parameters = null;
             _wrapFactoryMock
                 .Setup(f => f.CreateWrap(It.IsAny<object>(), It.IsAny<CreateWrapParameters>()))
-                .Returns(createWrapReturns)
-                .Callback<object, CreateWrapParameters>((o, pms) =>
+                .Returns<object, CreateWrapParameters>((o, pms) =>
                 {
-                    actualObj = o; parameters = pms;
+                    actualObj = o; 
+                    parameters = pms;
+
+                    return createWrapReturns(o, pms);
                 })
                 .Verifiable();
 
