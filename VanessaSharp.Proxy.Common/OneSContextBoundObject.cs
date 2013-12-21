@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 namespace VanessaSharp.Proxy.Common
 {
     /// <summary>Объект 1C, привязанный к глобальному контексту.</summary>
-    public sealed class OneSContextBoundObject : OneSObject, IGlobalContextBound
+    public class OneSContextBoundObject : OneSObject, IGlobalContextBound
     {
         /// <summary>Конструктор.</summary>
         /// <param name="comObject">RCW-обертка над 1С-объектом.</param>

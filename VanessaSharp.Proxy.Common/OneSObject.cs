@@ -10,8 +10,17 @@ namespace VanessaSharp.Proxy.Common
         /// <summary>Прокси-объект над оберткой 1С.</summary>
         private readonly OneSProxy _proxy;
 
+        /// <summary>Конструктор.</summary>
+        /// <param name="proxyCreator">Создатель Прокси-объекта над RCW-объектом 1С.</param>
+        internal OneSObject(Func<OneSObject, OneSProxy> proxyCreator)
+        {
+            Contract.Requires<ArgumentNullException>(proxyCreator != null);
+
+            _proxy = proxyCreator(this);
+        }
+
         /// <summary>
-        /// Базовый конструктор.
+        /// Конструктор, 
         /// </summary>
         /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
         /// <param name="proxyWrapper">Обертыватель объекта.</param>
@@ -22,14 +31,13 @@ namespace VanessaSharp.Proxy.Common
             Contract.Requires<ArgumentNullException>(
                 proxyWrapper != null, "proxyWrapper не может быть равен null");
 
-            _proxy = new OneSProxy(comObject, GetOneSProxyWrapper(proxyWrapper));
+            _proxy = new OneSProxy(comObject, proxyWrapper);
         }
 
-        /// <summary>Получение реального обертывателя.</summary>
-        /// <param name="originWrapper">Исходный обертыватель.</param>
-        internal virtual IOneSProxyWrapper GetOneSProxyWrapper(IOneSProxyWrapper originWrapper)
+        /// <summary>Обертыватель объекта.</summary>
+        internal IOneSProxyWrapper ProxyWrapper
         {
-            return originWrapper;
+            get { return _proxy.ProxyWrapper; }
         }
 
         /// <summary>Попытка конвертации в требуемый тип.</summary>

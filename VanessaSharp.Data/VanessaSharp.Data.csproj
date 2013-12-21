@@ -97,6 +97,7 @@
     </Compile>
     <Compile Include="IGlobalContextProvider.cs" />
     <Compile Include="ITransactionManager.cs" />
+    <Compile Include="IValueTypeConverter.cs" />
     <Compile Include="OneSCommand.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -130,6 +131,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utility\ConnectionStringHelper.cs" />
     <Compile Include="Utility\EnumerableExtensions.cs" />
+    <Compile Include="ValueTypeConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

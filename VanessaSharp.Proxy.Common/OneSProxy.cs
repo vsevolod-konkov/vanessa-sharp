@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Dynamic;
 using System.Linq;
@@ -36,6 +35,12 @@ namespace VanessaSharp.Proxy.Common
 
             _disposableWrapper = comObject.WrapToDisposable();
             _proxyWrapper = proxyWrapper;
+        }
+
+        /// <summary>Обертыватель объекта.</summary>
+        internal IOneSProxyWrapper ProxyWrapper
+        {
+            get { return _proxyWrapper; }
         }
 
         /// <summary>Обертка над объектом.</summary>

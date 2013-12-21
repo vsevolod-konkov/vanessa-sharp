@@ -77,6 +77,8 @@
     <Compile Include="Integration\GlobalContextTests.cs" />
     <Compile Include="OneSConnectorFactoryTests.cs" />
     <Compile Include="OneSObjectTests.cs" />
+    <Compile Include="OneSProxyWrapperTests.cs" />
+    <Compile Include="OneSProxyWrapperWithGlobalContextTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Data;
 using System.Diagnostics.Contracts;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
 {
@@ -224,13 +225,13 @@ namespace VanessaSharp.Data
 
             // Получение контекста
             var globalContext = _globalContextProvider.GlobalContext;
-            dynamic query = globalContext.NewObject("Query");
-            query.Text = CommandText;
-            dynamic queryResult = query.Execute();
-            dynamic columns = queryResult.Columns;
-            dynamic queryResultSelection = queryResult.Choose();
+            using (var query = globalContext.NewObject<IQuery>())
+            {
+                query.Text = CommandText;
+                var queryResult = query.Execute();
 
-            return new OneSDataReader(globalContext, columns, queryResultSelection);
+                return new OneSDataReader(queryResult);
+            }
         }
 
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>

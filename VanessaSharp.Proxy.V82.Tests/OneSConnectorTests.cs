@@ -4,7 +4,6 @@ using NUnit.Framework;
 using System;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
-using VanessaSharp.Proxy.V82;
 using V82;
 using VanessaSharp.Proxy.Common;
 
@@ -59,14 +58,14 @@ namespace VanessaSharp.Proxy.V82.Tests
         [Test(Description = "Тестирование пробрасывания исключения при вызове метода Connect")]
         public void TestThrowConnectByComException()
         {
-            const string message = "Ошибка 1С";
-            const int errorCode = 12345;
-            var testingInstance = InitTestingInstanceForConnect(s => s.Throws(new COMException(message, errorCode)));
+            const string MESSAGE = "Ошибка 1С";
+            const int ERROR_CODE = 12345;
+            var testingInstance = InitTestingInstanceForConnect(s => s.Throws(new COMException(MESSAGE, ERROR_CODE)));
 
             var exception = Assert.Throws<InvalidOperationException>(() => testingInstance.Connect(CONNECT_STRING));
             Assert.AreEqual(string.Format(
                         "Ошибка подключения к информационной базе 1C. Строка соединения: \"{0}\". Код ошибки: \"{1}\". Сообщение: \"{2}\".",
-                        CONNECT_STRING, errorCode, message), exception.Message);
+                        CONNECT_STRING, ERROR_CODE, MESSAGE), exception.Message);
         }
 
         /// <summary>Тестирование вызова метода <see cref="OneSConnector.Connect"/> в случае получения нулевой ссылки при соединении.</summary>
@@ -84,7 +83,7 @@ namespace VanessaSharp.Proxy.V82.Tests
         /// <param name="testingAction">Действие тестирования экземпляра.</param>
         /// <param name="verifingAction">Действие проверки установки свойства.</param>
         /// <param name="propertyValue">Значение свойства.</param>
-        private void AssertSetProperty(Expression<Func<IV8COMConnector2, uint>> propertyGetter,
+        private static void AssertSetProperty(Expression<Func<IV8COMConnector2, uint>> propertyGetter,
             Action<OneSConnector, uint> testingAction, Action<IV8COMConnector2, uint> verifingAction, uint propertyValue)
         {
             var mockComConnector = new Mock<IV8COMConnector2>();

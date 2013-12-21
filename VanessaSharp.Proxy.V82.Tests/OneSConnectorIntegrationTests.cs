@@ -1,11 +1,6 @@
 ﻿using NUnit.Framework;
 using System;
 using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using VanessaSharp.Proxy.V82;
-using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Proxy.V82.Tests
 {
@@ -21,16 +16,16 @@ namespace VanessaSharp.Proxy.V82.Tests
         {
             using (var testingInstance = new OneSConnector())
             {
-                const string userName = "Абдулов (директор)";
+                const string USER_NAME = "Абдулов (директор)";
                 var connectString = string.Format(
-                    "File=\"{0}\";Usr=\"{1}\";", Path.Combine(Environment.CurrentDirectory, "DbExample"), userName);
+                    "File=\"{0}\";Usr=\"{1}\";", Path.Combine(Environment.CurrentDirectory, "DbExample"), USER_NAME);
 
                 using (dynamic context = testingInstance.Connect(connectString))
                 using (var sessionParameters = context.SessionParameters)
                 using (var currentUser = sessionParameters.ТекущийПользователь)
                 {
                     string currentUserName = currentUser.Code;
-                    Assert.AreEqual(userName, currentUserName.Trim());
+                    Assert.AreEqual(USER_NAME, currentUserName.Trim());
                 }
             }
         }

@@ -10,35 +10,54 @@ namespace VanessaSharp.Data
     /// <summary>Читатель данных, являющихся результатом запроса к 1С.</summary>
     public sealed class OneSDataReader : DbDataReader
     {
-        /// <summary>Состояния читателя.</summary>
+        /// <summary>Состояния.</summary>
         private enum States
         {
             Open,
-            Close
+            Closed
+        }
+        
+        /// <summary>Результат запроса.</summary>
+        private readonly IQueryResult _queryResult;
+
+        /// <summary>Сервис перевода типов.</summary>
+        private readonly IValueTypeConverter _valueTypeConverter;
+
+        /// <summary>Текущее состояние.</summary>
+        private States _currentState = States.Open;
+
+        /// <summary>Инварианты класса.</summary>
+        [ContractInvariantMethod]
+        private void Invariant()
+        {
+            Contract.Invariant(_queryResult != null);
+            Contract.Invariant(_valueTypeConverter != null);
         }
 
-        private readonly dynamic _globalContext;
-        private readonly dynamic _columns;
-        private readonly dynamic _queryResultSelection;
+        /// <summary>Конструктор принимающий результат запроса и сервис перевода типов.</summary>
+        /// <param name="queryResult">Результат запроса данных у 1С.</param>
+        /// <param name="valueTypeConverter">Сервис перевода типов.</param>
+        internal OneSDataReader(IQueryResult queryResult, IValueTypeConverter valueTypeConverter)
+        {
+            Contract.Requires<ArgumentNullException>(queryResult != null);
+            Contract.Requires<ArgumentNullException>(valueTypeConverter != null);
 
-        private States _states = States.Open;
-
+            _queryResult = queryResult;
+            _valueTypeConverter = valueTypeConverter;
+        }
+        
+        /// <summary>Конструктор принимающий результат запроса.</summary>
+        /// <param name="queryResult">Результат запроса данных у 1С.</param>
         internal OneSDataReader(IQueryResult queryResult)
+            : this(queryResult, ValueTypeConverter.Default)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
         }
 
+        /// <summary>Результат запроса данных у 1С.</summary>
         internal IQueryResult QueryResult
         {
-            get { throw new NotImplementedException();}
-        }
-
-        [Obsolete]
-        internal OneSDataReader(dynamic globalContext, dynamic columns, dynamic queryResultSelection)
-        {
-            _globalContext = globalContext;
-            _columns = columns;
-            _queryResultSelection = queryResultSelection;
+            get { return _queryResult;}
         }
 
         /// <summary>
@@ -47,17 +66,11 @@ namespace VanessaSharp.Data
         /// <filterpriority>1</filterpriority>
         public override void Close()
         {
-            FreeResource(_columns);
-            FreeResource(_queryResultSelection);
-
-            _states = States.Close;
-        }
-
-        private static void FreeResource(dynamic obj)
-        {
-            var disposable = obj as IDisposable;
-            if (disposable != null)
-                disposable.Dispose();
+            if (_currentState != States.Closed)
+            {
+                _queryResult.Dispose();
+                _currentState = States.Closed;
+            }
         }
 
         public override DataTable GetSchemaTable()
@@ -72,7 +85,8 @@ namespace VanessaSharp.Data
 
         public override bool Read()
         {
-            return _queryResultSelection.Next();
+            //return _queryResultSelection.Next();
+            throw new NotImplementedException();
         }
 
         public override int Depth
@@ -80,9 +94,16 @@ namespace VanessaSharp.Data
             get { throw new NotImplementedException(); }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="T:System.Data.Common.DbDataReader"/> is closed.
+        /// </summary>
+        /// <returns>
+        /// true if the <see cref="T:System.Data.Common.DbDataReader"/> is closed; otherwise false.
+        /// </returns>
+        /// <exception cref="T:System.InvalidOperationException">The <see cref="T:System.Data.SqlClient.SqlDataReader"/> is closed. </exception><filterpriority>1</filterpriority>
         public override bool IsClosed
         {
-            get { return _states == States.Close; }
+            get { return _currentState == States.Closed; }
         }
 
         public override int RecordsAffected
@@ -152,14 +173,16 @@ namespace VanessaSharp.Data
 
         public override int GetValues(object[] values)
         {
-            var count = Math.Min(values.Length, FieldCount);
+            //var count = Math.Min(values.Length, FieldCount);
 
-            for (var index = 0; index < count; index++)
-            {
-                values[index] = _queryResultSelection.Get(index);
-            }
+            //for (var index = 0; index < count; index++)
+            //{
+            //    values[index] = _queryResultSelection.Get(index);
+            //}
 
-            return count;
+            //return count;
+
+            throw new NotImplementedException();
         }
 
         public override bool IsDBNull(int ordinal)
@@ -167,9 +190,20 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the number of columns in the current row.
+        /// </summary>
+        /// <returns>
+        /// The number of columns in the current row.
+        /// </returns>
+        /// <exception cref="T:System.NotSupportedException">There is no current connection to an instance of SQL Server. </exception><filterpriority>1</filterpriority>
         public override int FieldCount
         {
-            get { return _columns.Count; }
+            get
+            {
+                using (var columns = _queryResult.Columns)
+                    return columns.Count;
+            }
         }
 
         public override object this[int ordinal]
@@ -202,9 +236,18 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the name of the column, given the zero-based column ordinal.
+        /// </summary>
+        /// <returns>
+        /// The name of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param><filterpriority>1</filterpriority>
         public override string GetName(int ordinal)
         {
-            return _columns.Get(ordinal).Name;
+            using (var columns = _queryResult.Columns)
+            using (var column = columns.Get(ordinal))
+                return column.Name;
         }
 
         public override int GetOrdinal(string name)
@@ -217,17 +260,21 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the data type of the specified column.
+        /// </summary>
+        /// <returns>
+        /// The data type of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param><exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception><filterpriority>1</filterpriority>
         public override Type GetFieldType(int ordinal)
         {
-            var oneSTypes = _columns.Get(ordinal).ValueType.Types;
-            var count = oneSTypes.Count;
-            var oneSType = oneSTypes.Get(0);
-
-            var oneSStringTypeName = _globalContext.String(oneSType);
-            if (oneSStringTypeName == "Строка")
-                return typeof(string);
-
-            return typeof(object);
+            using (var columns = _queryResult.Columns)
+            using (var column = columns.Get(ordinal))
+            using (var valueType = column.ValueType)
+            {
+                return _valueTypeConverter.ConvertFrom(valueType);
+            }
         }
 
         public override IEnumerator GetEnumerator()

@@ -29,6 +29,9 @@ namespace VanessaSharp.Data.UnitTests
                 .Setup(q => q.Execute())
                 .Returns(queryResult)
                 .Verifiable();
+            queryMock
+                .Setup(q => q.Dispose())
+                .Verifiable();
 
             var globalContextMock = new Mock<IGlobalContext>(MockBehavior.Strict);
             globalContextMock
@@ -51,6 +54,7 @@ namespace VanessaSharp.Data.UnitTests
             globalContextMock.Verify(ctx => ctx.NewObject<IQuery>(), Times.Once());
             queryMock.VerifySet(q => q.Text = TEST_SQL, Times.Once());
             queryMock.Verify(q => q.Execute(), Times.Once());
+            queryMock.Verify(q => q.Dispose(), Times.Once());
 
             Assert.AreSame(queryResult, reader.QueryResult);
         }

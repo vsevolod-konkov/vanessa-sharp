@@ -1,21 +1,41 @@
-﻿namespace VanessaSharp.Proxy.Common
+﻿using System;
+using System.Diagnostics.Contracts;
+
+namespace VanessaSharp.Proxy.Common
 {
     /// <summary>
     /// Прокси к глобальному контексту 1С.
     /// </summary>
     public sealed class OneSGlobalContext : OneSObject, IGlobalContext
     {
+        /// <summary>Определитель типов 1С.</summary>
+        private readonly IOneSTypeResolver _oneSTypeResolver;
+
         /// <summary>Конструктор принимающий RCW-обертку COM-объекта 1C.</summary>
         /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
         public OneSGlobalContext(object comObject)
-            : base(comObject, new OneSProxyWrapper())
+            : this(comObject, OneSWrapFactory.Default)
         {}
 
-        /// <summary>Получение реального обертывателя.</summary>
-        /// <param name="originWrapper">Исходный обертыватель.</param>
-        internal override IOneSProxyWrapper GetOneSProxyWrapper(IOneSProxyWrapper originWrapper)
+        /// <summary>Конструктор принимающий RCW-обертку COM-объекта 1C.</summary>
+        /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
+        /// <param name="oneSTypeResolver">Определитель типов 1С.</param>
+        public OneSGlobalContext(object comObject, IOneSTypeResolver oneSTypeResolver)
+            : base(o => CreateOneSProxy(comObject, (OneSGlobalContext) o))
         {
-            return new OneSProxyWrapperWithGlobalContext(this);
+            Contract.Requires<ArgumentNullException>(oneSTypeResolver != null);
+
+            _oneSTypeResolver = oneSTypeResolver;
+        }
+
+        /// <summary>Создание прокси для глобального контекста.</summary>
+        /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
+        /// <param name="globalContext">Ссылка на глобальный контекст.</param>
+        private static OneSProxy CreateOneSProxy(object comObject, OneSGlobalContext globalContext)
+        {
+            return new OneSProxy(
+                comObject,
+                new OneSProxyWrapperWithGlobalContext(globalContext));
         }
 
         /// <summary>Создание нового объекта.</summary>
@@ -29,7 +49,28 @@
         /// <typeparam name="T">Тип интерфейса соответствующего типу объекта 1С.</typeparam>
         public T NewObject<T>() where T : IGlobalContextBound
         {
-            throw new System.NotImplementedException();
+            return NewObject(
+                GetOneSTypeNameForNewObject<T>());
+        }
+
+        /// <summary>
+        /// Получение имени типа в 1С для объекта реализующего 
+        /// запрашиваемый тип.
+        /// </summary>
+        /// <typeparam name="T">Запрашиваемый тип.</typeparam>
+        private string GetOneSTypeNameForNewObject<T>()
+        {
+            var requestedType = typeof(T);
+            try
+            {
+                return _oneSTypeResolver.GetTypeNameFor(requestedType);
+            }
+            catch (InvalidOperationException e)
+            {
+                throw new NotSupportedException(string.Format(
+                "Тип \"{0}\" для создания через метод NewObject{{T}} не поддерживается.",
+                requestedType), e);
+            }
         }
 
         /// <summary>

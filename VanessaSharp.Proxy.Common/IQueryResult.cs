@@ -1,6 +1,7 @@
 ﻿namespace VanessaSharp.Proxy.Common
 {
     /// <summary>Интерфейс результата запроса.</summary>
+    [OneSObjectMapping(WrapType = typeof(OneSQueryResult))]
     public interface IQueryResult : IGlobalContextBound
     {
         /// <summary>Коллекция колонок результата запроса.</summary>

@@ -66,6 +66,7 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="CreateWrapParameters.cs" />
     <Compile Include="DisposableWrapper.cs" />
     <Compile Include="IGlobalContext.cs" />
     <Compile Include="IGlobalContextBound.cs" />
@@ -75,21 +76,35 @@
     <Compile Include="IOneSConnectorContract.cs" />
     <Compile Include="IOneSConnectorFactory.cs" />
     <Compile Include="IOneSConnectorFactoryContract.cs" />
+    <Compile Include="IOneSObjectDefiner.cs" />
     <Compile Include="IOneSProxy.cs" />
     <Compile Include="IOneSProxyWrapper.cs" />
     <Compile Include="IOneSProxyWrapperContract.cs" />
+    <Compile Include="IOneSTypeResolver.cs" />
+    <Compile Include="IOneSWrapFactory.cs" />
     <Compile Include="IQuery.cs" />
     <Compile Include="IQueryResult.cs" />
+    <Compile Include="IQueryResultColumn.cs" />
     <Compile Include="IQueryResultColumnsCollection.cs" />
     <Compile Include="IQueryResultSelection.cs" />
+    <Compile Include="IValueType.cs" />
     <Compile Include="OneSConnectorFactory.cs" />
     <Compile Include="OneSContextBoundObject.cs" />
     <Compile Include="OneSGlobalContext.cs" />
     <Compile Include="OneSObject.cs" />
+    <Compile Include="OneSObjectDefiner.cs" />
+    <Compile Include="OneSObjectMapping.cs" />
     <Compile Include="OneSProxy.cs" />
     <Compile Include="OneSProxyHelper.cs" />
     <Compile Include="OneSProxyWrapper.cs" />
     <Compile Include="OneSProxyWrapperWithGlobalContext.cs" />
+    <Compile Include="OneSQuery.cs" />
+    <Compile Include="OneSQueryResult.cs" />
+    <Compile Include="OneSQueryResultColumn.cs" />
+    <Compile Include="OneSQueryResultColumnsCollection.cs" />
+    <Compile Include="OneSValueType.cs" />
+    <Compile Include="OneSObjectMappingAttribute.cs" />
+    <Compile Include="OneSWrapFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
