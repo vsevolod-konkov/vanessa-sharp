@@ -76,9 +76,14 @@
     <Compile Include="Integration\Constants.cs" />
     <Compile Include="Integration\GlobalContextTests.cs" />
     <Compile Include="OneSConnectorFactoryTests.cs" />
+    <Compile Include="OneSObjectMappingProviderTests.cs" />
     <Compile Include="OneSObjectTests.cs" />
     <Compile Include="OneSProxyWrapperTests.cs" />
     <Compile Include="OneSProxyWrapperWithGlobalContextTests.cs" />
+    <Compile Include="OneSWrapFactoryTestsThroughMapObject.cs" />
+    <Compile Include="OneSWrapFactoryTestsBase.cs" />
+    <Compile Include="OneSWrapFactoryTestsThroughMappingCollection.cs" />
+    <Compile Include="OneSWrapMapTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

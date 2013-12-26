@@ -6,7 +6,7 @@ namespace VanessaSharp.Proxy.Common
     /// Атрибут описывающий соответствие между
     /// интерфейсом и объектом 1С.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Interface)]
     public class OneSObjectMappingAttribute : Attribute
     {
         /// <summary>Тип обертки реализующей интерфейс.</summary>

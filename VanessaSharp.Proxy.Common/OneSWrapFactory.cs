@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Proxy.Common
 {
@@ -15,42 +18,66 @@ namespace VanessaSharp.Proxy.Common
         {
             get { return _default; }
         }
-        private static readonly OneSWrapFactory _default = new OneSWrapFactory();
-        
+        private static readonly OneSWrapFactory _default = new OneSWrapFactory(OneSObjectMappingProvider.GetObjectMappings());
+
+        /// <summary>Карта соответствия типов и действий по из созданию.</summary>
+        private readonly IOneSWrapMap _map;
+
+        /// <summary>Конструктор принимающий коллекцию структур-описателей соответствия.</summary>
+        /// <param name="objectMappings">Коллекция структур-описателей соответствия.</param>
+        public OneSWrapFactory(IEnumerable<OneSObjectMapping> objectMappings)
+            : this(CreateWrapMap(objectMappings))
+        {
+            Contract.Requires<ArgumentNullException>(objectMappings != null);
+        }
+
+        /// <summary>
+        /// Создание карты оберток.
+        /// </summary>
+        private static IOneSWrapMap CreateWrapMap(IEnumerable<OneSObjectMapping> objectMappings)
+        {
+            Contract.Requires<ArgumentNullException>(objectMappings != null);
+
+            var map = new OneSWrapMap();
+            foreach (var mapping in objectMappings)
+            {
+                try
+                {
+                    map.AddObjectMapping(mapping);
+                }
+                catch (Exception e)
+                {
+                    //  TODO: перейти на log4net
+                    Trace.Write(e);
+                }
+            }
+
+            return map;
+        }
+
+        /// <summary>Конструктор принимающий карту соответствия.</summary>
+        /// <param name="map">Карта.</param>
+        internal OneSWrapFactory(IOneSWrapMap map)
+        {
+            Contract.Requires<ArgumentNullException>(map != null);
+
+            _map = map;
+        }
+
         /// <summary>Создание обертки.</summary>
         /// <param name="comObject">RCW-обертка над объектом 1С.</param>
         /// <param name="parameters">Параметры для создания обертки.</param>
         public OneSObject CreateWrap(object comObject, CreateWrapParameters parameters)
         {
-            var type = parameters.RequiredType;
-
-            // TODO: Пока делается по месту
-            if (type == typeof(IQuery))
+            var creator = _map.GetObjectCreator(parameters.RequiredType);
+            if (creator == null)
             {
-                return new OneSQuery(comObject, parameters.ProxyWrapper, parameters.GlobalContext);
+                throw new NotSupportedException(string.Format(
+                    "Для типа \"{0}\" невозможно создать типизированную обертку.",
+                    parameters.RequiredType));
             }
 
-            if (type == typeof(IQueryResult))
-            {
-                return new OneSQueryResult(comObject, parameters.ProxyWrapper, parameters.GlobalContext);
-            }
-
-            if (type == typeof(IQueryResultColumnsCollection))
-            {
-                return new OneSQueryResultColumnsCollection(comObject, parameters.ProxyWrapper, parameters.GlobalContext);
-            }
-
-            if (type == typeof(IQueryResultColumn))
-            {
-                return new OneSQueryResultColumn(comObject, parameters.ProxyWrapper, parameters.GlobalContext);
-            }
-
-            if (type == typeof(IValueType))
-            {
-                return new OneSValueType(comObject, parameters.ProxyWrapper, parameters.GlobalContext);
-            }
-
-            return new OneSContextBoundObject(comObject, parameters.ProxyWrapper, parameters.GlobalContext);
+            return creator(comObject, parameters.ProxyWrapper, parameters.GlobalContext);
         }
 
         /// <summary>
@@ -62,13 +89,16 @@ namespace VanessaSharp.Proxy.Common
         /// </param>
         public string GetTypeNameFor(Type requestedType)
         {
-            // TODO: Пока делается по месту
-            if (requestedType == typeof(IQuery))
-                return "Query";
+            var typeName = _map.GetOneSObjectTypeName(requestedType);
 
-            throw new InvalidOperationException(string.Format(
-                "Неизвестно имя типа в 1С поддерживающего интрефейс типа \"{0}\".",
-                requestedType));
+            if (typeName == null)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Неизвестно имя типа в 1С поддерживающего интерфейс типа \"{0}\".",
+                    requestedType));
+            }
+
+            return typeName;
         }
     }
 }

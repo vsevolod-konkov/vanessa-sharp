@@ -82,6 +82,7 @@
     <Compile Include="IOneSProxyWrapperContract.cs" />
     <Compile Include="IOneSTypeResolver.cs" />
     <Compile Include="IOneSWrapFactory.cs" />
+    <Compile Include="IOneSWrapMap.cs" />
     <Compile Include="IQuery.cs" />
     <Compile Include="IQueryResult.cs" />
     <Compile Include="IQueryResultColumn.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="OneSObject.cs" />
     <Compile Include="OneSObjectDefiner.cs" />
     <Compile Include="OneSObjectMapping.cs" />
+    <Compile Include="OneSObjectMappingProvider.cs" />
     <Compile Include="OneSProxy.cs" />
     <Compile Include="OneSProxyHelper.cs" />
     <Compile Include="OneSProxyWrapper.cs" />
@@ -105,6 +107,7 @@
     <Compile Include="OneSValueType.cs" />
     <Compile Include="OneSObjectMappingAttribute.cs" />
     <Compile Include="OneSWrapFactory.cs" />
+    <Compile Include="OneSWrapMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
