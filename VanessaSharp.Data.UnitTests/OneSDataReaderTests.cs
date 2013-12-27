@@ -228,5 +228,150 @@ namespace VanessaSharp.Data.UnitTests
             VerifyDispose(columnMock);
             VerifyDispose(valueTypeMock);
         }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSDataReader.Read"/>
+        /// в случае если результат запроса данных пуст.
+        /// </summary>
+        [Test]
+        public void TestReadWhenEmptyData()
+        {
+            // Arrange
+            _queryResultMock
+                .Setup(qr => qr.IsEmpty())
+                .Returns(true)
+                .Verifiable();
+
+            // Act & Assert
+            Assert.IsFalse(_testedInstance.Read());
+
+            // Act & Assert
+            Assert.IsFalse(_testedInstance.Read());
+
+            // Assert
+            _queryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSDataReader.Read"/>
+        /// в случае если результат запроса имеет одну запись.
+        /// </summary>
+        [Test]
+        public void TestReadWhenOneRecord()
+        {
+            // Arrange
+            var result = true;
+
+            var queryResultSelectionMock = new Mock<IQueryResultSelection>(MockBehavior.Strict);
+            queryResultSelectionMock
+                .Setup(qrs => qrs.Next())
+                .Returns(() => result);
+
+            _queryResultMock
+                .Setup(qr => qr.IsEmpty())
+                .Returns(false)
+                .Verifiable();
+            _queryResultMock
+                .Setup(qr => qr.Choose())
+                .Returns(queryResultSelectionMock.Object)
+                .Verifiable();
+
+            // Act & Assert
+            Assert.IsTrue(_testedInstance.Read());
+
+            result = false;
+
+            // Act & Assert
+            Assert.IsFalse(_testedInstance.Read());
+
+            // Assert
+            _queryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
+            _queryResultMock.Verify(qr => qr.Choose(), Times.Once());
+            queryResultSelectionMock.Verify(qrs => qrs.Next(), Times.Exactly(2));
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetValues"/>.
+        /// </summary>
+        /// <param name="deltaLengthOfArray">Разница между длиной массива и количеством колонок.</param>
+        /// <param name="shouldBeClose">Закрыть тестируемый экземпляр.</param>
+        [Test]
+        public void TestGetValues([Values(-1, 0, 1)] int deltaLengthOfArray, [Values(false, true)] bool shouldBeClose)
+        {
+            // Arrange
+            var data = new object[]
+                {
+                    "TEST",
+                    12,
+                    23.54
+                };
+
+            var recordCount = 0;
+
+            var queryResultSelectionMock = new Mock<IQueryResultSelection>(MockBehavior.Strict);
+            queryResultSelectionMock
+                .Setup(qrs => qrs.Next())
+                .Returns(() =>
+                    {
+                        recordCount++;
+                        return recordCount <= 1;
+                    });
+            queryResultSelectionMock
+                .Setup(qrs => qrs.Get(It.IsAny<int>()))
+                .Returns<int>(i => data[i])
+                .Verifiable();
+            queryResultSelectionMock
+                .Setup(qrs => qrs.Dispose())
+                .Verifiable();
+
+            _queryResultColumnsMock
+                .Setup(cs => cs.Count)
+                .Returns(data.Length)
+                .Verifiable();
+            
+            _queryResultMock
+                .Setup(qr => qr.Dispose())
+                .Verifiable();
+            _queryResultMock
+                .Setup(qr => qr.IsEmpty())
+                .Returns(false);
+            _queryResultMock
+                .Setup(qr => qr.Choose())
+                .Returns(queryResultSelectionMock.Object);
+            
+            // Act
+            var actualValues = new object[data.Length + deltaLengthOfArray];
+            Assert.Throws<InvalidOperationException>(() => _testedInstance.GetValues(actualValues));
+            Assert.IsTrue(_testedInstance.Read());
+            var actualResult = _testedInstance.GetValues(actualValues);
+
+            // Assert
+            var expectedResult = data.Length + Math.Min(deltaLengthOfArray, 0);
+            Assert.AreEqual(expectedResult, actualResult);
+            var expectedValues = new object[actualValues.Length];
+            Array.Copy(data, expectedValues, expectedResult);
+            CollectionAssert.AreEqual(expectedValues, actualValues);
+
+            // Act
+            if (shouldBeClose)
+            {
+                _testedInstance.Close();
+            }
+            else
+            {
+                Assert.IsFalse(_testedInstance.Read());
+            }
+            Assert.Throws<InvalidOperationException>(() => _testedInstance.GetValues(actualValues));
+
+            // Assert
+            var times = (shouldBeClose) ? Times.Once() : Times.Never();
+
+            queryResultSelectionMock
+                .Verify(qrs => qrs.Get(It.IsAny<int>()), Times.Exactly(expectedResult));
+            queryResultSelectionMock
+                .Verify(qrs => qrs.Dispose(), times);
+            _queryResultMock
+                .Verify(qrs => qrs.Dispose(), times);
+        }
     }
 }

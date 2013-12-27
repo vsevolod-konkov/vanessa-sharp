@@ -144,6 +144,7 @@ namespace VanessaSharp.Proxy.Common.Tests
                     {typeof (IQueryResult), typeof (OneSQueryResult)},
                     {typeof (IQueryResultColumnsCollection), typeof (OneSQueryResultColumnsCollection)},
                     {typeof (IQueryResultColumn), typeof (OneSQueryResultColumn)},
+                    {typeof(IQueryResultSelection), typeof(OneSQueryResultSelection)},
                     {typeof (IValueType), typeof (OneSValueType)}
                 };
             AssertMappings(expectedMapTypes, result, m => m.WrapType);

@@ -13,7 +13,9 @@ namespace VanessaSharp.Data
         /// <summary>Состояния.</summary>
         private enum States
         {
-            Open,
+            BofOpen,
+            RecordOpen,
+            EofOpen,
             Closed
         }
         
@@ -24,7 +26,10 @@ namespace VanessaSharp.Data
         private readonly IValueTypeConverter _valueTypeConverter;
 
         /// <summary>Текущее состояние.</summary>
-        private States _currentState = States.Open;
+        private States _currentState = States.BofOpen;
+
+        /// <summary>Выборка из результата запроса.</summary>
+        private IQueryResultSelection _queryResultSelection;
 
         /// <summary>Инварианты класса.</summary>
         [ContractInvariantMethod]
@@ -68,6 +73,9 @@ namespace VanessaSharp.Data
         {
             if (_currentState != States.Closed)
             {
+                if (_queryResultSelection != null)
+                    _queryResultSelection.Dispose();
+
                 _queryResult.Dispose();
                 _currentState = States.Closed;
             }
@@ -83,10 +91,36 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Advances the reader to the next record in a result set.
+        /// </summary>
+        /// <returns>
+        /// true if there are more rows; otherwise false.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
         public override bool Read()
         {
-            //return _queryResultSelection.Next();
-            throw new NotImplementedException();
+            switch (_currentState)
+            {
+                case States.BofOpen:
+                    if (_queryResult.IsEmpty())
+                    {
+                        _currentState = States.EofOpen;
+                        return false;
+                    }
+                    _queryResultSelection = _queryResult.Choose();
+                    _currentState = States.RecordOpen;
+                    break;
+
+                case States.EofOpen:
+                    return false;
+            }
+
+            var result = _queryResultSelection.Next();
+            if (!result)
+                _currentState = States.EofOpen;
+
+            return result;
         }
 
         public override int Depth
@@ -171,18 +205,30 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Populates an array of objects with the column values of the current row.
+        /// </summary>
+        /// <returns>
+        /// The number of instances of <see cref="T:System.Object"/> in the array.
+        /// </returns>
+        /// <param name="values">
+        /// An array of <see cref="T:System.Object"/> into which to copy the attribute columns.
+        /// </param>
+        /// <filterpriority>1</filterpriority>
         public override int GetValues(object[] values)
         {
-            //var count = Math.Min(values.Length, FieldCount);
+            if (_currentState != States.RecordOpen)
+            {
+                throw new InvalidOperationException(
+                    "Вызов метода GetValues недопустимо в данном состоянии.");
+            }
+            
+            var count = Math.Min(values.Length, FieldCount);
 
-            //for (var index = 0; index < count; index++)
-            //{
-            //    values[index] = _queryResultSelection.Get(index);
-            //}
+            for (var index = 0; index < count; index++)
+                values[index] = _queryResultSelection.Get(index);
 
-            //return count;
-
-            throw new NotImplementedException();
+            return count;
         }
 
         public override bool IsDBNull(int ordinal)

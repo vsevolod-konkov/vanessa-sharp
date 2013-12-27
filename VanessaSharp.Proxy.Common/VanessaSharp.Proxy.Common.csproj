@@ -104,6 +104,7 @@
     <Compile Include="OneSQueryResult.cs" />
     <Compile Include="OneSQueryResultColumn.cs" />
     <Compile Include="OneSQueryResultColumnsCollection.cs" />
+    <Compile Include="OneSQueryResultSelection.cs" />
     <Compile Include="OneSValueType.cs" />
     <Compile Include="OneSObjectMappingAttribute.cs" />
     <Compile Include="OneSWrapFactory.cs" />
