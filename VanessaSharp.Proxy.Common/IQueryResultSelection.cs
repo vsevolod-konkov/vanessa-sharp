@@ -17,6 +17,6 @@
         /// Получение значения поля по  имени поля.
         /// </summary>
         /// <param name="fieldName">Имя поля.</param>
-        object GetByName(string fieldName);
+        object Get(string fieldName);
     }
 }

@@ -307,7 +307,7 @@ namespace VanessaSharp.Data
                         "Невозможно получить значение свойства Item так как экземпляр не находится на позиции строки данных.");
                 }
 
-                return _queryResultSelection.GetByName(name);
+                return _queryResultSelection.Get(name);
             }
         }
 

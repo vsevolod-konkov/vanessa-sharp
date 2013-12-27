@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Dynamic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace VanessaSharp.Proxy.Common
 {
@@ -94,6 +96,40 @@ namespace VanessaSharp.Proxy.Common
                         .Invoke(Unwrap(args)),
                      returnType);
         }
+
+        /// <summary>Динамическое получение значения члена нижележащего объекта.</summary>
+        /// <param name="memberName">Имя члена.</param>
+        public object _(string memberName)
+        {
+            object result;
+            try
+            {
+                TryGetMember(GetGetMemberBinder(memberName), out result);
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Произошла ошибка при получении значения члена \"{0}\". Ошибка: {1}",
+                    memberName, e.Message));
+            }
+
+            return result;
+        }
+
+        private GetMemberBinder GetGetMemberBinder(string memberName)
+        {
+            GetMemberBinder binder;
+            if (!_memberBinders.TryGetValue(memberName, out binder))
+            {
+                binder = (GetMemberBinder)Binder.GetMember(CSharpBinderFlags.None, memberName, _oneSProxyType, _argumentInfos);
+                _memberBinders.Add(memberName, binder);
+            }
+
+            return binder;
+        }
+        private readonly Dictionary<string, GetMemberBinder> _memberBinders = new Dictionary<string, GetMemberBinder>(); 
+        private static readonly IEnumerable<CSharpArgumentInfo> _argumentInfos = new CSharpArgumentInfo[0];
+        private static readonly Type _oneSProxyType = typeof(OneSProxy);
 
         /// <summary>Попытка конвертации в требуемый тип.</summary>
         /// <param name="binder">Привязчик.</param>

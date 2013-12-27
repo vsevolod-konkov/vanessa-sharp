@@ -509,7 +509,7 @@ namespace VanessaSharp.Data.UnitTests
             queryResultSelectionMock
                 .Setup(qrs => qrs.Dispose());
             queryResultSelectionMock
-                .Setup(qrs => qrs.GetByName(It.IsAny<string>()))
+                .Setup(qrs => qrs.Get(It.IsAny<string>()))
                 .Returns(TEST_VALUE)
                 .Verifiable();
 
@@ -529,7 +529,7 @@ namespace VanessaSharp.Data.UnitTests
             _testedInstance.Close();
             Assert.Throws<InvalidOperationException>(() => { var value = _testedInstance[TEST_FIELD_NAME]; });
 
-            queryResultSelectionMock.Verify(qrs => qrs.GetByName(TEST_FIELD_NAME), Times.Once());
+            queryResultSelectionMock.Verify(qrs => qrs.Get(TEST_FIELD_NAME), Times.Once());
         }
     }
 }

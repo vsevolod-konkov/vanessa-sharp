@@ -34,9 +34,9 @@
         /// Получение значения поля по  имени поля.
         /// </summary>
         /// <param name="fieldName">Имя поля.</param>
-        public object GetByName(string fieldName)
+        public object Get(string fieldName)
         {
-            throw new System.NotImplementedException();
+            return _(fieldName);
         }
     }
 }
