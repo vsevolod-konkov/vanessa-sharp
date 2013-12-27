@@ -123,9 +123,16 @@ namespace VanessaSharp.Data
             return result;
         }
 
+        /// <summary>
+        /// Gets a value indicating the depth of nesting for the current row.
+        /// </summary>
+        /// <returns>
+        /// The depth of nesting for the current row.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
         public override int Depth
         {
-            get { throw new NotImplementedException(); }
+            get { return 0; }
         }
 
         /// <summary>
@@ -252,19 +259,77 @@ namespace VanessaSharp.Data
             }
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as an instance of <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.IndexOutOfRangeException">
+        /// The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>.
+        /// </exception>
+        /// <filterpriority>1</filterpriority>
         public override object this[int ordinal]
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                if (_currentState != States.RecordOpen)
+                {
+                    throw new InvalidOperationException(
+                        "Невозможно получить значение свойства Item так как экземпляр не находится на позиции строки данных.");
+                }
+
+                return _queryResultSelection.Get(ordinal);
+            }
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as an instance of <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="name">
+        /// The name of the column.
+        /// </param>
+        /// <exception cref="T:System.IndexOutOfRangeException">
+        /// No column with the specified name was found.
+        /// </exception>
+        /// <filterpriority>1</filterpriority>
         public override object this[string name]
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                if (_currentState != States.RecordOpen)
+                {
+                    throw new InvalidOperationException(
+                        "Невозможно получить значение свойства Item так как экземпляр не находится на позиции строки данных.");
+                }
+
+                return _queryResultSelection.GetByName(name);
+            }
         }
 
+        /// <summary>
+        /// Gets a value that indicates whether this <see cref="T:System.Data.Common.DbDataReader"/> contains one or more rows.
+        /// </summary>
+        /// <returns>
+        /// true if the <see cref="T:System.Data.Common.DbDataReader"/> contains one or more rows; otherwise false.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
         public override bool HasRows
         {
-            get { throw new NotImplementedException(); }
+            get
+            {
+                if (_currentState == States.Closed)
+                {
+                    throw new InvalidOperationException(
+                        "Невозможно получить значение свойства HasRows поскольку экземпляр находится в закрытом состоянии.");
+                }
+                
+                return !_queryResult.IsEmpty();
+            }
         }
 
         public override decimal GetDecimal(int ordinal)

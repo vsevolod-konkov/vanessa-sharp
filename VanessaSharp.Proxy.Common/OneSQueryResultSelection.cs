@@ -29,5 +29,14 @@
         {
             return DynamicProxy.Get(index);
         }
+
+        /// <summary>
+        /// Получение значения поля по  имени поля.
+        /// </summary>
+        /// <param name="fieldName">Имя поля.</param>
+        public object GetByName(string fieldName)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

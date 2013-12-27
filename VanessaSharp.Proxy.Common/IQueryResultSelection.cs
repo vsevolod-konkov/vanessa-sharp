@@ -12,5 +12,11 @@
         /// </summary>
         /// <param name="index">Индекс поля.</param>
         object Get(int index);
+
+        /// <summary>
+        /// Получение значения поля по  имени поля.
+        /// </summary>
+        /// <param name="fieldName">Имя поля.</param>
+        object GetByName(string fieldName);
     }
 }

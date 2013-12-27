@@ -2,6 +2,7 @@
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using NUnit.Framework;
 
 namespace VanessaSharp.Data.AcceptanceTests
@@ -15,6 +16,8 @@ namespace VanessaSharp.Data.AcceptanceTests
         [Test]
         public void TestSimpleExecuteReader()
         {
+            const int FIELD_COUNT = 6;
+            
             var expectedRecords = new[]
                 {
                     new[]
@@ -28,7 +31,31 @@ namespace VanessaSharp.Data.AcceptanceTests
                             "109094 Г.МОСКВА ГЛУБИНЫЙ ПЕР.,2", "223-322"
                         }
                 };
-            
+
+            var fieldNames = new[]
+                {
+                    "Код",
+                    "Наименование",
+                    "КоррСчет",
+                    "Город",
+                    "Адрес",
+                    "Телефоны"
+                };
+
+            Assert.AreEqual(FIELD_COUNT, fieldNames.Length);
+
+            var queryStringBuilder = new StringBuilder("Выбрать ");
+            for (var fieldIndex = 0; fieldIndex < fieldNames.Length - 1; fieldIndex++)
+            {
+                queryStringBuilder.Append(fieldNames[fieldIndex]);
+                queryStringBuilder.Append(", ");
+            }
+            queryStringBuilder.Append(fieldNames[fieldNames.Length - 1]);
+            queryStringBuilder.Append(" Из Справочник.Банки");
+
+            var queryText = queryStringBuilder.ToString();
+            Console.WriteLine(queryText);
+
             var connectionBuilder = new OneSConnectionStringBuilder
                 {
                     Catalog = Path.Combine(Environment.CurrentDirectory, @"..\..\..\Db"),
@@ -41,25 +68,23 @@ namespace VanessaSharp.Data.AcceptanceTests
                     {
                         Connection = connection,
                         CommandType = CommandType.Text,
-                        CommandText = "Выбрать Код, Наименование, КоррСчет, Город, Адрес, Телефоны Из Справочник.Банки"
+                        CommandText = queryText
                     };
 
                 connection.Open();
 
                 using (var reader = command.ExecuteReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult))
                 {
-                    
+                    Assert.AreEqual(0, reader.Depth);
+                    Assert.IsTrue(reader.HasRows);
+                    Assert.IsFalse(reader.IsClosed);
 
                     const string FORMAT = "Код \"{0}\"; Наименование \"{1}\"; Корр. Счет \"{2}\"; Город \"{3}\"; Адрес \"{4}\"; Телефоны \"{5}\"";
 
-                    Assert.AreEqual(6, reader.FieldCount);
+                    Assert.AreEqual(FIELD_COUNT, reader.FieldCount);
 
-                    Assert.AreEqual("Код", reader.GetName(0));
-                    Assert.AreEqual("Наименование", reader.GetName(1));
-                    Assert.AreEqual("КоррСчет", reader.GetName(2));
-                    Assert.AreEqual("Город", reader.GetName(3));
-                    Assert.AreEqual("Адрес", reader.GetName(4));
-                    Assert.AreEqual("Телефоны", reader.GetName(5));
+                    for (var fieldIndex = 0; fieldIndex < FIELD_COUNT; fieldIndex++)
+                        Assert.AreEqual(fieldNames[fieldIndex], reader.GetName(fieldIndex));
 
                     Assert.AreEqual(typeof(string), reader.GetFieldType(0));
                     Assert.AreEqual(typeof(string), reader.GetFieldType(1));
@@ -68,22 +93,26 @@ namespace VanessaSharp.Data.AcceptanceTests
                     Assert.AreEqual(typeof(string), reader.GetFieldType(4));
                     Assert.AreEqual(typeof(string), reader.GetFieldType(5));
 
-                    var values = new object[6];
+                    var values = new object[FIELD_COUNT];
 
                     var recordCounter = 0;
 
                     while (reader.Read())
                     {
                         Assert.Less(recordCounter, expectedRecords.Length);
-                        
-                        Assert.AreEqual(6, reader.GetValues(values));
+
+                        Assert.AreEqual(FIELD_COUNT, reader.GetValues(values));
 
                         Trace.WriteLine(string.Format(FORMAT, values));
 
                         var expectedRecord = expectedRecords[recordCounter];
 
                         for (var fieldIndex = 0; fieldIndex < expectedRecord.Length; fieldIndex++)
+                        {
                             Assert.AreEqual(expectedRecord[fieldIndex], values[fieldIndex]);
+                            Assert.AreEqual(expectedRecord[fieldIndex], reader[fieldIndex]);
+                            Assert.AreEqual(expectedRecord[fieldIndex], reader[fieldNames[fieldIndex]]);
+                        }
 
                         ++recordCounter;
                     }
