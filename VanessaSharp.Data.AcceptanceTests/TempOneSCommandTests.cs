@@ -78,10 +78,12 @@ namespace VanessaSharp.Data.AcceptanceTests
                     Assert.AreEqual(0, reader.Depth);
                     Assert.IsTrue(reader.HasRows);
                     Assert.IsFalse(reader.IsClosed);
-
+                    Assert.AreEqual(-1, reader.RecordsAffected);
+                    
                     const string FORMAT = "Код \"{0}\"; Наименование \"{1}\"; Корр. Счет \"{2}\"; Город \"{3}\"; Адрес \"{4}\"; Телефоны \"{5}\"";
 
                     Assert.AreEqual(FIELD_COUNT, reader.FieldCount);
+                    Assert.AreEqual(FIELD_COUNT, reader.VisibleFieldCount);
 
                     for (var fieldIndex = 0; fieldIndex < FIELD_COUNT; fieldIndex++)
                         Assert.AreEqual(fieldNames[fieldIndex], reader.GetName(fieldIndex));

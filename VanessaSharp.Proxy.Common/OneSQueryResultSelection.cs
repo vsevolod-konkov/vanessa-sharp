@@ -31,7 +31,7 @@
         }
 
         /// <summary>
-        /// Получение значения поля по  имени поля.
+        /// Получение значения поля по имени поля.
         /// </summary>
         /// <param name="fieldName">Имя поля.</param>
         public object Get(string fieldName)

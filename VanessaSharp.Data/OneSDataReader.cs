@@ -114,6 +114,10 @@ namespace VanessaSharp.Data
 
                 case States.EofOpen:
                     return false;
+
+                case States.Closed:
+                    throw new InvalidOperationException(
+                        "Недопустимо вызывать метод GetFieldType в закрытом состоянии.");
             }
 
             var result = _queryResultSelection.Next();
@@ -147,9 +151,16 @@ namespace VanessaSharp.Data
             get { return _currentState == States.Closed; }
         }
 
+        /// <summary>
+        /// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement. 
+        /// </summary>
+        /// <returns>
+        /// The number of rows changed, inserted, or deleted. -1 for SELECT statements; 0 if no rows were affected or the statement failed.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
         public override int RecordsAffected
         {
-            get { throw new NotImplementedException(); }
+            get { return -1; }
         }
 
         public override bool GetBoolean(int ordinal)
@@ -254,6 +265,12 @@ namespace VanessaSharp.Data
         {
             get
             {
+                if (_currentState == States.Closed)
+                {
+                    throw new InvalidOperationException(
+                        "Недопустимо получить значение свойства FieldCount в закрытом состоянии.");
+                }
+                
                 using (var columns = _queryResult.Columns)
                     return columns.Count;
             }
@@ -356,6 +373,12 @@ namespace VanessaSharp.Data
         /// <param name="ordinal">The zero-based column ordinal.</param><filterpriority>1</filterpriority>
         public override string GetName(int ordinal)
         {
+            if (_currentState == States.Closed)
+            {
+                throw new InvalidOperationException(
+                    "Недопустимо вызывать метод GetName в закрытом состоянии.");
+            }
+            
             using (var columns = _queryResult.Columns)
             using (var column = columns.Get(ordinal))
                 return column.Name;
@@ -380,6 +403,12 @@ namespace VanessaSharp.Data
         /// <param name="ordinal">The zero-based column ordinal.</param><exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception><filterpriority>1</filterpriority>
         public override Type GetFieldType(int ordinal)
         {
+            if (_currentState == States.Closed)
+            {
+                throw new InvalidOperationException(
+                    "Недопустимо вызывать метод GetFieldType в закрытом состоянии.");
+            }
+
             using (var columns = _queryResult.Columns)
             using (var column = columns.Get(ordinal))
             using (var valueType = column.ValueType)

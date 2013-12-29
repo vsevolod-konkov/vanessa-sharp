@@ -57,7 +57,10 @@
     <Compile Include="OneSConnectionStates\OpenStateObjectTestsBase.cs" />
     <Compile Include="OneSConnectionStates\TransactionStateObjectTests.cs" />
     <Compile Include="OneSConnectionTests.cs" />
-    <Compile Include="OneSDataReaderTests.cs" />
+    <Compile Include="OneSDataReaderTests\BofStateTests.cs" />
+    <Compile Include="OneSDataReaderTests\ClosedStateTests.cs" />
+    <Compile Include="OneSDataReaderTests\EofStateTests.cs" />
+    <Compile Include="OneSDataReaderTests\RowStateTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
