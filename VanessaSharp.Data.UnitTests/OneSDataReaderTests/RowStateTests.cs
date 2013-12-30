@@ -10,261 +10,42 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     /// в состоянии нахождения на строке данных.
     /// </summary>
     [TestFixture]
-    public sealed class RowStateTests
+    public sealed class RowStateTests : OpenStateTestBase
     {
-        /// <summary>Мок для <see cref="IValueTypeConverter"/>.</summary>
-        private Mock<IValueTypeConverter> _valueTypeConverterMock; 
-        
-        /// <summary>Мок для <see cref="IQueryResult"/>.</summary>
-        private Mock<IQueryResult> _queryResultMock;
-
-        /// <summary>Мок для <see cref="IQueryResultColumnsCollection"/>.</summary>
-        private Mock<IQueryResultColumnsCollection> _queryResultColumnsMock;
-
         /// <summary>Мок для <see cref="IQueryResultSelection"/>.</summary>
         private Mock<IQueryResultSelection> _queryResultSelectionMock;
 
-        /// <summary>Индекс строки.</summary>
-        private int _rowIndex = -1;
-
-        /// <summary>Количество строк данных.</summary>
-        private int _rowsCount = 1;
-
-        /// <summary>Тестируемый экземпляр.</summary>
-        private OneSDataReader _testedInstance;
+        /// <summary>Мэнеджер строк.</summary>
+        private readonly RowsManager _rowsManager = new RowsManager();
 
         /// <summary>
-        /// Установка реализации <see cref="IDisposable.Dispose"/>
-        /// для мока.
+        /// Выполнение действий после инициализации <see cref="OpenStateTestBase.QueryResultMock"/>.
         /// </summary>
-        private static void SetupDispose<T>(Mock<T> mock)
-            where T : class, IDisposable
+        protected override void OnAfterInitQueryResultMock()
         {
-            mock
-                .Setup(o => o.Dispose())
-                .Verifiable();
+            _queryResultSelectionMock = CreateQueryResultSelectionMock(_rowsManager);
         }
 
-        /// <summary>Создание мока реализующего <see cref="IDisposable"/>.</summary>
-        private static Mock<T> CreateDisposableMock<T>()
-            where T : class, IDisposable
+        /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
+        protected override void ScenarioAfterInitTestedInstance()
         {
-            var mock = new Mock<T>(MockBehavior.Strict);
-            SetupDispose(mock);
-
-            return mock;
-        }
-
-        /// <summary>
-        /// Проверка вызова <see cref="IDisposable.Dispose"/> 
-        /// у мока.
-        /// </summary>
-        private static void VerifyDispose<T>(Mock<T> mock)
-            where T : class, IDisposable
-        {
-            mock.Verify(o => o.Dispose(), Times.AtLeastOnce());
-        }
-
-        /// <summary>
-        /// Проверка вызова <see cref="IDisposable.Dispose"/> 
-        /// у <see cref="_queryResultColumnsMock"/>.
-        /// </summary>
-        private void VerifyColumnsDispose()
-        {
-            VerifyDispose(_queryResultColumnsMock);
-        }
-
-        /// <summary>Установка количества колонок.</summary>
-        private void SetColumnsCount(int count)
-        {
-            _queryResultColumnsMock
-               .Setup(cs => cs.Count)
-               .Returns(count);
-        }
-
-        /// <summary>Инициализация теста.</summary>
-        [SetUp]
-        public void SetUp()
-        {
-            _valueTypeConverterMock = new Mock<IValueTypeConverter>(MockBehavior.Strict);
-
-            _queryResultColumnsMock = CreateDisposableMock<IQueryResultColumnsCollection>();
-
-            _queryResultSelectionMock = new Mock<IQueryResultSelection>(MockBehavior.Strict);
-            _queryResultSelectionMock
-                .Setup(s => s.Next())
-                .Returns(() => 
-                        {
-                            ++_rowIndex;
-                            return (_rowIndex < _rowsCount);
-                        })
-                .Verifiable();
-
-            _queryResultMock = new Mock<IQueryResult>(MockBehavior.Strict);
-            _queryResultMock
-                .SetupGet(r => r.Columns)
-                .Returns(_queryResultColumnsMock.Object)
-                .Verifiable();
-            _queryResultMock
-                .Setup(r => r.IsEmpty())
-                .Returns(false);
-            _queryResultMock
-                .Setup(r => r.Choose())
-                .Returns(_queryResultSelectionMock.Object);
-
-            _testedInstance = new OneSDataReader(_queryResultMock.Object, _valueTypeConverterMock.Object);
-
-            _rowIndex = -1;
-            _rowsCount = 1;
-            Assert.IsTrue(_testedInstance.Read());
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="OneSDataReader.IsClosed"/>.
-        /// </summary>
-        [Test]
-        public void TestIsClosed()
-        {
-            // Assert
-            Assert.IsFalse(_testedInstance.IsClosed);
+            _rowsManager.RowsCount = 1;
+            _rowsManager.Reset();
+            Assert.IsTrue(TestedInstance.Read());
         }
 
         /// <summary>Тестирование метода <see cref="OneSDataReader.Close"/>.</summary>
         [Test]
-        public void TestClose()
+        public override void TestClose()
         {
             // Arrange
-            SetupDispose(_queryResultMock);
             SetupDispose(_queryResultSelectionMock);
-
-            // Act
-            _testedInstance.Close();
-
-            // Assert
-            Assert.IsTrue(_testedInstance.IsClosed);
-            VerifyDispose(_queryResultMock);
-            VerifyDispose(_queryResultSelectionMock);
-        }
-
-        /// <summary>
-        /// Установка рeализации <see cref="IQueryResultColumnsCollection.Count"/>
-        /// у мока <see cref="_queryResultColumnsMock"/>.
-        /// </summary>
-        /// <param name="columnsCount">Количество колонок.</param>
-        private void SetupColumnsGetCount(int columnsCount)
-        {
-            _queryResultColumnsMock
-                .SetupGet(cs => cs.Count)
-                .Returns(columnsCount)
-                .Verifiable();
-        }
-        
-        /// <summary>Тестирование метода <see cref="OneSDataReader.FieldCount"/>.</summary>
-        [Test]
-        public void TestFieldCount()
-        {
-            const int TEST_FIELD_COUNT = 8;
-
-            // Arrange
-            SetupColumnsGetCount(TEST_FIELD_COUNT);
-
-            // Act & Assert
-            Assert.AreEqual(TEST_FIELD_COUNT, _testedInstance.FieldCount);
-
-            _queryResultMock.VerifyGet(r => r.Columns, Times.Once());
-            _queryResultColumnsMock.VerifyGet(cs => cs.Count, Times.Once());
-
-            VerifyColumnsDispose();
-        }
-
-        /// <summary>Установка получения колонки.</summary>
-        /// <param name="index">Индекс колонки.</param>
-        /// <param name="column">Экземпляр получаемой колонки.</param>
-        private void SetupGetColumn(int index, IQueryResultColumn column)
-        {
-            SetupColumnsGetCount(index + 1);
-
-            _queryResultColumnsMock
-                .Setup(cs => cs.Get(It.IsAny<int>()))
-                .Returns(column)
-                .Verifiable();
-        }
-
-        /// <summary>Проверка получения полонки.</summary>
-        /// <param name="index">Индекс колонки.</param>
-        private void VerifyGetColumn(int index)
-        {
-            _queryResultMock.Verify(r => r.Columns);
-            _queryResultColumnsMock.Verify(cs => cs.Get(index), Times.Once());
-        }
-
-        /// <summary>Тестирование <see cref="OneSDataReader.GetName"/>.</summary>
-        [Test]
-        public void TestGetName()
-        {
-            const string TEST_FIELD_NAME = "Тестовая колонка";
-            const int TEST_FIELD_ORDINAL = 3;
             
-            // Arrange
-            var columnMock = CreateDisposableMock<IQueryResultColumn>();
-            columnMock
-                .SetupGet(c => c.Name)
-                .Returns(TEST_FIELD_NAME)
-                .Verifiable();
-
-            SetupGetColumn(TEST_FIELD_ORDINAL, columnMock.Object);
-
-            // Act
-            var actualName = _testedInstance.GetName(TEST_FIELD_ORDINAL);
-
+            // Arrange - Act - Assert
+            base.TestClose();
+            
             // Assert
-            Assert.AreEqual(TEST_FIELD_NAME, actualName);
-
-            VerifyGetColumn(TEST_FIELD_ORDINAL);
-            columnMock.VerifyGet(c => c.Name, Times.Once());
-
-            VerifyColumnsDispose();
-            VerifyDispose(columnMock);
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="OneSDataReader.GetFieldType"/>.
-        /// </summary>
-        [Test]
-        public void TestGetFieldType()
-        {
-            const int TEST_FIELD_ORDINAL = 3;
-
-            // Arrange
-            var valueTypeMock = CreateDisposableMock<IValueType>();
-
-            var columnMock = CreateDisposableMock<IQueryResultColumn>();
-            columnMock
-                .SetupGet(c => c.ValueType)
-                .Returns(valueTypeMock.Object)
-                .Verifiable();
-
-            SetupGetColumn(TEST_FIELD_ORDINAL, columnMock.Object);
-
-            var expectedType = typeof(decimal);
-            _valueTypeConverterMock
-                .Setup(c => c.ConvertFrom(It.IsAny<IValueType>()))
-                .Returns(expectedType)
-                .Verifiable();
-
-            // Act
-            var actualType = _testedInstance.GetFieldType(TEST_FIELD_ORDINAL);
-
-            // Assert
-            Assert.AreEqual(expectedType, actualType);
-
-            VerifyGetColumn(TEST_FIELD_ORDINAL);
-            columnMock.VerifyGet(c => c.ValueType, Times.Once());
-            _valueTypeConverterMock.Verify(c => c.ConvertFrom(valueTypeMock.Object), Times.Once());
-
-            VerifyColumnsDispose();
-            VerifyDispose(columnMock);
-            VerifyDispose(valueTypeMock);
+            VerifyDispose(_queryResultSelectionMock);
         }
 
         /// <summary>
@@ -277,13 +58,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Arrange
             const int TEST_ROWS_COUNT = 10;
 
-            _rowsCount = TEST_ROWS_COUNT;
+            _rowsManager.RowsCount = TEST_ROWS_COUNT;
 
             // Act & Assert
             for (var rowsCounter = 1; rowsCounter < TEST_ROWS_COUNT; rowsCounter++)
-                Assert.IsTrue(_testedInstance.Read());
+                Assert.IsTrue(TestedInstance.Read());
             
-            Assert.IsFalse(_testedInstance.Read());
+            Assert.IsFalse(TestedInstance.Read());
 
             // Assert
             _queryResultSelectionMock.Verify(qrs => qrs.Next(), Times.Exactly(TEST_ROWS_COUNT + 1));
@@ -297,43 +78,31 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void TestGetValues([Values(-1, 0, 1)] int deltaLengthOfArray)
         {
             // Arrange
-            var rowData = new object[]
-                {
-                    "TEST",
-                    12,
-                    23.54
-                };
-
-            _rowsCount = 1;
-
-            SetColumnsCount(rowData.Length);
+            _rowsManager.RowsCount = 1;
+            var rowData = new object[] { "TEST", 12, 23.54 };
+            SetupColumnsGetCount(rowData.Length);
 
             _queryResultSelectionMock
                 .Setup(qrs => qrs.Get(It.IsAny<int>()))
                 .Returns<int>(i => rowData[i])
                 .Verifiable();
-            
+
+            var bufferLength = rowData.Length + deltaLengthOfArray;
+            var expectedValues = new object[bufferLength];
+
+            var expectedResult = rowData.Length + Math.Min(deltaLengthOfArray, 0);
+            Array.Copy(rowData, expectedValues, expectedResult);
+
             // Act
-            var actualValues = new object[rowData.Length + deltaLengthOfArray];
-            var actualResult = _testedInstance.GetValues(actualValues);
+            var actualValues = new object[bufferLength];
+            var actualResult = TestedInstance.GetValues(actualValues);
 
             // Assert
-            var expectedResult = rowData.Length + Math.Min(deltaLengthOfArray, 0);
             Assert.AreEqual(expectedResult, actualResult);
-            
-            var expectedValues = new object[actualValues.Length];
-            Array.Copy(rowData, expectedValues, expectedResult);
             CollectionAssert.AreEqual(expectedValues, actualValues);
 
             _queryResultSelectionMock
                 .Verify(qrs => qrs.Get(It.IsAny<int>()), Times.Exactly(expectedResult));
-        }
-
-        /// <summary>Тестирование свойства <see cref="OneSDataReader.Depth"/>.</summary>
-        [Test]
-        public void TestDepth()
-        {
-            Assert.AreEqual(0, _testedInstance.Depth);
         }
 
         /// <summary>
@@ -342,8 +111,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [Test]
         public void TestHasRows()
         {
-            // Act & Assert
-            Assert.IsTrue(_testedInstance.HasRows);
+            Assert.IsTrue(TestedInstance.HasRows);
         }
 
         /// <summary>
@@ -361,10 +129,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 .Returns(TEST_VALUE)
                 .Verifiable();
 
-            SetColumnsCount(TEST_FIELD_INDEX + 1);
+            SetupColumnsGetCount(TEST_FIELD_INDEX + 1);
 
             // Act & Assert
-            Assert.AreEqual(TEST_VALUE, _testedInstance[TEST_FIELD_INDEX]);
+            Assert.AreEqual(TEST_VALUE, TestedInstance[TEST_FIELD_INDEX]);
             _queryResultSelectionMock.Verify(qrs => qrs.Get(TEST_FIELD_INDEX), Times.Once());
         }
 
@@ -384,15 +152,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 .Verifiable();
 
             // Act & Assert
-            Assert.AreEqual(TEST_VALUE, _testedInstance[TEST_FIELD_NAME]);
+            Assert.AreEqual(TEST_VALUE, TestedInstance[TEST_FIELD_NAME]);
             _queryResultSelectionMock.Verify(qrs => qrs.Get(TEST_FIELD_NAME), Times.Once());
-        }
-
-        /// <summary>Тестирование <see cref="OneSDataReader.RecordsAffected"/>.</summary>
-        [Test]
-        public void TestRecordsAffected()
-        {
-            Assert.AreEqual(-1, _testedInstance.RecordsAffected);
         }
     }
 }

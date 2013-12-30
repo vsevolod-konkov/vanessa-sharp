@@ -60,6 +60,8 @@
     <Compile Include="OneSDataReaderTests\BofStateTests.cs" />
     <Compile Include="OneSDataReaderTests\ClosedStateTests.cs" />
     <Compile Include="OneSDataReaderTests\EofStateTests.cs" />
+    <Compile Include="OneSDataReaderTests\OneSDataReaderComponentTestBase.cs" />
+    <Compile Include="OneSDataReaderTests\OpenStateTestBase.cs" />
     <Compile Include="OneSDataReaderTests\RowStateTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

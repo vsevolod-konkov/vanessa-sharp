@@ -12,7 +12,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     [TestFixture(Case.AfterBof)]
     [TestFixture(Case.AfterRow)]
     [TestFixture(Case.AfterEof)]
-    public sealed class ClosedStateTests
+    public sealed class ClosedStateTests : OneSDataReaderComponentTestBase
     {
         public enum Case
         {
@@ -20,9 +20,6 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             AfterRow,
             AfterEof
         }
-
-        /// <summary>Тестируемый экземпляр.</summary>
-        private OneSDataReader _testedInstance;
 
         /// <summary>Сценарий закрытия.</summary>
         private readonly Case _case;
@@ -32,82 +29,41 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             _case = @case;
         }
 
-        /// <summary>
-        /// Установка реализации <see cref="IDisposable.Dispose"/>
-        /// для мока.
-        /// </summary>
-        private static void SetupDispose<T>(Mock<T> mock)
-            where T : class, IDisposable
+        /// <summary>Создание тестового экземпляра <see cref="IValueTypeConverter"/>.</summary>
+        internal override IValueTypeConverter CreateValueTypeConverter()
         {
-            mock
-                .Setup(o => o.Dispose())
-                .Verifiable();
+            return new Mock<IValueTypeConverter>(MockBehavior.Strict).Object;
         }
 
-        /// <summary>Создание мока реализующего <see cref="IDisposable"/>.</summary>
-        private static Mock<T> CreateDisposableMock<T>()
-            where T : class, IDisposable
-        {
-            var mock = new Mock<T>(MockBehavior.Strict);
-            SetupDispose(mock);
-
-            return mock;
-        }
-
-        /// <summary>
-        /// Проверка вызова <see cref="IDisposable.Dispose"/> 
-        /// у мока.
-        /// </summary>
-        private static void VerifyDispose<T>(Mock<T> mock)
-            where T : class, IDisposable
-        {
-            mock.Verify(o => o.Dispose(), Times.AtLeastOnce());
-        }
-
-        /// <summary>Инициализация теста.</summary>
-        [SetUp]
-        public void SetUp()
+        /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
+        protected override IQueryResult CreateQueryResult()
         {
             var queryResultMock = new Mock<IQueryResult>(MockBehavior.Strict);
             SetupDispose(queryResultMock);
 
             if (_case != Case.AfterBof)
             {
-                var rowIndex = -1;
-                const int ROWS_COUNT = 1;
-
-                var queryResultSelectionMock = new Mock<IQueryResultSelection>(MockBehavior.Strict);
-                queryResultSelectionMock
-                    .Setup(s => s.Next())
-                    .Returns(() =>
-                    {
-                        ++rowIndex;
-                        return (rowIndex < ROWS_COUNT);
-                    })
-                    .Verifiable();
+                var queryResultSelectionMock = CreateQueryResultSelectionMock(queryResultMock);
                 SetupDispose(queryResultSelectionMock);
-
-                queryResultMock
-                    .Setup(r => r.IsEmpty())
-                    .Returns(false);
-                queryResultMock
-                    .Setup(r => r.Choose())
-                    .Returns(queryResultSelectionMock.Object);
             }
 
-            _testedInstance = new OneSDataReader(queryResultMock.Object, new Mock<IValueTypeConverter>(MockBehavior.Strict).Object);
+            return queryResultMock.Object;
+        }
 
+        /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
+        protected override void ScenarioAfterInitTestedInstance()
+        {
             if (_case != Case.AfterBof)
             {
-                Assert.IsTrue(_testedInstance.Read());
+                Assert.IsTrue(TestedInstance.Read());
             }
 
             if (_case == Case.AfterEof)
             {
-                Assert.IsFalse(_testedInstance.Read());
+                Assert.IsFalse(TestedInstance.Read());
             }
 
-            _testedInstance.Close();
+            TestedInstance.Close();
         }
 
         /// <summary>
@@ -116,7 +72,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [Test]
         public void TestIsClosed()
         {
-            Assert.IsTrue(_testedInstance.IsClosed);
+            Assert.IsTrue(TestedInstance.IsClosed);
         }
 
         /// <summary>Тестирование метода <see cref="OneSDataReader.FieldCount"/>.</summary>
@@ -124,7 +80,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestFieldCount()
         {
-            var result = _testedInstance.FieldCount;
+            var result = TestedInstance.FieldCount;
         }
 
         /// <summary>Тестирование <see cref="OneSDataReader.GetName"/>.</summary>
@@ -132,7 +88,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestGetName()
         {
-            var result = _testedInstance.GetName(3);
+            var result = TestedInstance.GetName(3);
         }
 
         /// <summary>
@@ -142,7 +98,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestGetFieldType()
         {
-            var actualType = _testedInstance.GetFieldType(3);
+            var actualType = TestedInstance.GetFieldType(3);
         }
 
         /// <summary>
@@ -152,7 +108,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestRead()
         {
-            var actualType = _testedInstance.Read();
+            var actualType = TestedInstance.Read();
         }
 
         /// <summary>
@@ -162,14 +118,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestGetValues()
         {
-            var actualResult = _testedInstance.GetValues(new object[10]);
-        }
-
-        /// <summary>Тестирование свойства <see cref="OneSDataReader.Depth"/>.</summary>
-        [Test]
-        public void TestDepth()
-        {
-            Assert.AreEqual(0, _testedInstance.Depth);
+            var actualResult = TestedInstance.GetValues(new object[10]);
         }
 
         /// <summary>
@@ -179,7 +128,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestHasRows()
         {
-            var result = _testedInstance.HasRows;
+            var result = TestedInstance.HasRows;
         }
 
         /// <summary>
@@ -189,7 +138,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestItemByIndex()
         {
-            var result = _testedInstance[5];
+            var result = TestedInstance[5];
         }
 
         /// <summary>
@@ -199,14 +148,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [ExpectedException(typeof(InvalidOperationException))]
         public void TestItemByName()
         {
-            var result = _testedInstance["TEST_FIELD"];
-        }
-
-        /// <summary>Тестирование <see cref="OneSDataReader.RecordsAffected"/>.</summary>
-        [Test]
-        public void TestRecordsAffected()
-        {
-            Assert.AreEqual(-1, _testedInstance.RecordsAffected);
+            var result = TestedInstance["TEST_FIELD"];
         }
     }
 }
