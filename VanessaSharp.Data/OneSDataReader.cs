@@ -25,6 +25,9 @@ namespace VanessaSharp.Data
         /// <summary>Сервис перевода типов.</summary>
         private readonly IValueTypeConverter _valueTypeConverter;
 
+        /// <summary>Сервис перевода значений.</summary>
+        private readonly IValueConverter _valueConverter = ValueConverter.Default;
+
         /// <summary>Текущее состояние.</summary>
         private States _currentState = States.BofOpen;
 
@@ -37,24 +40,28 @@ namespace VanessaSharp.Data
         {
             Contract.Invariant(_queryResult != null);
             Contract.Invariant(_valueTypeConverter != null);
+            Contract.Invariant(_valueConverter != null);
         }
 
         /// <summary>Конструктор принимающий результат запроса и сервис перевода типов.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         /// <param name="valueTypeConverter">Сервис перевода типов.</param>
-        internal OneSDataReader(IQueryResult queryResult, IValueTypeConverter valueTypeConverter)
+        /// <param name="valueConverter">Сервис перевода значений.</param>
+        internal OneSDataReader(IQueryResult queryResult, IValueTypeConverter valueTypeConverter, IValueConverter valueConverter)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(valueTypeConverter != null);
+            Contract.Requires<ArgumentNullException>(valueConverter != null);
 
             _queryResult = queryResult;
             _valueTypeConverter = valueTypeConverter;
+            _valueConverter = valueConverter;
         }
         
         /// <summary>Конструктор принимающий результат запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         internal OneSDataReader(IQueryResult queryResult)
-            : this(queryResult, ValueTypeConverter.Default)
+            : this(queryResult, ValueTypeConverter.Default, ValueConverter.Default)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
         }
@@ -86,9 +93,24 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Advances the reader to the next result when reading the results of a batch of statements.
+        /// </summary>
+        /// <returns>
+        /// true if there are more result sets; otherwise false.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
         public override bool NextResult()
         {
-            throw new NotImplementedException();
+            // TODO: В 8.3 появились пакетные запросы, надо реализовать.
+
+            if (_currentState == States.Closed)
+            {
+                throw new InvalidOperationException(
+                    "Недопустимо вызывать NextResult в закрытом состоянии.");
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -168,9 +190,19 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a byte.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>1</filterpriority>
         public override byte GetByte(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToByte(
+                GetValue(ordinal));
         }
 
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
@@ -193,19 +225,49 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a 16-bit signed integer.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>2</filterpriority>
         public override short GetInt16(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToInt16(
+                GetValue(ordinal));
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a 32-bit signed integer.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>1</filterpriority>
         public override int GetInt32(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToInt32(
+                GetValue(ordinal));
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a 64-bit signed integer.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>2</filterpriority>
         public override long GetInt64(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToInt64(
+                GetValue(ordinal));
         }
 
         public override DateTime GetDateTime(int ordinal)
@@ -213,14 +275,39 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as an instance of <see cref="T:System.String"/>.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>1</filterpriority>
         public override string GetString(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToString(
+                GetValue(ordinal));
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as an instance of <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param><filterpriority>1</filterpriority>
         public override object GetValue(int ordinal)
         {
-            throw new NotImplementedException();
+            // TODO: Копипаст с индексатором и методом GetValues. Требуется рефакторинг
+            
+            if (_currentState != States.RecordOpen)
+            {
+                throw new InvalidOperationException(
+                    "Невозможно получить значение поля так как экземпляр не находится на позиции строки данных.");
+            }
+
+            return _queryResultSelection.Get(ordinal);
         }
 
         /// <summary>
@@ -354,14 +441,33 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a double-precision floating point number.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>1</filterpriority>
         public override double GetDouble(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToDouble(
+                GetValue(ordinal));
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a single-precision floating point number.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception><filterpriority>2</filterpriority>
         public override float GetFloat(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToFloat(
+                GetValue(ordinal));
         }
 
         /// <summary>
@@ -384,9 +490,33 @@ namespace VanessaSharp.Data
                 return column.Name;
         }
 
+        /// <summary>
+        /// Gets the column ordinal given the name of the column.
+        /// </summary>
+        /// <returns>
+        /// The zero-based column ordinal.
+        /// </returns>
+        /// <param name="name">The name of the column.</param><exception cref="T:System.IndexOutOfRangeException">The name specified is not a valid column name.</exception><filterpriority>1</filterpriority>
         public override int GetOrdinal(string name)
         {
-            throw new NotImplementedException();
+            if (_currentState == States.Closed)
+            {
+                throw new InvalidOperationException(
+                    "Недопустимо вызывать метод GetOrdinal в закрытом состоянии.");
+            }
+            
+            using (var columns = _queryResult.Columns)
+            {
+                var column = columns.Find(name);
+                if (column == null)
+                {
+                    throw new IndexOutOfRangeException(string.Format(
+                        "Колонки с именем \"{0}\" не существует.", name));
+                }
+                
+                using (column)
+                    return columns.IndexOf(column);
+            }
         }
 
         public override string GetDataTypeName(int ordinal)

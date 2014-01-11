@@ -26,6 +26,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.Acceptanc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.UnitTests", "VanessaSharp.Data.UnitTests\VanessaSharp.Data.UnitTests.csproj", "{9CB9BDB7-29AB-4778-8F49-E7E5B3A43780}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SampleDb", "SampleDb", "{92BCE3AE-D949-47FD-BA01-52689A3061C8}"
+	ProjectSection(SolutionItems) = preProject
+		Db\1Cv8.1CD = Db\1Cv8.1CD
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AcceptanceTestDb", "AcceptanceTestDb", "{4E8CC641-EB97-4EAF-85AA-B80BB06ECD9D}"
+	ProjectSection(SolutionItems) = preProject
+		AcceptanceTestDb\1Cv8.1CD = AcceptanceTestDb\1Cv8.1CD
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -132,5 +142,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D231F52C-1650-4523-A365-7AB2009A6BF7} = {EF47D692-349F-46E2-9725-C3EBF2165820}
+		{92BCE3AE-D949-47FD-BA01-52689A3061C8} = {D231F52C-1650-4523-A365-7AB2009A6BF7}
+		{4E8CC641-EB97-4EAF-85AA-B80BB06ECD9D} = {D231F52C-1650-4523-A365-7AB2009A6BF7}
 	EndGlobalSection
 EndGlobal

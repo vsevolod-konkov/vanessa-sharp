@@ -23,6 +23,17 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             return ValueTypeConverterMock.Object;
         }
 
+        /// <summary>Мок для <see cref="IValueConverter"/>.</summary>
+        internal Mock<IValueConverter> ValueConverterMock { get; private set; }
+
+        /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>
+        internal override IValueConverter CreateValueConverter()
+        {
+            ValueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
+
+            return ValueConverterMock.Object;
+        }
+
         /// <summary>Мок для <see cref="IQueryResult"/>.</summary>
         protected Mock<IQueryResult> QueryResultMock { get; private set; }
 
@@ -221,6 +232,86 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             VerifyColumnsDispose();
             VerifyDispose(columnMock);
             VerifyDispose(valueTypeMock);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSDataReader.GetOrdinal"/>
+        /// в случае если колонка с заданным именем существует.
+        /// </summary>
+        [Test]
+        public void TestGetOrdinalWhenColumnExist()
+        {
+            // Arrange
+            const string TEST_COLUMN_NAME = "Test";
+            const int TEST_EXPECTED_ORDINAL = 2;
+
+            var columnMock = CreateDisposableMock<IQueryResultColumn>();
+            var column = columnMock.Object;
+
+            SetupColumnsGetCount(TEST_EXPECTED_ORDINAL + 1);
+
+            QueryResultColumnsMock
+                .Setup(cs => cs.Find(It.IsAny<string>()))
+                .Returns(column)
+                .Verifiable();
+
+            QueryResultColumnsMock
+                .Setup(cs => cs.IndexOf(It.IsAny<IQueryResultColumn>()))
+                .Returns(TEST_EXPECTED_ORDINAL)
+                .Verifiable();
+               
+            // Act & Assert
+            Assert.AreEqual(TEST_EXPECTED_ORDINAL, TestedInstance.GetOrdinal(TEST_COLUMN_NAME));
+
+            QueryResultColumnsMock
+                .Verify(cs => cs.Find(TEST_COLUMN_NAME), Times.Once());
+            QueryResultColumnsMock
+                .Verify(cs => cs.IndexOf(column), Times.Once());
+            VerifyColumnsDispose();
+
+            VerifyDispose(columnMock);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSDataReader.GetOrdinal"/>
+        /// в случае если колонка с заданным именем не существует.
+        /// </summary>
+        [Test]
+        public void TestGetOrdinalWhenColumnNotExist()
+        {
+            // Arrange
+            const string TEST_COLUMN_NAME = "Test";
+
+            QueryResultColumnsMock
+                .Setup(cs => cs.Find(It.IsAny<string>()))
+                .Returns<IQueryResultColumn>(null)
+                .Verifiable();
+
+            // Act & Assert
+            Assert.Throws<IndexOutOfRangeException>(() =>
+                {
+                    var ordinal = TestedInstance.GetOrdinal(TEST_COLUMN_NAME);
+                });
+
+            QueryResultColumnsMock
+                .Verify(cs => cs.Find(TEST_COLUMN_NAME), Times.Once());
+            VerifyColumnsDispose();
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.NextResult"/>.
+        /// </summary>
+        [Test]
+        public void TestNextResult()
+        {
+            // TODO: Пока не реализована возможность работы с пакетными запросами.
+            Assert.IsFalse(TestedInstance.NextResult());
+        }
+
+        /// <summary>Настройка для получения значения.</summary>
+        protected override void ArrangeGetValue(int ordinal, object returnValue)
+        {
+            SetupColumnsGetCount(ordinal + 1);
         }
     }
 }

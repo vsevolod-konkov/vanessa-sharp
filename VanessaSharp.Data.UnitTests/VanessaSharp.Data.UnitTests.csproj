@@ -63,6 +63,16 @@
     <Compile Include="OneSDataReaderTests\OneSDataReaderComponentTestBase.cs" />
     <Compile Include="OneSDataReaderTests\OpenStateTestBase.cs" />
     <Compile Include="OneSDataReaderTests\RowStateTests.cs" />
+    <Compile Include="ValueConverterTests\ToByteTests.cs" />
+    <Compile Include="ValueConverterTests\ToDoubleTests.cs" />
+    <Compile Include="ValueConverterTests\ToFloatTests.cs" />
+    <Compile Include="ValueConverterTests\ToInt16Tests.cs" />
+    <Compile Include="ValueConverterTests\ToInt32Tests.cs" />
+    <Compile Include="ValueConverterTests\ToInt64Tests.cs" />
+    <Compile Include="ValueConverterTests\ToSmallNumberTestsBase.cs" />
+    <Compile Include="ValueConverterTests\ToStringTests.cs" />
+    <Compile Include="ValueConverterTests\ToValueTypeTestsBase.cs" />
+    <Compile Include="ValueConverterTests\ValueConverterTestsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

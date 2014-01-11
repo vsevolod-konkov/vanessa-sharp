@@ -90,34 +90,5 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             QueryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
         }
-
-        /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(int)"/>.
-        /// </summary>
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void TestItemByIndex()
-        {
-            // Arrange
-            const int TEST_FIELD_INDEX = 5;
-            
-            QueryResultColumnsMock
-                .Setup(cs => cs.Count)
-                .Returns(TEST_FIELD_INDEX + 1);
-
-            // Act & Assert
-            var value = TestedInstance[TEST_FIELD_INDEX];
-        }
-
-        /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(string)"/>.
-        /// </summary>
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void TestItemByName()
-        {
-            // Act & Assert
-            var value = TestedInstance["TEST_FIELD"];
-        }
     }
 }

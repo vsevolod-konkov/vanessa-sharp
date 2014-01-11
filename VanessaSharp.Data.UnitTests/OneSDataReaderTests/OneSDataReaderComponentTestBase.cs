@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Proxy.Common;
@@ -123,7 +124,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [SetUp]
         public void SetUp()
         {
-            TestedInstance = new OneSDataReader(CreateQueryResult(),  CreateValueTypeConverter());
+            TestedInstance = new OneSDataReader(
+                CreateQueryResult(),  
+                CreateValueTypeConverter(),
+                CreateValueConverter());
 
             ScenarioAfterInitTestedInstance();
         }
@@ -133,6 +137,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
         /// <summary>Создание тестового экземпляра <see cref="IValueTypeConverter"/>.</summary>
         internal abstract IValueTypeConverter CreateValueTypeConverter();
+
+        /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>
+        internal abstract IValueConverter CreateValueConverter();
 
         /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
         protected virtual void ScenarioAfterInitTestedInstance() {}
@@ -149,6 +156,315 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void TestRecordsAffected()
         {
             Assert.AreEqual(-1, TestedInstance.RecordsAffected);
+        }
+
+        /// <summary>
+        /// Следует ли вбрасывать исключение
+        /// <see cref="InvalidOperationException"/>
+        /// в случае попытки получения значения.
+        /// </summary>
+        protected virtual bool ShouldBeThrowInvalidOperationExceptionWhenGetValue
+        {
+            get { return true; }
+        }
+
+        /// <summary>Настройка для получения значения.</summary>
+        protected virtual void ArrangeGetValue(string columnName, object returnValue)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов получения значения.
+        /// </summary>
+        protected virtual void AssertGetValue(string columnName)
+        { }
+
+        /// <summary>
+        /// Тестирование свойства <see cref="OneSDataReader.Item(string)"/>.
+        /// </summary>
+        [Test]
+        public void TestItemByName()
+        {
+            // Arrange
+            const string TEST_COLUMN_NAME = "TestColumn";
+            const string TEST_VALUE = "TestValue";
+            ArrangeGetValue(TEST_COLUMN_NAME, TEST_VALUE);
+
+            // Act & Assert
+            Func<object> testedFunc = () => TestedInstance[TEST_COLUMN_NAME];
+            if (ShouldBeThrowInvalidOperationExceptionWhenGetValue)
+            {
+                Assert.Throws<InvalidOperationException>(() => testedFunc());
+            }
+            else
+            {
+                Assert.AreEqual(TEST_VALUE, testedFunc());
+                AssertGetValue(TEST_COLUMN_NAME);
+            }
+        }
+
+        /// <summary>Настройка для получения значения.</summary>
+        protected virtual void ArrangeGetValue(int ordinal, object returnValue)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов получения значения.
+        /// </summary>
+        protected virtual void AssertGetValue(int ordinal)
+        { }
+
+        /// <summary>
+        /// Тестирование получения значения.
+        /// </summary>
+        /// <typeparam name="T">Тип значения.</typeparam>
+        /// <param name="testedAction">Тестируемое действие.</param>
+        /// <param name="ordinal">Индекс колонки.</param>
+        /// <param name="expectedResult">Ожидаемый результат</param>
+        /// <returns>
+        /// Полученное значение.
+        /// </returns>
+        private T ArrangeAndGetValue<T>(Func<OneSDataReader, int, T> testedAction, int ordinal, T expectedResult)
+        {
+            // Arrange
+            ArrangeGetValue(ordinal, expectedResult);
+            return testedAction(TestedInstance, ordinal);
+
+        }
+
+        private void TestGetValue<T>(Func<OneSDataReader, int, T> testedAction, T expectedResult)
+        {
+            const int TEST_ORDINAL = 5;
+            Func<T> testedFunc = () => ArrangeAndGetValue(testedAction, TEST_ORDINAL, expectedResult);
+
+            if (ShouldBeThrowInvalidOperationExceptionWhenGetValue)
+            {
+                Assert.Throws<InvalidOperationException>(() => testedFunc());
+            }
+            else
+            {
+                Assert.AreEqual(expectedResult, testedFunc());
+                AssertGetValue(TEST_ORDINAL);
+            }
+        }
+
+        private void TestGetValue(Func<OneSDataReader, int, object> testedAction)
+        {
+            TestGetValue(testedAction, "Test");
+        }
+
+        /// <summary>
+        /// Тестирование свойства <see cref="OneSDataReader.Item(int)"/>.
+        /// </summary>
+        [Test]
+        public void TestItemByIndex()
+        {
+            TestGetValue((reader, ordinal) => reader[ordinal]);
+        }
+
+        /// <summary>
+        /// Тестирование свойства <see cref="OneSDataReader.GetValue"/>.
+        /// </summary>
+        [Test]
+        public void TestGetValue()
+        {
+            TestGetValue((reader, ordinal) => reader.GetValue(ordinal));
+        }
+
+        /// <summary>Тестирование получения типизированного значения.</summary>
+        /// <typeparam name="T">Тип получаемого значения.</typeparam>
+        /// <param name="expectedResult">Ожидаемый результат.</param>
+        /// <param name="arrange">Подготовка теста.</param>
+        /// <param name="testedAction">Тестовое действие.</param>
+        /// <param name="assert">Проверка вызовов.</param>
+        private void TestGetTypedValue<T>(
+            T expectedResult,
+            Action<object, T> arrange,
+            Func<OneSDataReader, int, T> testedAction,
+            Action<object> assert)
+        {
+            object returnValue = expectedResult;
+            arrange(returnValue, expectedResult);
+
+            TestGetValue(testedAction, expectedResult);
+
+            if (!ShouldBeThrowInvalidOperationExceptionWhenGetValue)
+                assert(returnValue);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetString"/>.
+        /// </summary>
+        protected virtual void ArrangeGetString(object returnValue, string expectedResult)
+        {}
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetString"/>.
+        /// </summary>
+        protected virtual void AssertGetString(object returnValue)
+        {}
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetString"/>.
+        /// </summary>
+        [Test]
+        public void TestGetString()
+        {
+            TestGetTypedValue(
+                "Test", 
+                ArrangeGetString, 
+                (reader, i) => reader.GetString(i), 
+                AssertGetString);
+        }
+
+
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetByte"/>.
+        /// </summary>
+        protected virtual void ArrangeGetByte(object returnValue, byte expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetByte"/>.
+        /// </summary>
+        protected virtual void AssertGetByte(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetByte"/>.
+        /// </summary>
+        [Test]
+        public void TestGetByte()
+        {
+            TestGetTypedValue(
+                (byte)123,
+                ArrangeGetByte,
+                (reader, i) => reader.GetByte(i),
+                AssertGetByte);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetInt16"/>.
+        /// </summary>
+        protected virtual void ArrangeGetInt16(object returnValue, short expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetInt16"/>.
+        /// </summary>
+        protected virtual void AssertGetInt16(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetInt16"/>.
+        /// </summary>
+        [Test]
+        public void TestGetInt16()
+        {
+            TestGetTypedValue(
+                (short)12353,
+                ArrangeGetInt16,
+                (reader, i) => reader.GetInt16(i),
+                AssertGetInt16);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetInt32"/>.
+        /// </summary>
+        protected virtual void ArrangeGetInt32(object returnValue, int expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetInt32"/>.
+        /// </summary>
+        protected virtual void AssertGetInt32(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetInt32"/>.
+        /// </summary>
+        [Test]
+        public void TestGetInt32()
+        {
+            TestGetTypedValue(
+                12345,
+                ArrangeGetInt32,
+                (reader, i) => reader.GetInt32(i),
+                AssertGetInt32);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetInt64"/>.
+        /// </summary>
+        protected virtual void ArrangeGetInt64(object returnValue, long expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetInt64"/>.
+        /// </summary>
+        protected virtual void AssertGetInt64(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetInt64"/>.
+        /// </summary>
+        [Test]
+        public void TestGetInt64()
+        {
+            TestGetTypedValue(
+                123456453634535,
+                ArrangeGetInt64,
+                (reader, i) => reader.GetInt64(i),
+                AssertGetInt64);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetFloat"/>.
+        /// </summary>
+        protected virtual void ArrangeGetFloat(object returnValue, float expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetFloat"/>.
+        /// </summary>
+        protected virtual void AssertGetFloat(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetFloat"/>.
+        /// </summary>
+        [Test]
+        public void TestGetFloat()
+        {
+            TestGetTypedValue(
+                4564536363463424254534541.14154F,
+                ArrangeGetFloat,
+                (reader, i) => reader.GetFloat(i),
+                AssertGetFloat);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetDouble"/>.
+        /// </summary>
+        protected virtual void ArrangeGetDouble(object returnValue, double expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetDouble"/>.
+        /// </summary>
+        protected virtual void AssertGetDouble(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetDouble"/>.
+        /// </summary>
+        [Test]
+        public void TestGetDouble()
+        {
+            TestGetTypedValue(
+                4564536345355141235631246363634643635252136534534542352153534634634242545345345345345345645322243241.14154153535323436363543553543223455345543532534554552509898009790709809809809890,
+                ArrangeGetDouble,
+                (reader, i) => reader.GetDouble(i),
+                AssertGetDouble);
         }
     }
 }

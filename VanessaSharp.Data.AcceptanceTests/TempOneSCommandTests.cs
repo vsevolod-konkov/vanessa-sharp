@@ -95,6 +95,10 @@ namespace VanessaSharp.Data.AcceptanceTests
                     Assert.AreEqual(typeof(string), reader.GetFieldType(4));
                     Assert.AreEqual(typeof(string), reader.GetFieldType(5));
 
+                    // Тестирование GetOrdinal
+                    for (var fieldIndex = 0; fieldIndex < fieldNames.Length; fieldIndex++)
+                        Assert.AreEqual(fieldIndex, reader.GetOrdinal(fieldNames[fieldIndex]));
+
                     var values = new object[FIELD_COUNT];
 
                     var recordCounter = 0;
@@ -113,8 +117,148 @@ namespace VanessaSharp.Data.AcceptanceTests
                         {
                             Assert.AreEqual(expectedRecord[fieldIndex], values[fieldIndex]);
                             Assert.AreEqual(expectedRecord[fieldIndex], reader[fieldIndex]);
+                            Assert.AreEqual(expectedRecord[fieldIndex], reader.GetValue(fieldIndex));
                             Assert.AreEqual(expectedRecord[fieldIndex], reader[fieldNames[fieldIndex]]);
                         }
+
+                        ++recordCounter;
+                    }
+                }
+            }
+        }
+
+        /// <summary>Тестирование простого запроса.</summary>
+        [Test]
+        public void TestSimpleExecuteReaderV2()
+        {
+            const int FIELD_COUNT = 8;
+
+            var fieldNames = new[]
+                {
+                    "СтроковоеПоле",
+                    "ЦелочисленноеПоле",
+                    "ЧисловоеПоле",
+                    "БулевоПоле",
+                    "ДатаПоле",
+                    "ДатаВремяПоле",
+                    "ВремяПоле",
+                    "НеограниченноеСтроковоеПоле"
+                };
+
+            Assert.AreEqual(FIELD_COUNT, fieldNames.Length);
+
+            var expectedRecords = new[]
+                {
+                    new object[]
+                        {
+                            "Тестирование", 234, 546.323, true,
+                            new DateTime(2014, 01, 15), new DateTime(2014, 01, 08, 4, 33, 43),
+                            new DateTime(100, 1, 1, 23, 43, 43),
+                            @"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+                        },
+                    new object[]
+                        {
+                            "", 0, 0, false,
+                            new DateTime(100, 1, 1), new DateTime(100, 1, 1),
+                            new DateTime(100, 1, 1),
+                            ""
+                        },
+                };
+
+
+            var queryStringBuilder = new StringBuilder("Выбрать ");
+            for (var fieldIndex = 0; fieldIndex < fieldNames.Length - 1; fieldIndex++)
+            {
+                queryStringBuilder.Append(fieldNames[fieldIndex]);
+                queryStringBuilder.Append(", ");
+            }
+            queryStringBuilder.Append(fieldNames[fieldNames.Length - 1]);
+            queryStringBuilder.Append(" Из Справочник.ТестовыйСправочник");
+
+            var queryText = queryStringBuilder.ToString();
+            Console.WriteLine(queryText);
+
+            var connectionBuilder = new OneSConnectionStringBuilder
+            {
+                Catalog = Constants.TestCatalog,
+                User = Constants.TEST_USER
+            };
+
+            var formatBuilder = new StringBuilder();
+            for (var fieldIndex = 0; fieldIndex < fieldNames.Length; fieldIndex++)
+            {
+                if (fieldIndex > 0)
+                    formatBuilder.Append(", ");
+                formatBuilder.Append(fieldNames[fieldIndex]);
+                formatBuilder.Append(" = {");
+                formatBuilder.Append(fieldIndex);
+                formatBuilder.Append("}");
+            }
+            var format = formatBuilder.ToString();
+
+            using (var connection = new OneSConnection(connectionBuilder.ConnectionString))
+            {
+                var command = new OneSCommand
+                {
+                    Connection = connection,
+                    CommandType = CommandType.Text,
+                    CommandText = queryText
+                };
+
+                connection.Open();
+
+                using (var reader = command.ExecuteReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult))
+                {
+                    Assert.AreEqual(0, reader.Depth);
+                    Assert.IsTrue(reader.HasRows);
+                    Assert.IsFalse(reader.IsClosed);
+                    Assert.AreEqual(-1, reader.RecordsAffected);
+
+
+                    Assert.AreEqual(FIELD_COUNT, reader.FieldCount);
+                    Assert.AreEqual(FIELD_COUNT, reader.VisibleFieldCount);
+
+                    for (var fieldIndex = 0; fieldIndex < FIELD_COUNT; fieldIndex++)
+                        Assert.AreEqual(fieldNames[fieldIndex], reader.GetName(fieldIndex));
+
+                    //Assert.AreEqual(typeof(string), reader.GetFieldType(0));
+                    //Assert.AreEqual(typeof(int), reader.GetFieldType(1));
+                    //Assert.AreEqual(typeof(double), reader.GetFieldType(2));
+                    //Assert.AreEqual(typeof(bool), reader.GetFieldType(3));
+                    //Assert.AreEqual(typeof(DateTime), reader.GetFieldType(4));
+                    //Assert.AreEqual(typeof(DateTime), reader.GetFieldType(5));
+                    //Assert.AreEqual(typeof(DateTime), reader.GetFieldType(6));
+                    //Assert.AreEqual(typeof(string), reader.GetFieldType(8));
+
+                    // Тестирование GetOrdinal
+                    for (var fieldIndex = 0; fieldIndex < fieldNames.Length; fieldIndex++)
+                        Assert.AreEqual(fieldIndex, reader.GetOrdinal(fieldNames[fieldIndex]));
+
+                    var values = new object[FIELD_COUNT];
+
+                    var recordCounter = 0;
+
+                    while (reader.Read())
+                    {
+                        Assert.Less(recordCounter, expectedRecords.Length);
+
+                        Assert.AreEqual(FIELD_COUNT, reader.GetValues(values));
+
+                        Trace.WriteLine(string.Format(format, values));
+
+                        var expectedRecord = expectedRecords[recordCounter];
+
+                        for (var fieldIndex = 0; fieldIndex < expectedRecord.Length; fieldIndex++)
+                        {
+                            Assert.AreEqual(expectedRecord[fieldIndex], values[fieldIndex]);
+                            Assert.AreEqual(expectedRecord[fieldIndex], reader[fieldIndex]);
+                            Assert.AreEqual(expectedRecord[fieldIndex], reader.GetValue(fieldIndex));
+                            Assert.AreEqual(expectedRecord[fieldIndex], reader[fieldNames[fieldIndex]]);
+                        }
+
+                        Assert.AreEqual(expectedRecord[0], reader.GetString(0));
+                        Assert.AreEqual(expectedRecord[1], reader.GetInt32(1));
+                        Assert.AreEqual(expectedRecord[2], reader.GetDouble(2));
 
                         ++recordCounter;
                     }

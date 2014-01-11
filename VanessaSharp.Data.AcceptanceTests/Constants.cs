@@ -12,10 +12,11 @@ namespace VanessaSharp.Data.AcceptanceTests
             get { return _testCatalog; }
         }
         private static readonly string _testCatalog
-            = Path.Combine(Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName, "Db");
+            = Path.Combine(Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName, "AcceptanceTestDb");
 
         /// <summary>Имя пользователя.</summary>
-        public const string TEST_USER = "Абдулов (директор)";
+        public const string TEST_USER = "";
+        //public const string TEST_USER = "Абдулов (директор)";
 
         /// <summary>Имя альтернативного пользователя.</summary>
         public const string ALTERNATIVE_TEST_USER = "Бакинская (бухгалтер-экономист)";

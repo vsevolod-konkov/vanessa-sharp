@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Proxy.Common;
@@ -115,45 +116,176 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         }
 
         /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(int)"/>.
+        /// Следует ли вбрасывать исключение
+        /// <see cref="InvalidOperationException"/>
+        /// в случае попытки получения значения.
         /// </summary>
-        [Test]
-        public void TestItemByIndex()
+        protected override bool ShouldBeThrowInvalidOperationExceptionWhenGetValue
         {
-            // Arrange
-            const string TEST_VALUE = "TEST_VALUE";
-            const int TEST_FIELD_INDEX = 5;
-            
+            get { return false; }
+        }
+
+        /// <summary>Настройка для получения значения.</summary>
+        protected override void ArrangeGetValue(string columnName, object returnValue)
+        {
             _queryResultSelectionMock
-                .Setup(qrs => qrs.Get(It.IsAny<int>()))
-                .Returns(TEST_VALUE)
+                .Setup(qrs => qrs.Get(columnName))
+                .Returns(returnValue)
                 .Verifiable();
-
-            SetupColumnsGetCount(TEST_FIELD_INDEX + 1);
-
-            // Act & Assert
-            Assert.AreEqual(TEST_VALUE, TestedInstance[TEST_FIELD_INDEX]);
-            _queryResultSelectionMock.Verify(qrs => qrs.Get(TEST_FIELD_INDEX), Times.Once());
         }
 
         /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(string)"/>.
+        /// Проверка вызовов получения значения.
         /// </summary>
-        [Test]
-        public void TestItemByName()
+        protected override void AssertGetValue(string columnName)
         {
-            // Arrange
-            const string TEST_VALUE = "TEST_VALUE";
-            const string TEST_FIELD_NAME = "TEST_FIELD";
+            _queryResultSelectionMock
+                .Verify(qrs => qrs.Get(columnName), Times.Once());
+        }
+
+        /// <summary>Настройка для получения значения.</summary>
+        protected override void ArrangeGetValue(int ordinal, object returnValue)
+        {
+            base.ArrangeGetValue(ordinal, returnValue);
 
             _queryResultSelectionMock
-                .Setup(qrs => qrs.Get(It.IsAny<string>()))
-                .Returns(TEST_VALUE)
+                .Setup(qrs => qrs.Get(ordinal))
+                .Returns(returnValue)
                 .Verifiable();
+        }
 
-            // Act & Assert
-            Assert.AreEqual(TEST_VALUE, TestedInstance[TEST_FIELD_NAME]);
-            _queryResultSelectionMock.Verify(qrs => qrs.Get(TEST_FIELD_NAME), Times.Once());
+        /// <summary>
+        /// Проверка вызовов получения значения.
+        /// </summary>
+        protected override void AssertGetValue(int ordinal)
+        {
+            _queryResultSelectionMock.Verify(qrs => qrs.Get(ordinal), Times.Once());
+        }
+
+        private void ArrangeGetTypedValue<T>(Expression<Func<IValueConverter, T>> setupAction, T expectedResult)
+        {
+            ValueConverterMock
+                .Setup(setupAction)
+                .Returns(expectedResult)
+                .Verifiable();
+        }
+
+        private void AssertGetTypedValue<T>(Expression<Func<IValueConverter, T>> verifyAction)
+        {
+            ValueConverterMock
+                .Verify(verifyAction, Times.Once());
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetString"/>.
+        /// </summary>
+        protected override void ArrangeGetString(object returnValue, string expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToString(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetString"/>.
+        /// </summary>
+        protected override void AssertGetString(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToString(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetByte"/>.
+        /// </summary>
+        protected override void ArrangeGetByte(object returnValue, byte expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToByte(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetByte"/>.
+        /// </summary>
+        protected override void AssertGetByte(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToByte(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetInt16"/>.
+        /// </summary>
+        protected override void ArrangeGetInt16(object returnValue, short expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToInt16(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetInt16"/>.
+        /// </summary>
+        protected override void AssertGetInt16(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToInt16(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetInt32"/>.
+        /// </summary>
+        protected override void ArrangeGetInt32(object returnValue, int expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToInt32(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetInt32"/>.
+        /// </summary>
+        protected override void AssertGetInt32(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToInt32(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetInt64"/>.
+        /// </summary>
+        protected override void ArrangeGetInt64(object returnValue, long expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToInt64(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetInt64"/>.
+        /// </summary>
+        protected override void AssertGetInt64(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToInt64(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetFloat"/>.
+        /// </summary>
+        protected override void ArrangeGetFloat(object returnValue, float expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToFloat(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetFloat"/>.
+        /// </summary>
+        protected override void AssertGetFloat(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToFloat(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetDouble"/>.
+        /// </summary>
+        protected override void ArrangeGetDouble(object returnValue, double expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToDouble(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetDouble"/>.
+        /// </summary>
+        protected override void AssertGetDouble(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToDouble(returnValue));
         }
     }
 }

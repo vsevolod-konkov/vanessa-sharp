@@ -35,6 +35,12 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             return new Mock<IValueTypeConverter>(MockBehavior.Strict).Object;
         }
 
+        /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>
+        internal override IValueConverter CreateValueConverter()
+        {
+            return new Mock<IValueConverter>(MockBehavior.Strict).Object;
+        }
+
         /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
         protected override IQueryResult CreateQueryResult()
         {
@@ -132,23 +138,23 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         }
 
         /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(int)"/>.
+        /// Тестирование метода <see cref="OneSDataReader.GetOrdinal"/>.
         /// </summary>
         [Test]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void TestItemByIndex()
+        public void TestGetOrdinal()
         {
-            var result = TestedInstance[5];
+            var result = TestedInstance.GetOrdinal("TEST_FIELD");
         }
 
         /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(string)"/>.
+        /// Тестирование <see cref="OneSDataReader.NextResult"/>.
         /// </summary>
         [Test]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void TestItemByName()
+        public void TestNextResult()
         {
-            var result = TestedInstance["TEST_FIELD"];
+            TestedInstance.NextResult();
         }
     }
 }

@@ -100,25 +100,5 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             Assert.AreEqual(_hasRows, TestedInstance.HasRows);
             QueryResultMock.Verify(qr => qr.IsEmpty(), Times.AtLeastOnce());
         }
-
-        /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(int)"/>.
-        /// </summary>
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void TestItemByIndex()
-        {
-            var value = TestedInstance[5];
-        }
-
-        /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Item(string)"/>.
-        /// </summary>
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void TestItemByName()
-        {
-            var value = TestedInstance["TEST_FIELD"];
-        }
     }
 }
