@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -11,8 +13,119 @@ namespace VanessaSharp.Proxy.Common
     internal sealed class OneSWrapMap : IOneSWrapMap
     {
         /// <summary>Делегаты создания объектов.</summary>
-        private readonly Dictionary<Type, Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject>> _creators
-            = new Dictionary<Type, Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject>>();
+        private readonly IDictionary<Type, Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject>> _creators
+            = new ConcurrentDictionary<Type, Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject>>();
+
+        /// <summary>
+        /// Создатель замкнутого обощенного типа реализации.
+        /// </summary>
+        private sealed class ImplementationTypeMaker
+        {
+            /// <summary>
+            /// Незамкнутый обобщенный тип реализации.
+            /// </summary>
+            private readonly Type _genericImplDefinition;
+
+            /// <summary>
+            /// Подстановка индексов типов-параметров класса реализации в индексы
+            /// типов-параметров запрашиваемого интерфейса.
+            /// </summary>
+            private readonly ReadOnlyCollection<int> _substitution;
+
+            /// <summary>Конструктор.</summary>
+            private ImplementationTypeMaker(
+                Type genericImplDefinition, ReadOnlyCollection<int> substitution)
+            {
+                _genericImplDefinition = genericImplDefinition;
+                _substitution = substitution;
+            }
+
+            /// <summary>Создание экземпляра.</summary>
+            /// <param name="interfaceType">Незамкнутый обобщенный интерфейс.</param>
+            /// <param name="implementationType">
+            /// Незамкнутый обобщенный класс,
+            /// который должен реализовать интерфейс.
+            /// </param>
+            public static ImplementationTypeMaker Create(Type interfaceType, Type implementationType)
+            {
+                Contract.Requires<ArgumentNullException>(interfaceType != null);
+                Contract.Requires<ArgumentException>(interfaceType.IsInterface);
+                Contract.Requires<ArgumentException>(interfaceType.IsGenericTypeDefinition);
+                
+                Contract.Requires<ArgumentNullException>(implementationType != null);
+                Contract.Requires<ArgumentException>(!implementationType.IsInterface);
+                Contract.Requires<ArgumentException>(implementationType.IsGenericTypeDefinition);
+
+                Contract.Ensures(Contract.Result<ImplementationTypeMaker>() != null);
+
+                var interfaceInImplType = (
+                                      from i in implementationType.GetInterfaces()
+                                      where i.IsGenericType 
+                                      && i.GetGenericTypeDefinition() == interfaceType
+                                      && i.GetGenericArguments().All(p => p.IsGenericParameter)
+                                      select i
+                                  ).FirstOrDefault();
+
+                if (interfaceInImplType == null)
+                {
+                    throw new ArgumentException(string.Format(
+                        "Невозможно создать экземпляр типизированной обертки над объектом 1С поддерживающим интерфейс \"{0}\""
+                         + " так как указанный тип обертки \"{1}\" этот интерфейс не поддерживает.",
+                        interfaceType, implementationType));
+                }
+
+                var typeArgumentsInImplType = interfaceInImplType.GetGenericArguments();
+
+                var typeParameters = implementationType.GetGenericArguments();
+                var substituteParameters = new int[typeParameters.Length];
+                for (var index = 0; index < typeParameters.Length; index++)
+                {
+                    var paramType = typeParameters[index];
+
+                    var indexInImplInterface = Array.IndexOf(typeArgumentsInImplType, paramType);
+                    if (indexInImplInterface == -1)
+                    {
+                        throw new InvalidOperationException(string.Format(
+                            "Не найден тип-параметр по номеру \"{0}\" в типе реализации \"{1}\" для подстановки из интерфейса \"{2}\"",
+                            index + 1, implementationType, interfaceType));
+                    }
+
+                    substituteParameters[index] = indexInImplInterface;
+                }
+
+                return new ImplementationTypeMaker(
+                    implementationType, new ReadOnlyCollection<int>(substituteParameters));
+            }
+
+            /// <summary>
+            /// Создание замкнутого обобщенного типа реализации
+            /// по интерфейсу, который он должен реализовать.
+            /// </summary>
+            /// <param name="interfaceType">
+            /// Интерфейс, который должен реализовать создаваемый тип.
+            /// </param>
+            public Type MakeType(Type interfaceType)
+            {
+                Contract.Requires<ArgumentNullException>(interfaceType != null);
+                Contract.Requires<ArgumentException>(interfaceType.IsGenericType);
+
+                Contract.Ensures(Contract.Result<Type>() != null);
+
+                var typeArgumentsForInterface = interfaceType.GetGenericArguments();
+                var typeArgumentsForImplementation = _substitution
+                    .Select(i => typeArgumentsForInterface[i])
+                    .ToArray();
+
+                return _genericImplDefinition
+                    .MakeGenericType(typeArgumentsForImplementation);
+            }
+        }
+
+        /// <summary>
+        /// Карта соответствия незамкнутых обобщенных интерфесов создателям замкнутых типов реализаций.
+        /// </summary>
+        private readonly IDictionary<Type, ImplementationTypeMaker> _genericTypeMakerMappings
+            = new ConcurrentDictionary<Type, ImplementationTypeMaker>();
 
         /// <summary>Имена объектов в 1С.</summary>
         private readonly Dictionary<Type, string> _oneSTypeNames = new Dictionary<Type, string>();
@@ -23,12 +136,39 @@ namespace VanessaSharp.Proxy.Common
         {
             Contract.Requires<ArgumentNullException>(mapping != null);
 
-            var creator = CheckAndBuildCreator(mapping.InterfaceType, mapping.WrapType);
-            // TODO: Сделать обработку в случае наличия типа интерфейса в словаре
-            _creators.Add(mapping.InterfaceType, creator);
+            if (mapping.InterfaceType.IsGenericTypeDefinition)
+            {
+                var creatorBuilder = CheckAndCreateTypeMaker(mapping.InterfaceType, mapping.WrapType);
+
+                AddToMap(_genericTypeMakerMappings, mapping, creatorBuilder);
+            }
+            else
+            {
+                var creator = CheckAndBuildCreator(mapping.InterfaceType, mapping.WrapType);
+
+                AddToMap(_creators, mapping, creator);
+            }
 
             if (mapping.OneSTypeName != null)
                 _oneSTypeNames.Add(mapping.InterfaceType, mapping.OneSTypeName);
+        }
+
+        /// <summary>
+        /// Добавление маппинга в соответствующую карту.
+        /// </summary>
+        private static void AddToMap<TValue>(
+            IDictionary<Type, TValue> map, OneSObjectMapping mapping, TValue value)
+        {
+            try
+            {
+                map.Add(mapping.InterfaceType, value);
+            }
+            catch (KeyNotFoundException e)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Невозможно добавить соответствие интерфейсу \"{0}\" реализации \"{1}\" так как уже для данного интерфейса соответствие добавлено.",
+                    mapping.InterfaceType, mapping.WrapType), e);
+            }
         }
 
         /// <summary>Проверка и создание делегата создания типа.</summary>
@@ -38,6 +178,7 @@ namespace VanessaSharp.Proxy.Common
             CheckAndBuildCreator(Type interfaceType, Type wrapType)
         {
             Contract.Requires<ArgumentNullException>(interfaceType != null);
+            Contract.Requires<ArgumentException>(!interfaceType.IsGenericTypeDefinition);
             Contract.Requires<ArgumentNullException>(wrapType != null);
             Contract.Ensures(Contract.Result<Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject>>() != null);
 
@@ -47,12 +188,14 @@ namespace VanessaSharp.Proxy.Common
         }
 
         /// <summary>
-        /// Проверка возможности делегата создания.
+        /// Проверка возможности генерации делегата создания.
         /// </summary>
         /// <param name="interfaceType">Тип интерфейса.</param>
         /// <param name="wrapType">Тип обертки.</param>
         private static void CheckPossibleCreator(Type interfaceType, Type wrapType)
         {
+            CheckDeriveOneSContextBoundObject(interfaceType, wrapType);
+            
             if (!interfaceType.IsAssignableFrom(wrapType))
             {
                 throw new ArgumentException(string.Format(
@@ -60,7 +203,42 @@ namespace VanessaSharp.Proxy.Common
                     + " так как указанный тип обертки \"{1}\" этот интерфейс не поддерживает.",
                     interfaceType, wrapType));
             }
-            
+        }
+
+        /// <summary>
+        /// Проверка возможности генерации и генерация создателя замкнутого обобщенного типа
+        /// для реализации.
+        /// </summary>
+        /// <param name="interfaceType">Незамкнутый обобщенный интерфейс.</param>
+        /// <param name="wrapType">Незамкнутый обобщенный тип реализации.</param>
+        private static ImplementationTypeMaker CheckAndCreateTypeMaker(Type interfaceType, Type wrapType)
+        {
+            Contract.Requires<ArgumentException>(interfaceType.IsGenericTypeDefinition);
+
+            CheckPossibleCreatorForGeneric(interfaceType, wrapType);
+
+            return ImplementationTypeMaker.Create(interfaceType, wrapType);
+        }
+
+        /// <summary>
+        /// Проверка возможности генерации делегата создания
+        /// в случае обобщенного типа.
+        /// </summary>
+        /// <param name="interfaceType">Тип интерфейса.</param>
+        /// <param name="wrapType">Тип обертки.</param>
+        private static void CheckPossibleCreatorForGeneric(Type interfaceType, Type wrapType)
+        {
+            CheckDeriveOneSContextBoundObject(interfaceType, wrapType);
+
+            FindMatchedConstructor(wrapType);
+        }
+
+        /// <summary>
+        /// Проверка того, что <paramref name="wrapType"/>
+        /// наследует от <see cref="OneSContextBoundObject"/>.
+        /// </summary>
+        private static void CheckDeriveOneSContextBoundObject(Type interfaceType, Type wrapType)
+        {
             if (!typeof(OneSContextBoundObject).IsAssignableFrom(wrapType))
             {
                 throw new ArgumentException(
@@ -156,9 +334,42 @@ namespace VanessaSharp.Proxy.Common
         public Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject> GetObjectCreator(Type type)
         {
             Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject> result;
-            _creators.TryGetValue(type, out result);
+            if (_creators.TryGetValue(type, out result))
+                return result;
 
-            return result;
+            if (TryGetObjectCreatorFromGenericBuilderMapping(type, out result))
+                return result;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Получение делегата создания обертки по запрашиваемому типу интерфейса
+        /// из создателя замкнутых типов карты соответствия.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        private bool TryGetObjectCreatorFromGenericBuilderMapping(
+            Type type,
+            out Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject> result)
+        {
+            result = null;
+
+            if (!type.IsGenericType)
+                return false;
+
+            ImplementationTypeMaker typeMaker;
+            if (!_genericTypeMakerMappings.TryGetValue(type.GetGenericTypeDefinition(), out typeMaker))
+                return false;
+
+            var wrapType = typeMaker.MakeType(type);
+            result = BuildCreator(wrapType);
+
+            // Кэширование
+            _creators[type] = result;
+
+            return true;
         }
 
         /// <summary>

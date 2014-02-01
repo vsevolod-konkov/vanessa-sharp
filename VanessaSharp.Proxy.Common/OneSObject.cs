@@ -134,5 +134,39 @@ namespace VanessaSharp.Proxy.Common
         {
             return _proxy.Unwrap();
         }
+
+        /// <summary>
+        /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
+        /// </returns>
+        /// <param name="obj">The object to compare with the current object. </param><filterpriority>2</filterpriority>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            if ((obj == null) || (GetType() != obj.GetType()))
+                return false;
+
+            return _proxy.Equals(((OneSObject)obj)._proxy);
+        }
+
+        /// <summary>
+        /// Serves as a hash function for a particular type. 
+        /// </summary>
+        /// <returns>
+        /// A hash code for the current <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return GetType().GetHashCode() * 251
+                ^ _proxy.GetHashCode();    
+            }
+        }
     }
 }

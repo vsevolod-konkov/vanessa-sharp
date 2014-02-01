@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Data
 {
@@ -6,9 +7,14 @@ namespace VanessaSharp.Data
     internal sealed class ValueConverter : IValueConverter
     {
         /// <summary>Реализация по умолчанию.</summary>
-        public static IValueConverter Default
+        public static ValueConverter Default
         {
-            get { return _default; }
+            get
+            {
+                Contract.Ensures(Contract.Result<ValueConverter>() != null);
+
+                return _default;
+            }
         }
         private static readonly ValueConverter _default = new ValueConverter();
 
@@ -123,6 +129,33 @@ namespace VanessaSharp.Data
         public double ToDouble(object value)
         {
             return To(value, c => c.ToDouble(null));
+        }
+
+        /// <summary>
+        /// Конвертация значения в <see cref="decimal"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        public decimal ToDecimal(object value)
+        {
+            return To(value, c => c.ToDecimal(null));
+        }
+
+        /// <summary>
+        /// Конвертация значения в <see cref="bool"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        public bool ToBoolean(object value)
+        {
+            return To(value, c => c.ToBoolean(null));
+        }
+
+        /// <summary>
+        /// Конвертация значения в <see cref="DateTime"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        public DateTime ToDateTime(object value)
+        {
+            return To(value, c => c.ToDateTime(null));
         }
     }
 }

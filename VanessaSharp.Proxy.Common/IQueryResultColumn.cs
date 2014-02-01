@@ -10,6 +10,6 @@
         string Name { get; }
 
         /// <summary>Тип колонки.</summary>
-        IValueType ValueType { get; }
+        ITypeDescription ValueType { get; }
     }
 }

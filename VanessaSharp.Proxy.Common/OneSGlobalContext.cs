@@ -119,5 +119,12 @@ namespace VanessaSharp.Proxy.Common
         {
             DynamicProxy.RollbackTransaction();
         }
+
+        /// <summary>Строковое представление объекта.</summary>
+        /// <param name="obj">Объект.</param>
+        public string String(object obj)
+        {
+            return DynamicProxy.String(obj);
+        }
     }
 }

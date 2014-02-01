@@ -23,7 +23,7 @@ namespace VanessaSharp.Data
         private readonly IQueryResult _queryResult;
 
         /// <summary>Сервис перевода типов.</summary>
-        private readonly IValueTypeConverter _valueTypeConverter;
+        private readonly ITypeDescriptionConverter _typeDescriptionConverter;
 
         /// <summary>Сервис перевода значений.</summary>
         private readonly IValueConverter _valueConverter = ValueConverter.Default;
@@ -39,29 +39,29 @@ namespace VanessaSharp.Data
         private void Invariant()
         {
             Contract.Invariant(_queryResult != null);
-            Contract.Invariant(_valueTypeConverter != null);
+            Contract.Invariant(_typeDescriptionConverter != null);
             Contract.Invariant(_valueConverter != null);
         }
 
         /// <summary>Конструктор принимающий результат запроса и сервис перевода типов.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
-        /// <param name="valueTypeConverter">Сервис перевода типов.</param>
+        /// <param name="typeDescriptionConverter">Сервис перевода типов.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
-        internal OneSDataReader(IQueryResult queryResult, IValueTypeConverter valueTypeConverter, IValueConverter valueConverter)
+        internal OneSDataReader(IQueryResult queryResult, ITypeDescriptionConverter typeDescriptionConverter, IValueConverter valueConverter)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
-            Contract.Requires<ArgumentNullException>(valueTypeConverter != null);
+            Contract.Requires<ArgumentNullException>(typeDescriptionConverter != null);
             Contract.Requires<ArgumentNullException>(valueConverter != null);
 
             _queryResult = queryResult;
-            _valueTypeConverter = valueTypeConverter;
+            _typeDescriptionConverter = typeDescriptionConverter;
             _valueConverter = valueConverter;
         }
         
         /// <summary>Конструктор принимающий результат запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         internal OneSDataReader(IQueryResult queryResult)
-            : this(queryResult, ValueTypeConverter.Default, ValueConverter.Default)
+            : this(queryResult, TypeDescriptionConverter.Default, ValueConverter.Default)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
         }
@@ -185,9 +185,19 @@ namespace VanessaSharp.Data
             get { return -1; }
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a Boolean.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>1</filterpriority>
         public override bool GetBoolean(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToBoolean(
+                GetValue(ordinal));
         }
 
         /// <summary>
@@ -270,9 +280,19 @@ namespace VanessaSharp.Data
                 GetValue(ordinal));
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a <see cref="T:System.DateTime"/> object.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>1</filterpriority>
         public override DateTime GetDateTime(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToDateTime(
+                GetValue(ordinal));
         }
 
         /// <summary>
@@ -336,9 +356,16 @@ namespace VanessaSharp.Data
             return count;
         }
 
+        /// <summary>
+        /// Gets a value that indicates whether the column contains nonexistent or missing values.
+        /// </summary>
+        /// <returns>
+        /// true if the specified column is equivalent to <see cref="T:System.DBNull"/>; otherwise false.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param><filterpriority>1</filterpriority>
         public override bool IsDBNull(int ordinal)
         {
-            throw new NotImplementedException();
+            return GetValue(ordinal) == null;
         }
 
         /// <summary>
@@ -436,9 +463,19 @@ namespace VanessaSharp.Data
             }
         }
 
+        /// <summary>
+        /// Gets the value of the specified column as a <see cref="T:System.Decimal"/> object.
+        /// </summary>
+        /// <returns>
+        /// The value of the specified column.
+        /// </returns>
+        /// <param name="ordinal">The zero-based column ordinal.</param>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>1</filterpriority>
         public override decimal GetDecimal(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToDecimal(
+                GetValue(ordinal));
         }
 
         /// <summary>
@@ -543,7 +580,7 @@ namespace VanessaSharp.Data
             using (var column = columns.Get(ordinal))
             using (var valueType = column.ValueType)
             {
-                return _valueTypeConverter.ConvertFrom(valueType);
+                return _typeDescriptionConverter.ConvertFrom(valueType);
             }
         }
 

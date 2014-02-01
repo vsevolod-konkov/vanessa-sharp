@@ -46,6 +46,8 @@ namespace VanessaSharp.Proxy.V82
         /// <returns>Возвращает объект глобального контекста.</returns>
         public IGlobalContext Connect(string connectString)
         {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrEmpty(connectString));
+            
             var result = InvokeConnect(connectString);
             if (result == null)
                 throw new InvalidOperationException("Соединитель к 1С вернул null при соединении.");
@@ -68,8 +70,6 @@ namespace VanessaSharp.Proxy.V82
         /// <returns>Возвращает объект глобального контекста.</returns>
         private dynamic InvokeConnect(string connectString)
         {
-            Contract.Requires(!string.IsNullOrEmpty(connectString));
-
             try
             {
                 return ComConnector.Connect(connectString);

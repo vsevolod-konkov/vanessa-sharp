@@ -221,14 +221,14 @@ namespace VanessaSharp.Data.AcceptanceTests
                     for (var fieldIndex = 0; fieldIndex < FIELD_COUNT; fieldIndex++)
                         Assert.AreEqual(fieldNames[fieldIndex], reader.GetName(fieldIndex));
 
-                    //Assert.AreEqual(typeof(string), reader.GetFieldType(0));
-                    //Assert.AreEqual(typeof(int), reader.GetFieldType(1));
-                    //Assert.AreEqual(typeof(double), reader.GetFieldType(2));
-                    //Assert.AreEqual(typeof(bool), reader.GetFieldType(3));
-                    //Assert.AreEqual(typeof(DateTime), reader.GetFieldType(4));
-                    //Assert.AreEqual(typeof(DateTime), reader.GetFieldType(5));
-                    //Assert.AreEqual(typeof(DateTime), reader.GetFieldType(6));
-                    //Assert.AreEqual(typeof(string), reader.GetFieldType(8));
+                    Assert.AreEqual(typeof(string), reader.GetFieldType(0));
+                    Assert.AreEqual(typeof(double), reader.GetFieldType(1));
+                    Assert.AreEqual(typeof(double), reader.GetFieldType(2));
+                    Assert.AreEqual(typeof(bool), reader.GetFieldType(3));
+                    Assert.AreEqual(typeof(DateTime), reader.GetFieldType(4));
+                    Assert.AreEqual(typeof(DateTime), reader.GetFieldType(5));
+                    Assert.AreEqual(typeof(DateTime), reader.GetFieldType(6));
+                    Assert.AreEqual(typeof(string), reader.GetFieldType(7));
 
                     // Тестирование GetOrdinal
                     for (var fieldIndex = 0; fieldIndex < fieldNames.Length; fieldIndex++)
@@ -259,6 +259,11 @@ namespace VanessaSharp.Data.AcceptanceTests
                         Assert.AreEqual(expectedRecord[0], reader.GetString(0));
                         Assert.AreEqual(expectedRecord[1], reader.GetInt32(1));
                         Assert.AreEqual(expectedRecord[2], reader.GetDouble(2));
+                        Assert.AreEqual(expectedRecord[3], reader.GetBoolean(3));
+                        Assert.AreEqual(expectedRecord[4], reader.GetDateTime(4));
+                        Assert.AreEqual(expectedRecord[5], reader.GetDateTime(5));
+                        Assert.AreEqual(expectedRecord[6], reader.GetDateTime(6));
+
 
                         ++recordCounter;
                     }

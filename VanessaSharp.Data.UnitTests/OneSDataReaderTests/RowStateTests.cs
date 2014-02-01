@@ -287,5 +287,53 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             AssertGetTypedValue(c => c.ToDouble(returnValue));
         }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetDecimal"/>.
+        /// </summary>
+        protected override void ArrangeGetDecimal(object returnValue, decimal expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToDecimal(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetDecimal"/>.
+        /// </summary>
+        protected override void AssertGetDecimal(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToDecimal(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetBoolean"/>.
+        /// </summary>
+        protected override void ArrangeGetBoolean(object returnValue, bool expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToBoolean(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetBoolean"/>.
+        /// </summary>
+        protected override void AssertGetBoolean(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToBoolean(returnValue));
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetDateTime"/>.
+        /// </summary>
+        protected override void ArrangeGetDateTime(object returnValue, DateTime expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToDateTime(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetDateTime"/>.
+        /// </summary>
+        protected override void AssertGetDateTime(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToDateTime(returnValue));
+        }
     }
 }

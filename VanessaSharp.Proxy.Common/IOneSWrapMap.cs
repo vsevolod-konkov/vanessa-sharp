@@ -7,6 +7,7 @@ namespace VanessaSharp.Proxy.Common
     /// Интерфейс карты соответствия
     /// запрашиваемого типа и действий связанных с ним.
     /// </summary>
+    [ContractClass(typeof(IOneSWrapMapContract))]
     internal interface IOneSWrapMap
     {
         /// <summary>
@@ -27,6 +28,7 @@ namespace VanessaSharp.Proxy.Common
     /// <summary>
     /// Описание контракта для <see cref="IOneSWrapMap"/>.
     /// </summary>
+    [ContractClassFor(typeof(IOneSWrapMap))]
     internal abstract class IOneSWrapMapContract : IOneSWrapMap
     {
         /// <summary>

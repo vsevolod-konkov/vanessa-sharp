@@ -96,9 +96,10 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="IGlobalContextProvider.cs" />
+    <Compile Include="IOneSTypeConverter.cs" />
     <Compile Include="ITransactionManager.cs" />
     <Compile Include="IValueConverter.cs" />
-    <Compile Include="IValueTypeConverter.cs" />
+    <Compile Include="ITypeDescriptionConverter.cs" />
     <Compile Include="OneSCommand.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -129,11 +130,12 @@
     <Compile Include="OneSParameter.cs" />
     <Compile Include="OneSParameterCollection.cs" />
     <Compile Include="OneSTransaction.cs" />
+    <Compile Include="OneSTypeConverter.cs" />
     <Compile Include="ValueConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utility\ConnectionStringHelper.cs" />
     <Compile Include="Utility\EnumerableExtensions.cs" />
-    <Compile Include="ValueTypeConverter.cs" />
+    <Compile Include="TypeDescriptionConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

@@ -29,8 +29,6 @@ namespace VanessaSharp.Data.UnitTests.ValueConverterTests
             Assert.AreEqual(expectedResult, Act(value));
         }
 
-       
-
         /// <summary>
         /// Тестирование 
         /// в случае когда передается значение требуемого типа.
@@ -56,6 +54,17 @@ namespace VanessaSharp.Data.UnitTests.ValueConverterTests
 
             mockValue
                 .Verify(convertibleMethod, Times.Once());
+        }
+
+        /// <summary>
+        /// Тестирование метода в случае, если значение невозможно привести 
+        /// к требуемому типу.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(InvalidCastException))]
+        public void TestWhenIsNotConvertibleType()
+        {
+            Act(new object());
         }
     }
 }

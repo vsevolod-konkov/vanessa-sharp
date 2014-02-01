@@ -29,10 +29,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             _case = @case;
         }
 
-        /// <summary>Создание тестового экземпляра <see cref="IValueTypeConverter"/>.</summary>
-        internal override IValueTypeConverter CreateValueTypeConverter()
+        /// <summary>Создание тестового экземпляра <see cref="ITypeDescriptionConverter"/>.</summary>
+        internal override ITypeDescriptionConverter CreateValueTypeConverter()
         {
-            return new Mock<IValueTypeConverter>(MockBehavior.Strict).Object;
+            return new Mock<ITypeDescriptionConverter>(MockBehavior.Strict).Object;
         }
 
         /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>

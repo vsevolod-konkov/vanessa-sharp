@@ -14,6 +14,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     {
         #region Вспомогательные статические методы
 
+        // TODO: CopyPaste Необходимо выделить во вспомогательный класс
         /// <summary>
         /// Установка реализации <see cref="IDisposable.Dispose"/>
         /// для мока.
@@ -26,6 +27,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 .Verifiable();
         }
 
+        // TODO: CopyPaste Необходимо выделить во вспомогательный класс
         /// <summary>Создание мока реализующего <see cref="IDisposable"/>.</summary>
         protected static Mock<T> CreateDisposableMock<T>()
             where T : class, IDisposable
@@ -36,6 +38,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             return mock;
         }
 
+        // TODO: CopyPaste Необходимо выделить во вспомогательный класс
         /// <summary>
         /// Проверка вызова <see cref="IDisposable.Dispose"/> 
         /// у мока.
@@ -135,8 +138,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
         protected abstract IQueryResult CreateQueryResult();
 
-        /// <summary>Создание тестового экземпляра <see cref="IValueTypeConverter"/>.</summary>
-        internal abstract IValueTypeConverter CreateValueTypeConverter();
+        /// <summary>Создание тестового экземпляра <see cref="ITypeDescriptionConverter"/>.</summary>
+        internal abstract ITypeDescriptionConverter CreateValueTypeConverter();
 
         /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>
         internal abstract IValueConverter CreateValueConverter();
@@ -227,7 +230,6 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Arrange
             ArrangeGetValue(ordinal, expectedResult);
             return testedAction(TestedInstance, ordinal);
-
         }
 
         private void TestGetValue<T>(Func<OneSDataReader, int, T> testedAction, T expectedResult)
@@ -314,8 +316,6 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 (reader, i) => reader.GetString(i), 
                 AssertGetString);
         }
-
-
 
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetByte"/>.
@@ -465,6 +465,110 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 ArrangeGetDouble,
                 (reader, i) => reader.GetDouble(i),
                 AssertGetDouble);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetDecimal"/>.
+        /// </summary>
+        protected virtual void ArrangeGetDecimal(object returnValue, decimal expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetDecimal"/>.
+        /// </summary>
+        protected virtual void AssertGetDecimal(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetDecimal"/>.
+        /// </summary>
+        [Test]
+        public void TestGetDecimal()
+        {
+            TestGetTypedValue(
+                45645363453551412356341.14154153535323436363543553543223455345543532534M,
+                ArrangeGetDecimal,
+                (reader, i) => reader.GetDecimal(i),
+                AssertGetDecimal);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetBoolean"/>.
+        /// </summary>
+        protected virtual void ArrangeGetBoolean(object returnValue, bool expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetBoolean"/>.
+        /// </summary>
+        protected virtual void AssertGetBoolean(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetBoolean"/>.
+        /// </summary>
+        [Test]
+        public void TestGetBoolean()
+        {
+            TestGetTypedValue(
+                true,
+                ArrangeGetBoolean,
+                (reader, i) => reader.GetBoolean(i),
+                AssertGetBoolean);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetDateTime"/>.
+        /// </summary>
+        protected virtual void ArrangeGetDateTime(object returnValue, DateTime expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetDateTime"/>.
+        /// </summary>
+        protected virtual void AssertGetDateTime(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetDateTime"/>.
+        /// </summary>
+        [Test]
+        public void TestGetDateTime()
+        {
+            TestGetTypedValue(
+                new DateTime(2029, 03, 14),
+                ArrangeGetDateTime,
+                (reader, i) => reader.GetDateTime(i),
+                AssertGetDateTime);
+        }
+
+        /// <summary>Тестирование метода <see cref="OneSDataReader.IsDBNull"/>.</summary>
+        [Test]
+        public void TestIsDbNull([Values(false, true)] bool expectedResult)
+        {
+            const int TEST_ORDINAL = 5;
+            
+            // В случае если возвращается null из 1С,
+            // то метод должен вернуть true, в ином случае false
+            var returnValue = expectedResult
+                                  ? null
+                                  : new object();
+
+            Func<bool> testedFunc = () =>
+                {
+                    ArrangeGetValue(TEST_ORDINAL, returnValue);
+                    return TestedInstance.IsDBNull(TEST_ORDINAL);
+                };
+
+            if (ShouldBeThrowInvalidOperationExceptionWhenGetValue)
+            {
+                Assert.Throws<InvalidOperationException>(() => testedFunc());
+            }
+            else
+            {
+                Assert.AreEqual(expectedResult, testedFunc());
+                AssertGetValue(TEST_ORDINAL);
+            }
         }
     }
 }

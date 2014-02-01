@@ -12,13 +12,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     /// </summary>
     public abstract class OpenStateTestBase : OneSDataReaderComponentTestBase
     {
-        /// <summary>Мок для <see cref="IValueTypeConverter"/>.</summary>
-        internal Mock<IValueTypeConverter> ValueTypeConverterMock { get; private set; }
+        /// <summary>Мок для <see cref="ITypeDescriptionConverter"/>.</summary>
+        internal Mock<ITypeDescriptionConverter> ValueTypeConverterMock { get; private set; }
 
-        /// <summary>Создание тестового экземпляра <see cref="IValueTypeConverter"/>.</summary>
-        internal sealed override IValueTypeConverter CreateValueTypeConverter()
+        /// <summary>Создание тестового экземпляра <see cref="ITypeDescriptionConverter"/>.</summary>
+        internal sealed override ITypeDescriptionConverter CreateValueTypeConverter()
         {
-            ValueTypeConverterMock = new Mock<IValueTypeConverter>(MockBehavior.Strict);
+            ValueTypeConverterMock = new Mock<ITypeDescriptionConverter>(MockBehavior.Strict);
 
             return ValueTypeConverterMock.Object;
         }
@@ -203,7 +203,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             const int TEST_FIELD_ORDINAL = 3;
 
             // Arrange
-            var valueTypeMock = CreateDisposableMock<IValueType>();
+            var valueTypeMock = CreateDisposableMock<ITypeDescription>();
 
             var columnMock = CreateDisposableMock<IQueryResultColumn>();
             columnMock
@@ -215,7 +215,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             var expectedType = typeof(decimal);
             ValueTypeConverterMock
-                .Setup(c => c.ConvertFrom(It.IsAny<IValueType>()))
+                .Setup(c => c.ConvertFrom(It.IsAny<ITypeDescription>()))
                 .Returns(expectedType)
                 .Verifiable();
 

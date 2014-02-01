@@ -22,7 +22,7 @@
         }
 
         /// <summary>Тип колонки.</summary>
-        public IValueType ValueType
+        public ITypeDescription ValueType
         {
             get { return DynamicProxy.ValueType; }
         }

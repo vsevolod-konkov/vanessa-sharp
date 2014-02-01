@@ -49,6 +49,11 @@ namespace VanessaSharp.Proxy.Common
             throw new NotImplementedException();
         }
 
+        string IGlobalContext.String(object obj)
+        {
+            throw new NotImplementedException();
+        }
+
         void IDisposable.Dispose()
         { }
     }

@@ -140,12 +140,15 @@ namespace VanessaSharp.Proxy.Common.Tests
             // Assert
             var expectedMapTypes = new Dictionary<Type, Type>
                 {
-                    {typeof (IQuery), typeof (OneSQuery)},
-                    {typeof (IQueryResult), typeof (OneSQueryResult)},
-                    {typeof (IQueryResultColumnsCollection), typeof (OneSQueryResultColumnsCollection)},
-                    {typeof (IQueryResultColumn), typeof (OneSQueryResultColumn)},
+                    {typeof(IQuery), typeof(OneSQuery)},
+                    {typeof(IQueryResult), typeof(OneSQueryResult)},
+                    {typeof(IQueryResultColumnsCollection), typeof(OneSQueryResultColumnsCollection)},
+                    {typeof(IQueryResultColumn), typeof(OneSQueryResultColumn)},
                     {typeof(IQueryResultSelection), typeof(OneSQueryResultSelection)},
-                    {typeof (IValueType), typeof (OneSValueType)}
+                    {typeof(IOneSType), typeof (OneSType)},
+                    {typeof(ITypeDescription), typeof(OneSTypeDescription)},
+                    {typeof(IOneSArray), typeof(OneSArray)},
+                    {typeof(IOneSArray<>), typeof(OneSArray<>)}
                 };
             AssertMappings(expectedMapTypes, result, m => m.WrapType);
 

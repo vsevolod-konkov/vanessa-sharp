@@ -47,5 +47,9 @@ namespace VanessaSharp.Proxy.Common
         /// Все изменения, внесенные в информационную базу в процессе транзакции, будут отменены.
         /// </summary>
         void RollbackTransaction();
+
+        /// <summary>Строковое представление объекта.</summary>
+        /// <param name="obj">Объект.</param>
+        string String(object obj);
     }
 }

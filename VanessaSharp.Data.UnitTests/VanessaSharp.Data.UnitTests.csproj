@@ -48,7 +48,9 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="ConnectionStringHelperTests.cs" />
+    <Compile Include="DisposableMock.cs" />
     <Compile Include="ExecuteReaderTests.cs" />
+    <Compile Include="IDisposableMock.cs" />
     <Compile Include="KnownKeywordsCollectionTests.cs" />
     <Compile Include="MockConnectionState.cs" />
     <Compile Include="OneSCommandTests.cs" />
@@ -63,7 +65,11 @@
     <Compile Include="OneSDataReaderTests\OneSDataReaderComponentTestBase.cs" />
     <Compile Include="OneSDataReaderTests\OpenStateTestBase.cs" />
     <Compile Include="OneSDataReaderTests\RowStateTests.cs" />
+    <Compile Include="OneSTypeConverterTests.cs" />
+    <Compile Include="ValueConverterTests\ToBooleanTests.cs" />
     <Compile Include="ValueConverterTests\ToByteTests.cs" />
+    <Compile Include="ValueConverterTests\ToDateTimeTests.cs" />
+    <Compile Include="ValueConverterTests\ToDecimalTests.cs" />
     <Compile Include="ValueConverterTests\ToDoubleTests.cs" />
     <Compile Include="ValueConverterTests\ToFloatTests.cs" />
     <Compile Include="ValueConverterTests\ToInt16Tests.cs" />
@@ -74,6 +80,7 @@
     <Compile Include="ValueConverterTests\ToValueTypeTestsBase.cs" />
     <Compile Include="ValueConverterTests\ValueConverterTestsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeDescriptionConverterTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VanessaSharp.Data\VanessaSharp.Data.csproj">

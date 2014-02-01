@@ -72,6 +72,13 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
 
             public void RollbackTransaction()
             {}
+
+            public string String(object obj)
+            {
+                return (obj == null)
+                           ? null
+                           : obj.ToString();
+            }
         }
     }
 

@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Moq;
 using NUnit.Framework;
 
@@ -10,12 +13,17 @@ namespace VanessaSharp.Proxy.Common.Tests
     {
         #region Вспомогательные типы для тестирования
 
+        private interface IValidObjectForTest
+        {
+             object ComObject { get; }
+        }
+
         /// <summary>Тестовый интерфейс.</summary>
         private interface ITestObject : IDisposable
         { }
 
         /// <summary>Валидный тестовый класс.</summary>
-        private sealed class ValidTestObject : OneSContextBoundObject, ITestObject
+        private sealed class ValidTestObject : OneSContextBoundObject, ITestObject, IValidObjectForTest
         {
             public ValidTestObject(object comObject, IOneSProxyWrapper proxyWrapper, OneSGlobalContext globalContext)
                 : base(comObject, proxyWrapper, globalContext)
@@ -41,6 +49,31 @@ namespace VanessaSharp.Proxy.Common.Tests
         {
             public void Dispose()
             {}
+        }
+
+        /// <summary>
+        /// Некоторый тестовый обобщенный интерфейс.
+        /// </summary>
+        private interface ITestGenericObject<T1, T2> : IDisposable
+        {}
+
+        /// <summary>
+        /// Валидный тестовый обобщенный класс.
+        /// </summary>
+        private sealed class ValidTestGenericObject<T1, T2>
+            : OneSContextBoundObject, ITestGenericObject<T2, T1>, IValidObjectForTest
+        {
+            public ValidTestGenericObject(object comObject, IOneSProxyWrapper proxyWrapper, OneSGlobalContext globalContext)
+                : base(comObject, proxyWrapper, globalContext)
+            {
+                _comObject = comObject;
+            }
+
+            public object ComObject
+            {
+                get { return _comObject; }
+            }
+            private readonly object _comObject;
         }
 
         /// <summary>
@@ -85,8 +118,9 @@ namespace VanessaSharp.Proxy.Common.Tests
 
         /// <summary>Проверка результата тестирования.</summary>
         /// <param name="testedCreator">Проверяемый делегат создания.</param>
-        private static void AssertCreator(
+        private static void AssertCreator<T>(
             Func<object, IOneSProxyWrapper, OneSGlobalContext, OneSObject> testedCreator)
+        where T : OneSContextBoundObject, IValidObjectForTest
         {
             Assert.IsNotNull(testedCreator);
 
@@ -96,8 +130,8 @@ namespace VanessaSharp.Proxy.Common.Tests
 
             var result = testedCreator(comObject, proxyWrapper, globalContext);
             
-            Assert.IsInstanceOf<ValidTestObject>(result);
-            var testObject = (ValidTestObject)result;
+            Assert.IsInstanceOf<T>(result);
+            var testObject = (T)result;
             Assert.AreSame(comObject, testObject.ComObject);
             Assert.AreSame(proxyWrapper, testObject.ProxyWrapper);
             Assert.AreSame(globalContext, testObject.GlobalContext);
@@ -191,7 +225,7 @@ namespace VanessaSharp.Proxy.Common.Tests
             var creator = OneSWrapMap.CheckAndBuildCreator(typeof(ITestObject), typeof(ValidTestObject));
 
             // Assert
-            AssertCreator(creator);
+            AssertCreator<ValidTestObject>(creator);
         }
 
         /// <summary>
@@ -223,7 +257,8 @@ namespace VanessaSharp.Proxy.Common.Tests
         }
 
         /// <summary>
-        /// Тестирование метода <see cref="OneSWrapMap.GetObjectCreator"/>.
+        /// Тестирование метода <see cref="OneSWrapMap.GetObjectCreator"/>
+        /// в случае корректного типа.
         /// </summary>
         [Test]
         public void TestGetObjectCreatorWhenTypeIsCorrect()
@@ -235,7 +270,26 @@ namespace VanessaSharp.Proxy.Common.Tests
             var creator = testedInstance.GetObjectCreator(typeof(ITestObject));
 
             // Assert
-            AssertCreator(creator);
+            AssertCreator<ValidTestObject>(creator);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSWrapMap.GetObjectCreator"/>
+        /// если корректный обобщенный тип.
+        /// </summary>
+        [Test]
+        public void TestGetObjectCreatorWhenGenericTypeIsCorrect()
+        {
+            // Arrange
+            var testedInstance = CreateNotEmptyWrapMap();
+            testedInstance.AddObjectMapping(new OneSObjectMapping(
+                typeof(ITestGenericObject<,>), typeof(ValidTestGenericObject<,>), null));
+
+            // Act
+            var creator = testedInstance.GetObjectCreator(typeof(ITestGenericObject<int, string>));
+
+            // Assert
+            AssertCreator<ValidTestGenericObject<string, int>>(creator);
         }
 
         /// <summary>

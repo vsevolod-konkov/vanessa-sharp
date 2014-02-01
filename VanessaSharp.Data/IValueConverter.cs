@@ -1,4 +1,6 @@
-﻿namespace VanessaSharp.Data
+﻿using System;
+
+namespace VanessaSharp.Data
 {
     /// <summary>Интерфейс конвертера значений.</summary>
     internal interface IValueConverter
@@ -42,5 +44,23 @@
         /// </summary>
         /// <param name="value">Конвертируемое значение.</param>
         double ToDouble(object value);
+
+        /// <summary>
+        /// Конвертация значения в <see cref="decimal"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        decimal ToDecimal(object value);
+
+        /// <summary>
+        /// Конвертация значения в <see cref="bool"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        bool ToBoolean(object value);
+
+        /// <summary>
+        /// Конвертация значения в <see cref="DateTime"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        DateTime ToDateTime(object value);
     }
 }
