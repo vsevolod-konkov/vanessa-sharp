@@ -37,6 +37,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AcceptanceTestDb", "Accepta
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Requirements", "Requirements", "{B0BF4273-9A8D-4E86-BEDF-169B5C80D9CC}"
+	ProjectSection(SolutionItems) = preProject
+		Requirements\Backlog.xlsx = Requirements\Backlog.xlsx
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
