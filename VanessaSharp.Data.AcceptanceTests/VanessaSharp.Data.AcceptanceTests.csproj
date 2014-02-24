@@ -12,6 +12,7 @@
     <AssemblyName>VanessaSharp.Data.AcceptanceTests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <CodeContractsAssemblyMode>1</CodeContractsAssemblyMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +23,40 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
+    <CodeContractsEnableRuntimeChecking>True</CodeContractsEnableRuntimeChecking>
+    <CodeContractsRuntimeOnlyPublicSurface>False</CodeContractsRuntimeOnlyPublicSurface>
+    <CodeContractsRuntimeThrowOnFailure>True</CodeContractsRuntimeThrowOnFailure>
+    <CodeContractsRuntimeCallSiteRequires>False</CodeContractsRuntimeCallSiteRequires>
+    <CodeContractsRuntimeSkipQuantifiers>False</CodeContractsRuntimeSkipQuantifiers>
+    <CodeContractsRunCodeAnalysis>False</CodeContractsRunCodeAnalysis>
+    <CodeContractsNonNullObligations>True</CodeContractsNonNullObligations>
+    <CodeContractsBoundsObligations>True</CodeContractsBoundsObligations>
+    <CodeContractsArithmeticObligations>False</CodeContractsArithmeticObligations>
+    <CodeContractsEnumObligations>False</CodeContractsEnumObligations>
+    <CodeContractsRedundantAssumptions>False</CodeContractsRedundantAssumptions>
+    <CodeContractsMissingPublicRequiresAsWarnings>True</CodeContractsMissingPublicRequiresAsWarnings>
+    <CodeContractsInferRequires>True</CodeContractsInferRequires>
+    <CodeContractsInferEnsures>False</CodeContractsInferEnsures>
+    <CodeContractsInferObjectInvariants>False</CodeContractsInferObjectInvariants>
+    <CodeContractsSuggestAssumptions>False</CodeContractsSuggestAssumptions>
+    <CodeContractsSuggestRequires>True</CodeContractsSuggestRequires>
+    <CodeContractsSuggestObjectInvariants>False</CodeContractsSuggestObjectInvariants>
+    <CodeContractsRunInBackground>True</CodeContractsRunInBackground>
+    <CodeContractsShowSquigglies>True</CodeContractsShowSquigglies>
+    <CodeContractsUseBaseLine>False</CodeContractsUseBaseLine>
+    <CodeContractsEmitXMLDocs>False</CodeContractsEmitXMLDocs>
+    <CodeContractsCustomRewriterAssembly />
+    <CodeContractsCustomRewriterClass />
+    <CodeContractsLibPaths />
+    <CodeContractsExtraRewriteOptions />
+    <CodeContractsExtraAnalysisOptions />
+    <CodeContractsSQLServerOption />
+    <CodeContractsBaseLineFile />
+    <CodeContractsCacheAnalysisResults>True</CodeContractsCacheAnalysisResults>
+    <CodeContractsFailBuildOnWarnings>False</CodeContractsFailBuildOnWarnings>
+    <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
+    <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
+    <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,6 +67,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Moq">
+      <HintPath>..\VanessaSharp.Proxy.V82.Tests\bin\Debug\Moq.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\externals\NUnit\framework\nunit.framework.dll</HintPath>
     </Reference>
@@ -46,13 +84,23 @@
     </Compile>
     <Compile Include="Constants.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
+    <Compile Include="Mocks\FieldDescription.cs" />
+    <Compile Include="Mocks\MockHelper.cs" />
+    <Compile Include="Mocks\NewOneSObjectEventArgs.cs" />
     <Compile Include="Mocks\OneSConnectorFactoryMock.cs" />
-    <Compile Include="OneSCommandTests\GeneralExecuteTests.cs" />
+    <Compile Include="Mocks\QueryResultMockFactory.cs" />
+    <Compile Include="Mocks\TableData.cs" />
+    <Compile Include="Mocks\TableDataBuilder.cs" />
+    <Compile Include="Mocks\TypeDescriptionMockFactory.cs" />
+    <Compile Include="OneSCommandTests\GeneralExecuteTestsBase.cs" />
+    <Compile Include="OneSCommandTests\GeneralExecuteTestsInIsolatedMode.cs" />
+    <Compile Include="OneSCommandTests\GeneralExecuteTestsInRealMode.cs" />
     <Compile Include="OneSCommandTests\ParametersTests.cs" />
     <Compile Include="OneSCommandTests\PropertiesTests.cs" />
     <Compile Include="OneSCommandTests\InitTests.cs" />
     <Compile Include="OneSCommandTests\CommandTestsBase.cs" />
-    <Compile Include="TempOneSCommandTests.cs" />
+    <Compile Include="OneSDataReaderTests\TestsInRealMode.cs" />
+    <Compile Include="OneSDataReaderTests\TestsInIsolatedMode.cs" />
     <Compile Include="OneSConnectionStringBuilderTests.cs" />
     <Compile Include="OneSConnectionTests\ClosedStateTests.cs" />
     <Compile Include="OneSConnectionTests\ClosedStateTestsBase.cs" />
@@ -66,6 +114,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestMode.cs" />
     <Compile Include="TestsBase.cs" />
+    <Compile Include="OneSDataReaderTests\TestsBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VanessaSharp.Data\VanessaSharp.Data.csproj">

@@ -7,11 +7,13 @@ namespace VanessaSharp.Proxy.Common
     [ContractClass(typeof(IGlobalContextContract))]
     public interface IGlobalContext : IDisposable
     {
+        // TODO: Нужен Рефакторинг. Оставить после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий этот метод.
         /// <summary>Создание объекта.</summary>
         /// <param name="typeName">Имя типа.</param>
         [Obsolete]
         dynamic NewObject(string typeName);
 
+        // TODO: Нужен Рефакторинг. Убрать после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий нетипизированный метод.
         /// <summary>Создание объекта.</summary>
         /// <typeparam name="T">Тип интерфейса соответствующего типу объекта 1С.</typeparam>
         T NewObject<T>() where T : IGlobalContextBound;

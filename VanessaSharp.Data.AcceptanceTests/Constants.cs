@@ -16,9 +16,5 @@ namespace VanessaSharp.Data.AcceptanceTests
 
         /// <summary>Имя пользователя.</summary>
         public const string TEST_USER = "";
-        //public const string TEST_USER = "Абдулов (директор)";
-
-        /// <summary>Имя альтернативного пользователя.</summary>
-        public const string ALTERNATIVE_TEST_USER = "Бакинская (бухгалтер-экономист)";
     }
 }

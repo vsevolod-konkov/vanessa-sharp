@@ -5,19 +5,14 @@ using System.Data;
 namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
 {
     /// <summary>Тесты проверяющие правильность поведения выполнения запросов команды.</summary>
-    #if REAL_MODE
-    [TestFixture(TestMode.Real, Description = "Тестирование метода Execute для реального режима.")]
-    #endif
-    #if ISOLATED_MODE
-    [TestFixture(TestMode.Isolated, Description = "Тестирование метода Execute для изоляционного режима.")]
-    #endif
-    public sealed class GeneralExecuteTests : CommandTestsBase
+    public abstract class GeneralExecuteTestsBase : CommandTestsBase
     {
-        private const string TEST_SQL = "ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты";
+        /// <summary>Тестовый запрос.</summary>
+        protected const string TEST_SQL = "ВЫБРАТЬ * ИЗ Справочник.ТестовыйСправочник";
 
         /// <summary>Параметрический конструктор.</summary>
         /// <param name="testMode">Режим тестирования.</param>
-        public GeneralExecuteTests(TestMode testMode)
+        protected GeneralExecuteTestsBase(TestMode testMode)
             : base(testMode, true)
         {}
 
@@ -32,11 +27,13 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
         /// Тестирование выполнения простого запроса.
         /// </summary>
         [Test(Description="Тестирование выполнения простого запроса")]
-        [Ignore("Тест имеет неприятный побочный эффект")]
         public void TestCommandSimpleExecute()
         {
-            using (TestedCommand.ExecuteReader())
-            {}
+            using (var reader = TestedCommand.ExecuteReader())
+            {
+                Assert.IsNotNull(reader);
+            }
+            AssertIsExecuteReaderIsSuccess();
         }
 
         /// <summary>
@@ -44,20 +41,18 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
         /// </summary>
         /// <param name="behavior"></param>
         [Test(Description="Проверка того что поведение команды не по умолчанию не поддерживается")]
-        [ExpectedException(typeof(NotSupportedException))]
         public void TestNotSupportedNonDefaultCommandBehavior(
             [Values(
                     CommandBehavior.SingleRow, 
-                    //CommandBehavior.SingleResult, 
-                    //CommandBehavior.SequentialAccess, 
                     CommandBehavior.SchemaOnly, 
                     CommandBehavior.KeyInfo, 
                     CommandBehavior.CloseConnection
                     )]
             CommandBehavior behavior)
         {
-            using (TestedCommand.ExecuteReader(behavior))
-            {}
+            Assert.Throws<NotSupportedException>(
+                () => TestedCommand.ExecuteReader(behavior));
+            AssertIfExecuteReaderIsInvalid();
         }
 
         /// <summary>
@@ -65,11 +60,10 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
         /// в случае если <see cref="OneSCommand.Connection"/> равно <c>null</c>.
         /// </summary>
         [Test(Description="Тестирование того, что при не заданном подключении, будет исключение InvalidOperationException")]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void TestInvalidOperationIfNullConnection()
         {
             TestedCommand.Connection = null;
-            TestedCommand.ExecuteReader();
+            TestInvalidOperationExecuteReader();
         }
 
         /// <summary>
@@ -78,11 +72,33 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
         /// то есть <see cref="OneSConnection.State"/> равно <see cref="ConnectionState.Closed"/>.
         /// </summary>
         [Test(Description = "Тестирование факта выброса исключения InvalidOperationException в случае если соединение находится в закрытом состоянии")]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void TestInvalidOperationIfClosedConnection()
         {
             TestedCommand.Connection.Close();
-            TestedCommand.ExecuteReader();
+            TestInvalidOperationExecuteReader();
         }
+
+        private void TestInvalidOperationExecuteReader()
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => TestedCommand.ExecuteReader());
+            AssertIfExecuteReaderIsInvalid();
+        }
+
+        /// <summary>
+        /// Дополнительная проверка в случае если выполнение 
+        /// метода <see cref="OneSCommand.ExecuteReader()"/>
+        /// вызвало исключение.
+        /// </summary>
+        protected virtual void AssertIfExecuteReaderIsInvalid()
+        {}
+
+        /// <summary>
+        /// Дополнительная проверка в случае если выполнение 
+        /// метода <see cref="OneSCommand.ExecuteReader()"/>
+        /// было успешным.
+        /// </summary>
+        protected virtual void AssertIsExecuteReaderIsSuccess()
+        {}
     }
 }

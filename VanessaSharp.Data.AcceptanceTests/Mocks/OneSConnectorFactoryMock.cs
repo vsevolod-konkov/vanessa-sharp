@@ -8,6 +8,9 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
     /// </summary>
     internal sealed class OneSConnectorFactoryMock : IOneSConnectorFactory
     {
+        /// <summary>Событие запроса на создания объекта 1С.</summary>
+        public event EventHandler<NewOneSObjectEventArgs> NewOneSObjectAsking;
+        
         /// <summary>Создание соединения в зависимости от версии.</summary>
         /// <param name="version">Версия.</param>
         /// <returns>Возвращает объект коннектора к информационной БД определенной версии.</returns>
@@ -15,7 +18,20 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
         /// <exception cref="InvalidOperationException">В случае, если фабрика не может создать экземпляр коннектора заданной версии.</exception>
         public IOneSConnector Create(string version)
         {
-            return new OneSConnectorMock();
+            return new OneSConnectorMock(AskOneSNewObject);
+        }
+
+        /// <summary>Запрос на создание объекта 1С.</summary>
+        /// <param name="requiredType">Тип, который должен поддерживать создаваемый объект.</param>
+        private object AskOneSNewObject(Type requiredType)
+        {
+            if (NewOneSObjectAsking == null)
+                return null;
+
+            var args = new NewOneSObjectEventArgs(requiredType);
+            NewOneSObjectAsking(this, args);
+
+            return args.CreatedInstance;
         }
 
         /// <summary>
@@ -23,11 +39,18 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
         /// </summary>
         private sealed class OneSConnectorMock : IOneSConnector
         {
+            private readonly Func<Type, object> _newObjectDelegate;
+
+            public OneSConnectorMock(Func<Type, object> newObjectDelegate)
+            {
+                _newObjectDelegate = newObjectDelegate;
+            }
+
             public void Dispose() {}
 
             public IGlobalContext Connect(string connectString)
             {
-                return new GlobalContextMock();
+                return new GlobalContextMock(_newObjectDelegate);
             }
 
             public uint PoolTimeout { get; set; }
@@ -40,8 +63,15 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
         /// </summary>
         private sealed class GlobalContextMock : IGlobalContext
         {
+            private readonly Func<Type, object> _newObjectDelegate; 
+
             private bool _isExclusiveMode;
-            
+
+            public GlobalContextMock(Func<Type, object> newObjectDelegate)
+            {
+                _newObjectDelegate = newObjectDelegate;
+            }
+
             public void Dispose() {}
 
             public dynamic NewObject(string typeName)
@@ -51,7 +81,17 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
 
             public T NewObject<T>() where T : IGlobalContextBound
             {
-                throw new NotImplementedException();
+                var requiredType = typeof(T);
+
+                var instance = _newObjectDelegate(requiredType);
+                if (instance == null)
+                {
+                    throw new NotSupportedException(string.Format(
+                        "Создание экземпляра типа \"{0}\" методом NewObject не поддерживается.",
+                        requiredType));
+                }
+
+                return (T)instance;
             }
 
             public bool ExclusiveMode()
@@ -81,6 +121,4 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
             }
         }
     }
-
-
 }

@@ -9,6 +9,7 @@ namespace VanessaSharp.Data
     /// <summary>Команда запроса к 1С.</summary>
     public sealed class OneSCommand : DbCommand
     {
+        // TODO: Нужен Рефакторинг. Убрать интерфейс после внедрения параметрических запросов. Нужна просто фабрика объектов.
         /// <summary>Поставщик глобального контекста 1С.</summary>
         private IGlobalContextProvider _globalContextProvider;
 

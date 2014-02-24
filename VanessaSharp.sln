@@ -36,6 +36,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AcceptanceTestDb", "Accepta
 		AcceptanceTestDb\1Cv8.1CD = AcceptanceTestDb\1Cv8.1CD
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Requirements", "Requirements", "{B0BF4273-9A8D-4E86-BEDF-169B5C80D9CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -142,6 +144,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D231F52C-1650-4523-A365-7AB2009A6BF7} = {EF47D692-349F-46E2-9725-C3EBF2165820}
+		{B0BF4273-9A8D-4E86-BEDF-169B5C80D9CC} = {EF47D692-349F-46E2-9725-C3EBF2165820}
 		{92BCE3AE-D949-47FD-BA01-52689A3061C8} = {D231F52C-1650-4523-A365-7AB2009A6BF7}
 		{4E8CC641-EB97-4EAF-85AA-B80BB06ECD9D} = {D231F52C-1650-4523-A365-7AB2009A6BF7}
 	EndGlobalSection

@@ -1,0 +1,227 @@
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Data;
+using System.Linq;
+using System.Text;
+using NUnit.Framework;
+using VanessaSharp.Data.AcceptanceTests.Mocks;
+
+namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
+{
+    /// <summary>Базовый класс приемочных тестов на <see cref="OneSDataReader"/>.</summary>
+    public abstract class TestsBase : ConnectedTestsBase
+    {
+        private TableDataBuilder _dataBuilder;
+        private ReadOnlyCollection<object> _currentExpectedRowData;
+
+        protected TestsBase(TestMode testMode) : base(testMode)
+        {}
+
+        /// <summary>Ожидаемые табличные данные.</summary>
+        internal TableData ExpectedData { get; private set; }
+
+        /// <summary>Начало определения данных для теста.</summary>
+        private void BeginDefineData()
+        {
+            _dataBuilder = new TableDataBuilder();
+        }
+
+        /// <summary>Завершение определения данных для теста.</summary>
+        private void EndDefineData()
+        {
+            ExpectedData = _dataBuilder.Build();
+        }
+
+        /// <summary>Определение поля табличных данных для теста.</summary>
+        private void Field<T>(string name)
+        {
+            _dataBuilder.AddField<T>(name);
+        }
+
+        /// <summary>
+        /// Определение строки в табличных данных для теста.
+        /// </summary>
+        private void Row(params object[] rowdata)
+        {
+            _dataBuilder.AddRow(rowdata);
+        }
+
+        /// <summary>Ожидаемое количество полей.</summary>
+        private int ExpectedFieldsCount
+        {
+            get { return ExpectedData.Fields.Count; }
+        }
+
+        /// <summary>Ожидаемое количество строк.</summary>
+        private int ExpectedRowsCount
+        {
+            get { return ExpectedData.Rows.Count; }
+        }
+        
+        /// <summary>
+        /// Ожидаемое имя поля по данному индексу <paramref name="fieldIndex"/>.
+        /// </summary>
+        private string ExpectedFieldName(int fieldIndex)
+        {
+            return ExpectedData.Fields[fieldIndex].Name;
+        }
+
+        /// <summary>
+        /// Ожидаемый тип поля по данному индексу <paramref name="fieldIndex"/>.
+        /// </summary>
+        private Type ExpectedFieldType(int fieldIndex)
+        {
+            return ExpectedData.Fields[fieldIndex].Type;
+        }
+
+        /// <summary>
+        /// Ожидаемое значение поля по данному индексу <paramref name="fieldIndex"/>
+        /// в текущей строке.
+        /// </summary>
+        private object ExpectedFieldValue(int fieldIndex)
+        {
+            return _currentExpectedRowData[fieldIndex];
+        }
+
+        /// <summary>
+        /// Установка текущей строки для проверки ожидаемых результатов.
+        /// </summary>
+        /// <param name="rowIndex">Индекс строки.</param>
+        private void SetCurrentExpectedRow(int rowIndex)
+        {
+            _currentExpectedRowData = ExpectedData.Rows[rowIndex];
+        }
+
+        private OneSDataReader GetTestedReader(string sourceName, CommandBehavior behavior)
+        {
+            var command = new OneSCommand
+            {
+                Connection = Connection,
+                CommandType = CommandType.Text,
+                CommandText = GetSql(sourceName)
+            };
+
+            return command.ExecuteReader(behavior);
+        }
+
+        private string GetSql(string sourceName)
+        {
+            var fieldNames = from field in ExpectedData.Fields
+                             select field.Name;
+
+            var queryStringBuilder = new StringBuilder("Выбрать ");
+            queryStringBuilder.Append(fieldNames.First());
+            foreach (var field in fieldNames.Skip(1))
+            {
+                queryStringBuilder.Append(", ");
+                queryStringBuilder.Append(field);
+            }
+            queryStringBuilder.Append(" ИЗ ");
+            queryStringBuilder.Append(sourceName);
+
+            return queryStringBuilder.ToString();
+        }
+
+        private static Func<int, object> GetTypedFieldValueGetter(params Func<int, object>[] typedFieldValueGetters)
+        {
+            return index => typedFieldValueGetters[index](index);
+        }
+
+        /// <summary>Тестирование простого запроса.</summary>
+        [Test]
+        public void TestSimpleQuery()
+        {
+            BeginDefineData();
+
+            Field<string>("СтроковоеПоле");
+            Field<double>("ЦелочисленноеПоле");
+            Field<double>("ЧисловоеПоле");
+            Field<bool>("БулевоПоле");
+            Field<DateTime>("ДатаПоле");
+            Field<DateTime>("ДатаВремяПоле");
+            Field<DateTime>("ВремяПоле");
+            Field<string>("НеограниченноеСтроковоеПоле");
+
+            Row
+            (
+                "Тестирование", 234, 546.323, true,
+                new DateTime(2014, 01, 15), new DateTime(2014, 01, 08, 4, 33, 43),
+                new DateTime(100, 1, 1, 23, 43, 43),
+                @"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."    
+            );
+
+            Row
+            (
+                "", 0, 0, false,
+                new DateTime(100, 1, 1), new DateTime(100, 1, 1),
+                new DateTime(100, 1, 1),
+                ""
+            );
+
+            EndDefineData();
+
+            Assert.AreEqual(8, ExpectedFieldsCount);
+
+            using (var reader = GetTestedReader("Справочник.ТестовыйСправочник",
+                CommandBehavior.SequentialAccess | CommandBehavior.SingleResult))
+            {
+                Assert.AreEqual(0, reader.Depth);
+                Assert.IsTrue(reader.HasRows);
+                Assert.IsFalse(reader.IsClosed);
+                Assert.AreEqual(-1, reader.RecordsAffected);
+
+
+                Assert.AreEqual(ExpectedFieldsCount, reader.FieldCount);
+                Assert.AreEqual(ExpectedFieldsCount, reader.VisibleFieldCount);
+
+                for (var fieldIndex = 0; fieldIndex < ExpectedFieldsCount; fieldIndex++)
+                {
+                    Assert.AreEqual(ExpectedFieldName(fieldIndex), reader.GetName(fieldIndex));
+                    Assert.AreEqual(ExpectedFieldType(fieldIndex), reader.GetFieldType(fieldIndex));
+                    Assert.AreEqual(fieldIndex, reader.GetOrdinal(ExpectedFieldName(fieldIndex)));
+                }
+
+                var values = new object[ExpectedFieldsCount];
+
+                var recordCounter = 0;
+
+                Func<int, object> getStringValue = index => reader.GetString(index);
+                Func<int, object> getDateTimeValue = index => reader.GetDateTime(index);
+
+                var getTypedValue = GetTypedFieldValueGetter(
+                                        getStringValue,    
+                                        i => reader.GetInt32(i),
+                                        i => reader.GetDouble(i),
+                                        i => reader.GetBoolean(i),
+                                        getDateTimeValue,
+                                        getDateTimeValue,
+                                        getDateTimeValue,
+                                        getStringValue
+                                        );
+
+                while (reader.Read())
+                {
+                    Assert.Less(recordCounter, ExpectedRowsCount);
+
+                    Assert.AreEqual(ExpectedFieldsCount, reader.GetValues(values));
+
+                    SetCurrentExpectedRow(recordCounter);
+
+                    for (var fieldIndex = 0; fieldIndex < ExpectedFieldsCount; fieldIndex++)
+                    {
+                        var expectedFieldValue = ExpectedFieldValue(fieldIndex);
+
+                        Assert.AreEqual(expectedFieldValue, values[fieldIndex]);
+                        Assert.AreEqual(expectedFieldValue, reader[fieldIndex]);
+                        Assert.AreEqual(expectedFieldValue, reader.GetValue(fieldIndex));
+                        Assert.AreEqual(expectedFieldValue, reader[ExpectedFieldName(fieldIndex)]);
+                        Assert.AreEqual(expectedFieldValue, getTypedValue(fieldIndex));
+                    }
+
+                    ++recordCounter;
+                }
+                
+            }
+        }
+    }
+}

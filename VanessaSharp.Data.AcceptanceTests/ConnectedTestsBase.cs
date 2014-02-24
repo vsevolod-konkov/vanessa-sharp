@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using VanessaSharp.Data.AcceptanceTests.Mocks;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.AcceptanceTests
 {
@@ -47,7 +48,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         {
             _connection = (_testMode == TestMode.Real)
                 ? new OneSConnection(TestConnectionString)
-                : new OneSConnection(new OneSConnectorFactoryMock()) { ConnectionString = TestConnectionString };
+                : new OneSConnection(CreateOneSConnectorFactoryForIsolatedMode()) { ConnectionString = TestConnectionString };
             
             if (_shouldBeOpen)
                 _connection.Open();
@@ -63,5 +64,19 @@ namespace VanessaSharp.Data.AcceptanceTests
                 _connection = null;
             }
         }
+
+        private IOneSConnectorFactory CreateOneSConnectorFactoryForIsolatedMode()
+        {
+            var result = new OneSConnectorFactoryMock();
+            result.NewOneSObjectAsking += (sender, args) => OnNewOneSObjectAsking(args);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Обработчик запроса на создание экземпляра объекта 1С.
+        /// </summary>
+        internal virtual void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
+        {}
     }
 }

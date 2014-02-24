@@ -8,6 +8,7 @@ namespace VanessaSharp.Proxy.Common
     /// </summary>
     public sealed class OneSGlobalContext : OneSObject, IGlobalContext
     {
+        // TODO: Нужен Рефакторинг. Убрать после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий нетипизированный метод.
         /// <summary>Определитель типов 1С.</summary>
         private readonly IOneSTypeResolver _oneSTypeResolver;
 
@@ -38,6 +39,7 @@ namespace VanessaSharp.Proxy.Common
                 new OneSProxyWrapperWithGlobalContext(globalContext));
         }
 
+        // TODO: Нужен Рефакторинг. Оставить после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий этот метод.
         /// <summary>Создание нового объекта.</summary>
         /// <param name="typeName">Имя типа создаваемого объекта.</param>
         public dynamic NewObject(string typeName)
@@ -45,6 +47,7 @@ namespace VanessaSharp.Proxy.Common
             return DynamicProxy.NewObject(typeName);
         }
 
+        // TODO: Нужен Рефакторинг. Убрать после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий нетипизированный метод.
         /// <summary>Создание объекта.</summary>
         /// <typeparam name="T">Тип интерфейса соответствующего типу объекта 1С.</typeparam>
         public T NewObject<T>() where T : IGlobalContextBound
@@ -53,6 +56,7 @@ namespace VanessaSharp.Proxy.Common
                 GetOneSTypeNameForNewObject<T>());
         }
 
+        // TODO: Нужен Рефакторинг. Убрать после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий нетипизированный метод.
         /// <summary>
         /// Получение имени типа в 1С для объекта реализующего 
         /// запрашиваемый тип.
