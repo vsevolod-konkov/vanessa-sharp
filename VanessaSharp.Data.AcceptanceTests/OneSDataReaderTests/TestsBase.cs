@@ -11,6 +11,9 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
     /// <summary>Базовый класс приемочных тестов на <see cref="OneSDataReader"/>.</summary>
     public abstract class TestsBase : ConnectedTestsBase
     {
+        private const string LONG_TEXT =
+            @"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
+        
         private TableDataBuilder _dataBuilder;
         private ReadOnlyCollection<object> _currentExpectedRowData;
 
@@ -101,6 +104,8 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 CommandText = GetSql(sourceName)
             };
 
+            command.Prepare();
+
             return command.ExecuteReader(behavior);
         }
 
@@ -146,8 +151,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             (
                 "Тестирование", 234, 546.323, true,
                 new DateTime(2014, 01, 15), new DateTime(2014, 01, 08, 4, 33, 43),
-                new DateTime(100, 1, 1, 23, 43, 43),
-                @"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."    
+                new DateTime(100, 1, 1, 23, 43, 43), LONG_TEXT
             );
 
             Row
@@ -221,6 +225,70 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                     ++recordCounter;
                 }
                 
+            }
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>
+        /// и <see cref="OneSDataReader.GetDataTypeName"/>.
+        /// </summary>
+        [Test]
+        [TestCheckNotImplemented]
+        public void TestGetSchema()
+        {
+            BeginDefineData();
+
+            Field<string>("СтроковоеПоле");
+            Field<double>("ЦелочисленноеПоле");
+            
+            EndDefineData();
+
+            using (var reader = GetTestedReader("Справочник.ТестовыйСправочник", CommandBehavior.Default))
+            {
+                Assert.Throws<NotImplementedException>(() =>
+                    {
+                        var schemaTable = reader.GetSchemaTable();
+                    });
+
+                for (var fieldIndex = 0; fieldIndex < ExpectedFieldsCount; fieldIndex++)
+                {
+                    Assert.Throws<NotImplementedException>(() =>
+                    {
+                        var typeName = reader.GetDataTypeName(fieldIndex);
+                    });    
+                }
+            }
+        }
+
+        /// <summary>
+        /// Тестирование 
+        /// методов потокового чтения:
+        /// <see cref="OneSDataReader.GetBytes"/>
+        /// и <see cref="OneSDataReader.GetChars"/>.
+        /// </summary>
+        [Test]
+        [TestCheckNotImplemented]
+        public void TestStreamReading()
+        {
+            BeginDefineData();
+            
+            Field<string>("НеограниченноеСтроковоеПоле");
+            Row(LONG_TEXT);
+
+            EndDefineData();
+
+            using (var reader = GetTestedReader("Справочник.ТестовыйСправочник", CommandBehavior.Default))
+            {
+                Assert.IsTrue(reader.Read());
+                SetCurrentExpectedRow(0);
+
+                const int BUFFER_SIZE = 1024;
+                
+                var binaryBuffer = new byte[BUFFER_SIZE];
+                Assert.Throws<NotImplementedException>(() => reader.GetBytes(0, 0, binaryBuffer, 0, BUFFER_SIZE));
+
+                var charBuffer = new char[BUFFER_SIZE];
+                Assert.Throws<NotImplementedException>(() => reader.GetChars(0, 0, charBuffer, 0, BUFFER_SIZE));
             }
         }
     }

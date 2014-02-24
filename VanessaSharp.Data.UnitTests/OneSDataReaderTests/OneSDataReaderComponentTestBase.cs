@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
@@ -159,6 +160,16 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void TestRecordsAffected()
         {
             Assert.AreEqual(-1, TestedInstance.RecordsAffected);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(NotImplementedException))]
+        public void TestNotImplementedGetSchemaTable()
+        {
+            TestedInstance.GetSchemaTable();
         }
 
         /// <summary>
@@ -569,6 +580,49 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 Assert.AreEqual(expectedResult, testedFunc());
                 AssertGetValue(TEST_ORDINAL);
             }
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSDataReader.GetBytes"/>.
+        /// </summary>
+        [Test]
+        public void TestGetBytes()
+        {
+            TestNotImplementedStreamReading(new byte[] {0xFF, 0x01, 0x56, 0x67, 0x54},
+                (reader, ordinal, dataOffset, buffer, bufferOffset, length) => 
+                    reader.GetBytes(ordinal, dataOffset, buffer, bufferOffset, length));
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSDataReader.GetChars"/>.
+        /// </summary>
+        [Test]
+        public void TestGetChars()
+        {
+            TestNotImplementedStreamReading(@"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
+                (reader, ordinal, dataOffset, buffer, bufferOffset, length) =>
+                    reader.GetChars(ordinal, dataOffset, buffer, bufferOffset, length));
+        }
+
+        /// <summary>Тестирование того, что не реализовано потоковое чтение значения поля.</summary>
+        /// <typeparam name="T">Тип потоковых данных.</typeparam>
+        /// <param name="expectedStream">Ожидаемые потоковые данные</param>
+        /// <param name="streamReader">Тестируемый метод потокового чтения.</param>
+        private void TestNotImplementedStreamReading<T>(IEnumerable<T> expectedStream, Action<OneSDataReader, int, long, T[], int, int> streamReader)
+        {
+            const int TEST_ORDINAL = 5;
+            ArrangeGetValue(TEST_ORDINAL, expectedStream);
+
+            const int BUFFER_SIZE = 1024;
+
+            var buffer = new T[BUFFER_SIZE];
+
+            var exceptionType = ShouldBeThrowInvalidOperationExceptionWhenGetValue
+                                    ? typeof(InvalidOperationException)
+                                    : typeof(NotImplementedException);
+
+            Assert.Throws(exceptionType,
+                          () => streamReader(TestedInstance, TEST_ORDINAL, 0, buffer, 0, BUFFER_SIZE));
         }
     }
 }

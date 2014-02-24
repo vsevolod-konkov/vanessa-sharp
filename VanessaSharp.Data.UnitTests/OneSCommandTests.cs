@@ -203,5 +203,39 @@ namespace VanessaSharp.Data.UnitTests
         {
             Assert.AreEqual(UpdateRowSource.None, _testedInstance.UpdatedRowSource);
         }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSCommand.Prepare"/>,
+        /// что ничего не произойдет.
+        /// </summary>
+        [Test]
+        public void TestPrepare()
+        {
+            _testedInstance.Prepare();
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSCommand.ExecuteNonQuery"/>,
+        /// что при вызове будет выкинуто исключение
+        /// <see cref="NotSupportedException"/>.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void TestExecuteNonQuery()
+        {
+            _testedInstance.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSCommand.ExecuteScalar"/>,
+        /// что при вызове будет выкинуто исключение
+        /// <see cref="NotImplementedException"/>.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(NotImplementedException))]
+        public void TestExecuteScalar()
+        {
+            _testedInstance.ExecuteScalar();
+        }
     }
 }

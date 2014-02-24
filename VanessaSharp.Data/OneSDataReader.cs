@@ -88,6 +88,17 @@ namespace VanessaSharp.Data
             }
         }
 
+        /// <summary>
+        /// Возвращает объект <see cref="T:System.Data.DataTable"/>, описывающий метаданные столбца объекта <see cref="T:System.Data.Common.DbDataReader"/>.
+        /// </summary>
+        /// <remarks>В текущей версии не реализовано.</remarks>
+        /// <returns>
+        /// Объект <see cref="T:System.Data.DataTable"/>, описывающий метаданные столбца.
+        /// </returns>
+        /// <exception cref="T:System.InvalidOperationException">Объект <see cref="T:System.Data.SqlClient.SqlDataReader"/> закрыт. </exception>
+        /// <filterpriority>1</filterpriority>
+        /// <exception cref="NotImplementedException"/>
+        [CurrentVersionNotImplemented]
         public override DataTable GetSchemaTable()
         {
             throw new NotImplementedException();
@@ -215,18 +226,64 @@ namespace VanessaSharp.Data
                 GetValue(ordinal));
         }
 
+        /// <summary>
+        /// Считывает поток байтов из указанного столбца, начиная с местоположения, указанного параметром <paramref name="dataOffset"/>, в буфер, начиная с местоположения, указанного параметром <paramref name="bufferOffset"/>.
+        /// </summary>
+        /// <remarks>В текущей версии не реализовано.</remarks>
+        /// <returns>
+        /// Фактическое количество считанных байтов.
+        /// </returns>
+        /// <param name="ordinal">Порядковый номер (с нуля) столбца.</param>
+        /// <param name="dataOffset">Индекс в строке, с которого начинается операция считывания.</param>
+        /// <param name="buffer">Буфер, в который копируются данные.</param><param name="bufferOffset">Индекс для буфера, в который будут копироваться данные.</param>
+        /// <param name="length">Наибольшее число символов для чтения.</param><exception cref="T:System.InvalidCastException">Указанное приведение недопустимо. </exception>
+        /// <filterpriority>1</filterpriority>
+        /// <exception cref="NotImplementedException"/>
+        [CurrentVersionNotImplemented]
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
+            // TODO: Копипаст
+            if (_currentState != States.RecordOpen)
+            {
+                throw new InvalidOperationException(
+                    "Невозможно получить значение поля так как экземпляр не находится на позиции строки данных.");
+            }
+
             throw new NotImplementedException();
         }
 
+        // TODO: Надо реализовать в этой версии
         public override char GetChar(int ordinal)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Считывает поток символов из указанного столбца, начиная с местоположения,
+        /// указанного параметром <paramref name="dataOffset"/>, в буфер, 
+        /// начиная с местоположения, указанного параметром <paramref name="bufferOffset"/>.
+        /// </summary>
+        /// <remarks>В текущей версии не реализовано.</remarks>
+        /// <returns>
+        /// Фактическое количество считанных символов.
+        /// </returns>
+        /// <param name="ordinal">Порядковый номер (с нуля) столбца.</param>
+        /// <param name="dataOffset">Индекс в строке, с которого начинается операция считывания.</param>
+        /// <param name="buffer">Буфер, в который копируются данные.</param>
+        /// <param name="bufferOffset">Индекс для буфера, в который будут копироваться данные.</param>
+        /// <param name="length">Наибольшее число символов для чтения.</param>
+        /// <filterpriority>1</filterpriority>
+        /// <exception cref="NotImplementedException"/>
+        [CurrentVersionNotImplemented]
         public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
+            // TODO: Копипаст
+            if (_currentState != States.RecordOpen)
+            {
+                throw new InvalidOperationException(
+                    "Невозможно получить значение поля так как экземпляр не находится на позиции строки данных.");
+            }
+            
             throw new NotImplementedException();
         }
 
@@ -556,6 +613,19 @@ namespace VanessaSharp.Data
             }
         }
 
+
+        /// <summary>
+        /// Получает имя типа данных указанного столбца.
+        /// </summary>
+        /// <remarks>В текущей версии не реализовано.</remarks>
+        /// <returns>
+        /// Строка, представляющая имя типа данных.
+        /// </returns>
+        /// <param name="ordinal">Порядковый номер столбца, начиная с нуля.</param>
+        /// <exception cref="T:System.InvalidCastException">Указанное приведение недопустимо. </exception>
+        /// <filterpriority>1</filterpriority>
+        /// <exception cref="NotImplementedException"/>
+        [CurrentVersionNotImplemented]
         public override string GetDataTypeName(int ordinal)
         {
             throw new NotImplementedException();

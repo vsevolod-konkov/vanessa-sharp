@@ -89,6 +89,14 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             var result = TestedInstance.FieldCount;
         }
 
+        /// <summary>Тестирование метода <see cref="OneSDataReader.GetDataTypeName"/>.</summary>
+        [Test]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestGetDataTypeName()
+        {
+            var result = TestedInstance.GetDataTypeName(4);
+        }
+
         /// <summary>Тестирование <see cref="OneSDataReader.GetName"/>.</summary>
         [Test]
         [ExpectedException(typeof(InvalidOperationException))]

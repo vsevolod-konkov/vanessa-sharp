@@ -252,28 +252,34 @@ namespace VanessaSharp.Data
 
         /// <summary>Выполняет для запрос и возвращает количество задействованных в инструкции строк.</summary>
         /// <returns>
-        /// Язык запросов 1С не поддерживает манипуляции данными, поэтому данный метод не поддерживается.
+        /// Язык запросов 1С не поддерживает изменение исходных данных, поэтому данный метод не поддерживается.
         /// </returns>
+        /// <exception cref="NotSupportedException"/>
         public override int ExecuteNonQuery()
         {
-            throw new System.NotImplementedException();
+            throw new NotSupportedException(
+                "Язык запросов 1С не поддерживает изменение исходных данных, поэтому данный метод не поддерживается.");
         }
 
         /// <summary>
         /// Выполняет запрос и возвращает первый столбец первой строки результирующего набора, возвращаемого запросом. 
         /// Дополнительные столбцы и строки игнорируются.
         /// </summary>
-        /// <returns></returns>
+        /// <remarks>В текущей версии не поддерживается.</remarks>
+        /// <exception cref="NotImplementedException"/>
+        [CurrentVersionNotImplemented]
         public override object ExecuteScalar()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         /// <summary>Создает подготовленную версию команды в информационной базе 1С.</summary>
+        /// <remarks>
+        /// Предварительная подготовка запросов в 1С не поддерживается.
+        /// Вызов данного метода ничего не делает.
+        /// </remarks>
         public override void Prepare()
-        {
-            throw new System.NotImplementedException();
-        }
+        {}
 
         /// <summary>
         /// Получает или задает способ применения результатов команды к объекту <see cref="DataRow"/>

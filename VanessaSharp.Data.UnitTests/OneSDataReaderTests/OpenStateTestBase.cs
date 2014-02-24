@@ -144,6 +144,20 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             VerifyColumnsDispose();
         }
 
+        /// <summary>Тестирование метода <see cref="OneSDataReader.GetDataTypeName"/>.</summary>
+        [Test]
+        [ExpectedException(typeof(NotImplementedException))]
+        public void TestGetDataTypeName()
+        {
+            const int TEST_FIELD_INDEX = 4;
+
+            // Arrange
+            SetupColumnsGetCount(TEST_FIELD_INDEX + 1);
+
+            // Act & Assert
+            var result = TestedInstance.GetDataTypeName(TEST_FIELD_INDEX);
+        }
+
         /// <summary>Установка получения колонки.</summary>
         /// <param name="index">Индекс колонки.</param>
         /// <param name="column">Экземпляр получаемой колонки.</param>

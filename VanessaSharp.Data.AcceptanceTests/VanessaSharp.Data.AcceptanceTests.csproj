@@ -77,6 +77,7 @@
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\ProductInfo.cs">
@@ -84,6 +85,7 @@
     </Compile>
     <Compile Include="Constants.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
+    <Compile Include="TestCheckNotImplementedAttribute.cs" />
     <Compile Include="Mocks\FieldDescription.cs" />
     <Compile Include="Mocks\MockHelper.cs" />
     <Compile Include="Mocks\NewOneSObjectEventArgs.cs" />
@@ -92,6 +94,7 @@
     <Compile Include="Mocks\TableData.cs" />
     <Compile Include="Mocks\TableDataBuilder.cs" />
     <Compile Include="Mocks\TypeDescriptionMockFactory.cs" />
+    <Compile Include="OneSCommandTests\FailedExecuteTests.cs" />
     <Compile Include="OneSCommandTests\GeneralExecuteTestsBase.cs" />
     <Compile Include="OneSCommandTests\GeneralExecuteTestsInIsolatedMode.cs" />
     <Compile Include="OneSCommandTests\GeneralExecuteTestsInRealMode.cs" />
