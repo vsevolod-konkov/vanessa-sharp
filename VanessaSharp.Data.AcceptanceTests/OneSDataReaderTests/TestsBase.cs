@@ -337,5 +337,83 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 Assert.Throws<NotImplementedException>(() => { var enumerator = reader.GetEnumerator(); });
             }
         }
+
+        /// <summary>
+        /// Тестирование выполнения параметрического запроса.
+        /// </summary>
+        [Test]
+        public void TestSimpleParameterizedQuery()
+        {
+            BeginDefineData();
+
+            Field<string>("СтроковоеПоле");
+            Field<double>("ЦелочисленноеПоле");
+
+            Row("Тестирование", 234);
+
+            EndDefineData();
+
+            var command =
+                GetCommand(
+                    "ВЫБРАТЬ СтроковоеПоле, ЦелочисленноеПоле ИЗ Справочник.ТестовыйСправочник ГДЕ СтроковоеПоле = &Фильтр");
+
+            command.Parameters.Add("Фильтр", "Тестирование");
+
+            command.Prepare();
+
+            using (var reader = command.ExecuteReader())
+            {
+                Assert.AreEqual(ExpectedFieldsCount, reader.FieldCount);
+                Assert.AreEqual(ExpectedFieldsCount, reader.VisibleFieldCount);
+
+                for (var fieldIndex = 0; fieldIndex < ExpectedFieldsCount; fieldIndex++)
+                {
+                    Assert.AreEqual(ExpectedFieldName(fieldIndex), reader.GetName(fieldIndex));
+                    Assert.AreEqual(ExpectedFieldType(fieldIndex), reader.GetFieldType(fieldIndex));
+                    Assert.AreEqual(fieldIndex, reader.GetOrdinal(ExpectedFieldName(fieldIndex)));
+                }
+
+                var values = new object[ExpectedFieldsCount];
+
+                var recordCounter = 0;
+
+                Func<int, object> getStringValue = index => reader.GetString(index);
+                Func<int, object> getDateTimeValue = index => reader.GetDateTime(index);
+
+                var getTypedValue = GetTypedFieldValueGetter(
+                                        getStringValue,
+                                        i => reader.GetInt32(i),
+                                        i => reader.GetDouble(i),
+                                        i => reader.GetBoolean(i),
+                                        getDateTimeValue,
+                                        getDateTimeValue,
+                                        getDateTimeValue,
+                                        getStringValue,
+                                        i => reader.GetChar(i).ToString()
+                                        );
+
+                while (reader.Read())
+                {
+                    Assert.Less(recordCounter, ExpectedRowsCount);
+
+                    Assert.AreEqual(ExpectedFieldsCount, reader.GetValues(values));
+
+                    SetCurrentExpectedRow(recordCounter);
+
+                    for (var fieldIndex = 0; fieldIndex < ExpectedFieldsCount; fieldIndex++)
+                    {
+                        var expectedFieldValue = ExpectedFieldValue(fieldIndex);
+
+                        Assert.AreEqual(expectedFieldValue, values[fieldIndex]);
+                        Assert.AreEqual(expectedFieldValue, reader[fieldIndex]);
+                        Assert.AreEqual(expectedFieldValue, reader.GetValue(fieldIndex));
+                        Assert.AreEqual(expectedFieldValue, reader[ExpectedFieldName(fieldIndex)]);
+                        Assert.AreEqual(expectedFieldValue, getTypedValue(fieldIndex));
+                    }
+
+                    ++recordCounter;
+                }
+            }
+        }
     }
 }

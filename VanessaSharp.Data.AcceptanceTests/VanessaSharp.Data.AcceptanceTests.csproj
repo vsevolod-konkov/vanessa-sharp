@@ -85,6 +85,8 @@
     </Compile>
     <Compile Include="Constants.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
+    <Compile Include="OneSParameterTests\InitTests.cs" />
+    <Compile Include="OneSParameterTests\ChangePropertiesTests.cs" />
     <Compile Include="TestCheckNotImplementedAttribute.cs" />
     <Compile Include="Mocks\FieldDescription.cs" />
     <Compile Include="Mocks\MockHelper.cs" />

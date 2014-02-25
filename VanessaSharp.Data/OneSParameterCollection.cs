@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Collections;
+using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Data
 {
@@ -15,6 +17,43 @@ namespace VanessaSharp.Data
         /// </returns>
         /// <param name="value">The <see cref="P:System.Data.Common.DbParameter.Value"/> of the <see cref="T:System.Data.Common.DbParameter"/> to add to the collection.</param><filterpriority>1</filterpriority>
         public override int Add(object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>Добавление параметра.</summary>
+        /// <param name="parameter">Добавляемый параметр.</param>
+        public OneSParameter Add(OneSParameter parameter)
+        {
+            Contract.Requires<ArgumentNullException>(parameter != null);
+            Contract.Ensures(Contract.Result<OneSParameter>() != null);
+            Contract.Ensures(Contract.Result<OneSParameter>() != parameter);
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>Добавление именованного параметра.</summary>
+        /// <param name="name">Имя нового параметра.</param>
+        public OneSParameter Add(string name)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrEmpty(name));
+            Contract.Ensures(Contract.Result<OneSParameter>() != null);
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>Добавление именованного параметра со значением.</summary>
+        /// <param name="name">Имя нового параметра.</param>
+        /// <param name="value">Значение нового параметра.</param>
+        public OneSParameter Add(string name, object value)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrEmpty(name));
+            Contract.Ensures(Contract.Result<OneSParameter>() != null);
+
+            throw new NotImplementedException();
+        }
+
+        public void AddRange(IEnumerable<OneSParameter> parameters)
         {
             throw new NotImplementedException();
         }
