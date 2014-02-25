@@ -193,6 +193,22 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         }
 
         /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetChar"/>.
+        /// </summary>
+        protected override void ArrangeGetChar(object returnValue, char expectedResult)
+        {
+            ArrangeGetTypedValue(c => c.ToChar(returnValue), expectedResult);
+        }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetChar"/>.
+        /// </summary>
+        protected override void AssertGetChar(object returnValue)
+        {
+            AssertGetTypedValue(c => c.ToChar(returnValue));
+        }
+
+        /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetByte"/>.
         /// </summary>
         protected override void ArrangeGetByte(object returnValue, byte expectedResult)

@@ -95,14 +95,19 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             _currentExpectedRowData = ExpectedData.Rows[rowIndex];
         }
 
-        private OneSDataReader GetTestedReader(string sourceName, CommandBehavior behavior)
+        private OneSCommand GetCommand(string sql)
         {
-            var command = new OneSCommand
+            return new OneSCommand
             {
                 Connection = Connection,
                 CommandType = CommandType.Text,
-                CommandText = GetSql(sourceName)
+                CommandText = sql
             };
+        }
+
+        private OneSDataReader GetTestedReader(string sourceName, CommandBehavior behavior)
+        {
+            var command = GetCommand(GetSql(sourceName));
 
             command.Prepare();
 
@@ -146,12 +151,13 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             Field<DateTime>("ДатаВремяПоле");
             Field<DateTime>("ВремяПоле");
             Field<string>("НеограниченноеСтроковоеПоле");
+            Field<string>("СимвольноеПоле");
 
             Row
             (
                 "Тестирование", 234, 546.323, true,
                 new DateTime(2014, 01, 15), new DateTime(2014, 01, 08, 4, 33, 43),
-                new DateTime(100, 1, 1, 23, 43, 43), LONG_TEXT
+                new DateTime(100, 1, 1, 23, 43, 43), LONG_TEXT, "А"
             );
 
             Row
@@ -159,12 +165,12 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 "", 0, 0, false,
                 new DateTime(100, 1, 1), new DateTime(100, 1, 1),
                 new DateTime(100, 1, 1),
-                ""
+                "", " "
             );
 
             EndDefineData();
 
-            Assert.AreEqual(8, ExpectedFieldsCount);
+            Assert.AreEqual(9, ExpectedFieldsCount);
 
             using (var reader = GetTestedReader("Справочник.ТестовыйСправочник",
                 CommandBehavior.SequentialAccess | CommandBehavior.SingleResult))
@@ -200,7 +206,8 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                                         getDateTimeValue,
                                         getDateTimeValue,
                                         getDateTimeValue,
-                                        getStringValue
+                                        getStringValue,
+                                        i => reader.GetChar(i).ToString()
                                         );
 
                 while (reader.Read())
@@ -289,6 +296,45 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
                 var charBuffer = new char[BUFFER_SIZE];
                 Assert.Throws<NotImplementedException>(() => reader.GetChars(0, 0, charBuffer, 0, BUFFER_SIZE));
+            }
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetGuid"/>.
+        /// </summary>
+        [Test]
+        [TestCheckNotImplemented]
+        public void TestGetGuid()
+        {
+            BeginDefineData();
+
+            Field<Guid>("UID");
+            Row(Guid.Parse("8e12149f-5b71-4218-a1cd-429d3d1cfe68"));
+
+            EndDefineData();
+
+            using (var reader = GetTestedReader("Справочник.СправочникUID", CommandBehavior.Default))
+            {
+                Assert.IsTrue(reader.Read());
+                SetCurrentExpectedRow(0);
+
+                Assert.Throws<NotImplementedException>(() => { var value = reader.GetGuid(0); });
+            }
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetEnumerator"/>.
+        /// </summary>
+        [Test]
+        [TestCheckNotImplemented]
+        public void TestGetEnumerator()
+        {
+            BeginDefineData();
+            EndDefineData();
+            
+            using (var reader = GetCommand("ВЫБРАТЬ * ИЗ Справочник.ТестовыйСправочник").ExecuteReader())
+            {
+                Assert.Throws<NotImplementedException>(() => { var enumerator = reader.GetEnumerator(); });
             }
         }
     }

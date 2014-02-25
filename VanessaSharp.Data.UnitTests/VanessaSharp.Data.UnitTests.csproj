@@ -69,6 +69,7 @@
     <Compile Include="OneSTypeConverterTests.cs" />
     <Compile Include="ValueConverterTests\ToBooleanTests.cs" />
     <Compile Include="ValueConverterTests\ToByteTests.cs" />
+    <Compile Include="ValueConverterTests\ToCharTests.cs" />
     <Compile Include="ValueConverterTests\ToDateTimeTests.cs" />
     <Compile Include="ValueConverterTests\ToDecimalTests.cs" />
     <Compile Include="ValueConverterTests\ToDoubleTests.cs" />

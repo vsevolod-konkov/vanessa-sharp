@@ -173,6 +173,16 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         }
 
         /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetEnumerator"/>.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(NotImplementedException))]
+        public void TestNotImplementedGetEnumerator()
+        {
+            var enumerator = TestedInstance.GetEnumerator();
+        }
+
+        /// <summary>
         /// Следует ли вбрасывать исключение
         /// <see cref="InvalidOperationException"/>
         /// в случае попытки получения значения.
@@ -326,6 +336,31 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 ArrangeGetString, 
                 (reader, i) => reader.GetString(i), 
                 AssertGetString);
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetChar"/>.
+        /// </summary>
+        protected virtual void ArrangeGetChar(object returnValue, char expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetChar"/>.
+        /// </summary>
+        protected virtual void AssertGetChar(object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetChar"/>.
+        /// </summary>
+        [Test]
+        public void TestGetChar()
+        {
+            TestGetTypedValue(
+                'A',
+                ArrangeGetChar,
+                (reader, i) => reader.GetChar(i),
+                AssertGetChar);
         }
 
         /// <summary>
@@ -582,6 +617,41 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             }
         }
 
+        /// <summary>Тестирование отсутствия реализации получения типизированного значения.</summary>
+        /// <typeparam name="T">Тип значения.</typeparam>
+        /// <param name="expectedValue">Ожидаемое значение.</param>
+        /// <param name="testedAction">Тестируемое действие.</param>
+        private void TestNotImplementedGetTypedValue<T>(T expectedValue, Action<OneSDataReader, int> testedAction)
+        {
+            const int TEST_ORDINAL = 5;
+            ArrangeGetValue(TEST_ORDINAL, expectedValue);
+
+            var exceptionType = ShouldBeThrowInvalidOperationExceptionWhenGetValue
+                                    ? typeof(InvalidOperationException)
+                                    : typeof(NotImplementedException);
+
+            Assert.Throws(exceptionType,
+                          () => testedAction(TestedInstance, TEST_ORDINAL));
+        }
+
+        /// <summary>Тестирование того, что не реализовано потоковое чтение значения поля.</summary>
+        /// <typeparam name="T">Тип потоковых данных.</typeparam>
+        /// <param name="expectedStream">Ожидаемые потоковые данные</param>
+        /// <param name="streamReader">Тестируемый метод потокового чтения.</param>
+        private void TestNotImplementedStreamReading<T>(
+            IEnumerable<T> expectedStream, Action<OneSDataReader, int, long, T[], int, int> streamReader)
+        {
+            TestNotImplementedGetTypedValue(expectedStream,
+                                            (reader, ordinal) =>
+                                            {
+                                                const int BUFFER_SIZE = 1024;
+                                                var buffer = new T[BUFFER_SIZE];
+
+                                                streamReader(reader, ordinal, 0, buffer, 0, BUFFER_SIZE);
+                                            }
+                );
+        }
+
         /// <summary>
         /// Тестирование метода <see cref="OneSDataReader.GetBytes"/>.
         /// </summary>
@@ -604,25 +674,14 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                     reader.GetChars(ordinal, dataOffset, buffer, bufferOffset, length));
         }
 
-        /// <summary>Тестирование того, что не реализовано потоковое чтение значения поля.</summary>
-        /// <typeparam name="T">Тип потоковых данных.</typeparam>
-        /// <param name="expectedStream">Ожидаемые потоковые данные</param>
-        /// <param name="streamReader">Тестируемый метод потокового чтения.</param>
-        private void TestNotImplementedStreamReading<T>(IEnumerable<T> expectedStream, Action<OneSDataReader, int, long, T[], int, int> streamReader)
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetGuid"/>
+        /// </summary>
+        [Test]
+        public void TestGetGuid()
         {
-            const int TEST_ORDINAL = 5;
-            ArrangeGetValue(TEST_ORDINAL, expectedStream);
-
-            const int BUFFER_SIZE = 1024;
-
-            var buffer = new T[BUFFER_SIZE];
-
-            var exceptionType = ShouldBeThrowInvalidOperationExceptionWhenGetValue
-                                    ? typeof(InvalidOperationException)
-                                    : typeof(NotImplementedException);
-
-            Assert.Throws(exceptionType,
-                          () => streamReader(TestedInstance, TEST_ORDINAL, 0, buffer, 0, BUFFER_SIZE));
+            TestNotImplementedGetTypedValue(Guid.NewGuid(), 
+                (reader, ordinal) => { var value = reader.GetGuid(ordinal); });
         }
     }
 }

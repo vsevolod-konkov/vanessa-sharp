@@ -10,6 +10,12 @@ namespace VanessaSharp.Data
         string ToString(object value);
 
         /// <summary>
+        /// Конвертация значения в <see cref="char"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        char ToChar(object value);
+
+        /// <summary>
         /// Конвертация значения в <see cref="byte"/>.
         /// </summary>
         /// <param name="value">Конвертируемое значение.</param>

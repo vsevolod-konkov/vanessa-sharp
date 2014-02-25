@@ -18,7 +18,8 @@ namespace VanessaSharp.Data.AcceptanceTests.Mocks
                     { typeof(string), "Строка" },
                     { typeof(double), "Число" },
                     { typeof(bool), "Булево"},
-                    { typeof(DateTime), "Дата" }
+                    { typeof(DateTime), "Дата" },
+                    { typeof(Guid), "XXX"},
                 };
 
         /// <summary>

@@ -252,10 +252,19 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
-        // TODO: Надо реализовать в этой версии
+        /// <summary>
+        /// Получает значение указанного столбца в виде одного символа.
+        /// </summary>
+        /// <returns>
+        /// Значение указанного столбца.
+        /// </returns>
+        /// <param name="ordinal">Порядковый номер столбца (начиная с нуля).</param>
+        /// <exception cref="T:System.InvalidCastException">Указанное приведение недопустимо. </exception>
+        /// <filterpriority>1</filterpriority>
         public override char GetChar(int ordinal)
         {
-            throw new NotImplementedException();
+            return _valueConverter.ToChar(
+                GetValue(ordinal));
         }
 
         /// <summary>
@@ -287,8 +296,27 @@ namespace VanessaSharp.Data
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Возвращает значение заданного столбца в виде глобального уникального идентификатора (GUID).
+        /// </summary>
+        /// <remarks>В текущей версии не реализовано.</remarks>
+        /// <returns>
+        /// Значение указанного столбца.
+        /// </returns>
+        /// <param name="ordinal">Порядковый номер столбца, начиная с нуля.</param>
+        /// <exception cref="T:System.InvalidCastException">Указанное приведение недопустимо. </exception>
+        /// <filterpriority>1</filterpriority>
+        /// <exception cref="NotImplementedException"/>
+        [CurrentVersionNotImplemented]
         public override Guid GetGuid(int ordinal)
         {
+            // TODO: Копипаст
+            if (_currentState != States.RecordOpen)
+            {
+                throw new InvalidOperationException(
+                    "Невозможно получить значение поля так как экземпляр не находится на позиции строки данных.");
+            }
+            
             throw new NotImplementedException();
         }
 
@@ -654,6 +682,16 @@ namespace VanessaSharp.Data
             }
         }
 
+        /// <summary>
+        /// Возвращает значение <see cref="T:System.Collections.IEnumerator"/>, которое можно использовать для итерации элементов строк в модуле чтения данных.
+        /// </summary>
+        /// <remarks>В текущей версии не реализовано.</remarks>
+        /// <returns>
+        /// Значение <see cref="T:System.Collections.IEnumerator"/>, которое может использоваться для итерации элементов строк в модуле чтения данных.
+        /// </returns>
+        /// <filterpriority>1</filterpriority>
+        /// <exception cref="NotImplementedException"/>
+        [CurrentVersionNotImplemented]
         public override IEnumerator GetEnumerator()
         {
             throw new NotImplementedException();

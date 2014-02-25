@@ -78,6 +78,15 @@ namespace VanessaSharp.Data
         }
 
         /// <summary>
+        /// Конвертация значения в <see cref="char"/>.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        public char ToChar(object value)
+        {
+            return To(value, c => c.ToChar(null));
+        }
+
+        /// <summary>
         /// Конвертация значения в <see cref="byte"/>.
         /// </summary>
         /// <param name="value">Конвертируемое значение.</param>

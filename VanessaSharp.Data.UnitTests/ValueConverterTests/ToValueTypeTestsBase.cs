@@ -21,6 +21,5 @@ namespace VanessaSharp.Data.UnitTests.ValueConverterTests
         {
             Act(null);
         }
-
     }
 }
