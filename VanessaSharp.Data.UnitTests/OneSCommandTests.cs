@@ -237,5 +237,18 @@ namespace VanessaSharp.Data.UnitTests
         {
             _testedInstance.ExecuteScalar();
         }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSCommand.CreateParameter"/>.
+        /// </summary>
+        [Test]
+        public void TestCreateParameter()
+        {
+            var expectedParameter = new OneSParameter();
+            var result = _testedInstance.CreateParameter();
+
+            Assert.AreEqual(expectedParameter.ParameterName, result.ParameterName);
+            Assert.AreEqual(expectedParameter.Value, expectedParameter.Value);
+        }
     }
 }

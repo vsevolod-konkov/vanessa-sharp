@@ -2,7 +2,7 @@
 using System.Data;
 using NUnit.Framework;
 
-namespace VanessaSharp.Data.AcceptanceTests
+namespace VanessaSharp.Data.AcceptanceTests.OneSParameterTests
 {
     /// <summary>
     /// Тесты на инициализацию экземпляра <see cref="OneSParameter"/>.
@@ -29,7 +29,7 @@ namespace VanessaSharp.Data.AcceptanceTests
 
             AssertPropertiesAfterInit(testedInstance);
             Assert.IsNull(testedInstance.ParameterName);
-            Assert.AreEqual(DBNull.Value, testedInstance.Value);
+            Assert.IsNull(testedInstance.Value);
         }
 
         /// <summary>Тестирование <see cref="OneSParameter(string)"/>.</summary>
@@ -42,7 +42,7 @@ namespace VanessaSharp.Data.AcceptanceTests
 
             AssertPropertiesAfterInit(testedInstance);
             Assert.AreEqual(PARAMETER_NAME, testedInstance.ParameterName);
-            Assert.AreEqual(DBNull.Value, testedInstance.Value);
+            Assert.IsNull(testedInstance.Value);
         }
 
         /// <summary>Тестирование <see cref="OneSParameter(string, object)"/>.</summary>

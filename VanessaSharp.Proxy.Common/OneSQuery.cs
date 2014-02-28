@@ -18,6 +18,14 @@
             set { DynamicProxy.Text = value; }
         }
 
+        /// <summary>Установка значения параметра.</summary>
+        /// <param name="name">Имя параметра.</param>
+        /// <param name="value">Значение парметра.</param>
+        public void SetParameter(string name, object value)
+        {
+            DynamicProxy.SetParameter(name, value);
+        }
+
         /// <summary>Выполнение запроса.</summary>
         public IQueryResult Execute()
         {

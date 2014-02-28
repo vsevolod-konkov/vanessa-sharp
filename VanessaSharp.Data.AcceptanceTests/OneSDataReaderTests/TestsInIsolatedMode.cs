@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using System.Linq;
+using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.AcceptanceTests.Mocks;
 using VanessaSharp.Proxy.Common;
@@ -23,6 +24,9 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             : base(TestMode.Isolated)
         {}
 
+        /// <summary>
+        /// Обработчик запроса на создание экземпляра объекта 1С.
+        /// </summary>
         internal override void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
         {
             if (args.RequiredType != typeof(IQuery))
@@ -35,10 +39,34 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 .SetupSet(q => q.Text = It.IsAny<string>())
                 .Verifiable();
             _queryMock
+                .Setup(q => q.SetParameter(It.IsAny<string>(), It.IsAny<object>()))
+                .Verifiable();
+            _queryMock
                 .Setup(q => q.Execute())
                 .Returns(QueryResultMockFactory.Create(ExpectedData));
 
             args.CreatedInstance = _queryMock.Object;
+        }
+
+        /// <summary>Обработка после выполнения команды.</summary>
+        /// <param name="command">Команда</param>
+        protected override void OnAfterExecute(OneSCommand command)
+        {
+            var sql = command.CommandText;
+            _queryMock.VerifySet(q => q.Text = sql, Times.Once());
+
+            var parameters = command.Parameters.AsEnumerable();
+            if (parameters.Any())
+            {
+                foreach (var p in parameters)
+                {
+                    _queryMock.Verify(q => q.SetParameter(p.ParameterName, p.Value), Times.Once());
+                }
+            }
+            else
+            {
+                _queryMock.Verify(q => q.SetParameter(It.IsAny<string>(), It.IsAny<object>()), Times.Never());
+            }
         }
     }
 }

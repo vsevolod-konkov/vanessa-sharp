@@ -95,6 +95,7 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="ChangeParameterNameEventArgs.cs" />
     <Compile Include="CurrentVersionNotImplementedAttribute.cs" />
     <Compile Include="IGlobalContextProvider.cs" />
     <Compile Include="IOneSTypeConverter.cs" />

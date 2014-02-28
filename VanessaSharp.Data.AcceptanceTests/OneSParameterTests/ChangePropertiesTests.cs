@@ -199,9 +199,9 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSParameterTests
                     new TestCaseData(STRING_PARAMETER_VALUE, STRING_PARAMETER_VALUE),  
                     new TestCaseData(string.Empty, string.Empty),
                     new TestCaseData(NUMBER_PARAMETER_VALUE, NUMBER_PARAMETER_VALUE),
-                    new TestCaseData(DBNull.Value, DBNull.Value),
-                    new TestCaseData(null, DBNull.Value)
-                            .SetDescription("Тестирование того, что null всегда преобразуется в DBNull")
+                    new TestCaseData(null, null),
+                    new TestCaseData(DBNull.Value, null)
+                            .SetDescription("Тестирование того, что DBNull всегда преобразуется в null")
                 };
         }
 

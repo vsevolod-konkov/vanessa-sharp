@@ -137,6 +137,11 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             return index => typedFieldValueGetters[index](index);
         }
 
+        /// <summary>Обработка после выполнения команды.</summary>
+        /// <param name="command">Команда</param>
+        protected virtual void OnAfterExecute(OneSCommand command)
+        {}
+
         /// <summary>Тестирование простого запроса.</summary>
         [Test]
         public void TestSimpleQuery()

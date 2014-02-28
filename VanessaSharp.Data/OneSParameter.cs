@@ -12,7 +12,6 @@ namespace VanessaSharp.Data
         {
             SourceColumnNullMapping = true;
             SourceVersion = DataRowVersion.Default;
-            _value = DBNull.Value;
         }
 
         /// <summary>Конструктор принимающий имя параметра.</summary>
@@ -107,8 +106,26 @@ namespace VanessaSharp.Data
         /// <filterpriority>1</filterpriority>
         public override string ParameterName
         {
-            get; set;
+            get { return _parameterName; }
+
+            set
+            {
+                if (_parameterName == value)
+                    return;
+
+                var args = new ChangeParameterNameEventArgs(_parameterName, value);
+                if (ParameterNameChanging != null)
+                    ParameterNameChanging(this, args);
+
+                _parameterName = value;
+            }
         }
+        private string _parameterName;
+
+        /// <summary>
+        /// Событие наступающее в момент изменения имени параметра.
+        /// </summary>
+        internal event EventHandler<ChangeParameterNameEventArgs> ParameterNameChanging;
 
         /// <summary>
         /// Resets the DbType property to its original settings.
@@ -176,7 +193,7 @@ namespace VanessaSharp.Data
         public override object Value
         {
             get { return _value; }
-            set { _value = value ?? DBNull.Value; }
+            set { _value = (value == DBNull.Value) ? null : value; }
         }
         private object _value;
     }

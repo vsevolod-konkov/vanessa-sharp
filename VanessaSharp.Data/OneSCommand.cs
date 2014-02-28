@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Data;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
@@ -113,13 +114,13 @@ namespace VanessaSharp.Data
         /// <summary>Создает экземпляр параметра запроса типа <see cref="OneSParameter"/>.</summary>
         public new OneSParameter CreateParameter()
         {
-            throw new NotImplementedException();
+            return new OneSParameter();
         }
 
         /// <summary>Создает экземпляр параметра запроса.</summary>
         protected override DbParameter CreateDbParameter()
         {
-            throw new NotImplementedException();
+            return CreateParameter();
         }
 
         /// <summary>Получает и устанавливает соединение с информационной базой 1С.</summary>
@@ -229,6 +230,10 @@ namespace VanessaSharp.Data
             using (var query = globalContext.NewObject<IQuery>())
             {
                 query.Text = CommandText;
+
+                foreach (var parameter in Parameters.AsEnumerable())
+                    query.SetParameter(parameter.ParameterName, parameter.Value);
+                
                 var queryResult = query.Execute();
 
                 return new OneSDataReader(queryResult);

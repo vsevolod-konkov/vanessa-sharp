@@ -66,6 +66,7 @@
     <Compile Include="OneSDataReaderTests\OneSDataReaderComponentTestBase.cs" />
     <Compile Include="OneSDataReaderTests\OpenStateTestBase.cs" />
     <Compile Include="OneSDataReaderTests\RowStateTests.cs" />
+    <Compile Include="OneSParameterTests.cs" />
     <Compile Include="OneSTypeConverterTests.cs" />
     <Compile Include="ValueConverterTests\ToBooleanTests.cs" />
     <Compile Include="ValueConverterTests\ToByteTests.cs" />
