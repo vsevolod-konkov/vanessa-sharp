@@ -1,12 +1,12 @@
 ﻿using System;
 using VanessaSharp.Proxy.Common;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>
     /// Моковая реализация <see cref="IOneSConnectorFactory"/>.
     /// </summary>
-    internal sealed class OneSConnectorFactoryMock : IOneSConnectorFactory
+    public sealed class OneSConnectorFactoryMock : IOneSConnectorFactory
     {
         /// <summary>Событие запроса на создания объекта 1С.</summary>
         public event EventHandler<NewOneSObjectEventArgs> NewOneSObjectAsking;

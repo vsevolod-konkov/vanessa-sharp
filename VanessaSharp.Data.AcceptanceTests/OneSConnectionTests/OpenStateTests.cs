@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using NUnit.Framework;
+using VanessaSharp.AcceptanceTests.Utility;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
 {

@@ -1,8 +1,9 @@
 ﻿using NUnit.Framework;
-using VanessaSharp.Data.AcceptanceTests.Mocks;
+using VanessaSharp.AcceptanceTests.Utility.Mocks;
+using VanessaSharp.Data;
 using VanessaSharp.Proxy.Common;
 
-namespace VanessaSharp.Data.AcceptanceTests
+namespace VanessaSharp.AcceptanceTests.Utility
 {
     /// <summary>Базовый класс тестов требующие подключения.</summary>
     public abstract class ConnectedTestsBase : TestsBase
@@ -76,7 +77,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         /// <summary>
         /// Обработчик запроса на создание экземпляра объекта 1С.
         /// </summary>
-        internal virtual void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
+        protected virtual void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
         {}
     }
 }

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>Построитель немутабельных табличных данных.</summary>
-    internal sealed class TableDataBuilder
+    public sealed class TableDataBuilder
     {
         private readonly List<FieldDescription> _fields = new List<FieldDescription>();
 

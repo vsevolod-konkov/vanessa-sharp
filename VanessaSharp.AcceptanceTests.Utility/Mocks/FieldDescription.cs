@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>Описание поля табличных данных.</summary>
-    internal sealed class FieldDescription
+    public sealed class FieldDescription
     {
         public FieldDescription(string name, Type type)
         {

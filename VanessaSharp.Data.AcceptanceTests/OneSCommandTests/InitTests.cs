@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Data;
+using VanessaSharp.AcceptanceTests.Utility;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
 {

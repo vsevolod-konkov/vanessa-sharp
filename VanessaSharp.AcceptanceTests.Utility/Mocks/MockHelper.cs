@@ -1,10 +1,10 @@
 ﻿using System;
 using Moq;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>Вспомогательные методы для создания моков.</summary>
-    internal static class MockHelper
+    public static class MockHelper
     {
         private static void SetupDispose<T>(Mock<T> mock)
             where T : class, IDisposable

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>Аргументы запроса на создание экземпляра объекта 1С.</summary>
-    internal sealed class NewOneSObjectEventArgs : EventArgs
+    public sealed class NewOneSObjectEventArgs : EventArgs
     {
         /// <summary>Конструктор.</summary>
         /// <param name="requiredType">Тип экземпляра, чье создание было запрошено.</param>

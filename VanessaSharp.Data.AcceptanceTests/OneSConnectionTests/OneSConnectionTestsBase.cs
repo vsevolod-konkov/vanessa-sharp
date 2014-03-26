@@ -1,4 +1,6 @@
-﻿namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
+﻿using VanessaSharp.AcceptanceTests.Utility;
+
+namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
 {
     /// <summary>
     /// Базовый класс для тестов экземпляра <see cref="OneSConnection"/>

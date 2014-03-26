@@ -1,9 +1,9 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>Табличные данные.</summary>
-    internal sealed class TableData
+    public sealed class TableData
     {
         public TableData(
             ReadOnlyCollection<FieldDescription> fields,

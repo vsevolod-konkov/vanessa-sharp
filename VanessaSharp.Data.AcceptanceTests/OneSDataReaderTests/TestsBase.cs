@@ -1,99 +1,21 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using VanessaSharp.Data.AcceptanceTests.Mocks;
+using VanessaSharp.AcceptanceTests.Utility;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 {
     /// <summary>Базовый класс приемочных тестов на <see cref="OneSDataReader"/>.</summary>
-    public abstract class TestsBase : ConnectedTestsBase
+    public abstract class TestsBase : ReadDataTestBase
     {
         private const string LONG_TEXT =
             @"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
         
-        private TableDataBuilder _dataBuilder;
-        private ReadOnlyCollection<object> _currentExpectedRowData;
 
         protected TestsBase(TestMode testMode) : base(testMode)
         {}
-
-        /// <summary>Ожидаемые табличные данные.</summary>
-        internal TableData ExpectedData { get; private set; }
-
-        /// <summary>Начало определения данных для теста.</summary>
-        private void BeginDefineData()
-        {
-            _dataBuilder = new TableDataBuilder();
-        }
-
-        /// <summary>Завершение определения данных для теста.</summary>
-        private void EndDefineData()
-        {
-            ExpectedData = _dataBuilder.Build();
-        }
-
-        /// <summary>Определение поля табличных данных для теста.</summary>
-        private void Field<T>(string name)
-        {
-            _dataBuilder.AddField<T>(name);
-        }
-
-        /// <summary>
-        /// Определение строки в табличных данных для теста.
-        /// </summary>
-        private void Row(params object[] rowdata)
-        {
-            _dataBuilder.AddRow(rowdata);
-        }
-
-        /// <summary>Ожидаемое количество полей.</summary>
-        private int ExpectedFieldsCount
-        {
-            get { return ExpectedData.Fields.Count; }
-        }
-
-        /// <summary>Ожидаемое количество строк.</summary>
-        private int ExpectedRowsCount
-        {
-            get { return ExpectedData.Rows.Count; }
-        }
-        
-        /// <summary>
-        /// Ожидаемое имя поля по данному индексу <paramref name="fieldIndex"/>.
-        /// </summary>
-        private string ExpectedFieldName(int fieldIndex)
-        {
-            return ExpectedData.Fields[fieldIndex].Name;
-        }
-
-        /// <summary>
-        /// Ожидаемый тип поля по данному индексу <paramref name="fieldIndex"/>.
-        /// </summary>
-        private Type ExpectedFieldType(int fieldIndex)
-        {
-            return ExpectedData.Fields[fieldIndex].Type;
-        }
-
-        /// <summary>
-        /// Ожидаемое значение поля по данному индексу <paramref name="fieldIndex"/>
-        /// в текущей строке.
-        /// </summary>
-        private object ExpectedFieldValue(int fieldIndex)
-        {
-            return _currentExpectedRowData[fieldIndex];
-        }
-
-        /// <summary>
-        /// Установка текущей строки для проверки ожидаемых результатов.
-        /// </summary>
-        /// <param name="rowIndex">Индекс строки.</param>
-        private void SetCurrentExpectedRow(int rowIndex)
-        {
-            _currentExpectedRowData = ExpectedData.Rows[rowIndex];
-        }
 
         private OneSCommand GetCommand(string sql)
         {
@@ -236,7 +158,8 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
                     ++recordCounter;
                 }
-                
+
+                Assert.AreEqual(ExpectedRowsCount, recordCounter);
             }
         }
 
@@ -418,6 +341,8 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
                     ++recordCounter;
                 }
+
+                Assert.AreEqual(ExpectedRowsCount, recordCounter);
             }
         }
     }

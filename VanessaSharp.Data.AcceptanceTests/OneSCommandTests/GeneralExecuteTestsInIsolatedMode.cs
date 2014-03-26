@@ -1,6 +1,7 @@
 ﻿using Moq;
 using NUnit.Framework;
-using VanessaSharp.Data.AcceptanceTests.Mocks;
+using VanessaSharp.AcceptanceTests.Utility;
+using VanessaSharp.AcceptanceTests.Utility.Mocks;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
@@ -32,7 +33,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
         /// <summary>
         /// Обработчик запроса на создание экземпляра объекта 1С.
         /// </summary>
-        internal override void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
+        protected override void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
         {
             if (args.RequiredType != typeof(IQuery))
                 return;

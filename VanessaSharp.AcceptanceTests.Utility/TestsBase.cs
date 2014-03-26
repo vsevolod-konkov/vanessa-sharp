@@ -1,4 +1,6 @@
-﻿namespace VanessaSharp.Data.AcceptanceTests
+﻿using VanessaSharp.Data;
+
+namespace VanessaSharp.AcceptanceTests.Utility
 {
     /// <summary>Базовый класс для тестов.</summary>
     public abstract class TestsBase

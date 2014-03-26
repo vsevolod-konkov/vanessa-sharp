@@ -4,12 +4,12 @@ using System.Diagnostics.Contracts;
 using Moq;
 using VanessaSharp.Proxy.Common;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>
     /// Фабричные методы для создания мока <see cref="ITypeDescription"/>.
     /// </summary>
-    internal static class TypeDescriptionMockFactory
+    public static class TypeDescriptionMockFactory
     {
         /// <summary>Карта соответствия типов CLR наименованием типов в 1С.</summary>
         private static readonly Dictionary<Type, string> _mapTypeNames =

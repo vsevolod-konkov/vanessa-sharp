@@ -6,10 +6,10 @@ using System.Linq;
 using Moq;
 using VanessaSharp.Proxy.Common;
 
-namespace VanessaSharp.Data.AcceptanceTests.Mocks
+namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
     /// <summary>Фабрика для создания моков объектов 1С табличных данных.</summary>
-    internal sealed class QueryResultMockFactory
+    public sealed class QueryResultMockFactory
     {
         public static IQueryResult Create(TableData tableData)
         {

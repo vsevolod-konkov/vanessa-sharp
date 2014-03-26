@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 
-namespace VanessaSharp.Data.AcceptanceTests
+namespace VanessaSharp.AcceptanceTests.Utility
 {
     /// <summary>Константы для тестирования.</summary>
-    internal static class Constants
+    public static class Constants
     {
         /// <summary>Путь к тестовой БД.</summary>
         public static string TestCatalog

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using System.Linq.Expressions;
 using NUnit.Framework;
+using VanessaSharp.AcceptanceTests.Utility;
 
 namespace VanessaSharp.Data.Linq.AcceptanceTests
 {
@@ -29,14 +29,14 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         {
             var mapperBuilder = new OneSTypeMapperBuilder();
             mapperBuilder
-                .AddSource<TestingDictionaryEntry>("Справочник.ТестовыйСправочник")
+                .AddSource<TestingDictionaryRecord>("Справочник.ТестовыйСправочник")
                     .AddColumn(e => e.String, "СтроковоеПоле");
 
             
             using (var connection = new OneSConnection(TestConnectionString))
             using (var dataContext = new OneSDataContext(connection))
             {
-                var query = from e in dataContext.GetEntries("Справочник.ТестовыйСправочник")
+                var query = from e in dataContext.GetRecords("Справочник.ТестовыйСправочник")
                             select new
                                 {
                                     String = e.GetString("СтроковоеПоле"),
@@ -50,7 +50,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                     Char = e.GetChar("СимвольноеПоле")
                                 };
 
-                var query2 = from e in dataContext.GetEntries("Справочник.ТестовыйСправочник")
+                var query2 = from e in dataContext.GetRecords("Справочник.ТестовыйСправочник")
                              select new
                              {
                                 String = (string)e["СтроковоеПоле"],
@@ -64,49 +64,20 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                 Char = (char)e["СимвольноеПоле"]
                              };
 
-                //var query3 = from e in dataContext.GetEntries("Справочник.ТестовыйСправочник")
-                //             let d = e.AsDynamic()
-                //             select new
-                //             {
-                //                 String = (string)d.СтроковоеПоле,
-                //                 Integer = (int)d.ЦелочисленноеПоле,
-                //                 Number = (double)d.ЧисловоеПоле,
-                //                 Boolean = (bool)d.БулевоПоле,
-                //                 Date = (DateTime)d.ДатаПоле,
-                //                 DateTime = (DateTime)d.ДатаВремяПоле,
-                //                 Time = (DateTime)d.ВремяПоле,
-                //                 UnboundStringt = (string)d.НеограниченноеСтроковоеПоле,
-                //                 Char = (char)d.СимвольноеПоле
-                //             };
-
-                //var query4 = from d in dataContext.GetDynamicEntries("Справочник.ТестовыйСправочник")
-                //             select new
-                //             {
-                //                 String = (string)d.СтроковоеПоле,
-                //                 Integer = (int)d.ЦелочисленноеПоле,
-                //                 Number = (double)d.ЧисловоеПоле,
-                //                 Boolean = (bool)d.БулевоПоле,
-                //                 Date = (DateTime)d.ДатаПоле,
-                //                 DateTime = (DateTime)d.ДатаВремяПоле,
-                //                 Time = (DateTime)d.ВремяПоле,
-                //                 UnboundStringt = (string)d.НеограниченноеСтроковоеПоле,
-                //                 Char = (char)d.СимвольноеПоле
-                //             };
-
-                var query5 = from e in dataContext.Get<TestingDictionaryEntry>()
+                var query5 = from e in dataContext.Get<TestingDictionaryRecord>()
                              select e;
 
-                var query6 = from e in dataContext.Catalogs.GetEntries("ТестовыйСправочник")
+                var query6 = from e in dataContext.Catalogs.GetRecords("ТестовыйСправочник")
                              select e;
 
-                var query7 = from e in dataContext.Catalogs.Get<TestingEntry>()
+                var query7 = from e in dataContext.Catalogs.Get<TestingRecord>()
                              select e;
 
             }
         }
 
         [OneSDataSource("Справочник.ТестовыйСправочник")]
-        public sealed class TestingDictionaryEntry
+        public sealed class TestingDictionaryRecord
         {
             [OneSDataColumn("СтроковоеПоле")]
             public string String;
@@ -136,13 +107,13 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             public char Char;
         }
 
-        public class CatalogEntryBase
+        public class CatalogRecordBase
         {
              
         }
 
         [OneSDataSource("ТестовыйСправочник")]
-        public sealed class TestingEntry : CatalogEntryBase
+        public sealed class TestingRecord : CatalogRecordBase
         {
             [OneSDataColumn("СтроковоеПоле")]
             public string String;

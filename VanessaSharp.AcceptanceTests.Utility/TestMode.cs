@@ -1,4 +1,4 @@
-﻿namespace VanessaSharp.Data.AcceptanceTests
+﻿namespace VanessaSharp.AcceptanceTests.Utility
 {
     /// <summary>Режим выполнения тестов.</summary>
     public enum TestMode
