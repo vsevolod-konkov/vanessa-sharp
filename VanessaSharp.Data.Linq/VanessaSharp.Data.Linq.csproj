@@ -86,13 +86,6 @@
     <Compile Include="Internal\ItemEnumerator.cs" />
     <Compile Include="Internal\SqlCommand.cs" />
     <Compile Include="Internal\SqlCommandExecuter.cs" />
-    <Compile Include="Internal\SqlExpressions\AsterixSqlExpression.cs" />
-    <Compile Include="Internal\SqlExpressions\FinalSqlExpression.cs" />
-    <Compile Include="Internal\SqlExpressions\FromSqlExpression.cs" />
-    <Compile Include="Internal\SqlExpressions\ISqlBuilder.cs" />
-    <Compile Include="Internal\SqlExpressions\LiteralSqlExpression.cs" />
-    <Compile Include="Internal\SqlExpressions\SelectSqlExpression.cs" />
-    <Compile Include="Internal\SqlExpressions\SqlExpression.cs" />
     <Compile Include="Internal\SqlParameter.cs" />
     <Compile Include="InvalidCallLinqMethodException.cs" />
     <Compile Include="IOneSQueryProvider.cs" />
