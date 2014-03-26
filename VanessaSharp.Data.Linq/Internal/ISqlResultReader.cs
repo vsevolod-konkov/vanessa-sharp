@@ -5,5 +5,7 @@ namespace VanessaSharp.Data.Linq.Internal
     /// <summary>Читатель табличных данных результата запроса.</summary>
     internal interface ISqlResultReader : IDisposable
     {
+        /// <summary>Передвигает курсор на следующую позицию.</summary>
+        bool Read();
     }
 }

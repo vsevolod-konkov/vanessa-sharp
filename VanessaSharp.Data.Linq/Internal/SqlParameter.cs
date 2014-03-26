@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Data.Linq.Internal
@@ -7,6 +8,14 @@ namespace VanessaSharp.Data.Linq.Internal
     /// <remarks>Немутабельная структура.</remarks>
     internal sealed class SqlParameter
     {
+        /// <summary>Пустая коллекция параметров.</summary>
+        public static ReadOnlyCollection<SqlParameter> EmptyCollection
+        {
+            get { return _emptyCollection; }
+        }
+        private static readonly ReadOnlyCollection<SqlParameter> _emptyCollection =
+            new ReadOnlyCollection<SqlParameter>(new SqlParameter[0]);
+
         /// <summary>Конструктор.</summary>
         /// <param name="name">Имя параметра.</param>
         /// <param name="value">Значение параметра.</param>

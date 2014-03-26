@@ -47,7 +47,9 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="CollectionReadExpressionParseProductTests.cs" />
     <Compile Include="ExpressionParserTests.cs" />
+    <Compile Include="ItemEnumeratorTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />
     <Compile Include="OneSQueryableTests.cs" />
     <Compile Include="OneSQueryProviderTests.cs" />

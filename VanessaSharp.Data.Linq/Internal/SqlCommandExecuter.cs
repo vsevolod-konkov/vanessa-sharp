@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Data.Linq.Internal
@@ -24,7 +25,19 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <param name="command">Команда SQL-запроса.</param>
         public ISqlResultReader ExecuteReader(SqlCommand command)
         {
-            throw new NotImplementedException();
+            var oneSCommand = new OneSCommand(_connection)
+                {
+                    CommandText = command.Sql
+                };
+
+            foreach (var sqlParameter in command.Parameters)
+                oneSCommand.Parameters.Add(sqlParameter.Name, sqlParameter.Value);
+
+            if (_connection.State != ConnectionState.Open)
+                _connection.Open();
+
+            return new SqlResultReader(
+                oneSCommand.ExecuteReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult));
         }
 
         /// <summary>Выполенение SQL-запроса для получения скалярного значения.</summary>

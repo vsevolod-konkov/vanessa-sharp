@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Reflection;
 
 namespace VanessaSharp.Data.Linq.Internal
 {
@@ -18,6 +19,17 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Читатель элемента из записи таблицы.</summary>
         private readonly Func<ISqlResultReader, T> _itemReader;
 
+        /// <summary>Состояния перечислителя.</summary>
+        private enum EnumeratorState
+        {
+            Bof,
+            Eof,
+            Item,
+        }
+
+        /// <summary>Текущее состояние.</summary>
+        private EnumeratorState _currentState = EnumeratorState.Bof;
+
         /// <summary>Конструктор.</summary>
         /// <param name="sqlReader">Читатель табличных данных из результата SQL-запроса.</param>
         /// <param name="itemReader">Читатель элемента из записи таблицы.</param>
@@ -32,6 +44,20 @@ namespace VanessaSharp.Data.Linq.Internal
         {
             Contract.Invariant(_sqlReader != null);
             Contract.Invariant(_itemReader != null);
+        }
+
+        /// <summary>Читатель табличных данных из результата SQL-запроса.</summary>
+        /// <remarks>Для проверки в тестах.</remarks>
+        internal ISqlResultReader SqlReader
+        {
+            get { return _sqlReader; }
+        }
+
+        /// <summary>Читатель элемента из записи таблицы.</summary>
+        /// <remarks>Для проверки в тестах.</remarks>
+        internal Func<ISqlResultReader, T> ItemReader
+        {
+            get { return _itemReader; }
         }
 
         /// <summary>
@@ -53,7 +79,21 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <filterpriority>2</filterpriority>
         public bool MoveNext()
         {
-            throw new NotImplementedException();
+            if (_currentState == EnumeratorState.Eof)
+                return false;
+
+            var result = _sqlReader.Read();
+            if (result)
+            {
+                _currentState = EnumeratorState.Item;
+                _current = _itemReader(_sqlReader);
+            }
+            else
+            {
+                _currentState = EnumeratorState.Eof;
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -63,7 +103,8 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <filterpriority>2</filterpriority>
         public void Reset()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException(
+                string.Format("Метод \"{0}\" не поддерживается.", MethodBase.GetCurrentMethod()));
         }
 
         /// <summary>
@@ -72,7 +113,20 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <returns>
         /// Элемент коллекции, соответствующий текущей позиции перечислителя.
         /// </returns>
-        public T Current { get; private set; }
+        public T Current
+        {
+            get
+            {
+                if (_currentState != EnumeratorState.Item)
+                {
+                    throw new InvalidOperationException(
+                        "Недопустимое состояние перечислителя для получения значения свойства Current.");
+                }
+
+                return _current;
+            }
+        }
+        private T _current;
 
         /// <summary>
         /// Получает текущий элемент в коллекции.

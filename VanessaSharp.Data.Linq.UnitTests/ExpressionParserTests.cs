@@ -33,10 +33,8 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.AreEqual("SELECT * FROM " + SOURCE_NAME, command.Sql);
             Assert.AreEqual(0, command.Parameters.Count);
 
-            var recordProduct = AssertAndCast<ExpressionParseProduct<OneSDataRecord>>(product);
+            var recordProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(product);
             var itemReader = recordProduct.ItemReader;
-
-
         }
     }
 }

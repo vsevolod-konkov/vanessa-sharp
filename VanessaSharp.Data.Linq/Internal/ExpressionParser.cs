@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace VanessaSharp.Data.Linq.Internal
 {
@@ -17,7 +19,51 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <param name="expression">Выражение.</param>
         public ExpressionParseProduct Parse(Expression expression)
         {
-            throw new NotImplementedException();
+            var getEnumeratorExpr = VerifyMethodCallExpression(
+                                    expression,
+                                    OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<OneSDataRecord>());
+
+            var getRecordsExpr = VerifyMethodCallExpression(
+                                    getEnumeratorExpr.Object,
+                                    OneSQueryExpressionHelper.GetRecordsMethodInfo);
+
+            var sourceName = VerifyConstantExpression(getRecordsExpr.Arguments[0]);
+
+            var sql = "SELECT * FROM " + sourceName;
+
+            return new CollectionReadExpressionParseProduct<OneSDataRecord>(
+                new SqlCommand(sql, SqlParameter.EmptyCollection),
+                reader => new OneSDataRecord());
+        }
+
+        private static MethodCallExpression VerifyMethodCallExpression(Expression expression, MethodInfo methodInfo)
+        {
+            Contract.Requires<ArgumentNullException>(expression != null);
+            Contract.Requires<ArgumentNullException>(methodInfo != null);
+            
+            var callExpression = expression as MethodCallExpression;
+            if (callExpression == null || callExpression.Method != methodInfo)
+                throw CreateExpressionNotSupportedException(expression);
+
+            return callExpression;
+        }
+
+        private static object VerifyConstantExpression(Expression expression)
+        {
+            Contract.Requires<ArgumentNullException>(expression != null);
+
+            var constExpression = expression as ConstantExpression;
+            if (constExpression == null)
+                throw CreateExpressionNotSupportedException(expression);
+
+            return constExpression.Value;
+        }
+
+        private static Exception CreateExpressionNotSupportedException(Expression expression)
+        {
+            Contract.Requires<ArgumentNullException>(expression != null);
+            
+            return new NotSupportedException(string.Format("Выражение \"{0}\" не поддерживается.", expression));
         }
     }
 }
