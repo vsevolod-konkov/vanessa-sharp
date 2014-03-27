@@ -49,7 +49,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         }
 
         /// <summary>Ожидаемое количество полей.</summary>
-        protected int ExpectedFieldsCount
+        protected virtual int ExpectedFieldsCount
         {
             get { return ExpectedData.Fields.Count; }
         }

@@ -29,5 +29,27 @@
         {
             return _dataReader.Read();
         }
+
+        /// <summary>Количество колонок.</summary>
+        public int FieldCount
+        {
+            get { return _dataReader.FieldCount; }
+        }
+
+        /// <summary>
+        /// Получение имени поля.
+        /// </summary>
+        /// <param name="fieldIndex">Индекс поля.</param>
+        public string GetFieldName(int fieldIndex)
+        {
+            return _dataReader.GetName(fieldIndex);
+        }
+
+        /// <summary>Получение значений из записи.</summary>
+        /// <param name="buffer">Буфер для записи.</param>
+        public void GetValues(object[] buffer)
+        {
+            _dataReader.GetValues(buffer);
+        }
     }
 }

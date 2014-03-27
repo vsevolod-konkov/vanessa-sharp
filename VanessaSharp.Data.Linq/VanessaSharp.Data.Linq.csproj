@@ -81,9 +81,11 @@
     <Compile Include="Internal\CollectionReadExpressionParseProduct.cs" />
     <Compile Include="Internal\ExpressionParser.cs" />
     <Compile Include="Internal\IExpressionParser.cs" />
+    <Compile Include="Internal\IItemReaderFactory.cs" />
     <Compile Include="Internal\ISqlCommandExecuter.cs" />
     <Compile Include="Internal\ISqlResultReader.cs" />
     <Compile Include="Internal\ItemEnumerator.cs" />
+    <Compile Include="Internal\OneSDataRecordReaderFactory.cs" />
     <Compile Include="Internal\SqlCommand.cs" />
     <Compile Include="Internal\SqlCommandExecuter.cs" />
     <Compile Include="Internal\SqlParameter.cs" />
@@ -102,6 +104,9 @@
     <Compile Include="OneSQueryProvider.cs" />
     <Compile Include="OneSTypeMapperBuilder.cs" />
     <Compile Include="OneSValue.cs" />
+    <Compile Include="PredefinedData\Fields.cs" />
+    <Compile Include="PredefinedData\LocalizedNameAttribute.cs" />
+    <Compile Include="PredefinedData\Tables.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

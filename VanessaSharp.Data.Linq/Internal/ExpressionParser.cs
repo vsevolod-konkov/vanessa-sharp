@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -33,7 +34,7 @@ namespace VanessaSharp.Data.Linq.Internal
 
             return new CollectionReadExpressionParseProduct<OneSDataRecord>(
                 new SqlCommand(sql, SqlParameter.EmptyCollection),
-                reader => new OneSDataRecord());
+                OneSDataRecordReaderFactory.Default);
         }
 
         private static MethodCallExpression VerifyMethodCallExpression(Expression expression, MethodInfo methodInfo)

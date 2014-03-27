@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility;
+using VanessaSharp.Data.Linq.PredefinedData;
 
 namespace VanessaSharp.Data.Linq.AcceptanceTests
 {
@@ -24,6 +26,31 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         private Func<int, object> GetTypedFieldValueGetterByName(params Func<string, object>[] typedFieldValueGetters)
         {
             return index => typedFieldValueGetters[index](ExpectedFieldName(index));
+        }
+
+        private static readonly IList<Fields.Catalog> PrefinedFields = new[]
+            {
+                Fields.Catalog.Ref,
+                Fields.Catalog.Code,
+                Fields.Catalog.Description,
+                Fields.Catalog.DeletionMark,
+                Fields.Catalog.Presentation,
+                Fields.Catalog.Predefined
+            };
+
+        private static int PredefinedFieldsCount
+        {
+            get { return PrefinedFields.Count; }
+        }
+
+        private int ExpectedOwnedFieldsCount
+        {
+            get { return base.ExpectedFieldsCount; }
+        }
+
+        protected sealed override int ExpectedFieldsCount
+        {
+            get { return ExpectedOwnedFieldsCount + PredefinedFieldsCount; }
         }
 
         /// <summary>Тестирование простого запроса.</summary>
@@ -59,7 +86,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             EndDefineData();
 
-            Assert.AreEqual(9, ExpectedFieldsCount);
+            Assert.AreEqual(9, ExpectedOwnedFieldsCount);
 
             using (var dataContext = new OneSDataContext(Connection))
             {

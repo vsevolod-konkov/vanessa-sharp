@@ -16,8 +16,11 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Читатель табличных данных из результата SQL-запроса.</summary>
         private readonly ISqlResultReader _sqlReader;
 
+        /// <summary>Буфер для чтения значений.</summary>
+        private readonly object[] _buffer;
+
         /// <summary>Читатель элемента из записи таблицы.</summary>
-        private readonly Func<ISqlResultReader, T> _itemReader;
+        private readonly Func<object[], T> _itemReader;
 
         /// <summary>Состояния перечислителя.</summary>
         private enum EnumeratorState
@@ -33,9 +36,13 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Конструктор.</summary>
         /// <param name="sqlReader">Читатель табличных данных из результата SQL-запроса.</param>
         /// <param name="itemReader">Читатель элемента из записи таблицы.</param>
-        public ItemEnumerator(ISqlResultReader sqlReader, Func<ISqlResultReader, T> itemReader)
+        public ItemEnumerator(ISqlResultReader sqlReader, Func<object[], T> itemReader)
         {
+            Contract.Requires<ArgumentNullException>(sqlReader != null);
+            Contract.Requires<ArgumentNullException>(itemReader != null);
+
             _sqlReader = sqlReader;
+            _buffer = new object[sqlReader.FieldCount];
             _itemReader = itemReader;
         }
 
@@ -55,7 +62,7 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>Читатель элемента из записи таблицы.</summary>
         /// <remarks>Для проверки в тестах.</remarks>
-        internal Func<ISqlResultReader, T> ItemReader
+        internal Func<object[], T> ItemReader
         {
             get { return _itemReader; }
         }
@@ -86,7 +93,7 @@ namespace VanessaSharp.Data.Linq.Internal
             if (result)
             {
                 _currentState = EnumeratorState.Item;
-                _current = _itemReader(_sqlReader);
+                _current = ReadItem();
             }
             else
             {
@@ -94,6 +101,14 @@ namespace VanessaSharp.Data.Linq.Internal
             }
 
             return result;
+        }
+
+        /// <summary>Чтение элемента.</summary>
+        private T ReadItem()
+        {
+            _sqlReader.GetValues(_buffer);
+
+            return _itemReader(_buffer);
         }
 
         /// <summary>

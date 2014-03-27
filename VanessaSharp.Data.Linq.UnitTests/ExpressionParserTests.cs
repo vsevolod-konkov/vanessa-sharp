@@ -34,7 +34,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.AreEqual(0, command.Parameters.Count);
 
             var recordProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(product);
-            var itemReader = recordProduct.ItemReader;
+            var itemReader = recordProduct.ItemReaderFactory;
         }
     }
 }

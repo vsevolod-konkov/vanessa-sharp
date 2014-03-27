@@ -11,29 +11,37 @@ namespace VanessaSharp.Data.Linq.Internal
     {
         /// <summary>Конструктор.</summary>
         /// <param name="command">Команда SQL-запроса.</param>
-        /// <param name="itemReader">Читатель элемента из записи результата запроса.</param>
-        public CollectionReadExpressionParseProduct(SqlCommand command, Func<ISqlResultReader, T> itemReader) 
+        /// <param name="itemReaderFactory">Фабрика создания читателя элемента.</param>
+        public CollectionReadExpressionParseProduct(SqlCommand command, IItemReaderFactory<T> itemReaderFactory) 
             : base(command)
         {
-            Contract.Requires<ArgumentNullException>(itemReader != null);
+            Contract.Requires<ArgumentNullException>(itemReaderFactory != null);
 
-            _itemReader = itemReader;
+            _itemReaderFactory = itemReaderFactory;
         }
 
-        /// <summary>Читатель элемента из записи результата запроса.</summary>
-        public Func<ISqlResultReader, T> ItemReader
+        /// <summary>Фабрика создания читателя элемента.</summary>
+        public IItemReaderFactory<T> ItemReaderFactory
         {
-            get { return _itemReader; }
+            get { return _itemReaderFactory; }
         }
-        private readonly Func<ISqlResultReader, T> _itemReader;
+        private readonly IItemReaderFactory<T> _itemReaderFactory;
 
         /// <summary>Выполнение запроса.</summary>
         /// <param name="executer">Выполнитель запроса.</param>
         public override object Execute(ISqlCommandExecuter executer)
         {
-            return new ItemEnumerator<T>(
-                executer.ExecuteReader(Command),
-                ItemReader);
+            var sqlReader = executer.ExecuteReader(Command);
+            try
+            {
+                var itemReader = ItemReaderFactory.CreateItemReader(sqlReader);
+                return new ItemEnumerator<T>(sqlReader, itemReader);
+            }
+            catch
+            {
+                sqlReader.Dispose();
+                throw;
+            }
         }
     }
 }
