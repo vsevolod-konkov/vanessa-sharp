@@ -101,6 +101,7 @@
     <Compile Include="OneSObjectDefiner.cs" />
     <Compile Include="OneSObjectMapping.cs" />
     <Compile Include="OneSObjectMappingProvider.cs" />
+    <Compile Include="DisposableTable.cs" />
     <Compile Include="OneSProxy.cs" />
     <Compile Include="OneSProxyHelper.cs" />
     <Compile Include="OneSProxyWrapper.cs" />

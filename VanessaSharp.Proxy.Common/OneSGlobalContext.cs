@@ -12,6 +12,8 @@ namespace VanessaSharp.Proxy.Common
         /// <summary>Определитель типов 1С.</summary>
         private readonly IOneSTypeResolver _oneSTypeResolver;
 
+        private readonly DisposableTable _disposableTable = new DisposableTable();
+
         /// <summary>Конструктор принимающий RCW-обертку COM-объекта 1C.</summary>
         /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
         public OneSGlobalContext(object comObject)
@@ -37,6 +39,14 @@ namespace VanessaSharp.Proxy.Common
             return new OneSProxy(
                 comObject,
                 new OneSProxyWrapperWithGlobalContext(globalContext));
+        }
+
+        /// <summary>Регистрация объекта 1С связанного с текущим контекстом.</summary>
+        internal void RegisterOneSObject(OneSContextBoundObject oneSObject)
+        {
+            Contract.Requires<ArgumentNullException>(oneSObject != null);
+
+            _disposableTable.RegisterObject(oneSObject);
         }
 
         // TODO: Нужен Рефакторинг. Оставить после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий этот метод.
@@ -129,6 +139,14 @@ namespace VanessaSharp.Proxy.Common
         public string String(object obj)
         {
             return DynamicProxy.String(obj);
+        }
+
+        /// <summary>Освобождение ресурсов.</summary>
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            _disposableTable.Dispose();
         }
     }
 }

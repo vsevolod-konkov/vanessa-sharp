@@ -16,6 +16,7 @@ namespace VanessaSharp.Proxy.Common
             Contract.Requires<ArgumentNullException>(globalContext != null);
 
             _globalContext = globalContext;
+            _globalContext.RegisterOneSObject(this);
         }
 
         /// <summary>Глобальный контекст.</summary>

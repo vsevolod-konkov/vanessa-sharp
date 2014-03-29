@@ -190,6 +190,7 @@ namespace VanessaSharp.Data.Linq
             }
         }
 
+        // TODO: Прототип
         public dynamic AsDynamic()
         {
             throw new NotImplementedException();

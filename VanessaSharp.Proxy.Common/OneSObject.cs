@@ -114,7 +114,7 @@ namespace VanessaSharp.Proxy.Common
         }
 
         /// <summary>Освобождение ресурсов.</summary>
-        public void Dispose()
+        public virtual void Dispose()
         {
             _proxy.Dispose();
         }
