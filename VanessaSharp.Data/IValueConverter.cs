@@ -3,7 +3,7 @@
 namespace VanessaSharp.Data
 {
     /// <summary>Интерфейс конвертера значений.</summary>
-    internal interface IValueConverter
+    public interface IValueConverter
     {
         /// <summary>Конвертация в строку.</summary>
         /// <param name="value">Конвертируемое значение.</param>

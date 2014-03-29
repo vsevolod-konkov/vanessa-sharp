@@ -55,6 +55,7 @@
     <Compile Include="OneSDataRecordTests.cs" />
     <Compile Include="OneSQueryableTests.cs" />
     <Compile Include="OneSQueryProviderTests.cs" />
+    <Compile Include="OneSValueTests.cs" />
     <Compile Include="PredefinedDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestsBase.cs" />

@@ -36,6 +36,12 @@
             get { return _dataReader.FieldCount; }
         }
 
+        /// <summary>Конвертер значений.</summary>
+        public IValueConverter ValueConverter
+        {
+            get { return _dataReader.ValueConverter; }
+        }
+
         /// <summary>
         /// Получение имени поля.
         /// </summary>

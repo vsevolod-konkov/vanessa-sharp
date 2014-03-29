@@ -26,7 +26,7 @@ namespace VanessaSharp.Data
         private readonly ITypeDescriptionConverter _typeDescriptionConverter;
 
         /// <summary>Сервис перевода значений.</summary>
-        private readonly IValueConverter _valueConverter = ValueConverter.Default;
+        private readonly IValueConverter _valueConverter;
 
         /// <summary>Текущее состояние.</summary>
         private States _currentState = States.BofOpen;
@@ -61,7 +61,7 @@ namespace VanessaSharp.Data
         /// <summary>Конструктор принимающий результат запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         internal OneSDataReader(IQueryResult queryResult)
-            : this(queryResult, TypeDescriptionConverter.Default, ValueConverter.Default)
+            : this(queryResult, TypeDescriptionConverter.Default, Data.ValueConverter.Default)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
         }
@@ -70,6 +70,12 @@ namespace VanessaSharp.Data
         internal IQueryResult QueryResult
         {
             get { return _queryResult;}
+        }
+
+        /// <summary>Конвертер значений.</summary>
+        public IValueConverter ValueConverter
+        {
+            get { return _valueConverter; }
         }
 
         /// <summary>

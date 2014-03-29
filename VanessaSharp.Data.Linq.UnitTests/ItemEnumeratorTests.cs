@@ -113,7 +113,8 @@ namespace VanessaSharp.Data.Linq.UnitTests
             {
                 // Arrange reader
                 _recordReaderMock.Reset();
-                _recordReaderMock.ExpectedRecord = new OneSDataRecord(new ReadOnlyCollection<string>(new string[0]));
+                _recordReaderMock.ExpectedRecord = new OneSDataRecord(
+                    new ReadOnlyCollection<string>(new string[0]), new ReadOnlyCollection<OneSValue>(new OneSValue[0]));
 
                 for (var field = 0; field < FIELDS_COUNT; field++)
                     buffer[field] = new object();
@@ -153,7 +154,9 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 .Setup(r => r.GetValues(It.IsAny<object[]>()))
                 .Verifiable();
 
-            _recordReaderMock.ExpectedRecord = new OneSDataRecord(new ReadOnlyCollection<string>(new string[0]));
+            _recordReaderMock.ExpectedRecord = new OneSDataRecord(
+                new ReadOnlyCollection<string>(new string[0]),
+                new ReadOnlyCollection<OneSValue>(new OneSValue[0]));
 
             for (var counter = 1; counter <= recordsCount; counter++)
             {

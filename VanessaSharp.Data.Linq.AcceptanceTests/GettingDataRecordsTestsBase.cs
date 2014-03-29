@@ -20,12 +20,12 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
         private static Func<int, object> GetTypedFieldValueGetterById(params Func<int, object>[] typedFieldValueGetters)
         {
-            return index => typedFieldValueGetters[index](index);
+            return index => typedFieldValueGetters[index - PredefinedFieldsCount](index);
         }
 
         private Func<int, object> GetTypedFieldValueGetterByName(params Func<string, object>[] typedFieldValueGetters)
         {
-            return index => typedFieldValueGetters[index](ExpectedFieldName(index));
+            return index => typedFieldValueGetters[index - PredefinedFieldsCount](ExpectedFieldName(index));
         }
 
         private static readonly IList<Fields.Catalog> PrefinedFields = new[]
@@ -51,6 +51,28 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         protected sealed override int ExpectedFieldsCount
         {
             get { return ExpectedOwnedFieldsCount + PredefinedFieldsCount; }
+        }
+
+        private int CorrectedIndex(int fieldIndex)
+        {
+            var newIndex = fieldIndex - PredefinedFieldsCount;
+            if (newIndex < 0)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Ожидаемое значение для предопределенной колонки \"{0}\" неизвестно.", newIndex));
+            }
+
+            return newIndex;
+        }
+
+        protected override object ExpectedFieldValue(int fieldIndex)
+        {
+            return base.ExpectedFieldValue(CorrectedIndex(fieldIndex));
+        }
+
+        protected override string ExpectedFieldName(int fieldIndex)
+        {
+            return base.ExpectedFieldName(CorrectedIndex(fieldIndex));
         }
 
         /// <summary>Тестирование простого запроса.</summary>
@@ -138,7 +160,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                             );
 
 
-                    for (var fieldIndex = 0; fieldIndex < ExpectedFieldsCount; fieldIndex++)
+                    for (var fieldIndex = PredefinedFieldsCount; fieldIndex < ExpectedFieldsCount; fieldIndex++)
                     {
                         var expectedFieldValue = ExpectedFieldValue(fieldIndex);
                         var fieldName = ExpectedFieldName(fieldIndex);
@@ -149,8 +171,8 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                         Assert.AreEqual(expectedFieldValue, record[fieldIndex].ToObject());
                         Assert.AreEqual(expectedFieldValue, record.GetValue(fieldName).ToObject());
                         Assert.AreEqual(expectedFieldValue, record[fieldName].ToObject());
-                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldIndex));
-                        Assert.AreEqual(expectedFieldValue, record[ExpectedFieldName(fieldIndex)]);
+                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldIndex).ToObject());
+                        Assert.AreEqual(expectedFieldValue, record[ExpectedFieldName(fieldIndex)].ToObject());
                         Assert.AreEqual(expectedFieldValue, getTypedValueById(fieldIndex));
                         Assert.AreEqual(expectedFieldValue, getTypedValueByName(fieldIndex));
                     } 

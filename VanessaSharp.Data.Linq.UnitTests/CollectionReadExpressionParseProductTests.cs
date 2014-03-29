@@ -32,7 +32,10 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
         private static OneSDataRecord ReadRecord(object[] values)
         {
-            return new OneSDataRecord(new ReadOnlyCollection<string>(new string[0]));
+            return new OneSDataRecord(
+                new ReadOnlyCollection<string>(new string[0]),
+                new ReadOnlyCollection<OneSValue>(new OneSValue[0])
+                );
         }
 
         /// <summary>Тестирование инициализации.</summary>

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace VanessaSharp.Data.Linq.Internal
 {
@@ -30,7 +32,9 @@ namespace VanessaSharp.Data.Linq.Internal
             for (var fieldIndex = 0; fieldIndex < fieldsCount; fieldIndex++)
                 fields[fieldIndex] = sqlResultReader.GetFieldName(fieldIndex);
 
-            var recordReader = new OneSDataRecordReader(new ReadOnlyCollection<string>(fields));
+            var recordReader = new OneSDataRecordReader(
+                new ReadOnlyCollection<string>(fields),
+                sqlResultReader.ValueConverter);
 
             return recordReader.ReadRecord;
         }
@@ -43,17 +47,28 @@ namespace VanessaSharp.Data.Linq.Internal
             /// <summary>Имена полей.</summary>
             private readonly ReadOnlyCollection<string> _fieldNames;
 
+            /// <summary>Конвертер значений.</summary>
+            private readonly IValueConverter _valueConverter;
+
             /// <summary>Конструктор.</summary>
             /// <param name="fieldNames">Имена полей.</param>
-            public OneSDataRecordReader(ReadOnlyCollection<string> fieldNames)
+            /// <param name="valueConverter">Конвертер значений.</param>
+            public OneSDataRecordReader(ReadOnlyCollection<string> fieldNames, IValueConverter valueConverter)
             {
+                Contract.Requires<ArgumentNullException>(fieldNames != null);
+                Contract.Requires<ArgumentNullException>(valueConverter != null);
+
                 _fieldNames = fieldNames;
+                _valueConverter = valueConverter;
             }
 
             /// <summary>Вычитывание записи из буфера.</summary>
             public OneSDataRecord ReadRecord(object[] buffer)
             {
-                return new OneSDataRecord(_fieldNames);
+                return new OneSDataRecord(
+                    _fieldNames, 
+                    new ReadOnlyCollection<OneSValue>(
+                        buffer.Select(o => new OneSValue(o, _valueConverter)).ToArray()));
             }
         }
     }

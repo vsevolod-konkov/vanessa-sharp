@@ -63,7 +63,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         /// <summary>
         /// Ожидаемое имя поля по данному индексу <paramref name="fieldIndex"/>.
         /// </summary>
-        protected string ExpectedFieldName(int fieldIndex)
+        protected virtual string ExpectedFieldName(int fieldIndex)
         {
             return ExpectedData.Fields[fieldIndex].Name;
         }
@@ -71,7 +71,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         /// <summary>
         /// Ожидаемый тип поля по данному индексу <paramref name="fieldIndex"/>.
         /// </summary>
-        protected Type ExpectedFieldType(int fieldIndex)
+        protected virtual Type ExpectedFieldType(int fieldIndex)
         {
             return ExpectedData.Fields[fieldIndex].Type;
         }
@@ -80,7 +80,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         /// Ожидаемое значение поля по данному индексу <paramref name="fieldIndex"/>
         /// в текущей строке.
         /// </summary>
-        protected object ExpectedFieldValue(int fieldIndex)
+        protected virtual object ExpectedFieldValue(int fieldIndex)
         {
             return _currentExpectedRowData[fieldIndex];
         }

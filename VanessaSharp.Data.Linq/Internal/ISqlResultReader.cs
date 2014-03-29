@@ -13,6 +13,9 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Количество колонок.</summary>
         int FieldCount { get; }
 
+        /// <summary>Конвертер значений.</summary>
+        IValueConverter ValueConverter { get; }
+
         /// <summary>
         /// Получение имени поля.
         /// </summary>
@@ -38,6 +41,16 @@ namespace VanessaSharp.Data.Linq.Internal
 
                 return 0;
             }
+        }
+
+        IValueConverter ISqlResultReader.ValueConverter 
+        { 
+            get
+            {
+                Contract.Ensures(Contract.Result<IValueConverter>() != null);
+
+                return null;
+            } 
         }
 
         string ISqlResultReader.GetFieldName(int fieldIndex)

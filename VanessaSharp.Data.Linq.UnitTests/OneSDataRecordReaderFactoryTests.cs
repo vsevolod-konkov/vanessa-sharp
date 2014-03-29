@@ -22,7 +22,13 @@ namespace VanessaSharp.Data.Linq.UnitTests
                     "ID", "Name", "Value"
                 };
 
+            var valueConverter = new Mock<IValueConverter>(MockBehavior.Strict).Object;
+
             var sqlReaderMock = new Mock<ISqlResultReader>(MockBehavior.Strict);
+            sqlReaderMock
+                .SetupGet(r => r.ValueConverter)
+                .Returns(valueConverter)
+                .Verifiable();
             sqlReaderMock
                 .SetupGet(r => r.FieldCount)
                 .Returns(expectedFields.Length)
@@ -34,11 +40,12 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
             // Act
             var result = OneSDataRecordReaderFactory.Default.CreateItemReader(sqlReaderMock.Object);
+            var record = result(new object[expectedFields.Length]);
 
             // Assert
-            var record = result(new object[0]);
             CollectionAssert.AreEqual(expectedFields, record.Fields);
-
+            sqlReaderMock
+                .VerifyGet(r => r.ValueConverter, Times.Once());
             sqlReaderMock
                 .VerifyGet(r => r.FieldCount, Times.AtLeastOnce());
             sqlReaderMock
