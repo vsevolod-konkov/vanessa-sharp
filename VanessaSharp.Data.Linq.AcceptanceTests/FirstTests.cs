@@ -46,7 +46,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                     Date = e.GetDateTime("ДатаПоле"),
                                     DateTime = e.GetDateTime("ДатаВремяПоле"),
                                     Time = e.GetDateTime("ВремяПоле"),
-                                    UnboundStringt = e.GetString("НеограниченноеСтроковоеПоле"),
+                                    UnboundString = e.GetString("НеограниченноеСтроковоеПоле"),
                                     Char = e.GetChar("СимвольноеПоле")
                                 };
 
@@ -60,7 +60,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                 Date = (DateTime)e["ДатаПоле"],
                                 DateTime = (DateTime)e["ДатаВремяПоле"],
                                 Time = (DateTime)e["ВремяПоле"],
-                                UnboundStringt = (string)e["НеограниченноеСтроковоеПоле"],
+                                UnboundString = (string)e["НеограниченноеСтроковоеПоле"],
                                 Char = (char)e["СимвольноеПоле"]
                              };
 

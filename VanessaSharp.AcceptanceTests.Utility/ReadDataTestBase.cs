@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using VanessaSharp.AcceptanceTests.Utility.Mocks;
 
 namespace VanessaSharp.AcceptanceTests.Utility
@@ -83,6 +84,36 @@ namespace VanessaSharp.AcceptanceTests.Utility
         protected virtual object ExpectedFieldValue(int fieldIndex)
         {
             return _currentExpectedRowData[fieldIndex];
+        }
+
+        /// <summary>
+        /// Ожидаемое значение поля по имени поля
+        /// в текущей строке.
+        /// </summary>
+        protected object ExpectedFieldValue(string fieldName)
+        {
+            var index = IndexOf(fieldName);
+
+            return _currentExpectedRowData[index];
+        }
+
+        private int IndexOf(string fieldName)
+        {
+            var indexes = ExpectedData.Fields
+                                    .Select((f, i) => new { Index = i, FieldName = f.Name })
+                                    .Where(s => s.FieldName == fieldName)
+                                    .Select(s => s.Index);
+
+            try
+            {
+                return indexes.Single();
+            }
+            catch (InvalidOperationException)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Колонка \"{0}\" не найдена.",
+                    fieldName));
+            }
         }
 
         /// <summary>

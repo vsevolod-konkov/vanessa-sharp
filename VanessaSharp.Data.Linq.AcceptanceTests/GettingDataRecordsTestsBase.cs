@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility;
 using VanessaSharp.Data.Linq.PredefinedData;
@@ -75,9 +76,9 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             return base.ExpectedFieldName(CorrectedIndex(fieldIndex));
         }
 
-        /// <summary>Тестирование простого запроса.</summary>
+        /// <summary>Тестирование запроса получение целой записи.</summary>
         [Test]
-        public void TestSimpleQuery()
+        public void TestFillRecordQuery()
         {
             BeginDefineData();
 
@@ -177,6 +178,82 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                         Assert.AreEqual(expectedFieldValue, getTypedValueByName(fieldIndex));
                     } 
 
+
+                    ++recordCounter;
+                }
+
+                Assert.AreEqual(ExpectedRowsCount, recordCounter);
+            }
+        }
+
+        /// <summary>Тестирование простого запроса с выборкой данных из записи.</summary>
+        [Test]
+        public void TestSelectSimpleQuery()
+        {
+            BeginDefineData();
+
+            Field<string>("СтроковоеПоле");
+            Field<double>("ЦелочисленноеПоле");
+            Field<double>("ЧисловоеПоле");
+            Field<bool>("БулевоПоле");
+            Field<DateTime>("ДатаПоле");
+            Field<DateTime>("ДатаВремяПоле");
+            Field<DateTime>("ВремяПоле");
+            Field<string>("НеограниченноеСтроковоеПоле");
+            Field<string>("СимвольноеПоле");
+
+            Row
+            (
+                "Тестирование", 234, 546.323, true,
+                new DateTime(2014, 01, 15), new DateTime(2014, 01, 08, 4, 33, 43),
+                new DateTime(100, 1, 1, 23, 43, 43), LONG_TEXT, "А"
+            );
+
+            Row
+            (
+                "", 0, 0, false,
+                new DateTime(100, 1, 1), new DateTime(100, 1, 1),
+                new DateTime(100, 1, 1),
+                "", " "
+            );
+
+            EndDefineData();
+
+            Assert.AreEqual(9, ExpectedOwnedFieldsCount);
+
+            using (var dataContext = new OneSDataContext(Connection))
+            {
+                var entries = from r in dataContext.GetRecords("Справочник.ТестовыйСправочник")
+                              select new
+                              {
+                                  String = r.GetString("СтроковоеПоле"),
+                                  Integer = r.GetInt32("ЦелочисленноеПоле"),
+                                  Number = r.GetDouble("ЧисловоеПоле"),
+                                  Boolean = r.GetBoolean("БулевоПоле"),
+                                  Date = r.GetDateTime("ДатаПоле"),
+                                  DateTime = r.GetDateTime("ДатаВремяПоле"),
+                                  Time = r.GetDateTime("ВремяПоле"),
+                                  UnboundString = r.GetString("НеограниченноеСтроковоеПоле"),
+                                  Char = r.GetChar("СимвольноеПоле")
+                              };
+
+                var recordCounter = 0;
+
+                foreach (var entry in entries)
+                {
+                    Assert.Less(recordCounter, ExpectedRowsCount);
+
+                    SetCurrentExpectedRow(recordCounter);
+
+                    Assert.AreEqual(ExpectedFieldValue("СтроковоеПоле"), entry.String);
+                    Assert.AreEqual(ExpectedFieldValue("ЦелочисленноеПоле"), entry.Integer);
+                    Assert.AreEqual(ExpectedFieldValue("ЧисловоеПоле"), entry.Number);
+                    Assert.AreEqual(ExpectedFieldValue("БулевоПоле"), entry.Boolean);
+                    Assert.AreEqual(ExpectedFieldValue("ДатаПоле"), entry.Date);
+                    Assert.AreEqual(ExpectedFieldValue("ДатаВремяПоле"), entry.DateTime);
+                    Assert.AreEqual(ExpectedFieldValue("ВремяПоле"), entry.Time);
+                    Assert.AreEqual(ExpectedFieldValue("НеограниченноеСтроковоеПоле"), entry.UnboundString);
+                    Assert.AreEqual(ExpectedFieldValue("СимвольноеПоле"), entry.Char);
 
                     ++recordCounter;
                 }
