@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 
 namespace VanessaSharp.Data.Linq.Internal
 {
@@ -19,51 +19,34 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <param name="expression">Выражение.</param>
         public ExpressionParseProduct Parse(Expression expression)
         {
-            var getEnumeratorExpr = VerifyMethodCallExpression(
-                                    expression,
-                                    OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<OneSDataRecord>());
-
-            var getRecordsExpr = VerifyMethodCallExpression(
-                                    getEnumeratorExpr.Object,
-                                    OneSQueryExpressionHelper.GetRecordsMethodInfo);
-
-            var sourceName = VerifyConstantExpression(getRecordsExpr.Arguments[0]);
-
-            var sql = "SELECT * FROM " + sourceName;
-
-            return new CollectionReadExpressionParseProduct<OneSDataRecord>(
-                new SqlCommand(sql, SqlParameter.EmptyCollection),
-                OneSDataRecordReaderFactory.Default);
+            return QueryTransformer.Transform(
+                GetQueryFromQueryableExpression(expression));
         }
 
-        private static MethodCallExpression VerifyMethodCallExpression(Expression expression, MethodInfo methodInfo)
+        /// <summary>
+        /// Создание объекта запроса из выражения генерируемого <see cref="Queryable"/>.
+        /// </summary>
+        /// <param name="expression">Выражение, которое необходимо преобразовать в запрос.</param>
+        private static SimpleQuery GetQueryFromQueryableExpression(Expression expression)
         {
-            Contract.Requires<ArgumentNullException>(expression != null);
-            Contract.Requires<ArgumentNullException>(methodInfo != null);
+            var handler = new SimpleQueryBuilder();
+            var visitor = new QueryableExpressionVisitor(handler);
+
+            try
+            {
+                handler.HandleStart();
+                visitor.Visit(expression);
+                handler.HandleEnd();
+
+                return handler.BuiltQuery;
+            }
+            catch (InvalidOperationException e)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Выражение \"{0}\" содержит недопустимую операцию. Подробности: {1}",
+                    expression, e.Message), e);
+            }
             
-            var callExpression = expression as MethodCallExpression;
-            if (callExpression == null || callExpression.Method != methodInfo)
-                throw CreateExpressionNotSupportedException(expression);
-
-            return callExpression;
-        }
-
-        private static object VerifyConstantExpression(Expression expression)
-        {
-            Contract.Requires<ArgumentNullException>(expression != null);
-
-            var constExpression = expression as ConstantExpression;
-            if (constExpression == null)
-                throw CreateExpressionNotSupportedException(expression);
-
-            return constExpression.Value;
-        }
-
-        private static Exception CreateExpressionNotSupportedException(Expression expression)
-        {
-            Contract.Requires<ArgumentNullException>(expression != null);
-            
-            return new NotSupportedException(string.Format("Выражение \"{0}\" не поддерживается.", expression));
         }
     }
 }

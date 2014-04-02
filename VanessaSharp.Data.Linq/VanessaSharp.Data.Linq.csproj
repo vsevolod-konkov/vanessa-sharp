@@ -77,15 +77,20 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="Internal\ExpressionParsePipeline\SimpleQuery.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SimpleQueryBuilder.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryTransformer.cs" />
     <Compile Include="Internal\ExpressionParseProduct.cs" />
     <Compile Include="Internal\CollectionReadExpressionParseProduct.cs" />
     <Compile Include="Internal\ExpressionParser.cs" />
     <Compile Include="Internal\IExpressionParser.cs" />
     <Compile Include="Internal\IItemReaderFactory.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\IQueryableExpressionHandler.cs" />
     <Compile Include="Internal\ISqlCommandExecuter.cs" />
     <Compile Include="Internal\ISqlResultReader.cs" />
     <Compile Include="Internal\ItemEnumerator.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactory.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryableExpressionVisitor.cs" />
     <Compile Include="Internal\SqlCommand.cs" />
     <Compile Include="Internal\SqlCommandExecuter.cs" />
     <Compile Include="Internal\SqlParameter.cs" />
