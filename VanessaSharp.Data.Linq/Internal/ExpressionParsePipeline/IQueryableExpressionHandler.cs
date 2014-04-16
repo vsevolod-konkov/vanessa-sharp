@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
@@ -17,8 +18,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         void HandleEnd();
         
         /// <summary>Получение перечислителя.</summary>
-        /// <param name="itemType">Тип элемента.</param>
+        /// <param name="itemType">Имя элемента.</param>
         void HandleGettingEnumerator(Type itemType);
+
+        /// <summary>Обработка выборки.</summary>
+        /// <param name="selectExpression">Выражение выборки.</param>
+        void HandleSelect(LambdaExpression selectExpression);
 
         /// <summary>Получение всех записей.</summary>
         /// <param name="sourceName">Имя источника.</param>
@@ -37,6 +42,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         void IQueryableExpressionHandler.HandleGettingEnumerator(Type itemType)
         {
             Contract.Requires<ArgumentNullException>(itemType != null);
+        }
+
+        void IQueryableExpressionHandler.HandleSelect(LambdaExpression selectExpression)
+        {
+            Contract.Requires<ArgumentNullException>(selectExpression != null);
+            Contract.Requires<ArgumentException>(
+                selectExpression.Type.IsGenericType 
+                && selectExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
+                && selectExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
         }
 
         void IQueryableExpressionHandler.HandleGettingRecords(string sourceName)

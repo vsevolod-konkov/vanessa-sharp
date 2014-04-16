@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using System.Linq.Expressions;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
-    /// <summary>Обработанный запрос.</summary>
-    internal sealed class SimpleQuery
+    /// <summary>Простой объект запроса.</summary>
+    internal abstract class SimpleQuery
     {
-        /// <summary>Источник записей.</summary>
-        private readonly string _source;
-
         /// <summary>Конструктор.</summary>
         /// <param name="source">Источник записей.</param>
-        public SimpleQuery(string source)
+        protected SimpleQuery(string source)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(source));
             
@@ -24,8 +20,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             get { return _source; }
         }
+        private readonly string _source;
 
-        //// <summary>Выражение выборки данных их записи.</summary>
-        //public LambdaExpression SelectExpression { get; set; }
+        /// <summary>Тип элемента.</summary>
+        public abstract Type ItemType { get; }
+
+        /// <summary>Преобразование.</summary>
+        public abstract ExpressionParseProduct Transform();
     }
 }

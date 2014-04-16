@@ -48,7 +48,9 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="CollectionReadExpressionParseProductTests.cs" />
-    <Compile Include="ExpressionParserTests.cs" />
+    <Compile Include="ExpressionParserInstanceTests.cs" />
+    <Compile Include="ExpressionParserStaticTests.cs" />
+    <Compile Include="ExpressionParserTestBase.cs" />
     <Compile Include="ItemEnumeratorTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />
     <Compile Include="OneSDataRecordReaderFactoryTests.cs" />
@@ -58,7 +60,14 @@
     <Compile Include="OneSValueTests.cs" />
     <Compile Include="PredefinedDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QueryableExpressionVisitorTests.cs" />
+    <Compile Include="QueryTransformerTests.cs" />
+    <Compile Include="SelectionVisitorTests.cs" />
+    <Compile Include="SimpleQueryBuilderTests.cs" />
+    <Compile Include="Utility\TestHelperQuery.cs" />
+    <Compile Include="Utility\TestHelperQueryProvider.cs" />
     <Compile Include="TestsBase.cs" />
+    <Compile Include="Utility\Trait.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VanessaSharp.Data.Linq\VanessaSharp.Data.Linq.csproj">

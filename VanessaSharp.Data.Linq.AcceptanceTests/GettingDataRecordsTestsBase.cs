@@ -253,7 +253,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     Assert.AreEqual(ExpectedFieldValue("ДатаВремяПоле"), entry.DateTime);
                     Assert.AreEqual(ExpectedFieldValue("ВремяПоле"), entry.Time);
                     Assert.AreEqual(ExpectedFieldValue("НеограниченноеСтроковоеПоле"), entry.UnboundString);
-                    Assert.AreEqual(ExpectedFieldValue("СимвольноеПоле"), entry.Char);
+                    Assert.AreEqual(ExpectedFieldValue("СимвольноеПоле"), entry.Char.ToString());
 
                     ++recordCounter;
                 }

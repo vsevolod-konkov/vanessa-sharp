@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
@@ -17,6 +18,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             Starting,
             Started,
             Enumerable,
+            Selected,
             Records,
             Ended,
         }
@@ -29,7 +31,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
         /// <summary>Источник данных.</summary>
         private string _sourceName;
-        
+
+        /// <summary>Фабрика создания запроса.</summary>
+        private Func<string, SimpleQuery> _queryFactory = source => new DataRecordsQuery(source);
 
         /// <summary>Обработка начала парсинга.</summary>
         public void HandleStart()
@@ -46,18 +50,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             if (_currentState != HandlerState.Records)
                 ThrowException(MethodBase.GetCurrentMethod());
 
-            if (_itemType != typeof(OneSDataRecord))
-            {
-                throw new NotSupportedException(string.Format(
-                    "Не поддерживаются последовательности с элементами типа \"{0}\".",
-                    _itemType));
-            }
-            _builtQuery = new SimpleQuery(_sourceName);
+            _builtQuery = _queryFactory(_sourceName);
             _currentState = HandlerState.Ended;
         }
 
         /// <summary>Получение перечислителя.</summary>
-        /// <param name="itemType">Тип элемента.</param>
+        /// <param name="itemType">Имя элемента.</param>
         public void HandleGettingEnumerator(Type itemType)
         {
             if (_currentState != HandlerState.Started)
@@ -67,11 +65,39 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             _currentState = HandlerState.Enumerable;
         }
 
+        /// <summary>Обработка выборки.</summary>
+        /// <typeparam name="T">Выходной тип.</typeparam>
+        /// <param name="selectExpression">Выражение выборки.</param>
+        public void HandleSelect(LambdaExpression selectExpression)
+        {
+            if (_currentState != HandlerState.Enumerable)
+                ThrowException(MethodBase.GetCurrentMethod());
+
+            if (_itemType != selectExpression.ReturnType)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Тип \"{0}\" результата выборки не приемлем. Ожидался тип \"{1}\".",
+                    selectExpression.ReturnType, _itemType));
+            }
+
+            _queryFactory = source => CreateDataTypeQuery(_sourceName, selectExpression);
+            _currentState = HandlerState.Selected;
+        }
+
+        /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>
+        /// <param name="source">Имя источника.</param>
+        /// <param name="selectExpression">Выражение выборки.</param>
+        private static SimpleQuery CreateDataTypeQuery(string source, LambdaExpression selectExpression)
+        {
+            var queryType = typeof(CustomDataTypeQuery<>).MakeGenericType(selectExpression.ReturnType);
+            return (SimpleQuery)Activator.CreateInstance(queryType, source, selectExpression);
+        }
+
         /// <summary>Получение всех записей.</summary>
         /// <param name="sourceName">Имя источника.</param>
         public void HandleGettingRecords(string sourceName)
         {
-            if (_currentState != HandlerState.Enumerable)
+            if (_currentState != HandlerState.Enumerable && _currentState != HandlerState.Selected)
                 ThrowException(MethodBase.GetCurrentMethod());
 
             _sourceName = sourceName;
