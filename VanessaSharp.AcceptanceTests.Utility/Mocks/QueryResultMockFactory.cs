@@ -78,15 +78,26 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                 .SetupGet(c => c.Name)
                 .Returns(field.Name);
 
-            columnMock
-                .SetupGet(c => c.ValueType)
-                .Returns(TypeDescriptionMockFactory.Create(field.Type));
+            var getter = columnMock
+                .SetupGet(c => c.ValueType);
+
+            if (field.Type == typeof(AnyType))
+            {
+                getter
+                    .Throws(new InvalidOperationException(
+                        string.Format("Неизвестный тип колонки \"{0}\".", field.Name)));
+            }
+            else
+            {
+                getter
+                    .Returns(TypeDescriptionMockFactory.Create(field.Type));
+            }
 
             return columnMock.Object;
         }
 
         private static IQueryResultSelection CreateQueryResultSelection(
-                IEnumerator<ReadOnlyCollection<object>> rowsEnumerator, IDictionary<string, int> mapNames)
+                IEnumerator<IList<object>> rowsEnumerator, IDictionary<string, int> mapNames)
         {
                 var resultSelectionMock = MockHelper.CreateDisposableMock<IQueryResultSelection>();
 

@@ -6,8 +6,6 @@ namespace VanessaSharp.Data.Linq.PredefinedData
     /// <summary>Поля.</summary>
     public static class Fields
     {
-
-
         public static string GetLocalizedName(this Catalog value)
         {
             var enumType = typeof(Catalog);

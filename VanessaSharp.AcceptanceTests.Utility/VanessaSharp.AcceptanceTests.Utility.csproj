@@ -83,6 +83,7 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="AnyType.cs" />
     <Compile Include="ConnectedTestsBase.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Mocks\FieldDescription.cs" />

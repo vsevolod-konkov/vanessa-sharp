@@ -8,11 +8,19 @@ using VanessaSharp.Data.Linq.PredefinedData;
 namespace VanessaSharp.Data.Linq.AcceptanceTests
 {
     /// <summary>
-    /// Базовый класс для тестирования получения данных.
+    /// Тестирование получения данных.
     /// </summary>
-    public abstract class GettingDataRecordsTestsBase : ReadDataTestBase
+    #if REAL_MODE
+    [TestFixture(TestMode.Real, false)]
+    [TestFixture(TestMode.Real, true)]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated, false)]
+    [TestFixture(TestMode.Isolated, true)]
+    #endif
+    public sealed class GettingDataRecordsTests : ReadDataTestBase
     {
-        protected GettingDataRecordsTestsBase(TestMode testMode, bool shouldBeOpen)
+        public GettingDataRecordsTests(TestMode testMode, bool shouldBeOpen)
             : base(testMode, shouldBeOpen)
         {}
 
@@ -21,59 +29,31 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
         private static Func<int, object> GetTypedFieldValueGetterById(params Func<int, object>[] typedFieldValueGetters)
         {
-            return index => typedFieldValueGetters[index - PredefinedFieldsCount](index);
+            return index =>
+                {
+                    var getter = typedFieldValueGetters[index];
+                    if (getter == null)
+                        throw new ArgumentOutOfRangeException("index");
+
+                    return getter(index);
+                };
         }
 
         private Func<int, object> GetTypedFieldValueGetterByName(params Func<string, object>[] typedFieldValueGetters)
         {
-            return index => typedFieldValueGetters[index - PredefinedFieldsCount](ExpectedFieldName(index));
+            return index =>
+                {
+                    var getter = typedFieldValueGetters[index];
+                    if (getter == null)
+                        throw new ArgumentOutOfRangeException("index");
+
+                    return getter(ExpectedFieldName(index));
+                };
         }
 
-        private static readonly IList<Fields.Catalog> PrefinedFields = new[]
-            {
-                Fields.Catalog.Ref,
-                Fields.Catalog.Code,
-                Fields.Catalog.Description,
-                Fields.Catalog.DeletionMark,
-                Fields.Catalog.Presentation,
-                Fields.Catalog.Predefined
-            };
-
-        private static int PredefinedFieldsCount
+        private void PredefinedField(Fields.Catalog field)
         {
-            get { return PrefinedFields.Count; }
-        }
-
-        private int ExpectedOwnedFieldsCount
-        {
-            get { return base.ExpectedFieldsCount; }
-        }
-
-        protected sealed override int ExpectedFieldsCount
-        {
-            get { return ExpectedOwnedFieldsCount + PredefinedFieldsCount; }
-        }
-
-        private int CorrectedIndex(int fieldIndex)
-        {
-            var newIndex = fieldIndex - PredefinedFieldsCount;
-            if (newIndex < 0)
-            {
-                throw new InvalidOperationException(string.Format(
-                    "Ожидаемое значение для предопределенной колонки \"{0}\" неизвестно.", newIndex));
-            }
-
-            return newIndex;
-        }
-
-        protected override object ExpectedFieldValue(int fieldIndex)
-        {
-            return base.ExpectedFieldValue(CorrectedIndex(fieldIndex));
-        }
-
-        protected override string ExpectedFieldName(int fieldIndex)
-        {
-            return base.ExpectedFieldName(CorrectedIndex(fieldIndex));
+            Field<AnyType>(field.GetLocalizedName());
         }
 
         /// <summary>Тестирование запроса получение целой записи.</summary>
@@ -81,6 +61,13 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         public void TestFillRecordQuery()
         {
             BeginDefineData();
+
+            PredefinedField(Fields.Catalog.Ref);
+            PredefinedField(Fields.Catalog.Code);
+            PredefinedField(Fields.Catalog.Description);
+            PredefinedField(Fields.Catalog.DeletionMark);
+            PredefinedField(Fields.Catalog.Presentation);
+            PredefinedField(Fields.Catalog.Predefined);
 
             Field<string>("СтроковоеПоле");
             Field<double>("ЦелочисленноеПоле");
@@ -94,6 +81,8 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             Row
             (
+                AnyType.Instance, AnyType.Instance, AnyType.Instance,
+                AnyType.Instance, AnyType.Instance, AnyType.Instance,
                 "Тестирование", 234, 546.323, true,
                 new DateTime(2014, 01, 15), new DateTime(2014, 01, 08, 4, 33, 43),
                 new DateTime(100, 1, 1, 23, 43, 43), LONG_TEXT, "А"
@@ -101,6 +90,8 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             Row
             (
+                AnyType.Instance, AnyType.Instance, AnyType.Instance,
+                AnyType.Instance, AnyType.Instance, AnyType.Instance,
                 "", 0, 0, false,
                 new DateTime(100, 1, 1), new DateTime(100, 1, 1),
                 new DateTime(100, 1, 1),
@@ -109,7 +100,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             EndDefineData();
 
-            Assert.AreEqual(9, ExpectedOwnedFieldsCount);
+            Assert.AreEqual(15, ExpectedFieldsCount);
 
             using (var dataContext = new OneSDataContext(Connection))
             {
@@ -137,6 +128,12 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     Func<string, object> getDateTimeValueByName = name => record.GetDateTime(name);
 
                     var getTypedValueById = GetTypedFieldValueGetterById(
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
                                             getStringValueById,
                                             i => record.GetInt32(i),
                                             i => record.GetDouble(i),
@@ -149,6 +146,12 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                             );
 
                     var getTypedValueByName = GetTypedFieldValueGetterByName(
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
                                             getStringValueByName,
                                             s => record.GetInt32(s),
                                             s => record.GetDouble(s),
@@ -161,8 +164,11 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                             );
 
 
-                    for (var fieldIndex = PredefinedFieldsCount; fieldIndex < ExpectedFieldsCount; fieldIndex++)
+                    for (var fieldIndex = 0; fieldIndex < ExpectedFieldsCount; fieldIndex++)
                     {
+                        if (ExpectedFieldType(fieldIndex) == typeof(AnyType))
+                            continue;
+
                         var expectedFieldValue = ExpectedFieldValue(fieldIndex);
                         var fieldName = ExpectedFieldName(fieldIndex);
 
@@ -177,7 +183,6 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                         Assert.AreEqual(expectedFieldValue, getTypedValueById(fieldIndex));
                         Assert.AreEqual(expectedFieldValue, getTypedValueByName(fieldIndex));
                     } 
-
 
                     ++recordCounter;
                 }
@@ -219,7 +224,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             EndDefineData();
 
-            Assert.AreEqual(9, ExpectedOwnedFieldsCount);
+            Assert.AreEqual(9, ExpectedFieldsCount);
 
             using (var dataContext = new OneSDataContext(Connection))
             {
@@ -259,6 +264,84 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 }
 
                 Assert.AreEqual(ExpectedRowsCount, recordCounter);
+
+                AssertSql(
+                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник");
+                AssertSqlParameters(new Dictionary<string, object>());
+            }
+        }
+
+        /// <summary>Тестирование запроса с выборкой и фильтрацией данных из записи.</summary>
+        [Test]
+        [Ignore("На реализации")]
+        public void TestSelectAndWhereQuery()
+        {
+            BeginDefineData();
+
+            Field<string>("СтроковоеПоле");
+            Field<double>("ЦелочисленноеПоле");
+            Field<double>("ЧисловоеПоле");
+            Field<bool>("БулевоПоле");
+            Field<DateTime>("ДатаПоле");
+            Field<DateTime>("ДатаВремяПоле");
+            Field<DateTime>("ВремяПоле");
+            Field<string>("НеограниченноеСтроковоеПоле");
+            Field<string>("СимвольноеПоле");
+
+            Row
+            (
+                "Тестирование", 234, 546.323, true,
+                new DateTime(2014, 01, 15), new DateTime(2014, 01, 08, 4, 33, 43),
+                new DateTime(100, 1, 1, 23, 43, 43), LONG_TEXT, "А"
+            );
+
+            EndDefineData();
+
+            Assert.AreEqual(9, ExpectedFieldsCount);
+
+            using (var dataContext = new OneSDataContext(Connection))
+            {
+                var entries = from r in dataContext.GetRecords("Справочник.ТестовыйСправочник")
+                              where r.GetString("СтроковоеПоле") == "Тестирование"
+                              select new
+                              {
+                                  String = r.GetString("СтроковоеПоле"),
+                                  Integer = r.GetInt32("ЦелочисленноеПоле"),
+                                  Number = r.GetDouble("ЧисловоеПоле"),
+                                  Boolean = r.GetBoolean("БулевоПоле"),
+                                  Date = r.GetDateTime("ДатаПоле"),
+                                  DateTime = r.GetDateTime("ДатаВремяПоле"),
+                                  Time = r.GetDateTime("ВремяПоле"),
+                                  UnboundString = r.GetString("НеограниченноеСтроковоеПоле"),
+                                  Char = r.GetChar("СимвольноеПоле")
+                              };
+
+                var recordCounter = 0;
+
+                foreach (var entry in entries)
+                {
+                    Assert.Less(recordCounter, ExpectedRowsCount);
+
+                    SetCurrentExpectedRow(recordCounter);
+
+                    Assert.AreEqual(ExpectedFieldValue("СтроковоеПоле"), entry.String);
+                    Assert.AreEqual(ExpectedFieldValue("ЦелочисленноеПоле"), entry.Integer);
+                    Assert.AreEqual(ExpectedFieldValue("ЧисловоеПоле"), entry.Number);
+                    Assert.AreEqual(ExpectedFieldValue("БулевоПоле"), entry.Boolean);
+                    Assert.AreEqual(ExpectedFieldValue("ДатаПоле"), entry.Date);
+                    Assert.AreEqual(ExpectedFieldValue("ДатаВремяПоле"), entry.DateTime);
+                    Assert.AreEqual(ExpectedFieldValue("ВремяПоле"), entry.Time);
+                    Assert.AreEqual(ExpectedFieldValue("НеограниченноеСтроковоеПоле"), entry.UnboundString);
+                    Assert.AreEqual(ExpectedFieldValue("СимвольноеПоле"), entry.Char.ToString());
+
+                    ++recordCounter;
+                }
+
+                Assert.AreEqual(ExpectedRowsCount, recordCounter);
+
+                AssertSql(
+                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1");
+                AssertSqlParameters(new Dictionary<string, object> { { "p1", "Тестирование" } });
             }
         }
     }

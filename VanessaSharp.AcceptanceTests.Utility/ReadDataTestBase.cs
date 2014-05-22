@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Moq;
+using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility.Mocks;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.AcceptanceTests.Utility
 {
@@ -10,14 +14,52 @@ namespace VanessaSharp.AcceptanceTests.Utility
     {
         private TableDataBuilder _dataBuilder;
         private ReadOnlyCollection<object> _currentExpectedRowData;
-        
+
+        private readonly ITestModeStrategy _testModeStrategy;
+
         protected ReadDataTestBase(TestMode testMode, bool shouldBeOpen) 
             : base(testMode, shouldBeOpen)
         {
+            _testModeStrategy = CreateTestModeStrategy(testMode);
         }
 
         protected ReadDataTestBase(TestMode testMode) : base(testMode)
         {
+            _testModeStrategy = CreateTestModeStrategy(testMode);
+        }
+
+        private static ITestModeStrategy CreateTestModeStrategy(TestMode testMode)
+        {
+            return (testMode == TestMode.Isolated)
+                                    ? (ITestModeStrategy)new IsolatedModeStrategy()
+                                    : new RealModeStrategy();
+        }
+
+        /// <summary>Инициализация фикстуры в зависимости от режима.</summary>
+        [SetUp]
+        public void ModeSetUp()
+        {
+            _testModeStrategy.SetUp(this);
+        }
+
+        /// <summary>Проверка SQL-запроса переданного в 1С.</summary>
+        protected void AssertSql(string expectedSql)
+        {
+            _testModeStrategy.AssertSql(expectedSql);
+        }
+
+        /// <summary>Проверка параметров SQL-запроса переданного в 1С.</summary>
+        protected void AssertSqlParameters(IDictionary<string, object> expectedSqlParameters)
+        {
+            _testModeStrategy.AssertSqlParameters(expectedSqlParameters);
+        }
+
+        /// <summary>
+        /// Обработчик запроса на создание экземпляра объекта 1С.
+        /// </summary>
+        protected override void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
+        {
+            _testModeStrategy.OnNewOneSObjectAsking(args);
         }
 
         /// <summary>Ожидаемые табличные данные.</summary>
@@ -50,7 +92,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         }
 
         /// <summary>Ожидаемое количество полей.</summary>
-        protected virtual int ExpectedFieldsCount
+        protected int ExpectedFieldsCount
         {
             get { return ExpectedData.Fields.Count; }
         }
@@ -64,7 +106,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         /// <summary>
         /// Ожидаемое имя поля по данному индексу <paramref name="fieldIndex"/>.
         /// </summary>
-        protected virtual string ExpectedFieldName(int fieldIndex)
+        protected string ExpectedFieldName(int fieldIndex)
         {
             return ExpectedData.Fields[fieldIndex].Name;
         }
@@ -72,7 +114,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         /// <summary>
         /// Ожидаемый тип поля по данному индексу <paramref name="fieldIndex"/>.
         /// </summary>
-        protected virtual Type ExpectedFieldType(int fieldIndex)
+        protected Type ExpectedFieldType(int fieldIndex)
         {
             return ExpectedData.Fields[fieldIndex].Type;
         }
@@ -81,7 +123,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         /// Ожидаемое значение поля по данному индексу <paramref name="fieldIndex"/>
         /// в текущей строке.
         /// </summary>
-        protected virtual object ExpectedFieldValue(int fieldIndex)
+        protected object ExpectedFieldValue(int fieldIndex)
         {
             return _currentExpectedRowData[fieldIndex];
         }
@@ -124,5 +166,73 @@ namespace VanessaSharp.AcceptanceTests.Utility
         {
             _currentExpectedRowData = ExpectedData.Rows[rowIndex];
         }
+
+        #region Стратегии в зависимости от режима тестирования
+
+        private interface ITestModeStrategy
+        {
+            void SetUp(ReadDataTestBase textFixture);
+
+            void OnNewOneSObjectAsking(NewOneSObjectEventArgs args);
+
+            void AssertSql(string expectedSql);
+
+            void AssertSqlParameters(IDictionary<string, object> expectedSqlParamters);
+        }
+
+        private sealed class RealModeStrategy : ITestModeStrategy
+        {
+            public void SetUp(ReadDataTestBase textFixture)
+            {}
+
+            public void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
+            {}
+
+            public void AssertSql(string expectedSql)
+            {}
+
+            public void AssertSqlParameters(IDictionary<string, object> expectedSqlParamters)
+            {}
+        }
+
+        private sealed class IsolatedModeStrategy : ITestModeStrategy
+        {
+            private IQuery _query;
+            private Dictionary<string, object> _parameters; 
+
+            public void SetUp(ReadDataTestBase textFixture)
+            {
+                _parameters = new Dictionary<string, object>();
+
+                var queryMock = MockHelper.CreateDisposableMock<IQuery>();
+                queryMock
+                    .SetupProperty(q => q.Text);
+                queryMock
+                    .Setup(q => q.SetParameter(It.IsAny<string>(), It.IsAny<object>()))
+                    .Callback<string, object>((name, value) => _parameters[name] = value);
+                queryMock
+                    .Setup(q => q.Execute())
+                    .Returns(() => QueryResultMockFactory.Create(textFixture.ExpectedData));
+                _query = queryMock.Object;
+            }
+
+            public void OnNewOneSObjectAsking(NewOneSObjectEventArgs args)
+            {
+                if (args.RequiredType == typeof(IQuery))
+                    args.CreatedInstance = _query;
+            }
+
+            public void AssertSql(string expectedSql)
+            {
+                Assert.AreEqual(expectedSql, _query.Text);
+            }
+
+            public void AssertSqlParameters(IDictionary<string, object> expectedSqlParamters)
+            {
+                CollectionAssert.AreEquivalent(expectedSqlParamters, _parameters);
+            }
+        }
+
+        #endregion
     }
 }
