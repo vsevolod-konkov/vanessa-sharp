@@ -6,7 +6,7 @@ namespace VanessaSharp.Data.Linq.Internal
 {
     /// <summary>Параметр для SQL-запроса.</summary>
     /// <remarks>Немутабельная структура.</remarks>
-    internal sealed class SqlParameter
+    internal sealed class SqlParameter : IEquatable<SqlParameter>
     {
         /// <summary>Пустая коллекция параметров.</summary>
         public static ReadOnlyCollection<SqlParameter> EmptyCollection
@@ -40,5 +40,36 @@ namespace VanessaSharp.Data.Linq.Internal
             get { return _value; }
         }
         private readonly object _value;
+        
+        public bool Equals(SqlParameter other)
+        {
+            if (ReferenceEquals(this, other))
+                return true;
+
+            if (ReferenceEquals(other, null))
+                return false;
+
+            return (Name == other.Name && Equals(Value, other.Value));
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as SqlParameter);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((_name != null ? _name.GetHashCode() : 0) * 397) 
+                    ^ (_value != null ? _value.GetHashCode() : 0);
+            }
+        }
+
+        public override string ToString()
+        {
+            return string.Format(
+                "SQL Parameter Name:{0}; Value:{1}", Name, Value);
+        }
     }
 }

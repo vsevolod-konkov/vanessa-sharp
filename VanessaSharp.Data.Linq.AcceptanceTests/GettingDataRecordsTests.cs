@@ -188,6 +188,9 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 }
 
                 Assert.AreEqual(ExpectedRowsCount, recordCounter);
+
+                AssertSql("SELECT * FROM Справочник.ТестовыйСправочник");
+                AssertSqlParameters(new Dictionary<string, object>());
             }
         }
 
@@ -273,7 +276,6 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
         /// <summary>Тестирование запроса с выборкой и фильтрацией данных из записи.</summary>
         [Test]
-        [Ignore("На реализации")]
         public void TestSelectAndWhereQuery()
         {
             BeginDefineData();

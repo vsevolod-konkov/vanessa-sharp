@@ -12,9 +12,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
     {
         /// <summary>Конструктор.</summary>
         /// <param name="source">Источник записей.</param>
+        /// <param name="filter">Выражение фильтрации.</param>
         /// <param name="selectExpression">Выражение выборки данных их записи.</param>
-        public CustomDataTypeQuery(string source, Expression<Func<OneSDataRecord, T>> selectExpression)
-            : base(source)
+        public CustomDataTypeQuery(string source, Expression<Func<OneSDataRecord, bool>> filter, Expression<Func<OneSDataRecord, T>> selectExpression)
+            : base(source, filter)
         {
             Contract.Requires<ArgumentNullException>(selectExpression != null);
             Contract.Requires<ArgumentNullException>(typeof(T) != typeof(OneSDataRecord));

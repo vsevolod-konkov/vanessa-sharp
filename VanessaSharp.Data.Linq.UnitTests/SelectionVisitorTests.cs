@@ -1,6 +1,7 @@
 ﻿using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests
@@ -25,7 +26,9 @@ namespace VanessaSharp.Data.Linq.UnitTests
             var result = SelectionVisitor.Parse(selectExpression);
 
             // Assert
-            CollectionAssert.AreEquivalent(new[] { FIRST_FIELD_NAME, SECOND_FIELD_NAME }, result.Fields);
+            CollectionAssert.AreEquivalent(
+                new[] { new SqlFieldExpression(FIRST_FIELD_NAME), new SqlFieldExpression(SECOND_FIELD_NAME) }, 
+                result.Columns);
 
             // Тестирование полученного делегата чтения кортежа
             var itemReader = result.SelectionFunc;

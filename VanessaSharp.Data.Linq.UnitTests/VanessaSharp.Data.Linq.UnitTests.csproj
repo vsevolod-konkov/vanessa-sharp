@@ -64,6 +64,7 @@
     <Compile Include="QueryTransformerTests.cs" />
     <Compile Include="SelectionVisitorTests.cs" />
     <Compile Include="SimpleQueryBuilderTests.cs" />
+    <Compile Include="SqlQueryStatementTests.cs" />
     <Compile Include="Utility\TestHelperQuery.cs" />
     <Compile Include="Utility\TestHelperQueryProvider.cs" />
     <Compile Include="TestsBase.cs" />

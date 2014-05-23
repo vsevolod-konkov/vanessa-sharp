@@ -138,6 +138,38 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Определяется, является ли метод методом 
+        /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/> 
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если метод является методом
+        /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/>.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        public static bool IsQueryableWhereMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            const string QUERYABLE_WHERE_METHOD_NAME = "Where";
+            const int FILTER_EXPRESSION_PARAMETER_INDEX = 1;
+
+            var declaringType = method.DeclaringType;
+            if (declaringType == typeof(Queryable))
+            {
+                if (method.Name == QUERYABLE_WHERE_METHOD_NAME)
+                {
+                    var whereExpressionType = method.GetParameters()[FILTER_EXPRESSION_PARAMETER_INDEX].ParameterType;
+                    Type funcType;
+                    if (IsExpressionType(whereExpressionType, typeof(Func<,>), out funcType))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Проверка того, что тип является <see cref="Expression{TDelegate}"/>.
         /// И что делегат является обобщенным типом <paramref name="openDelegateType"/>.
         /// </summary>

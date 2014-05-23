@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
@@ -37,15 +38,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             var resultExpression = instance.Visit(expression.Body);
 
             return new SelectionPartParseProduct<T>(
-                new ReadOnlyCollection<string>(instance._fields), 
+                new ReadOnlyCollection<SqlExpression>(instance._columns), 
                 instance.CreateItemReader<T>(resultExpression));
         }
 
         /// <summary>Выражение соответствующая записи данных из которой делается выборка.</summary>
         private readonly ParameterExpression _recordExpression;
 
-        /// <summary>Имена полей.</summary>
-        private readonly List<string> _fields = new List<string>();
+        /// <summary>Выражения колонок.</summary>
+        private readonly List<SqlExpression> _columns = new List<SqlExpression>();
+
+        /// <summary>Имена колонок полей.</summary>
+        /// <remarks>Для быстрого поиска.</remarks>
+        private readonly List<string> _fieldNames = new List<string>(); 
 
         /// <summary>Параметр для результирующего делегата создания элемента - конвертер значений.</summary>
         private readonly ParameterExpression _converterParameter 
@@ -78,14 +83,20 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="fieldName">Имя поля.</param>
         private int GetFieldIndex(string fieldName)
         {
-            var index = _fields.IndexOf(fieldName);
+            var index = _fieldNames.IndexOf(fieldName);
             if (index == -1)
-            {
-                _fields.Add(fieldName);
-                return _fields.Count - 1;
-            }
+                return AddNewField(fieldName);
 
             return index;
+        }
+
+        /// <summary>Добавление вычитки нового поля.</summary>
+        private int AddNewField(string fieldName)
+        {
+            _columns.Add(new SqlFieldExpression(fieldName));
+            _fieldNames.Add(fieldName);
+
+            return _fieldNames.Count - 1;
         }
 
         /// <summary>

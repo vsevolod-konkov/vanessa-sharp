@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
@@ -11,24 +12,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
     internal sealed class SelectionPartParseProduct<T>
     {
         /// <summary>Конструктор.</summary>
-        /// <param name="fields">Коллекция полей.</param>
+        /// <param name="columns">Коллекция полей.</param>
         /// <param name="selectionFunc">Функция получения элемента.</param>
         public SelectionPartParseProduct(
-            ReadOnlyCollection<string> fields, Func<IValueConverter, object[], T> selectionFunc)
+            ReadOnlyCollection<SqlExpression> columns, Func<IValueConverter, object[], T> selectionFunc)
         {
-            Contract.Requires<ArgumentNullException>(fields != null);
+            Contract.Requires<ArgumentNullException>(columns != null);
             Contract.Requires<ArgumentNullException>(selectionFunc != null);
             
-            _fields = fields;
+            _columns = columns;
             _selectionFunc = selectionFunc;
         }
 
-        /// <summary>Коллекция полей.</summary>
-        public ReadOnlyCollection<string> Fields
+        /// <summary>Коллекция колонок.</summary>
+        public ReadOnlyCollection<SqlExpression> Columns
         {
-            get { return _fields; }
+            get { return _columns; }
         }
-        private readonly ReadOnlyCollection<string> _fields;
+        private readonly ReadOnlyCollection<SqlExpression> _columns;
 
         /// <summary>Функция получения элемента.</summary>
         public Func<IValueConverter, object[], T> SelectionFunc

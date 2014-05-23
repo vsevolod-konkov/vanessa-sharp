@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
@@ -29,6 +30,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, query.Source);
+            Assert.IsNull(query.Filter);
             Assert.IsInstanceOf<DataRecordsQuery>(query);
         }
 
@@ -41,27 +43,42 @@ namespace VanessaSharp.Data.Linq.UnitTests
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
-
-            var provider = new TestHelperQueryProvider();
-            var query = provider.CreateQuery<OneSDataRecord>(
-                OneSQueryExpressionHelper.GetRecordsExpression(SOURCE_NAME));
-
-            var selectExpression = Trait.Of<OneSDataRecord>().SelectExpression(r => new { StringField = r.GetString("[string_field]"), IntField = r.GetInt32("[int_field]") });
-
-            var selectQuery = query.Select(selectExpression);
-            var trait = selectQuery.GetTrait();
-
-            var expression = Expression.Call(
-                selectQuery.Expression,
-                GetGetEnumeratorMethodInfo(trait));
+            var selectExpression = Trait.Of<OneSDataRecord>()
+                .SelectExpression(r => new { StringField = r.GetString("[string_field]"), IntField = r.GetInt32("[int_field]") });
+            var testedExpression = TestHelperQueryProvider
+                .BuildTestQueryExpression(SOURCE_NAME, q => q.Select(selectExpression));
+            var trait = selectExpression.GetTraitOfOutputType();
 
             // Act
-            var result = ExpressionParser.GetQueryFromQueryableExpression(expression);
+            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
+            Assert.IsNull(result.Filter);
             var typedQuery = AssertAndCastSimpleQuery(trait, result);
             Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
+        }
+
+        /// <summary>
+        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// в случае когда передается выражение получения записей из источника с фильтром.
+        /// </summary>
+        [Test]
+        public void TestGetQueryFromWhereRecordsExpression()
+        {
+            // Arrange
+            const string SOURCE_NAME = "[source]";
+            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("filterField") == "filterValue";
+            var testedExpression = TestHelperQueryProvider
+                .BuildTestQueryExpression(SOURCE_NAME, q => q.Where(filterExpression));
+
+            // Act
+            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+
+            // Assert
+            Assert.AreEqual(SOURCE_NAME, result.Source);
+            Assert.AreEqual(filterExpression, result.Filter);
+            Assert.IsInstanceOf<DataRecordsQuery>(result);
         }
 
         private static CustomDataTypeQuery<T> AssertAndCastSimpleQuery<T>(Trait<T> trait, SimpleQuery query)

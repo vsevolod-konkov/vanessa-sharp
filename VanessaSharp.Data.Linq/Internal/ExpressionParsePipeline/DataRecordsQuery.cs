@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
@@ -7,8 +8,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
     {
         /// <summary>Конструктор.</summary>
         /// <param name="source">Источник записей.</param>
-        public DataRecordsQuery(string source) 
-            : base(source)
+        /// <param name="filter">Выражение фильтрации.</param>
+        public DataRecordsQuery(string source, Expression<Func<OneSDataRecord, bool>> filter) 
+            : base(source, filter)
         {}
 
         /// <summary>Тип элемента.</summary>

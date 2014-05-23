@@ -32,8 +32,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Источник данных.</summary>
         private string _sourceName;
 
+        /// <summary>Выражение фильтрации записей.</summary>
+        private Expression<Func<OneSDataRecord, bool>> _filterExpression; 
+
         /// <summary>Фабрика создания запроса.</summary>
-        private Func<string, SimpleQuery> _queryFactory = source => new DataRecordsQuery(source);
+        private Func<string, SimpleQuery> _queryFactory;
+
+        /// <summary>Конструктор.</summary>
+        public SimpleQueryBuilder()
+        {
+            _queryFactory = source => new DataRecordsQuery(source, _filterExpression);
+        }
 
         /// <summary>Обработка начала парсинга.</summary>
         public void HandleStart()
@@ -66,7 +75,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         }
 
         /// <summary>Обработка выборки.</summary>
-        /// <typeparam name="T">Выходной тип.</typeparam>
         /// <param name="selectExpression">Выражение выборки.</param>
         public void HandleSelect(LambdaExpression selectExpression)
         {
@@ -80,17 +88,33 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                     selectExpression.ReturnType, _itemType));
             }
 
-            _queryFactory = source => CreateDataTypeQuery(_sourceName, selectExpression);
+            _queryFactory = source => CreateDataTypeQuery(_sourceName, _filterExpression, selectExpression);
             _currentState = HandlerState.Selected;
+        }
+
+        /// <summary>Обработка фильтрации.</summary>
+        /// <param name="filterExpression">Выражение фильтрации.</param>
+        public void HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
+        {
+            if (_currentState == HandlerState.Enumerable
+                ||
+                _currentState == HandlerState.Selected)
+            {
+                _filterExpression = filterExpression;
+                return;
+            }
+            
+            ThrowException(MethodBase.GetCurrentMethod());
         }
 
         /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>
         /// <param name="source">Имя источника.</param>
+        /// <param name="filterExpression">Выражение фильтрации.</param>
         /// <param name="selectExpression">Выражение выборки.</param>
-        private static SimpleQuery CreateDataTypeQuery(string source, LambdaExpression selectExpression)
+        private static SimpleQuery CreateDataTypeQuery(string source, Expression<Func<OneSDataRecord, bool>> filterExpression, LambdaExpression selectExpression)
         {
             var queryType = typeof(CustomDataTypeQuery<>).MakeGenericType(selectExpression.ReturnType);
-            return (SimpleQuery)Activator.CreateInstance(queryType, source, selectExpression);
+            return (SimpleQuery)Activator.CreateInstance(queryType, source, filterExpression, selectExpression);
         }
 
         /// <summary>Получение всех записей.</summary>

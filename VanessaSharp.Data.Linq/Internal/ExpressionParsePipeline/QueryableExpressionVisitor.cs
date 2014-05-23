@@ -34,6 +34,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                         CheckAndHandleGettingRecordsMethod,
                         CheckAndHandleEnumerableGetEnumeratorMethod,
                         CheckAndHandleQueryableSelectMethod,
+                        CheckAndHandleQueryableWhereMethod
                     });
         }
 
@@ -145,6 +146,53 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             }
                 
             throw CreateExpressionNotSupportedException(selectExpression);
+        }
+
+        /// <summary>
+        /// Проверка, того что узел соответствует вызову метода 
+        /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/>
+        /// и обработка его в случае если это так.
+        /// </summary>
+        /// <param name="node">Проверяемый узел.</param>
+        /// <param name="childNode">
+        /// Дочерний узел, который надо обработать.
+        /// Если метод не соответствует, то возвращается <c>null</c>.
+        /// </param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если узел соответствует вызову методу
+        /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/>,
+        /// в ином случае возвращается <c>false</c>.
+        /// </returns>  
+        private bool CheckAndHandleQueryableWhereMethod(MethodCallExpression node, out Expression childNode)
+        {
+            const int QUERYABLE_ARGUMENT_INDEX = 0;
+            const int WHERE_EXPRESSION_ARGUMENT_INDEX = 1;
+
+            childNode = null;
+            if (!OneSQueryExpressionHelper.IsQueryableWhereMethod(node.Method))
+                return false;
+
+            var quotedFilterExpression = node.Arguments[WHERE_EXPRESSION_ARGUMENT_INDEX];
+            LambdaExpression filterExpression;
+            try
+            {
+                filterExpression = UnQuote(quotedFilterExpression);
+            }
+            catch (ArgumentException)
+            {
+                throw CreateExpressionNotSupportedException(quotedFilterExpression);
+            }
+
+            var typedFilterExpression = filterExpression as Expression<Func<OneSDataRecord, bool>>;
+            if (typedFilterExpression != null)
+            {
+                _handler.HandleFilter(typedFilterExpression);
+                childNode = node.Arguments[QUERYABLE_ARGUMENT_INDEX];
+
+                return true;
+            }
+
+            throw CreateExpressionNotSupportedException(filterExpression);
         }
 
         /// <summary>Разкавычивание лямбда-выражения.</summary>

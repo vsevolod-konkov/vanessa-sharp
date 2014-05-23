@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
@@ -9,9 +9,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
     internal static class QueryTransformer
     {
         /// <summary>Часть запроса, отвечающая за выборку записи.</summary>
-        private static readonly Tuple<IList<string>, IItemReaderFactory<OneSDataRecord>>
-            _recordSelectPart = new Tuple<IList<string>, IItemReaderFactory<OneSDataRecord>>(
-                new[] { "*" }, OneSDataRecordReaderFactory.Default);
+        private static readonly SelectPartInfo<OneSDataRecord>
+            _recordSelectPart = new SelectPartInfo<OneSDataRecord>(
+                SqlAllColumnsExpression.Instance, OneSDataRecordReaderFactory.Default);
         
         /// <summary>
         /// Преобразование запроса в результат 
@@ -44,51 +44,63 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 _recordSelectPart);
         }
 
-        /// <summary>Построение SQL-запроса.</summary>
-        /// <param name="source">Источник.</param>
-        /// <param name="fields">Поля.</param>
-        internal static string BuildSql(string source, IList<string> fields)
+        private static CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(
+            SimpleQuery query, SelectPartInfo<T> selectPart)
         {
-            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(source));
-            Contract.Requires<ArgumentNullException>(fields != null && fields.Count > 0);
-            Contract.Ensures(!string.IsNullOrWhiteSpace(Contract.Result<string>()));
-
-            return "SELECT " + ConcateFields(fields) + " FROM " + source;
+            return GetExpressionParseProduct(new SqlFromStatement(query.Source), selectPart);
         }
 
         private static CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(
-            SimpleQuery query,
-            Tuple<IList<string>, IItemReaderFactory<T>> selectPart)
+            SqlFromStatement fromStatement, SelectPartInfo<T> selectPart)
         {
-            return GetExpressionParseProduct(query.Source, selectPart);
-        }
+            var queryStatement = new SqlQueryStatement(
+                                        selectPart.Statement,
+                                        fromStatement, 
+                                        null);
 
-        private static CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(
-            string source,
-            Tuple<IList<string>, IItemReaderFactory<T>> selectPart)
-        {
             return new CollectionReadExpressionParseProduct<T>(
-                new SqlCommand(BuildSql(source, selectPart.Item1),
+                new SqlCommand(queryStatement.BuildSql(),
                     SqlParameter.EmptyCollection),
-                selectPart.Item2);
+                selectPart.ItemReaderFactory);
         }
 
-        private static Tuple<IList<string>, IItemReaderFactory<T>> ParseSelectExpression<T>(
+        private static SelectPartInfo<T> ParseSelectExpression<T>(
             Expression<Func<OneSDataRecord, T>> selectExpression)
         {
             Contract.Requires<ArgumentNullException>(selectExpression != null);
 
             var part = SelectionVisitor.Parse(selectExpression);
 
-            return new Tuple<IList<string>, IItemReaderFactory<T>>(
-                part.Fields,
+            return new SelectPartInfo<T>(
+                new SqlColumnListExpression(part.Columns),
                 new NoSideEffectItemReaderFactory<T>(part.SelectionFunc));
         }
         
+        #region Вспомогательные типы
 
-        private static string ConcateFields(IEnumerable<string> fields)
+        /// <summary>Струтура с информацией о выборке данных.</summary>
+        /// <typeparam name="T">Тип читаемых данных.</typeparam>
+        private struct SelectPartInfo<T>
         {
-            return string.Join(", ", fields);
+            public SelectPartInfo(SqlColumnSetExpression columns, IItemReaderFactory<T> itemReaderFactory) : this()
+            {
+                _statement = new SqlSelectStatement(columns);
+                _itemReaderFactory = itemReaderFactory;
+            }
+
+            public SqlSelectStatement Statement
+            {
+                get { return _statement; }
+            }
+            private readonly SqlSelectStatement _statement;
+
+            public IItemReaderFactory<T> ItemReaderFactory
+            {
+                get { return _itemReaderFactory; }
+            }
+            private readonly IItemReaderFactory<T> _itemReaderFactory;
         }
+
+        #endregion
     }
 }

@@ -14,23 +14,13 @@ namespace VanessaSharp.Data.Linq.UnitTests
     [TestFixture]
     public sealed class QueryTransformerTests : TestsBase
     {
-        /// <summary>Тестирование построения SQL-запроса.</summary>
-        [Test]
-        public void TestBuildSql()
-        {
-            Assert.AreEqual(
-                "SELECT field1, field2, field3 FROM source",
-                QueryTransformer.BuildSql("source", new[] { "field1", "field2", "field3" })
-                );
-        }
-        
         /// <summary>Тестирование преобразования запроса простой выборки записей.</summary>
         [Test]
         public void TestTransformSelectOneSDataRecord()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
-            var query = new DataRecordsQuery(SOURCE_NAME);
+            var query = new DataRecordsQuery(SOURCE_NAME, null);
 
             // Act
             var result = QueryTransformer.Transform(query);
@@ -102,10 +92,31 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 .Verify(c => c.ToInt32(values[1]), Times.Once());
         }
 
+        /// <summary>Тестирование преобразования запроса простой выборки и фильтрации записей.</summary>
+        [Test]
+        public void TestTransformSelectAndFilterOneSDataRecord()
+        {
+            // Arrange
+            var query = new DataRecordsQuery("[source]", r => r.GetString("filter_field") == "filter_value");
+
+            // Act
+            var result = QueryTransformer.Transform(query);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(
+                "SELECT * FROM [source] WHERE filter_field = &p1", command.Sql);
+            CollectionAssert
+                .AreEquivalent(new[] { new SqlParameter("p1", "filter_value") }, command.Parameters);
+
+            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
+        }
+
         private static CustomDataTypeQuery<T> CreateQuery<T>(string source,
                                                      Expression<Func<OneSDataRecord, T>> selectExpression)
         {
-            return new CustomDataTypeQuery<T>(source, selectExpression);
+            return new CustomDataTypeQuery<T>(source, null, selectExpression);
         }
 
         private static CollectionReadExpressionParseProduct<T> AssertAndCastCollectionReadExpressionParseProduct<T>(
