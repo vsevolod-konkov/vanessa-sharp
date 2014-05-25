@@ -78,8 +78,11 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionVisitorBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\WhereExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\ParseParameterCollection.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryParseContext.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SelectionPartParseProduct.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\SelectionVisitor.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SelectExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SimpleQuery.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SimpleQueryBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryTransformer.cs" />

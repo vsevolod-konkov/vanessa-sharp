@@ -6,14 +6,17 @@ using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests
 {
+    /// <summary>
+    /// Тесты на <see cref="SelectExpressionTransformer"/>.
+    /// </summary>
     [TestFixture]
-    public sealed class SelectionVisitorTests : TestsBase
+    public sealed class SelectExpressionTransformerTests : TestsBase
     {
         /// <summary>
         /// Тестирование парсинга выражения получение экземпляра анонимного типа выборкой полей из записи.
         /// </summary>
         [Test]
-        public void TestParseSelectTuple()
+        public void TestTransformGetXxx()
         {
             // Arrange
             const string FIRST_FIELD_NAME = "[string_field]";
@@ -23,7 +26,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
                                         .SelectExpression(r => new { StringField = r.GetString(FIRST_FIELD_NAME), IntField = r.GetInt32(SECOND_FIELD_NAME) });
 
             // Act
-            var result = SelectionVisitor.Parse(selectExpression);
+            var result = SelectExpressionTransformer.Transform(new QueryParseContext(), selectExpression);
 
             // Assert
             CollectionAssert.AreEquivalent(

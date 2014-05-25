@@ -11,9 +11,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
     using M = OneSQueryExpressionHelper;
     
     /// <summary>
-    /// Посетитель для разбора части запроса, отвечающая за выборку полей.
+    /// Преобразователь выражения метода Select в SQL-инструкцию SELECT и в делегат для вычитки элемента данных из записи.
     /// </summary>
-    internal sealed class SelectionVisitor : ExpressionVisitorBase
+    internal sealed class SelectExpressionTransformer : ExpressionVisitorBase
     {
         private static readonly IDictionary<MethodInfo, MethodInfo>
             _methods = new Dictionary<MethodInfo, MethodInfo>
@@ -25,16 +25,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 { M.DataRecordGetBooleanMethod, M.ValueConverterToBooleanMethod },
                 { M.DataRecordGetCharMethod, M.ValueConverterToCharMethod },
             };
-        
-        /// <summary>Разбор выражения выборки полей из записи.</summary>
+
+        /// <summary>Преобразование LINQ-выражения метода Select.</summary>
         /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="expression">Выражение.</param>
-        public static SelectionPartParseProduct<T> Parse<T>(Expression<Func<OneSDataRecord, T>> expression)
+        public static SelectionPartParseProduct<T> Transform<T>(QueryParseContext context, Expression<Func<OneSDataRecord, T>> expression)
         {
+            Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(expression != null);
             Contract.Ensures(Contract.Result<SelectionPartParseProduct<T>>() != null);
 
-            var instance = new SelectionVisitor(expression.Parameters[0]);
+            var instance = new SelectExpressionTransformer(expression.Parameters[0]);
             var resultExpression = instance.Visit(expression.Body);
 
             return new SelectionPartParseProduct<T>(
@@ -62,7 +64,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
         /// <summary>Конструктор, в который передается параметр исходного лямбда-выражения.</summary>
         /// <param name="recordExpression">Выражение записи данных, из которой производится вычитка.</param>
-        private SelectionVisitor(ParameterExpression recordExpression)
+        private SelectExpressionTransformer(ParameterExpression recordExpression)
         {
             _recordExpression = recordExpression;
         }

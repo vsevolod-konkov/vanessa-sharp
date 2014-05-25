@@ -63,6 +63,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
                 FromStatement.BuildSql(sqlBuilder);
             }
 
+            if (WhereStatement != null)
+            {
+                sqlBuilder.Append(" ");
+                WhereStatement.BuildSql(sqlBuilder);
+            }
+
             return sqlBuilder.ToString();
         }
     }

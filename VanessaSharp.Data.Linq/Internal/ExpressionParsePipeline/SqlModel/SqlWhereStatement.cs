@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Text;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
 {
@@ -23,5 +24,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             get { return _condition; }
         }
         private readonly SqlCondition _condition;
+
+        /// <summary>Генерация кода SQL-запроса.</summary>
+        public void BuildSql(StringBuilder sqlBuilder)
+        {
+            Contract.Requires<ArgumentNullException>(sqlBuilder != null);
+
+            sqlBuilder.Append("WHERE ");
+            Condition.BuildSql(sqlBuilder);
+        }
     }
 }

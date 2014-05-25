@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
@@ -24,9 +25,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             Contract.Requires<ArgumentNullException>(query != null);
             Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<T>>() != null);
 
+            var context = new QueryParseContext();
+
             return GetExpressionParseProduct(
+                context,
                 query,
-                ParseSelectExpression(query.SelectExpression));
+                ParseSelectExpression(context, query.SelectExpression));
         }
 
         /// <summary>
@@ -40,40 +44,63 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<OneSDataRecord>>() != null);
             
             return GetExpressionParseProduct(
+                new QueryParseContext(),
                 query,
                 _recordSelectPart);
         }
 
         private static CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(
+            QueryParseContext context,
             SimpleQuery query, SelectPartInfo<T> selectPart)
         {
-            return GetExpressionParseProduct(new SqlFromStatement(query.Source), selectPart);
+            var whereStatement = ParseFilterExpression(context, query.Filter);
+
+            return GetExpressionParseProduct(
+                context.Parameters.GetSqlParameters(),
+                new SqlFromStatement(query.Source), 
+                whereStatement, 
+                selectPart);
         }
 
         private static CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(
-            SqlFromStatement fromStatement, SelectPartInfo<T> selectPart)
+            ReadOnlyCollection<SqlParameter> parameters,
+            SqlFromStatement fromStatement, 
+            SqlWhereStatement whereStatement, 
+            SelectPartInfo<T> selectPart)
         {
             var queryStatement = new SqlQueryStatement(
                                         selectPart.Statement,
                                         fromStatement, 
-                                        null);
+                                        whereStatement);
 
             return new CollectionReadExpressionParseProduct<T>(
-                new SqlCommand(queryStatement.BuildSql(),
-                    SqlParameter.EmptyCollection),
+                new SqlCommand(
+                    queryStatement.BuildSql(),
+                    parameters),
                 selectPart.ItemReaderFactory);
         }
 
-        private static SelectPartInfo<T> ParseSelectExpression<T>(
-            Expression<Func<OneSDataRecord, T>> selectExpression)
+        private static SelectPartInfo<T> ParseSelectExpression<T>(QueryParseContext context, Expression<Func<OneSDataRecord, T>> selectExpression)
         {
             Contract.Requires<ArgumentNullException>(selectExpression != null);
+            Contract.Requires<ArgumentNullException>(context != null);
 
-            var part = SelectionVisitor.Parse(selectExpression);
+            var part = SelectExpressionTransformer.Transform(context, selectExpression);
 
             return new SelectPartInfo<T>(
                 new SqlColumnListExpression(part.Columns),
                 new NoSideEffectItemReaderFactory<T>(part.SelectionFunc));
+        }
+
+        private static SqlWhereStatement ParseFilterExpression(QueryParseContext context, Expression<Func<OneSDataRecord, bool>> filterExpression)
+        {
+            Contract.Requires<ArgumentNullException>(context != null);
+
+            if (filterExpression == null)
+                return null;
+
+            return new SqlWhereStatement(
+                WhereExpressionTransformer.Transform(context, filterExpression));
         }
         
         #region Вспомогательные типы
