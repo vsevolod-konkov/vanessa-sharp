@@ -13,12 +13,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         private static readonly ISet<MethodInfo>
             _getValueMethods = new HashSet<MethodInfo>
             {
-                { OneSQueryExpressionHelper.DataRecordGetStringMethod },
-                { OneSQueryExpressionHelper.DataRecordGetInt32Method },
-                { OneSQueryExpressionHelper.DataRecordGetDoubleMethod },
-                { OneSQueryExpressionHelper.DataRecordGetDateTimeMethod },
-                { OneSQueryExpressionHelper.DataRecordGetBooleanMethod },
-                { OneSQueryExpressionHelper.DataRecordGetCharMethod },
+                OneSQueryExpressionHelper.DataRecordGetStringMethod,
+                OneSQueryExpressionHelper.DataRecordGetInt32Method,
+                OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
+                OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
+                OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
+                OneSQueryExpressionHelper.DataRecordGetCharMethod,
             };
         
         /// <summary>Контекст разбора запроса.</summary>
@@ -27,9 +27,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Выражение записи данных.</summary>
         private readonly ParameterExpression _recordExpression;
 
-        // TODO: Сделать более защищенный вариант
-        /// <summary>Стек выражений.</summary>
-        private readonly Stack<object> _stack = new Stack<object>(); 
+        /// <summary>Стековая машина для генерации условия.</summary>
+        private readonly StackEngine _stackEngine = new StackEngine(); 
 
         /// <summary>Конструктор.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
@@ -46,7 +45,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Получение результирующего запроса.</summary>
         private SqlCondition GetCondition()
         {
-            return (SqlCondition)_stack.Pop();
+            return _stackEngine.GetCondition();
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
@@ -80,7 +79,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 {
                     var fieldName = GetConstant<string>(node.Arguments[0]);
 
-                    _stack.Push(new SqlFieldExpression(fieldName));
+                    _stackEngine.Push(new SqlFieldExpression(fieldName));
                     return node;
                 }
 
@@ -94,7 +93,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             var parameterName = _context.Parameters.GetOrAddNewParameterName(node.Value);
             var parameter = new SqlParameterExpression(parameterName);
-            _stack.Push(parameter);
+            _stackEngine.Push(parameter);
             
             return node;
         }
@@ -106,12 +105,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             var relationType = GetSqlBinaryRelationType(node.NodeType);
             if (relationType.HasValue)
             {
-                var operand2 = (SqlExpression)_stack.Pop();
-                var operand1 = (SqlExpression)_stack.Pop();
-
-                var condition = new SqlBinaryRelationCondition(relationType.Value, operand1, operand2);
-                _stack.Push(condition);
-
+                _stackEngine.BinaryRelation(relationType.Value);
                 return result;
             }
             
@@ -139,5 +133,56 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                     return null;
             }
         }
+
+        #region Вспомогательные типы
+
+        private sealed class StackEngine
+        {
+            private readonly Stack<object> _stack = new Stack<object>(); 
+
+            public void Push(SqlExpression expression)
+            {
+                Contract.Requires<ArgumentNullException>(expression != null);
+
+                _stack.Push(expression);
+            }
+
+            private T Pop<T>()
+                where T : class
+            {
+                if (_stack.Count == 0)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "В стеке ожидался объект типа \"{0}\", но стек оказался пуст.", typeof(T)));
+                }
+
+                var obj = _stack.Pop();
+                var result = obj as T;
+
+                if (result == null)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "В стеке ожидался объект типа \"{0}\", но оказался объект \"{1}\".", typeof(T), obj));
+                }
+
+                return result;
+            }
+
+            public void BinaryRelation(SqlBinaryRelationType relationType)
+            {
+                var secondOperand = Pop<SqlExpression>();
+                var firstOperand = Pop<SqlExpression>();
+
+                var condition = new SqlBinaryRelationCondition(relationType, firstOperand, secondOperand);
+                _stack.Push(condition);
+            }
+
+            public SqlCondition GetCondition()
+            {
+                return Pop<SqlCondition>();
+            }
+        }
+
+        #endregion
     }
 }
