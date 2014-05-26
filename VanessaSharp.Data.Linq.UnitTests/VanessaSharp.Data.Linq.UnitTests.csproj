@@ -51,6 +51,7 @@
     <Compile Include="ExpressionParserInstanceTests.cs" />
     <Compile Include="ExpressionParserStaticTests.cs" />
     <Compile Include="ExpressionParserTestBase.cs" />
+    <Compile Include="QueryTransformerTestsBase.cs" />
     <Compile Include="WhereExpressionTransformerTests.cs" />
     <Compile Include="ItemEnumeratorTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />
@@ -62,7 +63,7 @@
     <Compile Include="PredefinedDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryableExpressionVisitorTests.cs" />
-    <Compile Include="QueryTransformerTests.cs" />
+    <Compile Include="QueryTransformerComponentTests.cs" />
     <Compile Include="SelectExpressionTransformerTests.cs" />
     <Compile Include="SimpleQueryBuilderTests.cs" />
     <Compile Include="SqlQueryStatementTests.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Utility\TestHelperQueryProvider.cs" />
     <Compile Include="TestsBase.cs" />
     <Compile Include="Utility\Trait.cs" />
+    <Compile Include="QueryTransformerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VanessaSharp.Data.Linq\VanessaSharp.Data.Linq.csproj">

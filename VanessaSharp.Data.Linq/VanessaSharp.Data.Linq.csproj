@@ -77,7 +77,11 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformerBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformMethods.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionVisitorBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\IExpressionTransformMethods.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\WhereExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ParseParameterCollection.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryParseContext.cs" />
@@ -92,7 +96,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlColumnListExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlColumnSetExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCondition.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlEqualsCondition.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlFieldExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlFromStatement.cs" />

@@ -22,7 +22,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Преобразование.</summary>
         public override ExpressionParseProduct Transform()
         {
-            return QueryTransformer.Transform(this);
+            return new QueryTransformer().Transform(this);
         }
     }
 }

@@ -26,22 +26,42 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 { M.DataRecordGetCharMethod, M.ValueConverterToCharMethod },
             };
 
+        /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>
+        /// <param name="recordExpression">Параметр метода - выражение записи из которой производиться выборка.</param>
+        private SelectExpressionTransformer(ParameterExpression recordExpression)
+        {
+            Contract.Requires<ArgumentNullException>(recordExpression != null);
+
+            _recordExpression = recordExpression;
+        }
+
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
-        /// <typeparam name="T">Тип элемента.</typeparam>
+        /// <typeparam name="T">Тип элементов последовательности - результатов выборки.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="expression">Выражение.</param>
+        /// <param name="expression">Преобразуемое выражение.</param>
         public static SelectionPartParseProduct<T> Transform<T>(QueryParseContext context, Expression<Func<OneSDataRecord, T>> expression)
         {
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(expression != null);
             Contract.Ensures(Contract.Result<SelectionPartParseProduct<T>>() != null);
 
-            var instance = new SelectExpressionTransformer(expression.Parameters[0]);
-            var resultExpression = instance.Visit(expression.Body);
+            return new SelectExpressionTransformer(expression.Parameters[0])
+                            .TransformLambdaBody<T>(expression.Body);
+        }
+
+        /// <summary>Преобразование тела лямбды метода выборки данных.</summary>
+        /// <typeparam name="T">Тип элементов выборки.</typeparam>
+        /// <param name="lambdaBody">Тело лямбды метода выборки.</param>
+        /// <returns>
+        /// Результат преобразования - набор колонок и делегат создания элемента из значений колонок.
+        /// </returns>
+        private SelectionPartParseProduct<T> TransformLambdaBody<T>(Expression lambdaBody)
+        {
+            var resultExpression = Visit(lambdaBody);
 
             return new SelectionPartParseProduct<T>(
-                new ReadOnlyCollection<SqlExpression>(instance._columns), 
-                instance.CreateItemReader<T>(resultExpression));
+                new ReadOnlyCollection<SqlExpression>(_columns),
+                CreateItemReader<T>(resultExpression));
         }
 
         /// <summary>Выражение соответствующая записи данных из которой делается выборка.</summary>
@@ -61,13 +81,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Параметр для результирующего делегата создания элемента - массив вычитанных значений.</summary>
         private readonly ParameterExpression _valuesParameter
             = Expression.Parameter(typeof(object[]), "values");
-
-        /// <summary>Конструктор, в который передается параметр исходного лямбда-выражения.</summary>
-        /// <param name="recordExpression">Выражение записи данных, из которой производится вычитка.</param>
-        private SelectExpressionTransformer(ParameterExpression recordExpression)
-        {
-            _recordExpression = recordExpression;
-        }
 
         /// <summary>
         /// Создание делегата создателя элемента вычитываемого из записи.

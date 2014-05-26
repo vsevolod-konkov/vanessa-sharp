@@ -8,10 +8,10 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
     /// <summary>Преобразователь LINQ-выражение метода Where в SQL-условие WHERE.</summary>
-    internal sealed class WhereExpressionTransformer : ExpressionVisitorBase
+    internal sealed class WhereExpressionTransformer : ExpressionTransformerBase
     {
         private static readonly ISet<MethodInfo>
-            _methods = new HashSet<MethodInfo>
+            _getValueMethods = new HashSet<MethodInfo>
             {
                 { OneSQueryExpressionHelper.DataRecordGetStringMethod },
                 { OneSQueryExpressionHelper.DataRecordGetInt32Method },
@@ -27,6 +27,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Выражение записи данных.</summary>
         private readonly ParameterExpression _recordExpression;
 
+        // TODO: Сделать более защищенный вариант
         /// <summary>Стек выражений.</summary>
         private readonly Stack<object> _stack = new Stack<object>(); 
 
@@ -75,9 +76,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             if (node.Object == _recordExpression)
             {
-                if (_methods.Contains(node.Method))
+                if (_getValueMethods.Contains(node.Method))
                 {
-                    _stack.Push(GetConvertGetValueExpression(node));
+                    var fieldName = GetConstant<string>(node.Arguments[0]);
+
+                    _stack.Push(new SqlFieldExpression(fieldName));
                     return node;
                 }
 
@@ -98,14 +101,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
         protected override Expression VisitBinary(BinaryExpression node)
         {
-            var result = base.VisitBinary(node);
-            
-            if (node.NodeType == ExpressionType.Equal)
+            var result = DefaultVisitBinary(node);
+
+            var relationType = GetSqlBinaryRelationType(node.NodeType);
+            if (relationType.HasValue)
             {
                 var operand2 = (SqlExpression)_stack.Pop();
                 var operand1 = (SqlExpression)_stack.Pop();
 
-                var condition = new SqlEqualsCondition(operand1, operand2);
+                var condition = new SqlBinaryRelationCondition(relationType.Value, operand1, operand2);
                 _stack.Push(condition);
 
                 return result;
@@ -114,15 +118,26 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             throw CreateExpressionNotSupportedException(node);
         }
 
-        /// <summary>
-        /// Получение выражения получения значения из массива и конвертация его к нужному типу.
-        /// </summary>
-        /// <param name="node">Исходный узел вызова метода получения данных из записи <see cref="OneSDataRecord"/>.</param>
-        private static SqlFieldExpression GetConvertGetValueExpression(MethodCallExpression node)
+        /// <summary>Получение типа бинарного отношения в зависимости от типа узла выражения.</summary>
+        private static SqlBinaryRelationType? GetSqlBinaryRelationType(ExpressionType expressionType)
         {
-            var fieldName = GetConstant<string>(node.Arguments[0]);
-
-            return new SqlFieldExpression(fieldName);
+            switch (expressionType)
+            {
+                case ExpressionType.Equal:
+                    return SqlBinaryRelationType.Equal;
+                case ExpressionType.NotEqual:
+                    return SqlBinaryRelationType.NotEqual;
+                case ExpressionType.GreaterThan:
+                    return SqlBinaryRelationType.Greater;
+                case ExpressionType.GreaterThanOrEqual:
+                    return SqlBinaryRelationType.GreaterOrEqual;
+                case ExpressionType.LessThan:
+                    return SqlBinaryRelationType.Less;
+                case ExpressionType.LessThanOrEqual:
+                    return SqlBinaryRelationType.LessOrEqual;
+                default:
+                    return null;
+            }
         }
     }
 }
