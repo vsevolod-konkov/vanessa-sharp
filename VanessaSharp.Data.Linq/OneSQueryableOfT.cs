@@ -10,7 +10,7 @@ namespace VanessaSharp.Data.Linq
     /// Реализация <see cref="IQueryable{T}"/> для доступа к данным 1С.
     /// </summary>
     /// <typeparam name="T">Тип возвращаемых данных.</typeparam>
-    internal sealed class OneSQueryable<T> : OneSQueryable, IQueryable<T>
+    internal sealed class OneSQueryable<T> : OneSQueryable, IOrderedQueryable<T>
     {
         /// <summary>
         /// Конструктор, принимающий поставщика запросов и выражение.

@@ -51,6 +51,7 @@
     <Compile Include="ExpressionParserInstanceTests.cs" />
     <Compile Include="ExpressionParserStaticTests.cs" />
     <Compile Include="ExpressionParserTestBase.cs" />
+    <Compile Include="OrderByExpressionTransformerTests.cs" />
     <Compile Include="QueryTransformerTestsBase.cs" />
     <Compile Include="WhereExpressionTransformerTests.cs" />
     <Compile Include="ItemEnumeratorTests.cs" />

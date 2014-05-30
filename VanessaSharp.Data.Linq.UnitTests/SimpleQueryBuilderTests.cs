@@ -34,6 +34,8 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
+            Assert.IsNull(result.Filter);
+            Assert.AreEqual(0, result.Sorters.Count);
             Assert.IsInstanceOf<DataRecordsQuery>(result);
         }
 
@@ -58,6 +60,9 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
+            Assert.IsNull(result.Filter);
+            Assert.AreEqual(0, result.Sorters.Count);
+
             var typedQuery = AssertAndCastSimpleQueryOf(traitOfOutputType, result);
             Assert.AreEqual(expectedExpression, typedQuery.SelectExpression);
         }
@@ -82,6 +87,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
             Assert.AreEqual(filterExpression, result.Filter);
+            Assert.AreEqual(0, result.Sorters.Count);
             Assert.IsInstanceOf<DataRecordsQuery>(result);
         }
 
@@ -110,8 +116,35 @@ namespace VanessaSharp.Data.Linq.UnitTests
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
             Assert.AreEqual(filterExpression, result.Filter);
+            Assert.AreEqual(0, result.Sorters.Count);
             var typedQuery = AssertAndCastSimpleQueryOf(traitOfOutputType, result);
             Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
+        }
+
+        /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
+        [Test]
+        public void TestBuildOrderedGetRecordsQuery()
+        {
+            // Arrange
+            const string SOURCE_NAME = "[source]";
+            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("int_field");
+
+            // Act
+            _testedInstance.HandleStart();
+            _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
+            _testedInstance.HandleOrderBy(sortKeyExpression);
+            _testedInstance.HandleGettingRecords(SOURCE_NAME);
+            _testedInstance.HandleEnd();
+
+            var result = _testedInstance.BuiltQuery;
+
+            // Assert
+            Assert.AreEqual(SOURCE_NAME, result.Source);
+            Assert.AreEqual(1, result.Sorters.Count);
+            Assert.AreEqual(sortKeyExpression, result.Sorters[0].KeyExpression);
+            Assert.AreEqual(SortKind.Ascending, result.Sorters[0].Kind);
+
+            Assert.IsInstanceOf<DataRecordsQuery>(result);
         }
 
         private static CustomDataTypeQuery<T> AssertAndCastSimpleQueryOf<T>(Trait<T> trait, SimpleQuery query)

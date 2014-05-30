@@ -99,6 +99,7 @@ namespace VanessaSharp.Data.Linq
             return false;
         }
 
+        // TODO: Убрать копипасту
         /// <summary>
         /// Определяется, является ли метод методом 
         /// <see cref="Queryable.Select{TSource,TResult}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TResult}})"/> 
@@ -137,6 +138,7 @@ namespace VanessaSharp.Data.Linq
             return false;
         }
 
+        // TODO: Убрать копипасту
         /// <summary>
         /// Определяется, является ли метод методом 
         /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/> 
@@ -164,6 +166,33 @@ namespace VanessaSharp.Data.Linq
                     if (IsExpressionType(whereExpressionType, typeof(Func<,>), out funcType))
                         return true;
                 }
+            }
+
+            return false;
+        }
+
+        // TODO: Убрать копипасту
+        /// <summary>
+        /// Определяется, является ли метод методом 
+        /// <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/> 
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если метод является методом
+        /// <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        public static bool IsQueryableOrderByMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            const string QUERYABLE_ORDER_BY_METHOD_NAME = "OrderBy";
+
+            var declaringType = method.DeclaringType;
+            if (declaringType == typeof(Queryable))
+            {
+                if (method.Name == QUERYABLE_ORDER_BY_METHOD_NAME && method.GetParameters().Length == 2)
+                    return true;
             }
 
             return false;

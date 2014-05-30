@@ -81,6 +81,33 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.IsInstanceOf<DataRecordsQuery>(result);
         }
 
+        /// <summary>
+        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// в случае когда передается выражение получения записей из источника с сортировкой.
+        /// </summary>
+        [Test]
+        public void TestGetQueryFromOrderByRecordsExpression()
+        {
+            // Arrange
+            const string SOURCE_NAME = "[source]";
+            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field");
+            var testedExpression = TestHelperQueryProvider
+                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderBy(orderbyExpression));
+
+            // Act
+            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+
+            // Assert
+            Assert.AreEqual(SOURCE_NAME, result.Source);
+            Assert.AreEqual(1, result.Sorters.Count);
+            
+            var sortExpression = result.Sorters[0];
+            Assert.AreEqual(orderbyExpression, sortExpression.KeyExpression);
+            Assert.AreEqual(SortKind.Ascending, sortExpression.Kind);
+
+            Assert.IsInstanceOf<DataRecordsQuery>(result);
+        }
+
         private static CustomDataTypeQuery<T> AssertAndCastSimpleQuery<T>(Trait<T> trait, SimpleQuery query)
         {
             return AssertAndCast<CustomDataTypeQuery<T>>(query);

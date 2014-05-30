@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 
@@ -13,9 +14,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Конструктор.</summary>
         /// <param name="source">Источник записей.</param>
         /// <param name="filter">Выражение фильтрации.</param>
+        /// <param name="sorters">Выражения сортировки.</param>
         /// <param name="selectExpression">Выражение выборки данных их записи.</param>
-        public CustomDataTypeQuery(string source, Expression<Func<OneSDataRecord, bool>> filter, Expression<Func<OneSDataRecord, T>> selectExpression)
-            : base(source, filter)
+        public CustomDataTypeQuery(
+            string source, 
+            Expression<Func<OneSDataRecord, bool>> filter,
+            ReadOnlyCollection<SortExpression> sorters, 
+            Expression<Func<OneSDataRecord, T>> selectExpression)
+            
+            : base(source, filter, sorters)
         {
             Contract.Requires<ArgumentNullException>(selectExpression != null);
             Contract.Requires<ArgumentNullException>(typeof(T) != typeof(OneSDataRecord));

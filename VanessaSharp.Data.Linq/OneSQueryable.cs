@@ -10,7 +10,7 @@ namespace VanessaSharp.Data.Linq
     /// Базовый класс для реализации <see cref="IQueryable"/>
     /// для доступа к данным 1С.
     /// </summary>
-    internal abstract class OneSQueryable : IQueryable
+    internal abstract class OneSQueryable : IOrderedQueryable
     {
         /// <summary>>Поставщик запросов к 1С.</summary>
         private readonly IOneSQueryProvider _provider;

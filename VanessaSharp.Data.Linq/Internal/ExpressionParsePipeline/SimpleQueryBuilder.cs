@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -33,7 +34,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         private string _sourceName;
 
         /// <summary>Выражение фильтрации записей.</summary>
-        private Expression<Func<OneSDataRecord, bool>> _filterExpression; 
+        private Expression<Func<OneSDataRecord, bool>> _filterExpression;
+
+        /// <summary>Выражение сортировки.</summary>
+        private SortExpression _sortExpression;
 
         /// <summary>Фабрика создания запроса.</summary>
         private Func<string, SimpleQuery> _queryFactory;
@@ -41,7 +45,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Конструктор.</summary>
         public SimpleQueryBuilder()
         {
-            _queryFactory = source => new DataRecordsQuery(source, _filterExpression);
+            _queryFactory = source => new DataRecordsQuery(
+                source, _filterExpression, CreateSortExpressionList());
+        }
+
+        /// <summary>Создание списка выражений сортировки.</summary>
+        private ReadOnlyCollection<SortExpression> CreateSortExpressionList()
+        {
+            var array = (_sortExpression == null)
+                            ? new SortExpression[0]
+                            : new [] {_sortExpression};
+
+            return new ReadOnlyCollection<SortExpression>(array);
         }
 
         /// <summary>Обработка начала парсинга.</summary>
@@ -88,7 +103,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                     selectExpression.ReturnType, _itemType));
             }
 
-            _queryFactory = source => CreateDataTypeQuery(_sourceName, _filterExpression, selectExpression);
+            _queryFactory = source => CreateDataTypeQuery(_sourceName, _filterExpression, CreateSortExpressionList(), selectExpression);
             _currentState = HandlerState.Selected;
         }
 
@@ -107,14 +122,40 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             ThrowException(MethodBase.GetCurrentMethod());
         }
 
+        /// <summary>Обработка старта сортировки.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        public void HandleOrderBy(LambdaExpression sortKeyExpression)
+        {
+            if (_currentState == HandlerState.Enumerable
+                ||
+                _currentState == HandlerState.Selected)
+            {
+                var lambdaType = sortKeyExpression.Type;
+                if (lambdaType.GetGenericTypeDefinition() != typeof (Func<,>) ||
+                    lambdaType.GetGenericArguments()[0] != typeof(OneSDataRecord))
+                {
+                    throw new ArgumentException(string.Format(
+                        "В текущем состоянии выражение сортировки \"{0}\" типа \"{1}\" не допустимо.",
+                        sortKeyExpression, lambdaType));
+                }
+
+                _sortExpression = new SortExpression(sortKeyExpression, SortKind.Ascending);
+
+                return;
+            }
+
+            ThrowException(MethodBase.GetCurrentMethod());
+        }
+
         /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>
         /// <param name="source">Имя источника.</param>
         /// <param name="filterExpression">Выражение фильтрации.</param>
+        /// <param name="sortExpressionList">Список выражений сортировки.</param>
         /// <param name="selectExpression">Выражение выборки.</param>
-        private static SimpleQuery CreateDataTypeQuery(string source, Expression<Func<OneSDataRecord, bool>> filterExpression, LambdaExpression selectExpression)
+        private static SimpleQuery CreateDataTypeQuery(string source, Expression<Func<OneSDataRecord, bool>> filterExpression, ReadOnlyCollection<SortExpression> sortExpressionList, LambdaExpression selectExpression)
         {
             var queryType = typeof(CustomDataTypeQuery<>).MakeGenericType(selectExpression.ReturnType);
-            return (SimpleQuery)Activator.CreateInstance(queryType, source, filterExpression, selectExpression);
+            return (SimpleQuery)Activator.CreateInstance(queryType, source, filterExpression, sortExpressionList, selectExpression);
         }
 
         /// <summary>Получение всех записей.</summary>

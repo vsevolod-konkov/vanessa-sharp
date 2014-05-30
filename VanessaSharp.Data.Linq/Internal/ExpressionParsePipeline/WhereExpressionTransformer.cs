@@ -2,31 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
-using System.Reflection;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
     /// <summary>Преобразователь LINQ-выражение метода Where в SQL-условие WHERE.</summary>
-    internal sealed class WhereExpressionTransformer : ExpressionTransformerBase
+    internal sealed class WhereExpressionTransformer : FieldAccessExpressionTransformerBase<SqlCondition>
     {
-        private static readonly ISet<MethodInfo>
-            _getValueMethods = new HashSet<MethodInfo>
-            {
-                OneSQueryExpressionHelper.DataRecordGetStringMethod,
-                OneSQueryExpressionHelper.DataRecordGetInt32Method,
-                OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
-                OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
-                OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
-                OneSQueryExpressionHelper.DataRecordGetCharMethod,
-            };
-        
-        /// <summary>Контекст разбора запроса.</summary>
-        private readonly QueryParseContext _context;
-
-        /// <summary>Выражение записи данных.</summary>
-        private readonly ParameterExpression _recordExpression;
-
         /// <summary>Стековая машина для генерации условия.</summary>
         private readonly StackEngine _stackEngine = new StackEngine(); 
 
@@ -34,18 +16,25 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи данных.</param>
         private WhereExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression)
-        {
-            Contract.Requires<ArgumentNullException>(recordExpression != null);
-            Contract.Requires<ArgumentNullException>(context != null);
+            : base(context, recordExpression)
+        {}
 
-            _context = context;
-            _recordExpression = recordExpression;
-        }
-
-        /// <summary>Получение результирующего запроса.</summary>
-        private SqlCondition GetCondition()
+        /// <summary>Получение результата трансформации.</summary>
+        protected override SqlCondition GetTransformResult()
         {
             return _stackEngine.GetCondition();
+        }
+
+        /// <summary>Фабрика преобразователя.</summary>
+        private sealed class Factory : TransformerFactoryBase
+        {
+            /// <summary>Создание преобразователя выражения.</summary>
+            /// <param name="context">Контекст разбора запроса.</param>
+            /// <param name="recordExpression">Выражение записи данных</param>
+            public override FieldAccessExpressionTransformerBase<SqlCondition> Create(QueryParseContext context, ParameterExpression recordExpression)
+            {
+                return new WhereExpressionTransformer(context, recordExpression);
+            }
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
@@ -57,41 +46,21 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(filterExpression != null);
+            Contract.Ensures(Contract.Result<SqlCondition>() != null);
 
-            var visitor = new WhereExpressionTransformer(context, filterExpression.Parameters[0]);
-            visitor.Visit(filterExpression.Body);
-
-            return visitor.GetCondition();
+            return Transform<Factory>(context, filterExpression);
         }
 
-        /// <summary>
-        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.MethodCallExpression"/>.
-        /// </summary>
-        /// <returns>
-        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
-        /// </returns>
-        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
-        protected override Expression VisitMethodCall(MethodCallExpression node)
+        /// <summary>Посещение доступа к полю.</summary>
+        /// <param name="fieldExpression">Выражение доступа к полю источника.</param>
+        protected override void VisitFieldAccess(SqlFieldExpression fieldExpression)
         {
-            if (node.Object == _recordExpression)
-            {
-                if (_getValueMethods.Contains(node.Method))
-                {
-                    var fieldName = GetConstant<string>(node.Arguments[0]);
-
-                    _stackEngine.Push(new SqlFieldExpression(fieldName));
-                    return node;
-                }
-
-                throw CreateExpressionNotSupportedException(node);
-            }
-
-            return base.VisitMethodCall(node);
+            _stackEngine.Push(fieldExpression);
         }
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
-            var parameterName = _context.Parameters.GetOrAddNewParameterName(node.Value);
+            var parameterName = Context.Parameters.GetOrAddNewParameterName(node.Value);
             var parameter = new SqlParameterExpression(parameterName);
             _stackEngine.Push(parameter);
             

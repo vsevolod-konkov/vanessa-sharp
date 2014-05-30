@@ -34,7 +34,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                         CheckAndHandleGettingRecordsMethod,
                         CheckAndHandleEnumerableGetEnumeratorMethod,
                         CheckAndHandleQueryableSelectMethod,
-                        CheckAndHandleQueryableWhereMethod
+                        CheckAndHandleQueryableWhereMethod,
+                        CheckAndHandleQueryableOrderByMethod
                     });
         }
 
@@ -97,6 +98,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             return true;
         }
 
+        // TODO: Копипаста
         /// <summary>
         /// Проверка, того что узел соответствует вызову метода 
         /// <see cref="Queryable.Select{TSource,TResult}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TResult}})"/>
@@ -148,6 +150,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             throw CreateExpressionNotSupportedException(selectExpression);
         }
 
+        // TODO: Копипаста
         /// <summary>
         /// Проверка, того что узел соответствует вызову метода 
         /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/>
@@ -193,6 +196,48 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             }
 
             throw CreateExpressionNotSupportedException(filterExpression);
+        }
+
+        // TODO: Копипаста
+        /// <summary>
+        /// Проверка, того что узел соответствует вызову метода 
+        /// <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>
+        /// и обработка его в случае если это так.
+        /// </summary>
+        /// <param name="node">Проверяемый узел.</param>
+        /// <param name="childNode">
+        /// Дочерний узел, который надо обработать.
+        /// Если метод не соответствует, то возвращается <c>null</c>.
+        /// </param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если узел соответствует вызову методу
+        /// <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>,
+        /// в ином случае возвращается <c>false</c>.
+        /// </returns>  
+        private bool CheckAndHandleQueryableOrderByMethod(MethodCallExpression node, out Expression childNode)
+        {
+            const int QUERYABLE_ARGUMENT_INDEX = 0;
+            const int ORDER_BY_EXPRESSION_ARGUMENT_INDEX = 1;
+
+            childNode = null;
+            if (!OneSQueryExpressionHelper.IsQueryableOrderByMethod(node.Method))
+                return false;
+
+            var quotedSortKeyExpression = node.Arguments[ORDER_BY_EXPRESSION_ARGUMENT_INDEX];
+            LambdaExpression sortKeyExpression;
+            try
+            {
+                sortKeyExpression = UnQuote(quotedSortKeyExpression);
+            }
+            catch (ArgumentException)
+            {
+                throw CreateExpressionNotSupportedException(quotedSortKeyExpression);
+            }
+
+            _handler.HandleOrderBy(sortKeyExpression);
+            childNode = node.Arguments[QUERYABLE_ARGUMENT_INDEX];
+
+            return true;
         }
 
         /// <summary>Разкавычивание лямбда-выражения.</summary>
@@ -248,130 +293,5 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         }
 
         #endregion
-
-        //protected override Expression VisitBinary(BinaryExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitBlock(BlockExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitConditional(ConditionalExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitConstant(ConstantExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitDebugInfo(DebugInfoExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitDefault(DefaultExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitDynamic(DynamicExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitExtension(Expression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitGoto(GotoExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitIndex(IndexExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitInvocation(InvocationExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitLabel(LabelExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitLambda<T>(Expression<T> node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitListInit(ListInitExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitLoop(LoopExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitMember(MemberExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitMemberInit(MemberInitExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitNew(NewExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitNewArray(NewArrayExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitParameter(ParameterExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitRuntimeVariables(RuntimeVariablesExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitSwitch(SwitchExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitTry(TryExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitTypeBinary(TypeBinaryExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
-
-        //protected override Expression VisitUnary(UnaryExpression node)
-        //{
-        //    throw CreateExpressionNotSupportedException(node);
-        //}
     }
 }

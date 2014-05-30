@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 namespace VanessaSharp.Data.Linq.UnitTests.Utility
 {
     /// <summary>Вспомогательный класс для генерации linq-выражений.</summary>
-    internal sealed class TestHelperQuery<T> : IQueryable<T>
+    internal sealed class TestHelperQuery<T> : IOrderedQueryable<T>
     {
         private readonly Expression _expression;
         private readonly IQueryProvider _provider;

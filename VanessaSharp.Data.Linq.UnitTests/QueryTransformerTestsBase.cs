@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
@@ -13,9 +15,11 @@ namespace VanessaSharp.Data.Linq.UnitTests
     {
         internal static CustomDataTypeQuery<T> CreateQuery<T>(string source,
                                                               Expression<Func<OneSDataRecord, T>> selectExpression,
-                                                              Expression<Func<OneSDataRecord, bool>> whereExpression = null)
+                                                              Expression<Func<OneSDataRecord, bool>> whereExpression = null,
+                                                              IList<SortExpression> orderbyExpressions = null)
         {
-            return new CustomDataTypeQuery<T>(source, whereExpression, selectExpression);
+            return new CustomDataTypeQuery<T>(source, whereExpression, 
+                new ReadOnlyCollection<SortExpression>(orderbyExpressions ?? new SortExpression[0]), selectExpression);
         }
 
         internal static NoSideEffectItemReaderFactory<T> AssertAndCastNoSideEffectItemReaderFactory<T>(

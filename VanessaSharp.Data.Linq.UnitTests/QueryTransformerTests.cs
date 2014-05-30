@@ -47,7 +47,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
-            var query = new DataRecordsQuery(SOURCE_NAME, null);
+            var query = new DataRecordsQuery(SOURCE_NAME, null, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -107,7 +107,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             const string FILTER_VALUE = "filter_value";
 
             // Arrange
-            var query = new DataRecordsQuery(SOURCE, r => r.GetString("any_field") == "Any");
+            var query = new DataRecordsQuery(SOURCE, r => r.GetString("any_field") == "Any", new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
             var filter = query.Filter;
 
             _transformMethodsMock
@@ -197,6 +197,37 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 "SELECT " + FIRST_FIELD_NAME + ", " + SECOND_FIELD_NAME + " FROM " + SOURCE + " WHERE " + FIRST_FIELD_NAME + " = &" + parameter.Name, command.Sql);
 
             AssertCollectionReadExpressionParseProduct(selectionPart.SelectionFunc, result);
+        }
+
+        /// <summary>Тестирование преобразования запроса простой выборки и сортировки записей по одному полю.</summary>
+        [Test]
+        public void TestTransformOrderByOneSDataRecord()
+        {
+            const string SOURCE = "[source]";
+            const string SORT_FIELD = "[sort_field]";
+
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32(SORT_FIELD);
+            var sortExpression = new SortExpression(sortKeyExpression, SortKind.Ascending);
+
+            var query = new DataRecordsQuery(SOURCE, null, new ReadOnlyCollection<SortExpression>(new[]{sortExpression}));
+
+            _transformMethodsMock
+                .Setup(m => m.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression))
+                .Returns(new SqlFieldExpression(SORT_FIELD));
+
+            // Act
+            var result = _testedInstance.Transform(query);
+
+            // Assert
+            var command = result.Command;
+
+            Assert.AreEqual(0, command.Parameters.Count);
+            Assert.AreEqual(
+                "SELECT * FROM " + SOURCE + " ORDER BY " + SORT_FIELD, command.Sql);
+
+            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            Assert.AreSame(OneSDataRecordReaderFactory.Default, parseProduct.ItemReaderFactory);
         }
     }
 }

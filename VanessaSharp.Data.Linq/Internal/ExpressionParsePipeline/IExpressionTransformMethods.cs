@@ -20,10 +20,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="filterExpression">Фильтрация выражения.</param>
+        /// <param name="filterExpression">Выражение фильтрации.</param>
         SqlCondition TransformWhereExpression(
             QueryParseContext context,
             Expression<Func<OneSDataRecord, bool>> filterExpression);
+
+        /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
+        /// <param name="context">Контекст разбора запроса.</param>
+        /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
+        SqlFieldExpression TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression);
     }
 
     /// <summary>
@@ -48,13 +53,25 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="filterExpression">Фильтрация выражения.</param>
+        /// <param name="filterExpression">Выражение фильтрации.</param>
         SqlCondition 
             IExpressionTransformMethods.TransformWhereExpression(QueryParseContext context, Expression<Func<OneSDataRecord, bool>> filterExpression)
         {
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(filterExpression != null);
             Contract.Ensures(Contract.Result<SqlCondition>() != null);
+
+            return null;
+        }
+
+        /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
+        /// <param name="context">Контекст разбора запроса.</param>
+        /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
+        SqlFieldExpression IExpressionTransformMethods.TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression)
+        {
+            Contract.Requires<ArgumentNullException>(context != null);
+            Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
+            Contract.Ensures(Contract.Result<SqlFieldExpression>() != null);
 
             return null;
         }

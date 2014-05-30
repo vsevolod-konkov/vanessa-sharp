@@ -38,5 +38,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             return WhereExpressionTransformer.Transform(context, filterExpression);
         }
+
+        /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
+        /// <param name="context">Контекст разбора запроса.</param>
+        /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
+        public SqlFieldExpression TransformOrderByExpression(
+            QueryParseContext context, LambdaExpression sortKeyExpression)
+        {
+            return OrderByExpressionTransformer.Transform(context, sortKeyExpression);
+        }
     }
 }

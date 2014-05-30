@@ -80,8 +80,15 @@
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformerBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformMethods.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionVisitorBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\FieldAccessExpressionTransformerBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\FieldAccessExpressionTransformerBaseOfTResult.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\IExpressionTransformMethods.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\OrderByExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SortExpression.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SortKind.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlOrderByStatement.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSortFieldExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\WhereExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ParseParameterCollection.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryParseContext.cs" />

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
@@ -68,9 +70,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             SimpleQuery query, SelectPartInfo<T> selectPart)
         {
             var whereStatement = ParseFilterExpression(query.Filter);
-            
+            var orderByStatement = ParseSortExpressions(query.Sorters);
+
             var queryStatement = new SqlQueryStatement(
-                selectPart.Statement, new SqlFromStatement(query.Source), whereStatement);
+                selectPart.Statement, new SqlFromStatement(query.Source), whereStatement, orderByStatement);
 
             return GetExpressionParseProduct(
                 queryStatement, selectPart.ItemReaderFactory);
@@ -106,7 +109,31 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             return new SqlWhereStatement(
                 _expressionTransformMethods.TransformWhereExpression(_context, filterExpression));
         }
-        
+
+        private SqlOrderByStatement ParseSortExpressions(ReadOnlyCollection<SortExpression> sortExpressions)
+        {
+            Contract.Requires<ArgumentNullException>(sortExpressions != null);
+
+            if (sortExpressions.Count == 0)
+                return null;
+
+            return new SqlOrderByStatement(
+                new ReadOnlyCollection<SqlSortFieldExpression>(
+                    sortExpressions
+                        .Select(ParseSortExpression)
+                        .ToArray()
+                    ));
+        }
+
+        private SqlSortFieldExpression ParseSortExpression(SortExpression sortExpression)
+        {
+            Contract.Requires<ArgumentNullException>(sortExpression != null);
+
+            return new SqlSortFieldExpression(
+                _expressionTransformMethods.TransformOrderByExpression(_context, sortExpression.KeyExpression),
+                sortExpression.Kind);
+        }
+
         #region Вспомогательные типы
 
         /// <summary>Струтура с информацией о выборке данных.</summary>

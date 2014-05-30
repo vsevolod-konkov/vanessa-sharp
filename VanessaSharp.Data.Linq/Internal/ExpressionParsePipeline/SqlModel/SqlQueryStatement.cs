@@ -13,14 +13,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <param name="selectStatement">Инструкция выборки данных.</param>
         /// <param name="fromStatement">Инструкция описания источника данных.</param>
         /// <param name="whereStatement">Инструкция фильтрации данных.</param>
+        /// <param name="orderByStatement">Инструкция сортировки данных.</param>
         public SqlQueryStatement(
-            SqlSelectStatement selectStatement, SqlFromStatement fromStatement, SqlWhereStatement whereStatement)
+            SqlSelectStatement selectStatement, SqlFromStatement fromStatement, SqlWhereStatement whereStatement, SqlOrderByStatement orderByStatement)
         {
             Contract.Requires<ArgumentNullException>(selectStatement != null);
 
             _selectStatement = selectStatement;
             _fromStatement = fromStatement;
             _whereStatement = whereStatement;
+            _orderByStatement = orderByStatement;
         }
 
         [ContractInvariantMethod]
@@ -49,6 +51,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             get { return _whereStatement; }
         }
         private readonly SqlWhereStatement _whereStatement;
+        
+        /// <summary>Инструкция сортировки данных.</summary>
+        public SqlOrderByStatement OrderByStatement
+        {
+            get { return _orderByStatement; }
+        }
+        private readonly SqlOrderByStatement _orderByStatement;
 
         /// <summary>Генерация SQL-запроса.</summary>
         public string BuildSql()
@@ -67,6 +76,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             {
                 sqlBuilder.Append(" ");
                 WhereStatement.BuildSql(sqlBuilder);
+            }
+
+            if (OrderByStatement != null)
+            {
+                sqlBuilder.Append(" ");
+                OrderByStatement.BuildSql(sqlBuilder);
             }
 
             return sqlBuilder.ToString();

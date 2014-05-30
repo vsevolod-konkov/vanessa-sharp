@@ -23,6 +23,7 @@ namespace VanessaSharp.Data.Linq.Internal
                 .Transform();
         }
 
+        // TODO: Ввести еще один вспомогательный объект - преобразователь IQueryable в SimpleQuery
         /// <summary>
         /// Создание объекта запроса из выражения генерируемого <see cref="Queryable"/>.
         /// </summary>

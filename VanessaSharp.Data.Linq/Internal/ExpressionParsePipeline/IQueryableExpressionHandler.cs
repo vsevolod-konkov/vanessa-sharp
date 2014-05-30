@@ -29,6 +29,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="filterExpression">Выражение фильтрации.</param>
         void HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression);
 
+        /// <summary>Обработка старта сортировки.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        void HandleOrderBy(LambdaExpression sortKeyExpression);
+
         /// <summary>Получение всех записей.</summary>
         /// <param name="sourceName">Имя источника.</param>
         void HandleGettingRecords(string sourceName);
@@ -57,9 +61,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 && selectExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
         }
 
-        public void HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
+        void IQueryableExpressionHandler.HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
         {
             Contract.Requires<ArgumentNullException>(filterExpression != null);
+        }
+
+        void IQueryableExpressionHandler.HandleOrderBy(LambdaExpression sortKeyExpression)
+        {
+            Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
         }
 
         void IQueryableExpressionHandler.HandleGettingRecords(string sourceName)

@@ -19,11 +19,11 @@ namespace VanessaSharp.Data.Linq.UnitTests
                         {
                             new SqlFieldExpression("field1"),
                             new SqlFieldExpression("field2"),
-                            new SqlFieldExpression("field3"),
+                            new SqlFieldExpression("field3")
                         })
                      ),
                 new SqlFromStatement("source"),
-                null);
+                null, null);
             
             // Act
             var result = testedInstance.BuildSql();

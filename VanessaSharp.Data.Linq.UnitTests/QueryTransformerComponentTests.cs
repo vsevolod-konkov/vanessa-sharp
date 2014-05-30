@@ -1,4 +1,7 @@
-﻿using Moq;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq.Expressions;
+using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
@@ -75,7 +78,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             const string FILTER_VALUE = "filter_value";
 
             // Arrange
-            var query = new DataRecordsQuery("[source]", r => r.GetString("filter_field") == FILTER_VALUE);
+            var query = new DataRecordsQuery("[source]", r => r.GetString("filter_field") == FILTER_VALUE, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
 
             // Act
             var result = new QueryTransformer().Transform(query);
@@ -89,6 +92,30 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
             Assert.AreEqual(
                 "SELECT * FROM [source] WHERE filter_field = &" + parameter.Name, command.Sql);
+
+            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
+        }
+
+        /// <summary>Тестирование преобразования запроса простой выборки и сортировки записей.</summary>
+        [Test]
+        public void TestTransformOrderByOneSDataRecord()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("sort_field");
+            var query = new DataRecordsQuery("[source]", null, 
+                new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sortKeyExpression, SortKind.Ascending) }));
+
+            // Act
+            var result = new QueryTransformer().Transform(query);
+
+            // Assert
+            var command = result.Command;
+
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                "SELECT * FROM [source] ORDER BY sort_field", command.Sql);
 
             var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
