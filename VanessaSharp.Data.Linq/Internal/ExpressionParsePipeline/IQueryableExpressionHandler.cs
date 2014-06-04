@@ -37,6 +37,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         void HandleOrderByDescending(LambdaExpression sortKeyExpression);
 
+        /// <summary>Обработка продолжения сортировки, по вторичным ключам.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        void HandleThenBy(LambdaExpression sortKeyExpression);
+
+        /// <summary>Обработка продолжения сортировки по убыванию, по вторичным ключам.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        void HandleThenByDescending(LambdaExpression sortKeyExpression);
+
         /// <summary>Получение всех записей.</summary>
         /// <param name="sourceName">Имя источника.</param>
         void HandleGettingRecords(string sourceName);
@@ -86,6 +94,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 sortKeyExpression.Type.IsGenericType
                 && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
                 && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+        }
+
+        void IQueryableExpressionHandler.HandleThenBy(LambdaExpression sortKeyExpression)
+        {
+            Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
+            Contract.Requires<ArgumentException>(
+               sortKeyExpression.Type.IsGenericType
+               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
+               && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+        }
+
+        void IQueryableExpressionHandler.HandleThenByDescending(LambdaExpression sortKeyExpression)
+        {
+            Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
+            Contract.Requires<ArgumentException>(
+               sortKeyExpression.Type.IsGenericType
+               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
+               && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
         }
 
         void IQueryableExpressionHandler.HandleGettingRecords(string sourceName)

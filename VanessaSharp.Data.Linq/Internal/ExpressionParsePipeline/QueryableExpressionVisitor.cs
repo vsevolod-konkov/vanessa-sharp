@@ -25,7 +25,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                             new CallQueryableSelectHandler(),
                             new CallQueryableWhereHandler(), 
                             new CallQueryableOrderByHandler(),
-                            new CallQueryableOrderByDescendingHandler()
+                            new CallQueryableOrderByDescendingHandler(),
+                            new CallQueryableThenByHandler(),
+                            new CallQueryableThenByDescendingHandler()
                         }
                 );
 
@@ -293,6 +295,40 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             protected override void Handle(IQueryableExpressionHandler handler, LambdaExpression lambdaExpression)
             {
                 handler.HandleOrderByDescending(lambdaExpression);
+            }
+        }
+
+        /// <summary>
+        /// Обработчик вызова метода
+        /// <see cref="Queryable.ThenBy{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// </summary>
+        private sealed class CallQueryableThenByHandler : CallQueryableMethodWithAnyResultTypeHandler
+        {
+            protected override bool IsThisMethod(MethodInfo method)
+            {
+                return OneSQueryExpressionHelper.IsQueryableThenByMethod(method);
+            }
+
+            protected override void Handle(IQueryableExpressionHandler handler, LambdaExpression lambdaExpression)
+            {
+                handler.HandleThenBy(lambdaExpression);
+            }
+        }
+
+        /// <summary>
+        /// Обработчик вызова метода
+        /// <see cref="Queryable.ThenByDescending{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// </summary>
+        private sealed class CallQueryableThenByDescendingHandler : CallQueryableMethodWithAnyResultTypeHandler
+        {
+            protected override bool IsThisMethod(MethodInfo method)
+            {
+                return OneSQueryExpressionHelper.IsQueryableThenByDescendingMethod(method);
+            }
+
+            protected override void Handle(IQueryableExpressionHandler handler, LambdaExpression lambdaExpression)
+            {
+                handler.HandleThenByDescending(lambdaExpression);
             }
         }
 

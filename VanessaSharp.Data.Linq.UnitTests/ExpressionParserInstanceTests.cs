@@ -129,5 +129,34 @@ namespace VanessaSharp.Data.Linq.UnitTests
             var recordProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(product);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(recordProduct.ItemReaderFactory);
         }
+
+        /// <summary>
+        /// Тестирование парсинга выражения получения записей из источника.
+        /// </summary>
+        [Test]
+        public void TestParseGetRecordsSortExpression()
+        {
+            // Arrange
+            const string SOURCE_NAME = "[source]";
+            const string SORT_FIELD_1_NAME = "[sort_field_1]";
+            const string SORT_FIELD_2_NAME = "[sort_field_2]";
+            const string SORT_FIELD_3_NAME = "[sort_field_3]";
+
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(
+                    SOURCE_NAME,
+                    q => q.OrderBy(r => r.GetInt32(SORT_FIELD_1_NAME)).OrderByDescending(r => r.GetInt32(SORT_FIELD_2_NAME)).ThenBy(r => r.GetString(SORT_FIELD_3_NAME)));
+
+            // Act
+            var product = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = product.Command;
+
+            Assert.AreEqual("SELECT * FROM " + SOURCE_NAME + " ORDER BY " + SORT_FIELD_2_NAME + " DESC, " + SORT_FIELD_3_NAME, command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            var recordProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(product);
+            Assert.IsInstanceOf<OneSDataRecordReaderFactory>(recordProduct.ItemReaderFactory);
+        }
     }
 }

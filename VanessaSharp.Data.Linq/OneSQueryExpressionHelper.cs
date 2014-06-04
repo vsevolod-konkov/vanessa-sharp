@@ -217,6 +217,44 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Определяется, является ли метод методом 
+        /// <see cref="Queryable.ThenBy{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/> 
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если метод является методом
+        /// <see cref="Queryable.ThenBy{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        public static bool IsQueryableThenByMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            const string QUERYABLE_THEN_BY_METHOD_NAME = "ThenBy";
+
+            return IsQueryableSortMethod(method, QUERYABLE_THEN_BY_METHOD_NAME);
+        }
+
+        /// <summary>
+        /// Определяется, является ли метод методом 
+        /// <see cref="Queryable.ThenByDescending{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/> 
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если метод является методом
+        /// <see cref="Queryable.ThenByDescending{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        public static bool IsQueryableThenByDescendingMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            const string QUERYABLE_THEN_BY_DESCENDING_METHOD_NAME = "ThenByDescending";
+
+            return IsQueryableSortMethod(method, QUERYABLE_THEN_BY_DESCENDING_METHOD_NAME);
+        }
+
+        /// <summary>
         /// Проверка того, что тип является <see cref="Expression{TDelegate}"/>.
         /// И что делегат является обобщенным типом <paramref name="openDelegateType"/>.
         /// </summary>

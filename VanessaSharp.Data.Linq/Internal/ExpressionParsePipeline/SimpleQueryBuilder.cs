@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
@@ -13,12 +14,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
     /// </remarks>
     internal sealed class SimpleQueryBuilder : IQueryableExpressionHandler
     {
+        // TODO Рефакторинг состояний
         /// <summary>Состояния построителя-обработчика.</summary>
         private enum HandlerState
         {
             Starting,
             Started,
             Enumerable,
+            Sorting,
+            Sorted,
             Selected,
             Records,
             Ended,
@@ -37,7 +41,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         private Expression<Func<OneSDataRecord, bool>> _filterExpression;
 
         /// <summary>Выражение сортировки.</summary>
-        private SortExpression _sortExpression;
+        private readonly Stack<SortExpression> _sortExpressionStack = new Stack<SortExpression>();
 
         /// <summary>Фабрика создания запроса.</summary>
         private Func<string, SimpleQuery> _queryFactory;
@@ -52,11 +56,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Создание списка выражений сортировки.</summary>
         private ReadOnlyCollection<SortExpression> CreateSortExpressionList()
         {
-            var array = (_sortExpression == null)
-                            ? new SortExpression[0]
-                            : new [] {_sortExpression};
-
-            return new ReadOnlyCollection<SortExpression>(array);
+            return new ReadOnlyCollection<SortExpression>(
+                _sortExpressionStack.ToArray());
         }
 
         /// <summary>Обработка начала парсинга.</summary>
@@ -113,7 +114,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             if (_currentState == HandlerState.Enumerable
                 ||
-                _currentState == HandlerState.Selected)
+                _currentState == HandlerState.Selected
+                ||
+                _currentState == HandlerState.Sorted)
             {
                 _filterExpression = filterExpression;
                 return;
@@ -126,40 +129,75 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleOrderBy(LambdaExpression sortKeyExpression)
         {
-            HandleOrderBy(sortKeyExpression, SortKind.Ascending);
+            if (!HandleOrderBy(sortKeyExpression, SortKind.Ascending))
+                ThrowException(MethodBase.GetCurrentMethod());
         }
 
         /// <summary>Обработка старта сортировки, начиная с сортировки по убыванию..</summary>
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleOrderByDescending(LambdaExpression sortKeyExpression)
         {
-            HandleOrderBy(sortKeyExpression, SortKind.Descending);
+            if (!HandleOrderBy(sortKeyExpression, SortKind.Descending))
+                ThrowException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>Обработка продолжения сортировки, по вторичным ключам.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        public void HandleThenBy(LambdaExpression sortKeyExpression)
+        {
+            if (HandleThenBy(sortKeyExpression, SortKind.Ascending))
+                ThrowException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>Обработка продолжения сортировки по убыванию, по вторичным ключам.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        public void HandleThenByDescending(LambdaExpression sortKeyExpression)
+        {
+            if (HandleThenBy(sortKeyExpression, SortKind.Descending))
+                ThrowException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>Обработка действия сортировки.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        /// <param name="sortKind">Порядок сортировки.</param>
+        /// <param name="newState">Новое состояние построителя после вызова метода</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если сортировка была допустима, в ином случае возвращается <c>false</c>.
+        /// </returns>
+        private bool HandleSort(LambdaExpression sortKeyExpression, SortKind sortKind, HandlerState newState)
+        {
+            if (_currentState == HandlerState.Sorted)
+                return true; // Сортировка игнорируется
+
+            if (_currentState == HandlerState.Enumerable
+                ||
+                _currentState == HandlerState.Selected
+                ||
+                _currentState == HandlerState.Sorting)
+            {
+                _sortExpressionStack.Push(new SortExpression(sortKeyExpression, sortKind));
+                _currentState = newState;
+
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>Обработка старта сортировки.</summary>
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         /// <param name="sortKind">Порядок сортировки.</param>
-        private void HandleOrderBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+        private bool HandleOrderBy(LambdaExpression sortKeyExpression, SortKind sortKind)
         {
-            if (_currentState == HandlerState.Enumerable
-                ||
-                _currentState == HandlerState.Selected)
-            {
-                var lambdaType = sortKeyExpression.Type;
-                if (lambdaType.GetGenericTypeDefinition() != typeof(Func<,>) ||
-                    lambdaType.GetGenericArguments()[0] != typeof(OneSDataRecord))
-                {
-                    throw new ArgumentException(string.Format(
-                        "В текущем состоянии выражение сортировки \"{0}\" типа \"{1}\" не допустимо.",
-                        sortKeyExpression, lambdaType));
-                }
+            return HandleSort(sortKeyExpression, sortKind, HandlerState.Sorted);
+        }
 
-                _sortExpression = new SortExpression(sortKeyExpression, sortKind);
-
-                return;
-            }
-
-            ThrowException(MethodBase.GetCurrentMethod());
+        /// <summary>Обработка продолжения сортировки.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        /// <param name="sortKind">Порядок сортировки.</param>
+        private bool HandleThenBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+        {
+            return HandleSort(sortKeyExpression, sortKind, HandlerState.Sorting);
         }
 
         /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>
@@ -177,7 +215,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sourceName">Имя источника.</param>
         public void HandleGettingRecords(string sourceName)
         {
-            if (_currentState != HandlerState.Enumerable && _currentState != HandlerState.Selected)
+            if (_currentState != HandlerState.Enumerable && _currentState != HandlerState.Selected && _currentState != HandlerState.Sorted)
                 ThrowException(MethodBase.GetCurrentMethod());
 
             _sourceName = sourceName;

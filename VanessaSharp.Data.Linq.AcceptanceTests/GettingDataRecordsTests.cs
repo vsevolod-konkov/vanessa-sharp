@@ -385,7 +385,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             using (var dataContext = new OneSDataContext(Connection))
             {
                 var entries = from r in dataContext.GetRecords("Справочник.ТестовыйСправочник")
-                              orderby r.GetInt32("ЦелочисленноеПоле")
+                              orderby r.GetInt32("ЦелочисленноеПоле"), r.GetString("ДатаПоле") descending, r.GetString("СтроковоеПоле")
                               select new
                               {
                                   String = r.GetString("СтроковоеПоле"),
@@ -423,7 +423,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 Assert.AreEqual(ExpectedRowsCount, recordCounter);
 
                 AssertSql(
-                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник ORDER BY ЦелочисленноеПоле");
+                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник ORDER BY ЦелочисленноеПоле, ДатаПоле DESC, СтроковоеПоле");
                 AssertSqlParameters(new Dictionary<string, object>());
             }
         }
