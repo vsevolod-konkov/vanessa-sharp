@@ -81,6 +81,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.IsInstanceOf<DataRecordsQuery>(result);
         }
 
+        // TODO: CopyPaste
         /// <summary>
         /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
         /// в случае когда передается выражение получения записей из источника с сортировкой.
@@ -104,6 +105,34 @@ namespace VanessaSharp.Data.Linq.UnitTests
             var sortExpression = result.Sorters[0];
             Assert.AreEqual(orderbyExpression, sortExpression.KeyExpression);
             Assert.AreEqual(SortKind.Ascending, sortExpression.Kind);
+
+            Assert.IsInstanceOf<DataRecordsQuery>(result);
+        }
+
+        // TODO: CopyPaste
+        /// <summary>
+        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// в случае когда передается выражение получения записей из источника с сортировкой по убыванию.
+        /// </summary>
+        [Test]
+        public void TestGetQueryFromOrderByDescendingRecordsExpression()
+        {
+            // Arrange
+            const string SOURCE_NAME = "[source]";
+            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field");
+            var testedExpression = TestHelperQueryProvider
+                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderByDescending(orderbyExpression));
+
+            // Act
+            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+
+            // Assert
+            Assert.AreEqual(SOURCE_NAME, result.Source);
+            Assert.AreEqual(1, result.Sorters.Count);
+
+            var sortExpression = result.Sorters[0];
+            Assert.AreEqual(orderbyExpression, sortExpression.KeyExpression);
+            Assert.AreEqual(SortKind.Descending, sortExpression.Kind);
 
             Assert.IsInstanceOf<DataRecordsQuery>(result);
         }

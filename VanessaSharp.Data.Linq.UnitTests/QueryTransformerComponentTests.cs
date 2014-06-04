@@ -120,5 +120,30 @@ namespace VanessaSharp.Data.Linq.UnitTests
             var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
         }
+
+        // TODO: Copy Paste TestTransformOrderByOneSDataRecord
+        /// <summary>Тестирование преобразования запроса простой выборки и сортировки записей.</summary>
+        [Test]
+        public void TestTransformOrderByDescendingOneSDataRecord()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("sort_field");
+            var query = new DataRecordsQuery("[source]", null,
+                new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sortKeyExpression, SortKind.Descending) }));
+
+            // Act
+            var result = new QueryTransformer().Transform(query);
+
+            // Assert
+            var command = result.Command;
+
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                "SELECT * FROM [source] ORDER BY sort_field DESC", command.Sql);
+
+            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
+        }
     }
 }

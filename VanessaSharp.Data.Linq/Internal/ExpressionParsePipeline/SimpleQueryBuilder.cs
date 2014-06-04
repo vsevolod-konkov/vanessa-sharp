@@ -126,12 +126,27 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleOrderBy(LambdaExpression sortKeyExpression)
         {
+            HandleOrderBy(sortKeyExpression, SortKind.Ascending);
+        }
+
+        /// <summary>Обработка старта сортировки, начиная с сортировки по убыванию..</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        public void HandleOrderByDescending(LambdaExpression sortKeyExpression)
+        {
+            HandleOrderBy(sortKeyExpression, SortKind.Descending);
+        }
+
+        /// <summary>Обработка старта сортировки.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        /// <param name="sortKind">Порядок сортировки.</param>
+        private void HandleOrderBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+        {
             if (_currentState == HandlerState.Enumerable
                 ||
                 _currentState == HandlerState.Selected)
             {
                 var lambdaType = sortKeyExpression.Type;
-                if (lambdaType.GetGenericTypeDefinition() != typeof (Func<,>) ||
+                if (lambdaType.GetGenericTypeDefinition() != typeof(Func<,>) ||
                     lambdaType.GetGenericArguments()[0] != typeof(OneSDataRecord))
                 {
                     throw new ArgumentException(string.Format(
@@ -139,7 +154,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                         sortKeyExpression, lambdaType));
                 }
 
-                _sortExpression = new SortExpression(sortKeyExpression, SortKind.Ascending);
+                _sortExpression = new SortExpression(sortKeyExpression, sortKind);
 
                 return;
             }

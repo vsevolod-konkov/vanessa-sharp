@@ -99,46 +99,54 @@ namespace VanessaSharp.Data.Linq
             return false;
         }
 
-        // TODO: Убрать копипасту
+        /// <summary>
+        /// Определяет, является ли метод <paramref name="method"/>
+        /// методом query-методом <see cref="Queryable"/> с именем <paramref name="testedMethodName"/>.
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <param name="testedMethodName">Ожидаемое имя метода.</param>
+        private static bool IsQueryableMethod(MethodInfo method, string testedMethodName)
+        {
+            return method.DeclaringType == typeof(Queryable)
+                && method.Name == testedMethodName;
+        }
+
+        /// <summary>
+        /// Является ли метод методом <see cref="Queryable"/> выражением 
+        /// и является ли второй параметр метода <see cref="Queryable"/>.
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <param name="testedMethodName">Ожидаемое имя метода.</param>
+        private static bool IsQueryableMethodAndSecondParameterIsExpression(MethodInfo method, string testedMethodName)
+        {
+            if (!IsQueryableMethod(method, testedMethodName))
+                return false;
+
+            const int EXPRESSION_PARAMETER_INDEX = 1;
+
+            var expressionType = method.GetParameters()[EXPRESSION_PARAMETER_INDEX].ParameterType;
+            return IsExpressionType(expressionType, typeof(Func<,>));
+        }
+
         /// <summary>
         /// Определяется, является ли метод методом 
         /// <see cref="Queryable.Select{TSource,TResult}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TResult}})"/> 
         /// </summary>
         /// <param name="method">Проверяемый метод.</param>
-        /// <param name="itemType">Тип элементов.</param>
         /// <returns>
         /// Возвращает <c>true</c>, если метод является методом
         /// <see cref="Queryable.Select{TSource,TResult}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TResult}})"/>.
         /// В ином случае возвращается <c>false</c>.
         /// </returns>
-        public static bool IsQueryableSelectMethod(MethodInfo method, out Type itemType)
+        public static bool IsQueryableSelectMethod(MethodInfo method)
         {
             Contract.Requires<ArgumentNullException>(method != null);
 
             const string QUERYABLE_SELECT_METHOD_NAME = "Select";
-            const int SELECT_EXPRESSION_PARAMETER_INDEX = 1;
-            const int FUNC_OUTPUT_TYPE_PARAMETER_INDEX = 1;
 
-            var declaringType = method.DeclaringType;
-            if (declaringType == typeof(Queryable))
-            {
-                if (method.Name == QUERYABLE_SELECT_METHOD_NAME)
-                {
-                    var selectExpressionType = method.GetParameters()[SELECT_EXPRESSION_PARAMETER_INDEX].ParameterType;
-                    Type funcType;
-                    if (IsExpressionType(selectExpressionType, typeof(Func<,>), out funcType))
-                    {
-                        itemType = funcType.GetGenericArguments()[FUNC_OUTPUT_TYPE_PARAMETER_INDEX];
-                        return true;
-                    }
-                }
-            }
-
-            itemType = default(Type);
-            return false;
+            return IsQueryableMethodAndSecondParameterIsExpression(method, QUERYABLE_SELECT_METHOD_NAME);
         }
 
-        // TODO: Убрать копипасту
         /// <summary>
         /// Определяется, является ли метод методом 
         /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/> 
@@ -154,24 +162,22 @@ namespace VanessaSharp.Data.Linq
             Contract.Requires<ArgumentNullException>(method != null);
 
             const string QUERYABLE_WHERE_METHOD_NAME = "Where";
-            const int FILTER_EXPRESSION_PARAMETER_INDEX = 1;
 
-            var declaringType = method.DeclaringType;
-            if (declaringType == typeof(Queryable))
-            {
-                if (method.Name == QUERYABLE_WHERE_METHOD_NAME)
-                {
-                    var whereExpressionType = method.GetParameters()[FILTER_EXPRESSION_PARAMETER_INDEX].ParameterType;
-                    Type funcType;
-                    if (IsExpressionType(whereExpressionType, typeof(Func<,>), out funcType))
-                        return true;
-                }
-            }
-
-            return false;
+            return IsQueryableMethodAndSecondParameterIsExpression(method, QUERYABLE_WHERE_METHOD_NAME);
         }
 
-        // TODO: Убрать копипасту
+        /// <summary>
+        /// Определяет, является ли метод <paramref name="method"/>
+        /// методом сортировки с именем <paramref name="testedMethodName"/>.
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <param name="testedMethodName">Ожидаемое имя метода сортировки.</param>
+        private static bool IsQueryableSortMethod(MethodInfo method, string testedMethodName)
+        {
+            return IsQueryableMethod(method, testedMethodName)
+                && method.GetParameters().Length == 2;
+        }
+
         /// <summary>
         /// Определяется, является ли метод методом 
         /// <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/> 
@@ -188,14 +194,26 @@ namespace VanessaSharp.Data.Linq
 
             const string QUERYABLE_ORDER_BY_METHOD_NAME = "OrderBy";
 
-            var declaringType = method.DeclaringType;
-            if (declaringType == typeof(Queryable))
-            {
-                if (method.Name == QUERYABLE_ORDER_BY_METHOD_NAME && method.GetParameters().Length == 2)
-                    return true;
-            }
+            return IsQueryableSortMethod(method, QUERYABLE_ORDER_BY_METHOD_NAME);
+        }
 
-            return false;
+        /// <summary>
+        /// Определяется, является ли метод методом 
+        /// <see cref="Queryable.OrderByDescending{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/> 
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если метод является методом
+        /// <see cref="Queryable.OrderByDescending{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        public static bool IsQueryableOrderByDescendingMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            const string QUERYABLE_ORDER_BY_DESCENDING_METHOD_NAME = "OrderByDescending";
+
+            return IsQueryableSortMethod(method, QUERYABLE_ORDER_BY_DESCENDING_METHOD_NAME);
         }
 
         /// <summary>
@@ -204,30 +222,21 @@ namespace VanessaSharp.Data.Linq
         /// </summary>
         /// <param name="testedType">Тестируемый тип.</param>
         /// <param name="openDelegateType">Обобщенный тип делегата.</param>
-        /// <param name="closedDelegateType">
-        /// Конкретный тип делегата.
-        /// Возвращается <c>null</c>, если проверка вернула <c>false</c>.
-        /// </param>
         /// <returns>
         /// Возвращает <c>true</c>, если тип яляется <see cref="Expression{TDelegate}"/>
         /// и тип-параметр делегата в <see cref="Expression{TDelegate}"/> является обощением
         /// <paramref name="openDelegateType"/>.
         /// В ином случае возвращает <c>true</c>.
         /// </returns>
-        private static bool IsExpressionType(Type testedType, Type openDelegateType, out Type closedDelegateType)
+        private static bool IsExpressionType(Type testedType, Type openDelegateType)
         {
             if (testedType.IsGenericType
                 && (testedType.GetGenericTypeDefinition() == typeof(Expression<>)))
             {
                 var parameterType = GetSingleParameterType(testedType);
-                if (parameterType.GetGenericTypeDefinition() == openDelegateType)
-                {
-                    closedDelegateType = parameterType;
-                    return true;
-                }
+                return (parameterType.GetGenericTypeDefinition() == openDelegateType);
             }
 
-            closedDelegateType = default(Type);
             return false;
         }
 

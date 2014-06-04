@@ -33,6 +33,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         void HandleOrderBy(LambdaExpression sortKeyExpression);
 
+        /// <summary>Обработка старта сортировки, начиная с сортировки по убыванию..</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+        void HandleOrderByDescending(LambdaExpression sortKeyExpression);
+
         /// <summary>Получение всех записей.</summary>
         /// <param name="sourceName">Имя источника.</param>
         void HandleGettingRecords(string sourceName);
@@ -69,6 +73,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         void IQueryableExpressionHandler.HandleOrderBy(LambdaExpression sortKeyExpression)
         {
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
+            Contract.Requires<ArgumentException>(
+               sortKeyExpression.Type.IsGenericType
+               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
+               && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+        }
+
+        void IQueryableExpressionHandler.HandleOrderByDescending(LambdaExpression sortKeyExpression)
+        {
+            Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
+            Contract.Requires<ArgumentException>(
+                sortKeyExpression.Type.IsGenericType
+                && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
+                && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
         }
 
         void IQueryableExpressionHandler.HandleGettingRecords(string sourceName)
