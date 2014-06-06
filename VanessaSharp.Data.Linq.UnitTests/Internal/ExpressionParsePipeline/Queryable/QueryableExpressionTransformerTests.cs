@@ -12,7 +12,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
     /// Тестирование статических методов парсера выражений <see cref="QueryableExpressionTransformer"/>.
     /// </summary>
     [TestFixture]
-    public sealed class QueryableExpressionTransformerTests : QueryableExpressionTransformTestBase
+    public sealed class QueryableExpressionTransformerTests : TestsBase
     {
         /// <summary>Тестируемый экземпляр.</summary>
         private QueryableExpressionTransformer _testedInstance;
@@ -23,7 +23,18 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         {
             _testedInstance = new QueryableExpressionTransformer();
         }
-        
+
+        /// <summary>
+        /// Получение выражения получения записей из источника данных.
+        /// </summary>
+        /// <param name="sourceName">Источник.</param>
+        private static Expression GetGetRecordsExpression(string sourceName)
+        {
+            return Expression.Call(
+                OneSQueryExpressionHelper.GetRecordsExpression(sourceName),
+                OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<OneSDataRecord>());
+        }
+
         /// <summary>
         /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
         /// в случае когда передается выражение получения записей из источника.

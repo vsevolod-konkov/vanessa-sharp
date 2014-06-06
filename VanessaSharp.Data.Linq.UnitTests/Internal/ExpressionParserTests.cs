@@ -23,7 +23,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 .Returns("test");
             var expression = expressionMock.Object;
 
-            var sqlCommand = new SqlCommand("SQL", new ReadOnlyCollection<SqlParameter>(new SqlParameter[0]));
+            var sqlCommand = new SqlCommand("SQL", SqlParameter.EmptyCollection);
             var expressionParseProduct = new Mock<ExpressionParseProduct>(MockBehavior.Strict, sqlCommand).Object;
             
             var simpleQueryMock = new Mock<SimpleQuery>(MockBehavior.Strict, "source", null, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));

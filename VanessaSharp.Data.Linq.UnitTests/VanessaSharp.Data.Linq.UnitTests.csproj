@@ -51,7 +51,6 @@
     <Compile Include="Internal\ExpressionParserComponentTests.cs" />
     <Compile Include="Internal\ExpressionParserTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformerTests.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformTestBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\OrderByExpressionTransformerTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerTestsBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\WhereExpressionTransformerTests.cs" />

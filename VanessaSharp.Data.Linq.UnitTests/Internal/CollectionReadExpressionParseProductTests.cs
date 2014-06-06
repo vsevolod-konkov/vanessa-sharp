@@ -32,10 +32,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
         private static OneSDataRecord ReadRecord(object[] values)
         {
-            return new OneSDataRecord(
-                new ReadOnlyCollection<string>(new string[0]),
-                new ReadOnlyCollection<OneSValue>(new OneSValue[0])
-                );
+            throw new InvalidOperationException("Этот метод нельзя вызывать.");
         }
 
         /// <summary>Тестирование инициализации.</summary>
@@ -66,7 +63,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             
             var sqlCommandExecuterMock = new Mock<ISqlCommandExecuter>(MockBehavior.Strict);
             sqlCommandExecuterMock
-                .Setup(e => e.ExecuteReader(It.IsAny<SqlCommand>()))
+                .Setup(e => e.ExecuteReader(_sqlCommand))
                 .Returns(sqlResultReaderMock.Object)
                 .Verifiable();
 
