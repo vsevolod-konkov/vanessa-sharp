@@ -5,7 +5,7 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
-namespace VanessaSharp.Data.Linq.UnitTests
+namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Queryable
 {
     /// <summary>Тестирование <see cref="SimpleQueryBuilder"/>.</summary>
     [TestFixture]

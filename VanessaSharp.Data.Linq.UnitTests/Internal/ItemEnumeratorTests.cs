@@ -4,7 +4,7 @@ using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 
-namespace VanessaSharp.Data.Linq.UnitTests
+namespace VanessaSharp.Data.Linq.UnitTests.Internal
 {
     /// <summary>Тесты на <see cref="ItemEnumerator{T}"/>.</summary>
     [TestFixture]

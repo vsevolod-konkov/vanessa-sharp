@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
-namespace VanessaSharp.Data.Linq.UnitTests
+namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Queryable
 {
     /// <summary>
     /// Базовый класс для тестов на преобразование linq-выражений <see cref="Queryable"/>.

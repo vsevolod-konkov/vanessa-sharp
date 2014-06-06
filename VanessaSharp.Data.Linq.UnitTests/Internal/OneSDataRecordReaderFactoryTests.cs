@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 
-namespace VanessaSharp.Data.Linq.UnitTests
+namespace VanessaSharp.Data.Linq.UnitTests.Internal
 {
     /// <summary>
     /// Тестирование <see cref="OneSDataRecordReaderFactory"/>.

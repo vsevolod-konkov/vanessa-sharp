@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
-namespace VanessaSharp.Data.Linq.UnitTests
+namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
 {
     /// <summary>Тесты на <see cref="SqlQueryStatement"/>.</summary>
     [TestFixture]

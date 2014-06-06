@@ -47,32 +47,33 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
-    <Compile Include="CollectionReadExpressionParseProductTests.cs" />
-    <Compile Include="ExpressionParserComponentTests.cs" />
-    <Compile Include="QueryableExpressionTransformerTests.cs" />
-    <Compile Include="QueryableExpressionTransformTestBase.cs" />
-    <Compile Include="OrderByExpressionTransformerTests.cs" />
-    <Compile Include="QueryTransformerTestsBase.cs" />
-    <Compile Include="WhereExpressionTransformerTests.cs" />
-    <Compile Include="ItemEnumeratorTests.cs" />
+    <Compile Include="Internal\CollectionReadExpressionParseProductTests.cs" />
+    <Compile Include="Internal\ExpressionParserComponentTests.cs" />
+    <Compile Include="Internal\ExpressionParserTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformerTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformTestBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\OrderByExpressionTransformerTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerTestsBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\WhereExpressionTransformerTests.cs" />
+    <Compile Include="Internal\ItemEnumeratorTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />
-    <Compile Include="OneSDataRecordReaderFactoryTests.cs" />
+    <Compile Include="Internal\OneSDataRecordReaderFactoryTests.cs" />
     <Compile Include="OneSDataRecordTests.cs" />
     <Compile Include="OneSQueryableTests.cs" />
     <Compile Include="OneSQueryProviderTests.cs" />
     <Compile Include="OneSValueTests.cs" />
     <Compile Include="PredefinedDataTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QueryableExpressionVisitorTests.cs" />
-    <Compile Include="QueryTransformerComponentTests.cs" />
-    <Compile Include="SelectExpressionTransformerTests.cs" />
-    <Compile Include="SimpleQueryBuilderTests.cs" />
-    <Compile Include="SqlQueryStatementTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionVisitorTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerComponentTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\SelectExpressionTransformerTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\SimpleQueryBuilderTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlQueryStatementTests.cs" />
     <Compile Include="Utility\TestHelperQuery.cs" />
     <Compile Include="Utility\TestHelperQueryProvider.cs" />
     <Compile Include="TestsBase.cs" />
     <Compile Include="Utility\Trait.cs" />
-    <Compile Include="QueryTransformerTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VanessaSharp.Data.Linq\VanessaSharp.Data.Linq.csproj">

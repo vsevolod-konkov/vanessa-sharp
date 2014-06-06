@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Linq.Expressions;
 using NUnit.Framework;
-using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
-namespace VanessaSharp.Data.Linq.UnitTests
+namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Тестирование <see cref="WhereExpressionTransformer"/>.</summary>
     [TestFixture]
