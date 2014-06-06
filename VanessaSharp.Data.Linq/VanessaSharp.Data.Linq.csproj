@@ -78,25 +78,27 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformerBase.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformMethods.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionTransformMethods.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionVisitorBase.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\FieldAccessExpressionTransformerBase.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\FieldAccessExpressionTransformerBaseOfTResult.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\IExpressionTransformMethods.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\OrderByExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\FieldAccessExpressionTransformerBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\FieldAccessExpressionTransformerBaseOfTResult.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\IExpressionTransformMethods.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\OrderByExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\IQueryableExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortKind.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlOrderByStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSortFieldExpression.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\WhereExpressionTransformer.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\ParseParameterCollection.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\QueryParseContext.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\WhereExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\ParseParameterCollection.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryParseContext.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SelectionPartParseProduct.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\SelectExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\SelectExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SimpleQuery.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\SimpleQueryBuilder.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\QueryTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\SimpleQueryBuilder.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\CustomDataTypeQuery.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\DataRecordsQuery.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlAllColumnsExpression.cs" />
@@ -116,12 +118,12 @@
     <Compile Include="Internal\ExpressionParser.cs" />
     <Compile Include="Internal\IExpressionParser.cs" />
     <Compile Include="Internal\IItemReaderFactory.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\IQueryableExpressionHandler.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\IQueryableExpressionHandler.cs" />
     <Compile Include="Internal\ISqlCommandExecuter.cs" />
     <Compile Include="Internal\ISqlResultReader.cs" />
     <Compile Include="Internal\ItemEnumerator.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactory.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\QueryableExpressionVisitor.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionVisitor.cs" />
     <Compile Include="Internal\SqlCommand.cs" />
     <Compile Include="Internal\SqlCommandExecuter.cs" />
     <Compile Include="Internal\SqlParameter.cs" />
@@ -152,6 +154,7 @@
       <Name>VanessaSharp.Data</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

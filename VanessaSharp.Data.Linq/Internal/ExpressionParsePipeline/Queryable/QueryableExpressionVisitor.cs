@@ -6,7 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 {
     /// <summary>
     /// Посетитель для парсинга выражения генерируемого 

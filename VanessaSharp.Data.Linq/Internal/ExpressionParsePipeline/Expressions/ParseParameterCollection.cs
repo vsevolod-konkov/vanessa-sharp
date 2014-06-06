@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>
     /// Коллекция параметров запроса,

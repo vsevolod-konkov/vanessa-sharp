@@ -1,14 +1,14 @@
-﻿using System.Linq.Expressions;
+﻿using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
-using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests
 {
     /// <summary>
-    /// Базовый класс для тестов на методы <see cref="ExpressionParser"/>.
+    /// Базовый класс для тестов на преобразование linq-выражений <see cref="Queryable"/>.
     /// </summary>
-    public abstract class ExpressionParserTestBase : TestsBase
+    public abstract class QueryableExpressionTransformTestBase : TestsBase
     {
         /// <summary>
         /// Получение выражения получения записей из источника данных.

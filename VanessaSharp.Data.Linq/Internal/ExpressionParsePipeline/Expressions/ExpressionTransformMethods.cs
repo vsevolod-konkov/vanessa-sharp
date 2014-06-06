@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>
     /// Стандартная реализация <see cref="IExpressionTransformMethods"/>.

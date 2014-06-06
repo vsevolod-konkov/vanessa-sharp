@@ -2,31 +2,41 @@
 using System.Linq;
 using System.Linq.Expressions;
 using NUnit.Framework;
-using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests
 {
     /// <summary>
-    /// Тестирование статических методов парсера выражений <see cref="ExpressionParser"/>.
+    /// Тестирование статических методов парсера выражений <see cref="QueryableExpressionTransformer"/>.
     /// </summary>
     [TestFixture]
-    public sealed class ExpressionParserStaticTests : ExpressionParserTestBase
+    public sealed class QueryableExpressionTransformerTests : QueryableExpressionTransformTestBase
     {
+        /// <summary>Тестируемый экземпляр.</summary>
+        private QueryableExpressionTransformer _testedInstance;
+
+        /// <summary>Инициализация тестируемого экземпляра.</summary>
+        [SetUp]
+        public void SetUp()
+        {
+            _testedInstance = new QueryableExpressionTransformer();
+        }
+        
         /// <summary>
-        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
         /// в случае когда передается выражение получения записей из источника.
         /// </summary>
         [Test]
-        public void TestGetQueryFromGetRecordsExpression()
+        public void TestTransformFromGetRecordsExpression()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
             var expression = GetGetRecordsExpression(SOURCE_NAME);
 
             // Act
-            var query = ExpressionParser.GetQueryFromQueryableExpression(expression);
+            var query = _testedInstance.Transform(expression);
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, query.Source);
@@ -35,11 +45,11 @@ namespace VanessaSharp.Data.Linq.UnitTests
         }
 
         /// <summary>
-        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
         /// в случае когда передается выражение выборки полей из записей источника.
         /// </summary>
         [Test]
-        public void TestGetQueryFromSelectRecordsExpression()
+        public void TestTransformFromSelectRecordsExpression()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
@@ -50,7 +60,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             var trait = selectExpression.GetTraitOfOutputType();
 
             // Act
-            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+            var result = _testedInstance.Transform(testedExpression);
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
@@ -60,11 +70,11 @@ namespace VanessaSharp.Data.Linq.UnitTests
         }
 
         /// <summary>
-        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
         /// в случае когда передается выражение получения записей из источника с фильтром.
         /// </summary>
         [Test]
-        public void TestGetQueryFromWhereRecordsExpression()
+        public void TestTransformFromWhereRecordsExpression()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
@@ -73,7 +83,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 .BuildTestQueryExpression(SOURCE_NAME, q => q.Where(filterExpression));
 
             // Act
-            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+            var result = _testedInstance.Transform(testedExpression);
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
@@ -83,11 +93,11 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
         // TODO: CopyPaste
         /// <summary>
-        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
         /// в случае когда передается выражение получения записей из источника с сортировкой.
         /// </summary>
         [Test]
-        public void TestGetQueryFromOrderByRecordsExpression()
+        public void TestTransformFromOrderByRecordsExpression()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
@@ -96,7 +106,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderBy(orderbyExpression));
 
             // Act
-            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+            var result = _testedInstance.Transform(testedExpression);
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
@@ -111,11 +121,11 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
         // TODO: CopyPaste
         /// <summary>
-        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
         /// в случае когда передается выражение получения записей из источника с сортировкой по убыванию.
         /// </summary>
         [Test]
-        public void TestGetQueryFromOrderByDescendingRecordsExpression()
+        public void TestTransformFromOrderByDescendingRecordsExpression()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
@@ -124,7 +134,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderByDescending(orderbyExpression));
 
             // Act
-            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+            var result = _testedInstance.Transform(testedExpression);
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);
@@ -139,11 +149,11 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
         // TODO: CopyPaste
         /// <summary>
-        /// Тестирование получения <see cref="ExpressionParser.GetQueryFromQueryableExpression"/>
+        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
         /// в случае когда передается выражение получения записей из источника с сортировкой по убыванию.
         /// </summary>
         [Test]
-        public void TestGetQueryFromOrderByDescendingAndThenByRecordsExpression()
+        public void TestTransformFromOrderByDescendingAndThenByRecordsExpression()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
@@ -154,7 +164,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderByDescending(orderbyExpression1).ThenBy(orderbyExpression2));
 
             // Act
-            var result = ExpressionParser.GetQueryFromQueryableExpression(testedExpression);
+            var result = _testedInstance.Transform(testedExpression);
 
             // Assert
             Assert.AreEqual(SOURCE_NAME, result.Source);

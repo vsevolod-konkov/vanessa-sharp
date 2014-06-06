@@ -48,9 +48,9 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="CollectionReadExpressionParseProductTests.cs" />
-    <Compile Include="ExpressionParserInstanceTests.cs" />
-    <Compile Include="ExpressionParserStaticTests.cs" />
-    <Compile Include="ExpressionParserTestBase.cs" />
+    <Compile Include="ExpressionParserComponentTests.cs" />
+    <Compile Include="QueryableExpressionTransformerTests.cs" />
+    <Compile Include="QueryableExpressionTransformTestBase.cs" />
     <Compile Include="OrderByExpressionTransformerTests.cs" />
     <Compile Include="QueryTransformerTestsBase.cs" />
     <Compile Include="WhereExpressionTransformerTests.cs" />

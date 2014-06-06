@@ -3,7 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 {
     /// <summary>
     /// Обработчик парсинга выражений генерируемых <see cref="Queryable"/>.

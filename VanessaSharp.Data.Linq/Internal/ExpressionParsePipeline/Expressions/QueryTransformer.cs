@@ -5,7 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Преобразователь запроса в объект <see cref="ExpressionParseProduct"/>.</summary>
     internal sealed class QueryTransformer

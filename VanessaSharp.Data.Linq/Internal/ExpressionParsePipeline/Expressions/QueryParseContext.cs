@@ -1,4 +1,4 @@
-﻿namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+﻿namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Контекст парсинга запроса.</summary>
     internal sealed class QueryParseContext

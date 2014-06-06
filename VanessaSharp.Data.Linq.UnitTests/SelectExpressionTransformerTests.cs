@@ -1,6 +1,7 @@
 ﻿using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 

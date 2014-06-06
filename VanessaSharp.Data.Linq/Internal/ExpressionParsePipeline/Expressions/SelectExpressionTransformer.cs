@@ -6,10 +6,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
-    using M = OneSQueryExpressionHelper;
-    
     /// <summary>
     /// Преобразователь выражения метода Select в SQL-инструкцию SELECT и в делегат для вычитки элемента данных из записи.
     /// </summary>
@@ -18,12 +16,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         private static readonly IDictionary<MethodInfo, MethodInfo>
             _methods = new Dictionary<MethodInfo, MethodInfo>
             {
-                { M.DataRecordGetStringMethod, M.ValueConverterToStringMethod },
-                { M.DataRecordGetInt32Method, M.ValueConverterToInt32Method },
-                { M.DataRecordGetDoubleMethod, M.ValueConverterToDoubleMethod },
-                { M.DataRecordGetDateTimeMethod, M.ValueConverterToDateTimeMethod },
-                { M.DataRecordGetBooleanMethod, M.ValueConverterToBooleanMethod },
-                { M.DataRecordGetCharMethod, M.ValueConverterToCharMethod },
+                { OneSQueryExpressionHelper.DataRecordGetStringMethod, OneSQueryExpressionHelper.ValueConverterToStringMethod },
+                { OneSQueryExpressionHelper.DataRecordGetInt32Method, OneSQueryExpressionHelper.ValueConverterToInt32Method },
+                { OneSQueryExpressionHelper.DataRecordGetDoubleMethod, OneSQueryExpressionHelper.ValueConverterToDoubleMethod },
+                { OneSQueryExpressionHelper.DataRecordGetDateTimeMethod, OneSQueryExpressionHelper.ValueConverterToDateTimeMethod },
+                { OneSQueryExpressionHelper.DataRecordGetBooleanMethod, OneSQueryExpressionHelper.ValueConverterToBooleanMethod },
+                { OneSQueryExpressionHelper.DataRecordGetCharMethod, OneSQueryExpressionHelper.ValueConverterToCharMethod },
             };
 
         /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>

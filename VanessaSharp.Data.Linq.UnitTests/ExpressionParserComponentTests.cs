@@ -10,7 +10,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
     /// Тесты на экземпляр <see cref="ExpressionParser"/>.
     /// </summary>
     [TestFixture]
-    public sealed class ExpressionParserInstanceTests : ExpressionParserTestBase
+    public sealed class ExpressionParserComponentTests : QueryableExpressionTransformTestBase
     {
         /// <summary>Тестируемый экземпляр.</summary>
         private readonly ExpressionParser _testedInstance = ExpressionParser.Default;

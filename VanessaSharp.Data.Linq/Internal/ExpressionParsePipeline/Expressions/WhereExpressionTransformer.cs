@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Преобразователь LINQ-выражение метода Where в SQL-условие WHERE.</summary>
     internal sealed class WhereExpressionTransformer : FieldAccessExpressionTransformerBase<SqlCondition>

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 {
     /// <summary>Стандартная реализация <see cref="IQueryableExpressionHandler"/></summary>
     /// <remarks>
@@ -145,7 +145,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleThenBy(LambdaExpression sortKeyExpression)
         {
-            if (HandleThenBy(sortKeyExpression, SortKind.Ascending))
+            if (!HandleThenBy(sortKeyExpression, SortKind.Ascending))
                 ThrowException(MethodBase.GetCurrentMethod());
         }
 
@@ -153,7 +153,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleThenByDescending(LambdaExpression sortKeyExpression)
         {
-            if (HandleThenBy(sortKeyExpression, SortKind.Descending))
+            if (!HandleThenBy(sortKeyExpression, SortKind.Descending))
                 ThrowException(MethodBase.GetCurrentMethod());
         }
 

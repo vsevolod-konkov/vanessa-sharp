@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
-namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
+namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Базовый класс преобразования выражения с доступом к полям источника.</summary>
     internal abstract class FieldAccessExpressionTransformerBase : ExpressionTransformerBase
