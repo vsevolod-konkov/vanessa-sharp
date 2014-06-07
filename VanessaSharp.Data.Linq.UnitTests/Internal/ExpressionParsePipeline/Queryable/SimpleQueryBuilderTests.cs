@@ -9,7 +9,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 {
     /// <summary>Тестирование <see cref="SimpleQueryBuilder"/>.</summary>
     [TestFixture]
-    public sealed class SimpleQueryBuilderTests : TestsBase
+    public sealed class SimpleQueryBuilderTests : SimpleQueryBuildingTestsBase
     {
         private SimpleQueryBuilder _testedInstance;
 
@@ -21,10 +21,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
         /// <summary>Тестирование построения запроса получения записей.</summary>
         [Test]
-        public void TestBuildGetRecordsQuery()
+        public void TestBuildQueryWhenOnlyGetRecords()
         {
-            const string SOURCE_NAME = "[source]";
-            
             // Act
             _testedInstance.HandleStart();
             _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
@@ -34,17 +32,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.IsNull(result.Filter);
-            Assert.AreEqual(0, result.Sorters.Count);
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
+            AssertDataRecordsQuery(result);
         }
 
         /// <summary>Тестирование построения запроса выборки полей записей.</summary>
         [Test]
-        public void TestBuildSelectRecordsQuery()
+        public void TestBuildQueryWhenSelectingTuple()
         {
-            const string SOURCE_NAME = "[source]";
+            // Arrange
             var expectedExpression = Trait
                      .Of<OneSDataRecord>()
                      .SelectExpression(r => new {Name = r.GetString("name"), Value = r.GetInt32("value")});
@@ -60,20 +55,17 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.IsNull(result.Filter);
-            Assert.AreEqual(0, result.Sorters.Count);
-
-            var typedQuery = AssertAndCastSimpleQueryOf(traitOfOutputType, result);
+            AssertSimpleQuery(result);
+            
+            var typedQuery = AssertAndCastCustomDataTypeQuery(traitOfOutputType, result);
             Assert.AreEqual(expectedExpression, typedQuery.SelectExpression);
         }
 
         /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
         [Test]
-        public void TestBuildFilteredGetRecordsQuery()
+        public void TestBuildQueryWhenFiltering()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
             Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filterField]") == "filterValue";
 
             // Act
@@ -86,18 +78,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(filterExpression, result.Filter);
-            Assert.AreEqual(0, result.Sorters.Count);
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
+            AssertDataRecordsQuery(result, filterExpression);
         }
 
         /// <summary>Тестирование построения запроса выборки и фильтрации записей.</summary>
         [Test]
-        public void TestBuildFilteredSelectRecordsQuery()
+        public void TestBuildQueryWhenFilteringAndSelectingTuple()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
             Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filterField]") == "filterValue";
             var selectExpression = Trait
                      .Of<OneSDataRecord>()
@@ -115,195 +103,148 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(filterExpression, result.Filter);
-            Assert.AreEqual(0, result.Sorters.Count);
-            var typedQuery = AssertAndCastSimpleQueryOf(traitOfOutputType, result);
+            AssertSimpleQuery(result, filterExpression);
+            var typedQuery = AssertAndCastCustomDataTypeQuery(traitOfOutputType, result);
             Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
         }
 
-        /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
-        [Test]
-        public void TestBuildOrderedGetRecordsQuery()
+        private void TestBuildQueryWhenSorting(Action<SimpleQueryBuilder> queryBuilderAction,
+                                               params SortExpression[] expectedSorters)
         {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("int_field");
-
             // Act
             _testedInstance.HandleStart();
             _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
-            _testedInstance.HandleOrderBy(sortKeyExpression);
+
+            queryBuilderAction(_testedInstance);
+
             _testedInstance.HandleGettingRecords(SOURCE_NAME);
             _testedInstance.HandleEnd();
 
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(1, result.Sorters.Count);
-            Assert.AreEqual(sortKeyExpression, result.Sorters[0].KeyExpression);
-            Assert.AreEqual(SortKind.Ascending, result.Sorters[0].Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
+            AssertDataRecordsQuery(result, expectedSorters: expectedSorters);
         }
 
-        // TODO: Копипаста TestBuildOrderedGetRecordsQuery
-        /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
         [Test]
-        public void TestBuildOrderedDescendingGetRecordsQuery()
+        public void TestBuildQueryWhenSorting()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
             Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("int_field");
 
-            // Act
-            _testedInstance.HandleStart();
-            _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
-            _testedInstance.HandleOrderByDescending(sortKeyExpression);
-            _testedInstance.HandleGettingRecords(SOURCE_NAME);
-            _testedInstance.HandleEnd();
-
-            var result = _testedInstance.BuiltQuery;
-
-            // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(1, result.Sorters.Count);
-            Assert.AreEqual(sortKeyExpression, result.Sorters[0].KeyExpression);
-            Assert.AreEqual(SortKind.Descending, result.Sorters[0].Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
+            // Arrange-Act-Assert
+            TestBuildQueryWhenSorting(
+                qb => qb.HandleOrderBy(sortKeyExpression),
+                new SortExpression(sortKeyExpression, SortKind.Ascending));
         }
 
-        // TODO: Копипаста TestBuildOrderedGetRecordsQuery
-        /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
+        
         [Test]
-        public void TestBuildOrderedDescendingThenByGetRecordsQuery()
+        public void TestBuildQueryWhenSortingDescending()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
+            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("int_field");
+
+            // Arrange-Act-Assert
+            TestBuildQueryWhenSorting(
+                qb => qb.HandleOrderByDescending(sortKeyExpression),
+                new SortExpression(sortKeyExpression, SortKind.Descending));
+        }
+
+        [Test]
+        public void TestBuildQueryWhenSortingAscendingAndDescending()
+        {
+            // Arrange
             Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("int_field");
             Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("string_field");
 
+            // Arrange-Act-Assert
+            TestBuildQueryWhenSorting(
+                qb =>
+                    {
+                        qb.HandleThenByDescending(sortKey2Expression);
+                        qb.HandleOrderBy(sortKey1Expression);
+                    },
+                new SortExpression(sortKey1Expression, SortKind.Ascending),
+                new SortExpression(sortKey2Expression, SortKind.Descending));
+        }
+
+        [Test]
+        public void TestBuildQueryWhenSortingDescendingAndAscending()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("int_field");
+            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("string_field");
+
+            // Arrange-Act-Assert
+            TestBuildQueryWhenSorting(
+                qb =>
+                {
+                    qb.HandleThenBy(sortKey2Expression);
+                    qb.HandleOrderByDescending(sortKey1Expression);
+                },
+                new SortExpression(sortKey1Expression, SortKind.Descending),
+                new SortExpression(sortKey2Expression, SortKind.Ascending));
+        }
+
+        [Test]
+        public void TestBuildQueryWhenDoubleSorting()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("int_field");
+            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("string_field");
+
+            // Arrange-Act-Assert
+            TestBuildQueryWhenSorting(
+                qb =>
+                {
+                    qb.HandleOrderBy(sortKey2Expression);
+                    qb.HandleOrderBy(sortKey1Expression);
+                },
+                new SortExpression(sortKey2Expression, SortKind.Ascending));
+        }
+
+        [Test]
+        public void TestBuildQueryComplex()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filterField]") == "filterValue";
+
+            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("any_field");
+            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("any_field");
+            Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("any_field");
+
+            var selectExpression = Trait
+                     .Of<OneSDataRecord>()
+                     .SelectExpression(r => new { Name = r.GetString("name"), Value = r.GetInt32("value") });
+            var traitOfOutputType = selectExpression.GetTraitOfOutputType();
+
             // Act
             _testedInstance.HandleStart();
-            _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
-            _testedInstance.HandleThenBy(sortKey2Expression);
-            _testedInstance.HandleOrderByDescending(sortKey1Expression);
-            _testedInstance.HandleGettingRecords(SOURCE_NAME);
-            _testedInstance.HandleEnd();
-
-            var result = _testedInstance.BuiltQuery;
-
-            // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(2, result.Sorters.Count);
+            _testedInstance.HandleGettingEnumerator(traitOfOutputType.Type);
             
-            Assert.AreEqual(sortKey1Expression, result.Sorters[0].KeyExpression);
-            Assert.AreEqual(SortKind.Descending, result.Sorters[0].Kind);
+            _testedInstance.HandleSelect(selectExpression);
 
-            Assert.AreEqual(sortKey2Expression, result.Sorters[1].KeyExpression);
-            Assert.AreEqual(SortKind.Ascending, result.Sorters[1].Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
-        }
-
-        // TODO: Копипаста TestBuildOrderedGetRecordsQuery
-        /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
-        [Test]
-        public void TestBuildOrderByThenByDescendingGetRecordsQuery()
-        {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("int_field");
-            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("string_field");
-
-            // Act
-            _testedInstance.HandleStart();
-            _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
+            _testedInstance.HandleThenBy(sortKey3Expression);
             _testedInstance.HandleThenByDescending(sortKey2Expression);
-            _testedInstance.HandleOrderBy(sortKey1Expression);
-            _testedInstance.HandleGettingRecords(SOURCE_NAME);
-            _testedInstance.HandleEnd();
-
-            var result = _testedInstance.BuiltQuery;
-
-            // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(2, result.Sorters.Count);
-
-            Assert.AreEqual(sortKey1Expression, result.Sorters[0].KeyExpression);
-            Assert.AreEqual(SortKind.Ascending, result.Sorters[0].Kind);
-
-            Assert.AreEqual(sortKey2Expression, result.Sorters[1].KeyExpression);
-            Assert.AreEqual(SortKind.Descending, result.Sorters[1].Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
-        }
-
-        // TODO: Копипаста TestBuildOrderedGetRecordsQuery
-        /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
-        [Test]
-        public void TestBuildOrderByOrderByDescendingGetRecordsQuery()
-        {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("int_field");
-            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("string_field");
-
-            // Act
-            _testedInstance.HandleStart();
-            _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
-            _testedInstance.HandleOrderByDescending(sortKey2Expression);
-            _testedInstance.HandleOrderBy(sortKey1Expression);
-            _testedInstance.HandleGettingRecords(SOURCE_NAME);
-            _testedInstance.HandleEnd();
-
-            var result = _testedInstance.BuiltQuery;
-
-            // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(1, result.Sorters.Count);
-
-            Assert.AreEqual(sortKey2Expression, result.Sorters[0].KeyExpression);
-            Assert.AreEqual(SortKind.Descending, result.Sorters[0].Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
-        }
-
-        // TODO: Копипаста TestBuildOrderedGetRecordsQuery
-        /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
-        [Test]
-        public void TestBuildOrderByDescendingOrderByGetRecordsQuery()
-        {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("int_field");
-            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("string_field");
-
-            // Act
-            _testedInstance.HandleStart();
-            _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
-            _testedInstance.HandleOrderBy(sortKey2Expression);
             _testedInstance.HandleOrderByDescending(sortKey1Expression);
+
+            _testedInstance.HandleFilter(filterExpression);
             _testedInstance.HandleGettingRecords(SOURCE_NAME);
             _testedInstance.HandleEnd();
 
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(1, result.Sorters.Count);
+            AssertSimpleQuery(
+                result, 
+                filterExpression,
+                new SortExpression(sortKey1Expression, SortKind.Descending),
+                new SortExpression(sortKey2Expression, SortKind.Descending),
+                new SortExpression(sortKey3Expression, SortKind.Ascending));
 
-            Assert.AreEqual(sortKey2Expression, result.Sorters[0].KeyExpression);
-            Assert.AreEqual(SortKind.Ascending, result.Sorters[0].Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
-        }
-
-        private static CustomDataTypeQuery<T> AssertAndCastSimpleQueryOf<T>(Trait<T> trait, SimpleQuery query)
-        {
-            return AssertAndCast<CustomDataTypeQuery<T>>(query);
+            var typedQuery = AssertAndCastCustomDataTypeQuery(traitOfOutputType, result);
+            Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
         }
     }
 }

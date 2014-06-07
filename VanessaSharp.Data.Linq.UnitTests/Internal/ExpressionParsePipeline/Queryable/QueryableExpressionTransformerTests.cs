@@ -12,7 +12,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
     /// Тестирование статических методов парсера выражений <see cref="QueryableExpressionTransformer"/>.
     /// </summary>
     [TestFixture]
-    public sealed class QueryableExpressionTransformerTests : TestsBase
+    public sealed class QueryableExpressionTransformerTests : SimpleQueryBuildingTestsBase
     {
         /// <summary>Тестируемый экземпляр.</summary>
         private QueryableExpressionTransformer _testedInstance;
@@ -25,176 +25,203 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         }
 
         /// <summary>
-        /// Получение выражения получения записей из источника данных.
-        /// </summary>
-        /// <param name="sourceName">Источник.</param>
-        private static Expression GetGetRecordsExpression(string sourceName)
-        {
-            return Expression.Call(
-                OneSQueryExpressionHelper.GetRecordsExpression(sourceName),
-                OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<OneSDataRecord>());
-        }
-
-        /// <summary>
-        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае когда передается выражение получения записей из источника.
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае когда запросом является простое получение записей из источника данных.
         /// </summary>
         [Test]
-        public void TestTransformFromGetRecordsExpression()
+        public void TestTransformGetRecordsQueryable()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
-            var expression = GetGetRecordsExpression(SOURCE_NAME);
+            var expression = TestHelperQueryProvider.BuildTestQueryExpression(SOURCE_NAME);
 
             // Act
-            var query = _testedInstance.Transform(expression);
+            var result = _testedInstance.Transform(expression);
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, query.Source);
-            Assert.IsNull(query.Filter);
-            Assert.IsInstanceOf<DataRecordsQuery>(query);
+            AssertDataRecordsQuery(result);
         }
 
         /// <summary>
-        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае когда передается выражение выборки полей из записей источника.
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае когда в запросе вызывался метод 
+        /// <see cref="Queryable.Select{TSource,TResult}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TResult}})"/>.
         /// </summary>
         [Test]
-        public void TestTransformFromSelectRecordsExpression()
+        public void TestTransformSelectingQueryable()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
             var selectExpression = Trait.Of<OneSDataRecord>()
                 .SelectExpression(r => new { StringField = r.GetString("[string_field]"), IntField = r.GetInt32("[int_field]") });
-            var testedExpression = TestHelperQueryProvider
-                .BuildTestQueryExpression(SOURCE_NAME, q => q.Select(selectExpression));
             var trait = selectExpression.GetTraitOfOutputType();
-
+            
+            var testedExpression = BuildQueryableExpression(q => q.Select(selectExpression));
+            
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.IsNull(result.Filter);
-            var typedQuery = AssertAndCastSimpleQuery(trait, result);
+            AssertSimpleQuery(result);
+
+            var typedQuery = AssertAndCastCustomDataTypeQuery(trait, result);
             Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
         }
 
         /// <summary>
         /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае когда передается выражение получения записей из источника с фильтром.
+        /// в случае когда в запросе вызывался метод
+        /// <see cref="Queryable.Where{TSource}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,bool}})"/>.
         /// </summary>
         [Test]
-        public void TestTransformFromWhereRecordsExpression()
+        public void TestTransformFilteringQueryable()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
             Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("filterField") == "filterValue";
-            var testedExpression = TestHelperQueryProvider
-                .BuildTestQueryExpression(SOURCE_NAME, q => q.Where(filterExpression));
+            var testedExpression = BuildQueryableExpression(q => q.Where(filterExpression));
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(filterExpression, result.Filter);
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
+            AssertDataRecordsQuery(result, expectedFilter: filterExpression);
         }
 
-        // TODO: CopyPaste
         /// <summary>
-        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае когда передается выражение получения записей из источника с сортировкой.
+        /// Тестирование в случае
         /// </summary>
-        [Test]
-        public void TestTransformFromOrderByRecordsExpression()
+        /// <param name="queryAction">Запрос над <see cref="IQueryable{OneSDataRecord}"/></param>
+        /// <param name="expectedSorters">Ожидаемые сортировщики в результате.</param>
+        private void TestTransformSortingQueryable(
+            Func<IQueryable<OneSDataRecord>, IQueryable<OneSDataRecord>> queryAction,
+            params SortExpression[] expectedSorters)
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
-            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field");
-            var testedExpression = TestHelperQueryProvider
-                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderBy(orderbyExpression));
+            var testedExpression = BuildQueryableExpression(queryAction);
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(1, result.Sorters.Count);
+            AssertDataRecordsQuery(result, expectedSorters: expectedSorters);
+        }
+
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае когда вызывается метод
+        /// <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableWithOrderBy()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field");
             
-            var sortExpression = result.Sorters[0];
-            Assert.AreEqual(orderbyExpression, sortExpression.KeyExpression);
-            Assert.AreEqual(SortKind.Ascending, sortExpression.Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
+            // Arrange-Act-Assert
+            TestTransformSortingQueryable(
+                q => q.OrderBy(orderbyExpression),
+                new SortExpression(orderbyExpression, SortKind.Ascending)
+                );
         }
 
-        // TODO: CopyPaste
         /// <summary>
-        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае когда передается выражение получения записей из источника с сортировкой по убыванию.
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае когда вызывается метод
+        /// <see cref="Queryable.OrderByDescending{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
         /// </summary>
         [Test]
-        public void TestTransformFromOrderByDescendingRecordsExpression()
+        public void TestTransformQueryableWithOrderByDescending()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
             Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field");
-            var testedExpression = TestHelperQueryProvider
-                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderByDescending(orderbyExpression));
 
-            // Act
-            var result = _testedInstance.Transform(testedExpression);
-
-            // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(1, result.Sorters.Count);
-
-            var sortExpression = result.Sorters[0];
-            Assert.AreEqual(orderbyExpression, sortExpression.KeyExpression);
-            Assert.AreEqual(SortKind.Descending, sortExpression.Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
+            // Arrange-Act-Assert
+            TestTransformSortingQueryable(
+                q => q.OrderByDescending(orderbyExpression),
+                new SortExpression(orderbyExpression, SortKind.Descending)
+                );
         }
 
-        // TODO: CopyPaste
         /// <summary>
-        /// Тестирование получения <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае когда передается выражение получения записей из источника с сортировкой по убыванию.
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае когда вызывается метод
+        /// <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>
+        /// и
+        /// <see cref="Queryable.ThenByDescending{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
         /// </summary>
         [Test]
-        public void TestTransformFromOrderByDescendingAndThenByRecordsExpression()
+        public void TestTransformQueryableWithOrderByAndThenByDescending()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
-            Expression<Func<OneSDataRecord, int>> orderbyExpression1 = r => r.GetInt32("sort_field_1");
-            Expression<Func<OneSDataRecord, string>> orderbyExpression2 = r => r.GetString("sort_field_2");
+            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field_1");
+            Expression<Func<OneSDataRecord, string>> thenbyExpression = r => r.GetString("sort_field_2");
 
-            var testedExpression = TestHelperQueryProvider
-                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderByDescending(orderbyExpression1).ThenBy(orderbyExpression2));
+            // Arrange-Act-Assert
+            TestTransformSortingQueryable(
+                q => q.OrderBy(orderbyExpression).ThenByDescending(thenbyExpression),
+                new SortExpression(orderbyExpression, SortKind.Ascending),
+                new SortExpression(thenbyExpression, SortKind.Descending)
+                );
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае когда вызывается метод
+        /// <see cref="Queryable.OrderByDescending{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>
+        /// и
+        /// <see cref="Queryable.ThenBy{TSource,TKey}(System.Linq.IOrderedQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableWithOrderByDescendingAndThenBy()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field_1");
+            Expression<Func<OneSDataRecord, string>> thenbyExpression = r => r.GetString("sort_field_2");
+
+            // Arrange-Act-Assert
+            TestTransformSortingQueryable(
+                q => q.OrderByDescending(orderbyExpression).ThenBy(thenbyExpression),
+                new SortExpression(orderbyExpression, SortKind.Descending),
+                new SortExpression(thenbyExpression, SortKind.Ascending)
+                );
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае когда в запросе, есть и фильтрация, и сортировки и выборка данных.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableWithFilteringAndSortingAndSelecting()
+        {
+
+            // Arrange
+            var selectExpression = Trait.Of<OneSDataRecord>()
+                .SelectExpression(r => new { StringField = r.GetString("[string_field]"), IntField = r.GetInt32("[int_field]") });
+            var trait = selectExpression.GetTraitOfOutputType();
+
+            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filter_field]") == "filter_value";
+            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("[sort_key1]");
+            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("[sort_key2]");
+            Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("[sort_key3]");
+
+            var testedExpression = BuildQueryableExpression(q => q
+                    .Where(filterExpression)
+                    .OrderBy(sortKey1Expression)
+                    .ThenByDescending(sortKey2Expression)
+                    .ThenBy(sortKey3Expression)
+                    .Select(selectExpression));
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            Assert.AreEqual(SOURCE_NAME, result.Source);
-            Assert.AreEqual(2, result.Sorters.Count);
+            AssertSimpleQuery(result, 
+                filterExpression, 
+                new SortExpression(sortKey1Expression, SortKind.Ascending), 
+                new SortExpression(sortKey2Expression, SortKind.Descending),
+                new SortExpression(sortKey3Expression, SortKind.Ascending));
 
-            var sortExpression1 = result.Sorters[0];
-            Assert.AreEqual(orderbyExpression1, sortExpression1.KeyExpression);
-            Assert.AreEqual(SortKind.Descending, sortExpression1.Kind);
-
-            var sortExpression2 = result.Sorters[1];
-            Assert.AreEqual(orderbyExpression2, sortExpression2.KeyExpression);
-            Assert.AreEqual(SortKind.Ascending, sortExpression2.Kind);
-
-            Assert.IsInstanceOf<DataRecordsQuery>(result);
-        }
-
-        private static CustomDataTypeQuery<T> AssertAndCastSimpleQuery<T>(Trait<T> trait, SimpleQuery query)
-        {
-            return AssertAndCast<CustomDataTypeQuery<T>>(query);
+            var typedQuery = AssertAndCastCustomDataTypeQuery(trait, result);
+            Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
         }
     }
 }

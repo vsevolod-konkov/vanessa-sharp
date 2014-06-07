@@ -15,8 +15,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
     public sealed class QueryableExpressionVisitorTests
     {
         private Mock<IQueryableExpressionHandler> _handlerMock; 
-
         private QueryableExpressionVisitor _testedInstance;
+        private List<MemberInfo> _methodCallsLog; 
 
         private static readonly MethodInfo _handleGettingEnumeratorMethod =
             GetMethod(h => h.HandleGettingEnumerator(It.IsAny<Type>()));
@@ -47,95 +47,118 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             return OneSQueryExpressionHelper.ExtractMethodInfo(expression);
         }
 
-        /// <summary>
-        /// Получение выражения получения записей из источника данных.
-        /// </summary>
-        /// <param name="sourceName">Источник.</param>
-        private static Expression GetGetRecordsExpression(string sourceName)
-        {
-            return Expression.Call(
-                OneSQueryExpressionHelper.GetRecordsExpression(sourceName),
-                OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<OneSDataRecord>());
-        }
-
         /// <summary>Инициализация теста.</summary>
         [SetUp]
         public void SetUp()
         {
             _handlerMock = new Mock<IQueryableExpressionHandler>(MockBehavior.Strict);
-
             _testedInstance = new QueryableExpressionVisitor(_handlerMock.Object);
+            
+            _methodCallsLog = new List<MemberInfo>();
         }
 
-        /// <summary>
-        /// Тестирование посещения выражения получения записей.
-        /// </summary>
-        [Test]
-        public void TestVisitGetRecordsExpression()
+        private void HandlerSetupHandleGettingEnumerator(Type itemType)
         {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            var expectedType = typeof(OneSDataRecord);
-
-            var calls = new List<MethodInfo>();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingEnumerator(expectedType))
-                .Callback(() => calls.Add(_handleGettingEnumeratorMethod))
+            _handlerMock.Setup(h => h.HandleGettingEnumerator(itemType))
+                .Callback(() => _methodCallsLog.Add(_handleGettingEnumeratorMethod))
                 .Verifiable();
+        }
 
+        private void HandlerSetupHandleSelect(LambdaExpression selectExpression)
+        {
             _handlerMock
-                .Setup(h => h.HandleGettingRecords(SOURCE_NAME))
-                .Callback(() => calls.Add(_handleGettingRecordsMethod))
+                .Setup(h => h.HandleSelect(selectExpression))
+                .Callback(() => _methodCallsLog.Add(_handleSelectMethod))
                 .Verifiable();
+        }
 
-            var expression = GetGetRecordsExpression(SOURCE_NAME);
-            
-            // Act
-            _testedInstance.Visit(expression);
+        private void HandlerSetupHandleOrderBy(LambdaExpression sortKeyExpression)
+        {
+            _handlerMock
+                .Setup(h => h.HandleOrderBy(sortKeyExpression))
+                .Callback(() => _methodCallsLog.Add(_handleOrderByMethod))
+                .Verifiable();
+        }
 
-            // Assert
-            _handlerMock.Verify(h => h.HandleGettingEnumerator(expectedType), Times.Once());
-            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
+        private void HandlerSetupHandleOrderByDescending(LambdaExpression sortKeyExpression)
+        {
+            _handlerMock
+                .Setup(h => h.HandleOrderByDescending(sortKeyExpression))
+                .Callback(() => _methodCallsLog.Add(_handleOrderByDescendingMethod))
+                .Verifiable();
+        }
 
-            Assert.AreEqual(2, calls.Count);
-            Assert.AreEqual(_handleGettingEnumeratorMethod, calls[0]);
-            Assert.AreEqual(_handleGettingRecordsMethod, calls[1]);
+        private void HandlerSetupHandleThenBy(LambdaExpression sortKeyExpression)
+        {
+            _handlerMock
+                .Setup(h => h.HandleThenBy(sortKeyExpression))
+                .Callback(() => _methodCallsLog.Add(_handleThenByMethod))
+                .Verifiable();
+        }
+
+        private void HandlerSetupHandleThenByDescending(LambdaExpression sortKeyExpression)
+        {
+            _handlerMock
+                .Setup(h => h.HandleThenByDescending(sortKeyExpression))
+                .Callback(() => _methodCallsLog.Add(_handleThenByDescendingMethod))
+                .Verifiable();
+        }
+
+        private void HandlerSetupHandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
+        {
+            _handlerMock
+                .Setup(h => h.HandleFilter(filterExpression))
+                .Callback(() => _methodCallsLog.Add(_handleFilterMethod))
+                .Verifiable();
+        }
+
+        private void HandlerSetupHandleGettingRecords(string sourceName)
+        {
+            _handlerMock
+                .Setup(h => h.HandleGettingRecords(sourceName))
+                .Callback(() => _methodCallsLog.Add(_handleGettingRecordsMethod))
+                .Verifiable();
+        }
+
+        private void AssertMethodCalls(params MethodInfo[] expectedMethods)
+        {
+            CollectionAssert.AreEqual(expectedMethods, _methodCallsLog);
         }
 
         /// <summary>
         /// Тестирование посещения выражения выборки экземпляров анонимного типа из полученных записей.
         /// </summary>
         [Test]
-        public void TestVisitSelectExpression()
+        public void TestVisits()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
             var selectExpression = Trait
                      .Of<OneSDataRecord>()
-                     .SelectExpression(r => new {Name = r.GetString("Name"), Value = r.GetInt32("Value")});
-            
-            var calls = new List<MethodInfo>();
+                     .SelectExpression(r => new { Name = r.GetString("Name"), Value = r.GetInt32("Value") });
+            var itemType = selectExpression.GetTraitOfOutputType().Type;
 
-            var traitOfOutputType = selectExpression.GetTraitOfOutputType();
-            var itemType = traitOfOutputType.Type;
+            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("filter_value") == "filter_value";
+            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("sort_field_1");
+            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("sort_field_2");
+            Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("sort_field_3");
 
-            _handlerMock.Setup(h => h.HandleGettingEnumerator(itemType))
-                .Callback(() => calls.Add(_handleGettingEnumeratorMethod))
-                .Verifiable();
+            HandlerSetupHandleGettingEnumerator(itemType);
+            HandlerSetupHandleSelect(selectExpression);
+            HandlerSetupHandleOrderBy(sortKey1Expression);
+            HandlerSetupHandleThenBy(sortKey2Expression);
+            HandlerSetupHandleThenByDescending(sortKey3Expression);
+            HandlerSetupHandleFilter(filterExpression);
+            HandlerSetupHandleGettingRecords(SOURCE_NAME);
 
-            _handlerMock
-                .Setup(h => h.HandleSelect(selectExpression))
-                .Callback(() => calls.Add(_handleSelectMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingRecords(SOURCE_NAME))
-                .Callback(() => calls.Add(_handleGettingRecordsMethod))
-                .Verifiable();
-
-            var expression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(traitOfOutputType, SOURCE_NAME, q => q.Select(selectExpression));
+            var expression = TestHelperQueryProvider.BuildTestQueryExpression(
+                SOURCE_NAME, 
+                q => q
+                    .Where(filterExpression)
+                    .OrderBy(sortKey1Expression)
+                    .ThenBy(sortKey2Expression)
+                    .ThenByDescending(sortKey3Expression)
+                    .Select(selectExpression));
 
             // Act
             _testedInstance.Visit(expression);
@@ -143,261 +166,103 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             // Assert
             _handlerMock.Verify(h => h.HandleGettingEnumerator(itemType), Times.Once());
             _handlerMock.Verify(h => h.HandleSelect(selectExpression), Times.Once());
-            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
-
-            Assert.AreEqual(3, calls.Count);
-            Assert.AreEqual(_handleGettingEnumeratorMethod, calls[0]);
-            Assert.AreEqual(_handleSelectMethod, calls[1]);
-            Assert.AreEqual(_handleGettingRecordsMethod, calls[2]);
-        }
-
-        /// <summary>
-        /// Тестирование посещения выражения фильтрации получения записей.
-        /// </summary>
-        [Test]
-        public void TestVisitWhereRecordsExpression()
-        {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            var expectedType = typeof(OneSDataRecord);
-
-            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filterField]") == "filterValue";
-
-            var calls = new List<MethodInfo>();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingEnumerator(expectedType))
-                .Callback(() => calls.Add(_handleGettingEnumeratorMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleFilter(filterExpression))
-                .Callback(() => calls.Add(_handleFilterMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingRecords(SOURCE_NAME))
-                .Callback(() => calls.Add(_handleGettingRecordsMethod))
-                .Verifiable();
-
-            var expression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(SOURCE_NAME, q => q.Where(filterExpression));
-
-            // Act
-            _testedInstance.Visit(expression);
-
-            // Assert
-            _handlerMock.Verify(h => h.HandleGettingEnumerator(expectedType), Times.Once());
-            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
+            _handlerMock.Verify(h => h.HandleOrderBy(sortKey1Expression), Times.Once());
+            _handlerMock.Verify(h => h.HandleThenBy(sortKey2Expression), Times.Once());
+            _handlerMock.Verify(h => h.HandleThenByDescending(sortKey3Expression), Times.Once());
             _handlerMock.Verify(h => h.HandleFilter(filterExpression), Times.Once());
+            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
 
-            Assert.AreEqual(3, calls.Count);
-            Assert.AreEqual(_handleGettingEnumeratorMethod, calls[0]);
-            Assert.AreEqual(_handleFilterMethod, calls[1]);
-            Assert.AreEqual(_handleGettingRecordsMethod, calls[2]);
+            AssertMethodCalls(
+                        _handleGettingEnumeratorMethod,
+                        _handleSelectMethod,
+                        _handleThenByDescendingMethod,
+                        _handleThenByMethod,
+                        _handleOrderByMethod,
+                        _handleFilterMethod,
+                        _handleGettingRecordsMethod);
         }
 
         /// <summary>
-        /// Тестирование посещения выражения сортировки полученных записей.
+        /// Тестирование посещения выражения с вызовом метода
+        /// <see cref="Queryable.OrderByDescending{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
         /// </summary>
         [Test]
-        public void TestVisitOrderByRecordsExpression()
+        public void TestVisitOrderByDescending()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
-            var expectedType = typeof(OneSDataRecord);
+            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("sort_field_1");
+            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("sort_field_2");
 
-            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("field_int");
+            HandlerSetupHandleGettingEnumerator(typeof(OneSDataRecord));
+            HandlerSetupHandleOrderByDescending(sortKey1Expression);
+            HandlerSetupHandleThenBy(sortKey2Expression);
+            HandlerSetupHandleGettingRecords(SOURCE_NAME);
 
-            var calls = new List<MethodInfo>();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingEnumerator(expectedType))
-                .Callback(() => calls.Add(_handleGettingEnumeratorMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingRecords(SOURCE_NAME))
-                .Callback(() => calls.Add(_handleGettingRecordsMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleOrderBy(sortKeyExpression))
-                .Callback(() => calls.Add(_handleOrderByMethod))
-                .Verifiable();
-
-            var expression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderBy(sortKeyExpression));
+            var expression = TestHelperQueryProvider.BuildTestQueryExpression(
+                SOURCE_NAME,
+                q => q
+                    .OrderByDescending(sortKey1Expression)
+                    .ThenBy(sortKey2Expression));
 
             // Act
             _testedInstance.Visit(expression);
 
             // Assert
-            _handlerMock.Verify(h => h.HandleGettingEnumerator(expectedType), Times.Once());
-            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
-            _handlerMock.Verify(h => h.HandleOrderBy(sortKeyExpression), Times.Once());
-
-            Assert.AreEqual(3, calls.Count);
-            Assert.AreEqual(_handleGettingEnumeratorMethod, calls[0]);
-            Assert.AreEqual(_handleOrderByMethod, calls[1]);
-            Assert.AreEqual(_handleGettingRecordsMethod, calls[2]);
-        }
-
-        // TODO: CopyPaste TestVisitOrderByRecordsExpression
-        /// <summary>
-        /// Тестирование посещения выражения сортировки полученных записей.
-        /// </summary>
-        [Test]
-        public void TestVisitOrderByDescendingRecordsExpression()
-        {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            var expectedType = typeof(OneSDataRecord);
-
-            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("field_int");
-
-            var calls = new List<MethodInfo>();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingEnumerator(expectedType))
-                .Callback(() => calls.Add(_handleGettingEnumeratorMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingRecords(SOURCE_NAME))
-                .Callback(() => calls.Add(_handleGettingRecordsMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleOrderByDescending(sortKeyExpression))
-                .Callback(() => calls.Add(_handleOrderByDescendingMethod))
-                .Verifiable();
-
-            var expression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderByDescending(sortKeyExpression));
-
-            // Act
-            _testedInstance.Visit(expression);
-
-            // Assert
-            _handlerMock.Verify(h => h.HandleGettingEnumerator(expectedType), Times.Once());
-            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
-            _handlerMock.Verify(h => h.HandleOrderByDescending(sortKeyExpression), Times.Once());
-
-            Assert.AreEqual(3, calls.Count);
-            Assert.AreEqual(_handleGettingEnumeratorMethod, calls[0]);
-            Assert.AreEqual(_handleOrderByDescendingMethod, calls[1]);
-            Assert.AreEqual(_handleGettingRecordsMethod, calls[2]);
-        }
-
-        // TODO: CopyPaste TestVisitOrderByRecordsExpression
-        /// <summary>
-        /// Тестирование посещения выражения вторичной сортировки полученных записей.
-        /// </summary>
-        [Test]
-        public void TestVisitOrderByDescendingThenByRecordsExpression()
-        {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            var expectedType = typeof(OneSDataRecord);
-
-            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("field_int");
-            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("field_string");
-
-            var calls = new List<MethodInfo>();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingEnumerator(expectedType))
-                .Callback(() => calls.Add(_handleGettingEnumeratorMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingRecords(SOURCE_NAME))
-                .Callback(() => calls.Add(_handleGettingRecordsMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleThenBy(sortKey2Expression))
-                .Callback(() => calls.Add(_handleThenByMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleOrderByDescending(sortKey1Expression))
-                .Callback(() => calls.Add(_handleOrderByDescendingMethod))
-                .Verifiable();
-
-            var expression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderByDescending(sortKey1Expression).ThenBy(sortKey2Expression));
-
-            // Act
-            _testedInstance.Visit(expression);
-
-            // Assert
-            _handlerMock.Verify(h => h.HandleGettingEnumerator(expectedType), Times.Once());
-            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
+            _handlerMock.Verify(h => h.HandleGettingEnumerator(typeof(OneSDataRecord)), Times.Once());
             _handlerMock.Verify(h => h.HandleOrderByDescending(sortKey1Expression), Times.Once());
             _handlerMock.Verify(h => h.HandleThenBy(sortKey2Expression), Times.Once());
+            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
 
-            Assert.AreEqual(4, calls.Count);
-            Assert.AreEqual(_handleGettingEnumeratorMethod, calls[0]);
-            Assert.AreEqual(_handleThenByMethod, calls[1]);
-            Assert.AreEqual(_handleOrderByDescendingMethod, calls[2]);
-            Assert.AreEqual(_handleGettingRecordsMethod, calls[3]);
+            AssertMethodCalls(
+                        _handleGettingEnumeratorMethod,
+                        _handleThenByMethod,
+                        _handleOrderByDescendingMethod,
+                        _handleGettingRecordsMethod);
         }
 
-        // TODO: CopyPaste TestVisitOrderByRecordsExpression
         /// <summary>
-        /// Тестирование посещения выражения вторичной сортировки полученных записей.
+        /// Тестирование посещения выражения 
+        /// с двойным вызовом метода <see cref="Queryable.OrderBy{TSource,TKey}(System.Linq.IQueryable{TSource},System.Linq.Expressions.Expression{System.Func{TSource,TKey}})"/>.
         /// </summary>
         [Test]
-        public void TestVisitOrderByThenByDescendingRecordsExpression()
+        public void TestVisitDoubleOrderBy()
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
-            var expectedType = typeof(OneSDataRecord);
+            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("sort_field_1");
+            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("sort_field_2");
+            Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("sort_field_3");
 
-            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("field_int");
-            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("field_string");
+            HandlerSetupHandleGettingEnumerator(typeof(OneSDataRecord));
+            HandlerSetupHandleOrderBy(sortKey1Expression);
+            HandlerSetupHandleOrderBy(sortKey2Expression);
+            HandlerSetupHandleThenBy(sortKey3Expression);
+            HandlerSetupHandleGettingRecords(SOURCE_NAME);
 
-            var calls = new List<MethodInfo>();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingEnumerator(expectedType))
-                .Callback(() => calls.Add(_handleGettingEnumeratorMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleGettingRecords(SOURCE_NAME))
-                .Callback(() => calls.Add(_handleGettingRecordsMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleThenByDescending(sortKey2Expression))
-                .Callback(() => calls.Add(_handleThenByDescendingMethod))
-                .Verifiable();
-
-            _handlerMock
-                .Setup(h => h.HandleOrderBy(sortKey1Expression))
-                .Callback(() => calls.Add(_handleOrderByMethod))
-                .Verifiable();
-
-            var expression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(SOURCE_NAME, q => q.OrderBy(sortKey1Expression).ThenByDescending(sortKey2Expression));
+            var expression = TestHelperQueryProvider.BuildTestQueryExpression(
+                SOURCE_NAME,
+                q => q
+                    .OrderBy(sortKey1Expression)
+                    .OrderBy(sortKey2Expression)
+                    .ThenBy(sortKey3Expression));
 
             // Act
             _testedInstance.Visit(expression);
 
             // Assert
-            _handlerMock.Verify(h => h.HandleGettingEnumerator(expectedType), Times.Once());
-            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
+            _handlerMock.Verify(h => h.HandleGettingEnumerator(typeof(OneSDataRecord)), Times.Once());
             _handlerMock.Verify(h => h.HandleOrderBy(sortKey1Expression), Times.Once());
-            _handlerMock.Verify(h => h.HandleThenByDescending(sortKey2Expression), Times.Once());
+            _handlerMock.Verify(h => h.HandleOrderBy(sortKey2Expression), Times.Once()); 
+            _handlerMock.Verify(h => h.HandleThenBy(sortKey3Expression), Times.Once());
+            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
 
-            Assert.AreEqual(4, calls.Count);
-            Assert.AreEqual(_handleGettingEnumeratorMethod, calls[0]);
-            Assert.AreEqual(_handleThenByDescendingMethod, calls[1]);
-            Assert.AreEqual(_handleOrderByMethod, calls[2]);
-            Assert.AreEqual(_handleGettingRecordsMethod, calls[3]);
+            AssertMethodCalls(
+                        _handleGettingEnumeratorMethod,
+                        _handleThenByMethod,
+                        _handleOrderByMethod,
+                        _handleOrderByMethod,
+                        _handleGettingRecordsMethod);
         }
     }
 }

@@ -7,12 +7,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
     /// <summary>Вспомогательный класс для генерации linq-выражений.</summary>
     internal sealed class TestHelperQueryProvider : IQueryProvider
     {
-        public static Expression BuildTestQueryExpression<T>(Trait<T> trait, string source,
-                                                             Func<IQueryable<OneSDataRecord>, IQueryable<T>> queryAction)
-        {
-            return BuildTestQueryExpression(source, queryAction);
-        }
-
         public static Expression BuildTestQueryExpression<T>(string source,
                                                              Func<IQueryable<OneSDataRecord>, IQueryable<T>> queryAction)
         {
@@ -25,6 +19,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             return Expression.Call(
                 resultQuery.Expression,
                 OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<T>());
+        }
+
+        public static Expression BuildTestQueryExpression(string source)
+        {
+            return BuildTestQueryExpression(source, q => q);
         }
         
         public IQueryable CreateQuery(Expression expression)
