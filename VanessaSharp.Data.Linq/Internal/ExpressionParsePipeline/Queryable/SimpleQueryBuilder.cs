@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -14,234 +15,502 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
     /// </remarks>
     internal sealed class SimpleQueryBuilder : IQueryableExpressionHandler
     {
-        // TODO Рефакторинг состояний
-        /// <summary>Состояния построителя-обработчика.</summary>
-        private enum HandlerState
-        {
-            Starting,
-            Started,
-            Enumerable,
-            Sorting,
-            Sorted,
-            Selected,
-            Records,
-            Ended,
-        }
-
-        /// <summary>Текущее состояние.</summary>
-        private HandlerState _currentState = HandlerState.Starting;
-
-        /// <summary>Тип элементов в последовательности.</summary>
-        private Type _itemType;
-
-        /// <summary>Источник данных.</summary>
-        private string _sourceName;
-
-        /// <summary>Выражение фильтрации записей.</summary>
-        private Expression<Func<OneSDataRecord, bool>> _filterExpression;
-
-        /// <summary>Выражение сортировки.</summary>
-        private readonly Stack<SortExpression> _sortExpressionStack = new Stack<SortExpression>();
-
-        /// <summary>Фабрика создания запроса.</summary>
-        private Func<string, SimpleQuery> _queryFactory;
+        /// <summary>Объект текущего состояния.</summary>
+        private BuilderState _currentState;
 
         /// <summary>Конструктор.</summary>
         public SimpleQueryBuilder()
         {
-            _queryFactory = source => new DataRecordsQuery(
-                source, _filterExpression, CreateSortExpressionList());
-        }
-
-        /// <summary>Создание списка выражений сортировки.</summary>
-        private ReadOnlyCollection<SortExpression> CreateSortExpressionList()
-        {
-            return new ReadOnlyCollection<SortExpression>(
-                _sortExpressionStack.ToArray());
+            _currentState = new StartingState();
         }
 
         /// <summary>Обработка начала парсинга.</summary>
         public void HandleStart()
         {
-            if (_currentState != HandlerState.Starting)
-               ThrowException(MethodBase.GetCurrentMethod());
-
-            _currentState = HandlerState.Started;
+            _currentState = _currentState.HandleStart();
         }
 
         /// <summary>Обработка завершения парсинга.</summary>
         public void HandleEnd()
         {
-            if (_currentState != HandlerState.Records)
-                ThrowException(MethodBase.GetCurrentMethod());
-
-            _builtQuery = _queryFactory(_sourceName);
-            _currentState = HandlerState.Ended;
+            _currentState = _currentState.HandleEnd();
         }
 
         /// <summary>Получение перечислителя.</summary>
         /// <param name="itemType">Имя элемента.</param>
         public void HandleGettingEnumerator(Type itemType)
         {
-            if (_currentState != HandlerState.Started)
-                ThrowException(MethodBase.GetCurrentMethod());
-
-            _itemType = itemType;
-            _currentState = HandlerState.Enumerable;
+            _currentState = _currentState.HandleGettingEnumerator(itemType);
         }
 
         /// <summary>Обработка выборки.</summary>
         /// <param name="selectExpression">Выражение выборки.</param>
         public void HandleSelect(LambdaExpression selectExpression)
         {
-            if (_currentState != HandlerState.Enumerable)
-                ThrowException(MethodBase.GetCurrentMethod());
-
-            if (_itemType != selectExpression.ReturnType)
-            {
-                throw new InvalidOperationException(string.Format(
-                    "Тип \"{0}\" результата выборки не приемлем. Ожидался тип \"{1}\".",
-                    selectExpression.ReturnType, _itemType));
-            }
-
-            _queryFactory = source => CreateDataTypeQuery(_sourceName, _filterExpression, CreateSortExpressionList(), selectExpression);
-            _currentState = HandlerState.Selected;
+            _currentState = _currentState.HandleSelect(selectExpression);
         }
 
         /// <summary>Обработка фильтрации.</summary>
         /// <param name="filterExpression">Выражение фильтрации.</param>
         public void HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
         {
-            if (_currentState == HandlerState.Enumerable
-                ||
-                _currentState == HandlerState.Selected
-                ||
-                _currentState == HandlerState.Sorted)
-            {
-                _filterExpression = filterExpression;
-                return;
-            }
-            
-            ThrowException(MethodBase.GetCurrentMethod());
+            _currentState.HandleFilter(filterExpression);
         }
 
         /// <summary>Обработка старта сортировки.</summary>
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleOrderBy(LambdaExpression sortKeyExpression)
         {
-            if (!HandleOrderBy(sortKeyExpression, SortKind.Ascending))
-                ThrowException(MethodBase.GetCurrentMethod());
+            _currentState = _currentState.HandleOrderBy(sortKeyExpression);
         }
 
         /// <summary>Обработка старта сортировки, начиная с сортировки по убыванию..</summary>
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleOrderByDescending(LambdaExpression sortKeyExpression)
         {
-            if (!HandleOrderBy(sortKeyExpression, SortKind.Descending))
-                ThrowException(MethodBase.GetCurrentMethod());
+            _currentState = _currentState.HandleOrderByDescending(sortKeyExpression);
         }
 
         /// <summary>Обработка продолжения сортировки, по вторичным ключам.</summary>
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleThenBy(LambdaExpression sortKeyExpression)
         {
-            if (!HandleThenBy(sortKeyExpression, SortKind.Ascending))
-                ThrowException(MethodBase.GetCurrentMethod());
+            _currentState = _currentState.HandleThenBy(sortKeyExpression);
         }
 
         /// <summary>Обработка продолжения сортировки по убыванию, по вторичным ключам.</summary>
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         public void HandleThenByDescending(LambdaExpression sortKeyExpression)
         {
-            if (!HandleThenBy(sortKeyExpression, SortKind.Descending))
-                ThrowException(MethodBase.GetCurrentMethod());
-        }
-
-        /// <summary>Обработка действия сортировки.</summary>
-        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
-        /// <param name="sortKind">Порядок сортировки.</param>
-        /// <param name="newState">Новое состояние построителя после вызова метода</param>
-        /// <returns>
-        /// Возвращает <c>true</c>, если сортировка была допустима, в ином случае возвращается <c>false</c>.
-        /// </returns>
-        private bool HandleSort(LambdaExpression sortKeyExpression, SortKind sortKind, HandlerState newState)
-        {
-            if (_currentState == HandlerState.Sorted)
-                return true; // Сортировка игнорируется
-
-            if (_currentState == HandlerState.Enumerable
-                ||
-                _currentState == HandlerState.Selected
-                ||
-                _currentState == HandlerState.Sorting)
-            {
-                _sortExpressionStack.Push(new SortExpression(sortKeyExpression, sortKind));
-                _currentState = newState;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>Обработка старта сортировки.</summary>
-        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
-        /// <param name="sortKind">Порядок сортировки.</param>
-        private bool HandleOrderBy(LambdaExpression sortKeyExpression, SortKind sortKind)
-        {
-            return HandleSort(sortKeyExpression, sortKind, HandlerState.Sorted);
-        }
-
-        /// <summary>Обработка продолжения сортировки.</summary>
-        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
-        /// <param name="sortKind">Порядок сортировки.</param>
-        private bool HandleThenBy(LambdaExpression sortKeyExpression, SortKind sortKind)
-        {
-            return HandleSort(sortKeyExpression, sortKind, HandlerState.Sorting);
-        }
-
-        /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>
-        /// <param name="source">Имя источника.</param>
-        /// <param name="filterExpression">Выражение фильтрации.</param>
-        /// <param name="sortExpressionList">Список выражений сортировки.</param>
-        /// <param name="selectExpression">Выражение выборки.</param>
-        private static SimpleQuery CreateDataTypeQuery(string source, Expression<Func<OneSDataRecord, bool>> filterExpression, ReadOnlyCollection<SortExpression> sortExpressionList, LambdaExpression selectExpression)
-        {
-            var queryType = typeof(CustomDataTypeQuery<>).MakeGenericType(selectExpression.ReturnType);
-            return (SimpleQuery)Activator.CreateInstance(queryType, source, filterExpression, sortExpressionList, selectExpression);
+            _currentState = _currentState.HandleThenByDescending(sortKeyExpression);
         }
 
         /// <summary>Получение всех записей.</summary>
         /// <param name="sourceName">Имя источника.</param>
         public void HandleGettingRecords(string sourceName)
         {
-            if (_currentState != HandlerState.Enumerable && _currentState != HandlerState.Selected && _currentState != HandlerState.Sorted)
-                ThrowException(MethodBase.GetCurrentMethod());
-
-            _sourceName = sourceName;
-            _currentState = HandlerState.Records;
+            _currentState = _currentState.HandleGettingRecords(sourceName);
         }
 
         /// <summary>Построенный запрос, после обработки выражения.</summary>
         public SimpleQuery BuiltQuery
         {
-            get
-            {
-                if (_currentState != HandlerState.Ended)
-                    ThrowException(MethodBase.GetCurrentMethod());
+            get { return _currentState.BuiltQuery; }
+        }
 
-                return _builtQuery;
+        #region Классы состояний
+
+        /// <summary>Интерфейс данных состояния.</summary>
+        private interface IStateData
+        {
+            /// <summary>Выражение фильтрации записей.</summary>
+            Expression<Func<OneSDataRecord, bool>> FilterExpression { set; }
+
+            /// <summary>Добавление сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            /// <param name="sortKind">Направление сортировки.</param>
+            void AddSort(LambdaExpression sortKeyExpression, SortKind sortKind);
+
+            /// <summary>Создание объекта запроса.</summary>
+            /// <param name="sourceName">Имя источника.</param>
+            SimpleQuery CreateQuery(string sourceName);
+        }
+
+        /// <summary>Данные состояний когда не происходило выборки.</summary>
+        private sealed class StateDataWithoutSelection : IStateData
+        {
+            public StateDataWithoutSelection(Type itemType)
+            {
+                _itemType = itemType;
+            }
+            
+            /// <summary>Тип элементов в последовательности.</summary>
+            public Type ItemType
+            {
+                get { return _itemType; }
+            }
+            private readonly Type _itemType;
+
+            /// <summary>Выражение фильтрации записей.</summary>
+            public Expression<Func<OneSDataRecord, bool>> FilterExpression { get; set; }
+
+            /// <summary>Добавление сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            /// <param name="sortKind">Направление сортировки.</param>
+            public void AddSort(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                _sortExpressionStack.Push(new SortExpression(sortKeyExpression, sortKind));
+            }
+
+            /// <summary>Создание списка выражений сортировки.</summary>
+            public ReadOnlyCollection<SortExpression> CreateSortExpressionList()
+            {
+                return new ReadOnlyCollection<SortExpression>(
+                    _sortExpressionStack.ToArray());
+            }
+            
+            /// <summary>Выражение сортировки.</summary>
+            private readonly Stack<SortExpression> _sortExpressionStack = new Stack<SortExpression>();
+
+            /// <summary>Создание объекта запроса.</summary>
+            /// <param name="sourceName">Имя источника.</param>
+            public SimpleQuery CreateQuery(string sourceName)
+            {
+                return new DataRecordsQuery(sourceName, FilterExpression, CreateSortExpressionList());
             }
         }
-        private SimpleQuery _builtQuery;
 
-        /// <summary>Создание исключения недопустимой операции.</summary>
-        /// <param name="method">Метод вызываемой операции.</param>
-        private void ThrowException(MethodBase method)
+        /// <summary>Данные состояния с выражением выборки.</summary>
+        private sealed class SelectionStateData : IStateData
         {
-            throw new InvalidOperationException(string.Format(
-                "Недопустимо вызывать метод \"{0}\" в состоянии \"{1}\".",
-                method, _currentState));
+            /// <summary>Данные без выборки.</summary>
+            private readonly StateDataWithoutSelection _stateData;
+
+            /// <summary>Выражение выборки данных.</summary>
+            private readonly LambdaExpression _selectExpression;
+
+            /// <summary>Конструктор.</summary>
+            /// <param name="stateData">Данные без выборки.</param>
+            /// <param name="selectExpression">Выражение выборки данных.</param>
+            public SelectionStateData(StateDataWithoutSelection stateData, LambdaExpression selectExpression)
+            {
+                _stateData = stateData;
+                _selectExpression = selectExpression;
+            }
+
+            /// <summary>Выражение фильтрации записей.</summary>
+            public Expression<Func<OneSDataRecord, bool>> FilterExpression
+            {
+                set { _stateData.FilterExpression = value; }
+            }
+
+            /// <summary>Добавление сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            /// <param name="sortKind">Направление сортировки.</param>
+            public void AddSort(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                _stateData.AddSort(sortKeyExpression, sortKind);
+            }
+
+            /// <summary>Создание объекта запроса.</summary>
+            /// <param name="sourceName">Имя источника.</param>
+            public SimpleQuery CreateQuery(string sourceName)
+            {
+                return CreateDataTypeQuery(sourceName, _stateData.FilterExpression,
+                                           _stateData.CreateSortExpressionList(), _selectExpression);
+            }
+
+            /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>
+            /// <param name="source">Имя источника.</param>
+            /// <param name="filterExpression">Выражение фильтрации.</param>
+            /// <param name="sortExpressionList">Список выражений сортировки.</param>
+            /// <param name="selectExpression">Выражение выборки.</param>
+            private static SimpleQuery CreateDataTypeQuery(
+                string source, Expression<Func<OneSDataRecord, bool>> filterExpression,
+                ReadOnlyCollection<SortExpression> sortExpressionList, LambdaExpression selectExpression)
+            {
+                var queryType = typeof(CustomDataTypeQuery<>).MakeGenericType(selectExpression.ReturnType);
+                return (SimpleQuery)Activator.CreateInstance(queryType, source, filterExpression, sortExpressionList, selectExpression);
+            }
         }
+
+        /// <summary>Базовый класс состояний.</summary>
+        private abstract class BuilderState
+        {
+            /// <summary>Создание исключения недопустимой операции.</summary>
+            /// <param name="method">Метод вызываемой операции.</param>
+            private Exception CreateException(MethodBase method)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Недопустимо вызывать метод \"{0}\" в состоянии \"{1}\".",
+                    method, GetType()));
+            }
+
+            /// <summary>Построенный запрос, после обработки выражения.</summary>
+            public virtual SimpleQuery BuiltQuery
+            {
+                get
+                {
+                    throw CreateException(MethodBase.GetCurrentMethod());
+                }
+            }
+
+            /// <summary>Обработка начала парсинга.</summary>
+            public virtual BuilderState HandleStart()
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
+            /// <summary>Обработка завершения парсинга.</summary>
+            public virtual BuilderState HandleEnd()
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
+            /// <summary>Получение перечислителя.</summary>
+            /// <param name="itemType">Имя элемента.</param>
+            public virtual BuilderState HandleGettingEnumerator(Type itemType)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
+            /// <summary>Обработка выборки.</summary>
+            /// <param name="selectExpression">Выражение выборки.</param>
+            public virtual BuilderState HandleSelect(LambdaExpression selectExpression)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
+            /// <summary>Обработка фильтрации.</summary>
+            /// <param name="filterExpression">Выражение фильтрации.</param>
+            public virtual void HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
+            /// <summary>Обработка старта сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            public BuilderState HandleOrderBy(LambdaExpression sortKeyExpression)
+            {
+                return HandleOrderBy(sortKeyExpression, SortKind.Ascending);
+            }
+
+            /// <summary>Обработка старта сортировки, начиная с сортировки по убыванию..</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            public BuilderState HandleOrderByDescending(LambdaExpression sortKeyExpression)
+            {
+                return HandleOrderBy(sortKeyExpression, SortKind.Descending);
+            }
+
+            /// <summary>Обработка продолжения сортировки, по вторичным ключам.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            public BuilderState HandleThenBy(LambdaExpression sortKeyExpression)
+            {
+                return HandleThenBy(sortKeyExpression, SortKind.Ascending);
+            }
+
+            /// <summary>Обработка продолжения сортировки по убыванию, по вторичным ключам.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            public BuilderState HandleThenByDescending(LambdaExpression sortKeyExpression)
+            {
+                return HandleThenBy(sortKeyExpression, SortKind.Descending);
+            }
+
+            /// <summary>Получение всех записей.</summary>
+            /// <param name="sourceName">Имя источника.</param>
+            public virtual BuilderState HandleGettingRecords(string sourceName)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
+            /// <summary>Обработка старта сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            /// <param name="sortKind">Порядок сортировки.</param>
+            protected virtual BuilderState HandleOrderBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
+            /// <summary>Обработка продолжения сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            /// <param name="sortKind">Порядок сортировки.</param>
+            protected virtual BuilderState HandleThenBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+        }
+
+        /// <summary>Начальное состояние.</summary>
+        private sealed class StartingState : BuilderState
+        {
+            public override BuilderState HandleStart()
+            {
+                return new StartedState();
+            }
+        }
+
+        /// <summary>Состояние после старта.</summary>
+        private sealed class StartedState : BuilderState
+        {
+            public override BuilderState HandleGettingEnumerator(Type itemType)
+            {
+                return new EnumeratorState(itemType);
+            }
+        }
+
+        /// <summary>Завершенное состояние.</summary>
+        private sealed class EndedState : BuilderState
+        {
+            public EndedState(SimpleQuery builtQuery)
+            {
+                Contract.Requires<ArgumentNullException>(builtQuery != null);
+
+                _builtQuery = builtQuery;
+            }
+
+            /// <summary>Построенный запрос, после обработки выражения.</summary>
+            public override SimpleQuery BuiltQuery
+            {
+                get { return _builtQuery; }
+            }
+            private readonly SimpleQuery _builtQuery;
+        }
+
+        /// <summary>Состояние после получение записей из источника.</summary>
+        private sealed class GettingRecordsState : BuilderState
+        {
+            private readonly SimpleQuery _builtQuery;
+
+            public GettingRecordsState(SimpleQuery builtQuery)
+            {
+                _builtQuery = builtQuery;
+            }
+
+            /// <summary>Обработка завершения парсинга.</summary>
+            public override BuilderState HandleEnd()
+            {
+                return new EndedState(_builtQuery);
+            }
+        }
+
+        /// <summary>Базовый класс состояния с данными.</summary>
+        private abstract class StateWithDataBase : BuilderState
+        {
+            protected StateWithDataBase(IStateData data)
+            {
+                _data = data;
+            }
+            
+            /// <summary>
+            /// Данные состояния.
+            /// </summary>
+            protected IStateData Data
+            {
+                get { return _data; }
+            }
+            private readonly IStateData _data;
+
+            /// <summary>Обработка сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение выборки ключа сортировки.</param>
+            /// <param name="sortKind">Направление сортировки.</param>
+            private void HandleSort(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                Data.AddSort(sortKeyExpression, sortKind);
+            }
+
+            /// <summary>Обработка старта сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            /// <param name="sortKind">Порядок сортировки.</param>
+            protected override BuilderState HandleOrderBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                HandleSort(sortKeyExpression, sortKind);
+                return new SortedState(Data);
+            }
+
+            /// <summary>Обработка продолжения сортировки.</summary>
+            /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
+            /// <param name="sortKind">Порядок сортировки.</param>
+            protected override BuilderState HandleThenBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                HandleSort(sortKeyExpression, sortKind);
+                return new SortingState(Data);
+            }
+        }
+
+        /// <summary>
+        /// Базовый класс промежуточных состояний.
+        /// </summary>
+        private abstract class IntermediateStateBase : StateWithDataBase
+        {
+             protected IntermediateStateBase(IStateData data)
+                 : base(data)
+             {}
+
+            /// <summary>Получение всех записей.</summary>
+            /// <param name="sourceName">Имя источника.</param>
+            public sealed override BuilderState HandleGettingRecords(string sourceName)
+             {
+                 return new GettingRecordsState(
+                     Data.CreateQuery(sourceName));
+             }
+
+            /// <summary>Обработка фильтрации.</summary>
+            /// <param name="filterExpression">Выражение фильтрации.</param>
+            public sealed override void HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
+             {
+                 Data.FilterExpression = filterExpression;
+             }
+        }
+
+        /// <summary>
+        /// Состояние после получения перечислителя элементов данных.
+        /// </summary>
+        private sealed class EnumeratorState : IntermediateStateBase
+        {
+            private readonly StateDataWithoutSelection _stateDataWithoutSelection;
+            
+            public EnumeratorState(Type itemType) 
+                : this(new StateDataWithoutSelection(itemType))
+            {}
+
+            private EnumeratorState(StateDataWithoutSelection stateDataWithoutSelection) 
+                : base(stateDataWithoutSelection)
+            {
+                _stateDataWithoutSelection = stateDataWithoutSelection;
+            }
+
+            public override BuilderState HandleSelect(LambdaExpression selectExpression)
+            {
+                if (_stateDataWithoutSelection.ItemType != selectExpression.ReturnType)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Тип \"{0}\" результата выборки не приемлем. Ожидался тип \"{1}\".",
+                        selectExpression.ReturnType, _stateDataWithoutSelection.ItemType));
+                }
+
+                return new SelectedState(
+                    new SelectionStateData(_stateDataWithoutSelection, selectExpression));
+            }
+        }
+
+        /// <summary>Состояние после выборки данных.</summary>
+        private sealed class SelectedState : IntermediateStateBase
+        {
+            public SelectedState(SelectionStateData data) : base(data)
+            {}
+        }
+
+        /// <summary>
+        /// Промежуточное состояние описания сортировки.
+        /// </summary>
+        private sealed class SortingState : StateWithDataBase
+        {
+            public SortingState(IStateData data)
+                : base(data)
+            {}
+        }
+
+        /// <summary>
+        /// Состояние после описания сортировки.
+        /// </summary>
+        private sealed class SortedState : IntermediateStateBase
+        {
+            public SortedState(IStateData data) : base(data)
+            {}
+
+            protected override BuilderState HandleOrderBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                // Другие сортировки игнорируются.
+                return this;
+            }
+
+            protected override BuilderState HandleThenBy(LambdaExpression sortKeyExpression, SortKind sortKind)
+            {
+                // Другие сортировки игнорируются.
+                return this;
+            }
+        }
+
+        #endregion
     }
 }
