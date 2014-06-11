@@ -99,38 +99,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>Тестирование преобразования запроса простой выборки и сортировки записей.</summary>
-        [Test]
-        public void TestTransformOrderByOneSDataRecord()
+        [TestCase("Ascending", "", Description = "Тестирование в случае сортировки по убыванию")]
+        [TestCase("Descending", " DESC", Description = "Тестирование в случае сортировки по возрастанию")]
+        public void TestTransformOrderByOneSDataRecord(string sortKindString, string expectedSqlPart)
         {
-            // Arrange
-            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("sort_field");
-            var query = new DataRecordsQuery("[source]", null, 
-                new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sortKeyExpression, SortKind.Ascending) }));
+            var sortKind = (SortKind)Enum.Parse(typeof(SortKind), sortKindString);
 
-            // Act
-            var result = new QueryTransformer().Transform(query);
-
-            // Assert
-            var command = result.Command;
-
-            Assert.AreEqual(0, command.Parameters.Count);
-
-            Assert.AreEqual(
-                "SELECT * FROM [source] ORDER BY sort_field", command.Sql);
-
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
-            Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
-        }
-
-        // TODO: Copy Paste TestTransformOrderByOneSDataRecord
-        /// <summary>Тестирование преобразования запроса простой выборки и сортировки записей.</summary>
-        [Test]
-        public void TestTransformOrderByDescendingOneSDataRecord()
-        {
             // Arrange
             Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("sort_field");
             var query = new DataRecordsQuery("[source]", null,
-                new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sortKeyExpression, SortKind.Descending) }));
+                new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sortKeyExpression, sortKind) }));
 
             // Act
             var result = new QueryTransformer().Transform(query);
@@ -141,7 +119,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(0, command.Parameters.Count);
 
             Assert.AreEqual(
-                "SELECT * FROM [source] ORDER BY sort_field DESC", command.Sql);
+                "SELECT * FROM [source] ORDER BY sort_field" + expectedSqlPart, command.Sql);
 
             var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
