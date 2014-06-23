@@ -13,6 +13,13 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Разбор выражения.</summary>
         /// <param name="expression">Выражение.</param>
         ExpressionParseProduct Parse(Expression expression);
+
+        /// <summary>
+        /// Проверка типа на корректность использования его в виде 
+        /// типа записи данных из 1С.
+        /// </summary>
+        /// <param name="dataType">Тип данных.</param>
+        void CheckDataType(Type dataType);
     }
 
     [ContractClassFor(typeof(IExpressionParser))]
@@ -24,6 +31,11 @@ namespace VanessaSharp.Data.Linq.Internal
             Contract.Ensures(Contract.Result<ExpressionParseProduct>() != null);
 
             return null;
+        }
+
+        void IExpressionParser.CheckDataType(Type dataType)
+        {
+            Contract.Requires<ArgumentNullException>(dataType != null);
         }
     }
 }

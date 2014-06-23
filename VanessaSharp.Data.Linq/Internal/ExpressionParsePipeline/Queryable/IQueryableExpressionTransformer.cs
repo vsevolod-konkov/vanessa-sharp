@@ -16,7 +16,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// в <see cref="SimpleQuery"/>.
         /// </summary>
         /// <param name="expression">Выражение.</param>
-        SimpleQuery Transform(Expression expression);
+        ISimpleQuery Transform(Expression expression);
     }
 
     [ContractClassFor(typeof(IQueryableExpressionTransformer))]
@@ -26,10 +26,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// в <see cref="SimpleQuery"/>.
         /// </summary>
         /// <param name="expression">Выражение.</param>
-        SimpleQuery IQueryableExpressionTransformer.Transform(Expression expression)
+        ISimpleQuery IQueryableExpressionTransformer.Transform(Expression expression)
         {
             Contract.Requires<ArgumentNullException>(expression != null);
-            Contract.Ensures(Contract.Result<SimpleQuery>() != null);
+            Contract.Ensures(Contract.Result<ISimpleQuery>() != null);
 
             return null;
         }

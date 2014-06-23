@@ -12,6 +12,34 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
     [TestFixture]
     public sealed class ExpressionParserTests
     {
+        /// <summary>
+        /// Мок <see cref="IQueryableExpressionTransformer"/>.
+        /// </summary>
+        private Mock<IQueryableExpressionTransformer> _queryableExpressionTransformerMock;
+
+        /// <summary>
+        /// Мок <see cref="IOneSMappingProvider"/>.
+        /// </summary>
+        private Mock<IOneSMappingProvider> _mappingProviderMock;
+
+        /// <summary>
+        /// Тестируемый экземпляр <see cref="ExpressionParser"/>.
+        /// </summary>
+        private ExpressionParser _testedInstance;
+
+        /// <summary>
+        /// Инициализация тестируемого экземпляра.
+        /// </summary>
+        [SetUp]
+        public void SetUp()
+        {
+            _queryableExpressionTransformerMock = new Mock<IQueryableExpressionTransformer>(MockBehavior.Strict);
+            _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
+
+            _testedInstance = new ExpressionParser(
+                _queryableExpressionTransformerMock.Object, _mappingProviderMock.Object);
+        }
+        
         /// <summary>Тестирование <see cref="ExpressionParser.Parse"/>.</summary>
         [Test]
         public void TestParse()
@@ -28,28 +56,48 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             
             var simpleQueryMock = new Mock<SimpleQuery>(MockBehavior.Strict, "source", null, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
             simpleQueryMock
-                .Setup(q => q.Transform())
+                .Setup(q => q.Transform(_mappingProviderMock.Object))
                 .Returns(expressionParseProduct)
                 .Verifiable();
 
-            var queryableExpressionTransformerMock = new Mock<IQueryableExpressionTransformer>(MockBehavior.Strict);
-            queryableExpressionTransformerMock
+            _queryableExpressionTransformerMock
                 .Setup(t => t.Transform(expression))
                 .Returns(simpleQueryMock.Object)
                 .Verifiable();
 
-            var testedInstance = new ExpressionParser(queryableExpressionTransformerMock.Object);
-
             // Act
-            var result = testedInstance.Parse(expression);
+            var result = _testedInstance.Parse(expression);
 
             // Assert
             Assert.AreSame(expressionParseProduct, result);
 
-            queryableExpressionTransformerMock
+            _queryableExpressionTransformerMock
                 .Verify(t => t.Transform(expression), Times.Once());
             simpleQueryMock
-                .Verify(q => q.Transform(), Times.Once());
+                .Verify(q => q.Transform(_mappingProviderMock.Object), Times.Once());
         }
+
+        /// <summary>
+        /// Тестирование метода <see cref="ExpressionParser.CheckDataType"/>.
+        /// </summary>
+        [Test]
+        public void TestCheckDataType()
+        {
+            // Arrange
+            _mappingProviderMock
+                .Setup(p => p.CheckDataType(typeof(AnyData)))
+                .Verifiable();
+
+            // Act
+            _testedInstance.CheckDataType(typeof(AnyData));
+
+            // Assert
+            _mappingProviderMock
+                .Verify(p => p.CheckDataType(typeof(AnyData)), Times.Once());
+        }
+
+        /// <summary>Вспомогательный тип данных для тестирования.</summary>
+        public struct AnyData
+        {}
     }
 }

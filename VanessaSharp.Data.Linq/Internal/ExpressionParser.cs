@@ -22,15 +22,23 @@ namespace VanessaSharp.Data.Linq.Internal
         /// Преобразователь linq-выражения <see cref="IQueryable{T}"/>
         /// в <see cref="SimpleQuery"/>.
         /// </param>
-        internal ExpressionParser(IQueryableExpressionTransformer queryableExpressionTransformer)
+        /// <param name="mappingProvider">
+        /// Поставщик соответствия типам CLR
+        /// данным 1С.
+        /// </param>
+        internal ExpressionParser(
+            IQueryableExpressionTransformer queryableExpressionTransformer,
+            IOneSMappingProvider mappingProvider)
         {
             Contract.Requires<ArgumentNullException>(queryableExpressionTransformer != null);
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
             
             _queryableExpressionTransformer = queryableExpressionTransformer;
+            _mappingProvider = mappingProvider;
         }
 
         /// <summary>Конструктор для инициализации экзеемпляра по умолчанию.</summary>
-        private ExpressionParser() : this(QueryableExpressionTransformer.Default)
+        private ExpressionParser() : this(QueryableExpressionTransformer.Default, new OneSMappingProvider())
         {}
 
         /// <summary>
@@ -39,13 +47,29 @@ namespace VanessaSharp.Data.Linq.Internal
         /// </summary>
         private readonly IQueryableExpressionTransformer _queryableExpressionTransformer;
 
+        /// <summary>
+        /// Поставщик соответствия типам CLR
+        /// данным 1С.
+        /// </summary>
+        private readonly IOneSMappingProvider _mappingProvider;
+
         /// <summary>Разбор выражения.</summary>
         /// <param name="expression">Выражение.</param>
         public ExpressionParseProduct Parse(Expression expression)
         {
             return _queryableExpressionTransformer
                 .Transform(expression)
-                .Transform();
+                .Transform(_mappingProvider);
+        }
+
+        /// <summary>
+        /// Проверка типа на корректность использования его в виде 
+        /// типа записи данных из 1С.
+        /// </summary>
+        /// <param name="dataType">Тип данных.</param>
+        public void CheckDataType(Type dataType)
+        {
+            _mappingProvider.CheckDataType(dataType);
         }
     }
 }

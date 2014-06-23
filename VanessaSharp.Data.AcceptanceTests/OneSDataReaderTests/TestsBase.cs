@@ -17,7 +17,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         protected TestsBase(TestMode testMode) : base(testMode)
         {}
 
-        private OneSCommand GetCommand(string sql)
+        protected OneSCommand GetCommand(string sql)
         {
             return new OneSCommand
             {

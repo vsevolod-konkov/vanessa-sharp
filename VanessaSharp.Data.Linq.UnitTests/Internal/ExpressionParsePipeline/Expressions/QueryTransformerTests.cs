@@ -228,5 +228,50 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.AreSame(OneSDataRecordReaderFactory.Default, parseProduct.ItemReaderFactory);
         }
+
+        public sealed class AnyData
+        {}
+
+        /// <summary>
+        /// Тестирование <see cref="QueryTransformer.Transform{T}(TupleQuery{T})"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformTupleQuery()
+        {
+            // Arrange
+            Func<IValueConverter, object[], AnyData> anyDataReader = (c, v) => new AnyData();
+
+            var columns = new[]
+                {
+                    "Наименование", "Идентификатор", "Цена"
+                };
+
+            var selectPart = new SelectionPartParseProduct<AnyData>(
+                new ReadOnlyCollection<SqlExpression>(
+                    columns.Select(c => (SqlExpression) new SqlFieldExpression(c)).ToArray()),
+                anyDataReader);
+
+            _transformMethodsMock
+                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Returns("Тест");
+
+            _transformMethodsMock
+                .Setup(t => t.TransformSelectTypedRecord<AnyData>())
+                .Returns(selectPart);
+            
+            var testedQuery = new TupleQuery<AnyData>();
+
+            // Act
+            var result = _testedInstance.Transform(testedQuery);
+
+            // Assert
+            Assert.AreEqual(
+                "SELECT Наименование, Идентификатор, Цена FROM Тест",
+                result.Command.Sql
+                );
+
+            Assert.AreEqual(0, result.Command.Parameters.Count);
+            AssertCollectionReadExpressionParseProduct(anyDataReader, result);
+        }
     }
 }

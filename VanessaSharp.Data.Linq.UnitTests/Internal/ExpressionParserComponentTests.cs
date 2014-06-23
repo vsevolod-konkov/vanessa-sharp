@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
@@ -129,6 +130,84 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
             Assert.AreEqual(stringValue, item.StringField);
             Assert.AreEqual(intValue, item.IntField);
+        }
+
+        /// <summary>Тестирование парсинга запроса, который выбирает типизированные записи.</summary>
+        [Test]
+        public void TestParseWhenGetTypedRecords()
+        {
+            // Arrange
+            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест",
+                product.Command.Sql
+                );
+
+            Assert.AreEqual(0, product.Command.Parameters.Count);
+
+            var itemReaderFactory = AssertAndCast<NoSideEffectItemReaderFactory<AnyDataType>>(product.ItemReaderFactory);
+            var itemReader = itemReaderFactory.ItemReader;
+
+            // Assert Item Reader
+            const string TEST_NAME = "Лыжи";
+            const int TEST_ID = 10;
+            const decimal TEST_PRICE = 34.55m;
+            var testStartDate = new DateTime(2001, 09, 23);
+
+            var values = new object[]
+                {
+                    TEST_ID, TEST_PRICE, testStartDate, TEST_NAME 
+                };
+
+            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
+
+            valueConverterMock
+                .Setup(c => c.ToString(It.IsAny<object>()))
+                .Returns<object>(o => (string)o);
+            valueConverterMock
+                .Setup(c => c.ToInt32(It.IsAny<object>()))
+                .Returns<object>(o => (int)o);
+            valueConverterMock
+                .Setup(c => c.ToDecimal(It.IsAny<object>()))
+                .Returns<object>(o => (decimal)o);
+            valueConverterMock
+                .Setup(c => c.ToDateTime(It.IsAny<object>()))
+                .Returns<object>(o => (DateTime)o);
+
+            var actualItem = itemReader(valueConverterMock.Object, values);
+
+            Assert.IsNotNull(actualItem);
+            Assert.AreEqual(TEST_NAME, actualItem.Name);
+            Assert.AreEqual(TEST_ID, actualItem.Id);
+            Assert.AreEqual(TEST_PRICE, actualItem.Price);
+            Assert.AreEqual(testStartDate, actualItem.StartDate);
+        }
+
+        public abstract class DataTypeBase
+        {
+            [OneSDataColumn("Наименование")]
+            public string Name { get; set; }
+        }
+
+        [OneSDataSource("Справочник.Тест")]
+        public sealed class AnyDataType : DataTypeBase
+        {
+            [OneSDataColumn("Идентификатор")]
+            public int Id { get; set; }
+
+            [OneSDataColumn("Цена")]
+            public decimal Price { get; set; }
+
+            [OneSDataColumn("ДатаНачала")]
+            public DateTime StartDate { get; set; }
         }
     }
 }

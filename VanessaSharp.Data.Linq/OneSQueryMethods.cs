@@ -12,5 +12,11 @@ namespace VanessaSharp.Data.Linq
         {
             throw new InvalidCallLinqMethodException(MethodBase.GetCurrentMethod());
         }
+
+        /// <summary>Создание запроса получения типизированных записей из табличного источника данных 1С.</summary>
+        public static IQueryable<T> GetTypedRecords<T>()
+        {
+            throw new InvalidCallLinqMethodException(MethodBase.GetCurrentMethod());
+        }
     }
 }

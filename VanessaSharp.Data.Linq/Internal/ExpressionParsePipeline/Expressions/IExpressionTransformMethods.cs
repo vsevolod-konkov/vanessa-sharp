@@ -29,6 +29,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
         SqlFieldExpression TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression);
+
+        /// <summary>Получение имени источника данных для типизированной записи.</summary>
+        /// <typeparam name="T">Тип записи.</typeparam>
+        string GetTypedRecordSourceName<T>();
+        
+        /// <summary>Преобразование получения типизированных записей.</summary>
+        /// <typeparam name="T">Тип записей.</typeparam>
+        SelectionPartParseProduct<T> TransformSelectTypedRecord<T>();
     }
 
     /// <summary>
@@ -72,6 +80,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Ensures(Contract.Result<SqlFieldExpression>() != null);
+
+            return null;
+        }
+
+        /// <summary>Получение имени источника данных для типизированной записи.</summary>
+        /// <typeparam name="T">Тип записи.</typeparam>
+        string IExpressionTransformMethods.GetTypedRecordSourceName<T>()
+        {
+            Contract.Ensures(!string.IsNullOrWhiteSpace(Contract.Result<string>()));
+
+            return null;
+        }
+
+        /// <summary>Преобразование получения типизированных записей.</summary>
+        /// <typeparam name="T">Тип записей.</typeparam>
+        SelectionPartParseProduct<T> IExpressionTransformMethods.TransformSelectTypedRecord<T>()
+        {
+            Contract.Ensures(Contract.Result<SelectionPartParseProduct<T>>() != null);
 
             return null;
         }

@@ -77,6 +77,7 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformerBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionTransformMethods.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionVisitorBase.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\FieldAccessExpressionTransformerBaseOfTResult.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IExpressionTransformMethods.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\OrderByExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\ISimpleQuery.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\IQueryableExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortExpression.cs" />
@@ -113,22 +115,28 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlQueryStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSelectStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlWhereStatement.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\TupleQuery.cs" />
     <Compile Include="Internal\ExpressionParseProduct.cs" />
     <Compile Include="Internal\CollectionReadExpressionParseProduct.cs" />
     <Compile Include="Internal\ExpressionParser.cs" />
     <Compile Include="Internal\IExpressionParser.cs" />
     <Compile Include="Internal\IItemReaderFactory.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\IQueryableExpressionHandler.cs" />
+    <Compile Include="Internal\IOneSMappingProvider.cs" />
     <Compile Include="Internal\ISqlCommandExecuter.cs" />
     <Compile Include="Internal\ISqlResultReader.cs" />
     <Compile Include="Internal\ItemEnumerator.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactory.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionVisitor.cs" />
+    <Compile Include="Internal\OneSFieldMapping.cs" />
+    <Compile Include="Internal\OneSMappingProvider.cs" />
+    <Compile Include="Internal\OneSTypeMapping.cs" />
     <Compile Include="Internal\SqlCommand.cs" />
     <Compile Include="Internal\SqlCommandExecuter.cs" />
     <Compile Include="Internal\SqlParameter.cs" />
     <Compile Include="Internal\SqlResultReader.cs" />
     <Compile Include="InvalidCallLinqMethodException.cs" />
+    <Compile Include="InvalidDataTypeException.cs" />
     <Compile Include="IOneSQueryProvider.cs" />
     <Compile Include="Internal\NoSideEffectItemReaderFactory.cs" />
     <Compile Include="OneSCatalogDataContext.cs" />

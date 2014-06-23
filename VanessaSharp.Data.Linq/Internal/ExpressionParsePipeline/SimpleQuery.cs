@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
     /// <summary>Простой объект запроса.</summary>
-    internal abstract class SimpleQuery
+    internal abstract class SimpleQuery : ISimpleQuery
     {
         /// <summary>Конструктор.</summary>
         /// <param name="source">Источник записей.</param>
@@ -47,6 +47,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         public abstract Type ItemType { get; }
 
         /// <summary>Преобразование.</summary>
-        public abstract ExpressionParseProduct Transform();
+        public abstract ExpressionParseProduct Transform(IOneSMappingProvider mappingProvider);
     }
 }

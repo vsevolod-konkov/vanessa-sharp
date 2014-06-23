@@ -223,5 +223,26 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var typedQuery = AssertAndCastCustomDataTypeQuery(trait, result);
             Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
         }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае запроса типизированных кортежей.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableTuple()
+        {
+            // Arrange
+            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            Assert.IsInstanceOf<TupleQuery<AnyDataType>>(result);
+        }
+
+        public sealed class AnyDataType
+        {}
     }
 }

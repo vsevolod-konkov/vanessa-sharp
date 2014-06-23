@@ -69,6 +69,36 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.AreEqual(SOURCE_NAME, argument.Value);
         }
 
+        /// <summary>Вспомогательный тип для тестов.</summary>
+        public struct AnyData
+        {}
+
+        /// <summary>
+        /// Тестирование <see cref="OneSQueryProvider.CreateQueryOf{T}"/>.
+        /// </summary>
+        [Test]
+        public void TestCreateCreateQueryOfAnyData()
+        {
+            // Arrange
+            _expressionParserMock
+                .Setup(p => p.CheckDataType(typeof(AnyData)))
+                .Verifiable();
+
+            // Act
+            var result = _testedInstance.CreateQueryOf<AnyData>();
+
+            // Assert
+            var query = AssertAndCast<OneSQueryable<AnyData>>(result);
+
+            Assert.AreSame(_testedInstance, query.Provider);
+
+            var methodCallExpression = AssertAndCast<MethodCallExpression>(query.Expression);
+            Assert.AreEqual(OneSQueryExpressionHelper.GetGetTypedRecordsMethodInfo<AnyData>(), methodCallExpression.Method);
+
+            _expressionParserMock
+                .Verify(p => p.CheckDataType(typeof(AnyData)), Times.Once());
+        }
+
         /// <summary>
         /// Тестирование <see cref="OneSQueryProvider.Execute{TResult}"/>
         /// в случае если выражение имеет тип несовместимый с типом результата.

@@ -21,12 +21,24 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             return TestHelperQueryProvider.BuildTestQueryExpression(SOURCE_NAME, queryAction);
         }
 
-        internal static CustomDataTypeQuery<T> AssertAndCastCustomDataTypeQuery<T>(Trait<T> trait, SimpleQuery query)
+        internal static CustomDataTypeQuery<T> AssertAndCastCustomDataTypeQuery<T>(Trait<T> trait, ISimpleQuery query)
         {
             return AssertAndCast<CustomDataTypeQuery<T>>(query);
         }
 
-        internal static void AssertSimpleQuery(SimpleQuery testedQuery,
+        // TODO Упростить
+        internal static void AssertSimpleQuery(ISimpleQuery testedQuery,
+                                               Expression<Func<OneSDataRecord, bool>> expectedFilter = null,
+                                               params SortExpression[] expectedSorters)
+        {
+            AssertSimpleQuery(
+                AssertAndCast<SimpleQuery>(testedQuery),
+                expectedFilter,
+                expectedSorters
+                );
+        }
+
+        private static void AssertSimpleQuery(SimpleQuery testedQuery,
                                               Expression<Func<OneSDataRecord, bool>> expectedFilter = null,
                                               params SortExpression[] expectedSorters)
         {
@@ -47,7 +59,19 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             Assert.AreEqual(expectedSortExpression.KeyExpression, actualSortExpression.KeyExpression);
         }
 
-        internal static void AssertDataRecordsQuery(SimpleQuery testedQuery,
+        // TODO Упростить
+        internal static void AssertDataRecordsQuery(ISimpleQuery testedQuery,
+                                                   Expression<Func<OneSDataRecord, bool>> expectedFilter = null,
+                                                   params SortExpression[] expectedSorters)
+        {
+            AssertDataRecordsQuery(
+                AssertAndCast<SimpleQuery>(testedQuery),
+                expectedFilter,
+                expectedSorters
+                );
+        }
+
+        private static void AssertDataRecordsQuery(SimpleQuery testedQuery,
                                                    Expression<Func<OneSDataRecord, bool>> expectedFilter = null,
                                                    params SortExpression[] expectedSorters)
         {

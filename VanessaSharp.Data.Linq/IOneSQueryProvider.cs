@@ -21,6 +21,12 @@ namespace VanessaSharp.Data.Linq
         /// </summary>
         /// <param name="sourceName">Имя источника данных.</param>
         IQueryable<OneSDataRecord> CreateGetRecordsQuery(string sourceName);
+
+        /// <summary>
+        /// Создание объекта запроса возвращающего записи описываемые типом <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">Тип запрашиваемых записей.</typeparam>
+        IQueryable<T> CreateQueryOf<T>();
     }
 
     [ContractClassFor(typeof(IOneSQueryProvider))]
@@ -40,6 +46,13 @@ namespace VanessaSharp.Data.Linq
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
             Contract.Ensures(Contract.Result<IQueryable<OneSDataRecord>>() != null);
+
+            return null;
+        }
+
+        IQueryable<T> IOneSQueryProvider.CreateQueryOf<T>()
+        {
+            Contract.Ensures(Contract.Result<IQueryable<T>>() != null);
 
             return null;
         }

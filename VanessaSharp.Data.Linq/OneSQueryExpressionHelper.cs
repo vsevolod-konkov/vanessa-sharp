@@ -61,6 +61,16 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _getRecordsMethodInfo = GetGetRecordsMethodInfo();
 
+        /// <summary>
+        /// Метод <see cref="OneSQueryMethods.GetTypedRecords{T}"/>.
+        /// </summary>
+        /// <typeparam name="T">Тип запрашиваемых записей данных.</typeparam>
+        public static MethodInfo GetGetTypedRecordsMethodInfo<T>()
+        {
+            return ExtractMethodInfo<Func<IQueryable<T>>>(
+                () => OneSQueryMethods.GetTypedRecords<T>());
+        }
+
         private static Type GetSingleParameterType(Type genericType)
         {
             Contract.Requires<ArgumentNullException>(genericType != null);
@@ -340,6 +350,13 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _valueConverterToInt32Method = GetValueConverterMethod(c => c.ToInt32(0));
 
+        /// <summary>Метод <see cref="IValueConverter.ToDecimal"/>.</summary>
+        public static MethodInfo ValueConverterToDecimalMethod
+        {
+            get { return _valueConverterToDecimalMethod; }
+        }
+        private static readonly MethodInfo _valueConverterToDecimalMethod = GetValueConverterMethod(c => c.ToDecimal(0.0m));
+
         /// <summary>Метод <see cref="IValueConverter.ToDouble"/>.</summary>
         public static MethodInfo ValueConverterToDoubleMethod
         {
@@ -368,6 +385,33 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _valueConverterToCharMethod = GetValueConverterMethod(c => c.ToChar(""));
 
+        /// <summary>
+        /// Получение метода <see cref="IValueConverter"/>
+        /// для конвертации значения к типу <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">Тип к которому необходимо конвертировать значение.</param>
+        public static MethodInfo GetValueConvertMethod(Type type)
+        {
+            Contract.Requires<ArgumentNullException>(type != null);
+
+            MethodInfo method;
+            if (_valueConvertMethodsMap.TryGetValue(type, out method))
+                return method;
+
+            throw new InvalidOperationException(string.Format(
+                "Для типа \"{0}\" не найден метод конвертации значения 1С.", type));
+        }
+        private static readonly Dictionary<Type, MethodInfo> _valueConvertMethodsMap = new Dictionary<Type, MethodInfo>
+            {
+                { typeof(string), ValueConverterToStringMethod },
+                { typeof(int), ValueConverterToInt32Method },
+                { typeof(decimal), ValueConverterToDecimalMethod },
+                { typeof(double), ValueConverterToDoubleMethod },
+                { typeof(bool), ValueConverterToBooleanMethod },
+                { typeof(DateTime), ValueConverterToDateTimeMethod },
+                { typeof(char), ValueConverterToCharMethod }
+            };
+
         #endregion
 
         /// <summary>
@@ -391,6 +435,40 @@ namespace VanessaSharp.Data.Linq
 
             return Expression.Call(GetRecordsMethodInfo,
                     Expression.Constant(sourceName));
+        }
+
+        /// <summary>
+        /// Генерация выражения получения типизированных записей.
+        /// </summary>
+        public static Expression GetTypedRecordsExpression<T>()
+        {
+            Contract.Ensures(Contract.Result<Expression>() != null);
+
+            return Expression.Call(GetGetTypedRecordsMethodInfo<T>());
+        }
+
+        /// <summary>
+        /// Определение того является ли метод методом <see cref="OneSQueryMethods.GetTypedRecords{T}"/>.
+        /// </summary>
+        /// <param name="method">Проверяемый метода.</param>
+        /// <param name="dataType">Тип запрашиваемых записей.</param>
+        public static bool IsGetTypedRecordsMethod(MethodInfo method, out Type dataType)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            const string GET_TYPED_RECORDS_METHOD_NAME = "GetTypedRecords";
+
+            if (method.DeclaringType == typeof(OneSQueryMethods)
+                && method.IsStatic
+                && method.Name == GET_TYPED_RECORDS_METHOD_NAME
+                && method.IsGenericMethod)
+            {
+                dataType = method.GetGenericArguments()[0];
+                return true;
+            }
+
+            dataType = default(Type);
+            return false;
         }
 
         /// <summary>Получение типа результата выражения.</summary>

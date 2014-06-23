@@ -66,5 +66,33 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.AreSame(expectedQuery, result);
             _queryProviderMock.Verify(provider => provider.CreateGetRecordsQuery(SOURCE_NAME), Times.Once());
         }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataContext.Get{T}"/>.
+        /// </summary>
+        [Test]
+        public void TestGetOf()
+        {
+            // Arrange
+            var expectedQuery = new Mock<IQueryable<AnyData>>(MockBehavior.Strict).Object;
+
+            _queryProviderMock
+                .Setup(provider => provider.CreateQueryOf<AnyData>())
+                .Returns(expectedQuery)
+                .Verifiable();
+
+            // Act
+            var result = _testedInstance.Get<AnyData>();
+
+            // Assert
+            Assert.AreSame(expectedQuery, result);
+            _queryProviderMock.Verify(provider => provider.CreateQueryOf<AnyData>(), Times.Once());
+        }
+
+        /// <summary>
+        /// Тестовый тип.
+        /// </summary>
+        public struct AnyData
+        { }    
     }
 }

@@ -21,6 +21,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                     new ICallMethodHandler[]
                         {
                             new CallGettingRecordsHandler(),
+                            new CallGettingTypedRecordsHandler(), 
                             new CallEnumerableGetEnumeratorHandler(),
                             new CallQueryableSelectHandler(),
                             new CallQueryableWhereHandler(), 
@@ -132,6 +133,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         }
 
         /// <summary>
+        /// Обработчик вызова метода <see cref="OneSQueryMethods.GetTypedRecords{T}"/>.
+        /// </summary>
+        private sealed class CallGettingTypedRecordsHandler : ICallMethodHandler
+        {
+            public bool CheckAndHandle(IQueryableExpressionHandler handler, MethodCallExpression node, out Expression childNode)
+            {
+                childNode = null;
+                Type dataType;
+                if (!OneSQueryExpressionHelper.IsGetTypedRecordsMethod(node.Method, out dataType))
+                    return false;
+
+                handler.HandleGettingTypedRecords(dataType);
+                childNode = node.Object;
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Обработчик вызова метода <see cref="IEnumerable{T}.GetEnumerator"/>.
         /// </summary>
         private sealed class CallEnumerableGetEnumeratorHandler : ICallMethodHandler
@@ -214,8 +233,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 
                 var lambdaType = lambdaExpression.Type;
                 if (lambdaType.IsGenericType
-                    && lambdaType.GetGenericTypeDefinition() == typeof(Func<,>)
-                    && lambdaType.GetGenericArguments()[EXPRESSION_SOURCE_TYPE_INDEX] == typeof(OneSDataRecord))
+                    && lambdaType.GetGenericTypeDefinition() == typeof(Func<,>))
                 {
                     Handle(handler, lambdaExpression);
                     return true;

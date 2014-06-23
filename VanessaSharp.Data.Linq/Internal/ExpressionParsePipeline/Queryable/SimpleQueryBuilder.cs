@@ -92,10 +92,25 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             _currentState = _currentState.HandleGettingRecords(sourceName);
         }
 
+        /// <summary>Получение всех типизированных записей.</summary>
+        /// <param name="dataType">Тип запрашиваемых записей.</param>
+        public void HandleGettingTypedRecords(Type dataType)
+        {
+            _currentState = _currentState.HandleGettingTypedRecords(dataType);
+        }
+
         /// <summary>Построенный запрос, после обработки выражения.</summary>
-        public SimpleQuery BuiltQuery
+        public ISimpleQuery BuiltQuery
         {
             get { return _currentState.BuiltQuery; }
+        }
+
+        /// <summary>Создание <see cref="TupleQuery{T}"/>.</summary>
+        /// <param name="dataType">Тип данных.</param>
+        private static ISimpleQuery CreateTupleQuery(Type dataType)
+        {
+            var queryType = typeof(TupleQuery<>).MakeGenericType(dataType);
+            return (ISimpleQuery)Activator.CreateInstance(queryType);
         }
 
         #region Классы состояний
@@ -227,7 +242,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             }
 
             /// <summary>Построенный запрос, после обработки выражения.</summary>
-            public virtual SimpleQuery BuiltQuery
+            public virtual ISimpleQuery BuiltQuery
             {
                 get
                 {
@@ -303,6 +318,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 throw CreateException(MethodBase.GetCurrentMethod());
             }
 
+            /// <summary>Получение всех типизированных записей.</summary>
+            /// <param name="dataType">Тип запрашиваемых записей.</param>
+            public virtual BuilderState HandleGettingTypedRecords(Type dataType)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
             /// <summary>Обработка старта сортировки.</summary>
             /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
             /// <param name="sortKind">Порядок сортировки.</param>
@@ -341,7 +363,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// <summary>Завершенное состояние.</summary>
         private sealed class EndedState : BuilderState
         {
-            public EndedState(SimpleQuery builtQuery)
+            public EndedState(ISimpleQuery builtQuery)
             {
                 Contract.Requires<ArgumentNullException>(builtQuery != null);
 
@@ -349,19 +371,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             }
 
             /// <summary>Построенный запрос, после обработки выражения.</summary>
-            public override SimpleQuery BuiltQuery
+            public override ISimpleQuery BuiltQuery
             {
                 get { return _builtQuery; }
             }
-            private readonly SimpleQuery _builtQuery;
+            private readonly ISimpleQuery _builtQuery;
         }
 
         /// <summary>Состояние после получение записей из источника.</summary>
         private sealed class GettingRecordsState : BuilderState
         {
-            private readonly SimpleQuery _builtQuery;
+            private readonly ISimpleQuery _builtQuery;
 
-            public GettingRecordsState(SimpleQuery builtQuery)
+            public GettingRecordsState(ISimpleQuery builtQuery)
             {
                 _builtQuery = builtQuery;
             }
@@ -468,8 +490,33 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                         selectExpression.ReturnType, _stateDataWithoutSelection.ItemType));
                 }
 
+                // Для тривиального выражения ничего не делается.
+                if (IsTrivial(selectExpression))
+                    return this;
+
                 return new SelectedState(
                     new SelectionStateData(_stateDataWithoutSelection, selectExpression));
+            }
+
+            private static bool IsTrivial(LambdaExpression lambda)
+            {
+                Contract.Assert(lambda.Parameters.Count == 1);
+
+                var parameter = lambda.Parameters[0];
+
+                return lambda.Body == parameter;
+            }
+
+            public override BuilderState HandleGettingTypedRecords(Type dataType)
+            {
+                if (_stateDataWithoutSelection.ItemType != dataType)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Тип \"{0}\" для получения записей неприемлем. Ожидался тип \"{1}\".",
+                        dataType, _stateDataWithoutSelection.ItemType));
+                }
+
+                return new GettingRecordsState(CreateTupleQuery(dataType));
             }
         }
 

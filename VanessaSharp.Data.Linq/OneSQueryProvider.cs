@@ -63,6 +63,17 @@ namespace VanessaSharp.Data.Linq
             return CreateQuery<OneSDataRecord>(OneSQueryExpressionHelper.GetRecordsExpression(sourceName));
         }
 
+        /// <summary>
+        /// Создание объекта запроса возвращающего записи описываемые типом <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">Тип запрашиваемых записей.</typeparam>
+        public IQueryable<T> CreateQueryOf<T>()
+        {
+            _expressionParser.CheckDataType(typeof(T));
+            
+            return CreateQuery<T>(OneSQueryExpressionHelper.GetTypedRecordsExpression<T>());
+        }
+
         // TODO: Реализовать
         /// <summary>
         /// Создает объект <see cref="T:System.Linq.IQueryable"/>, который позволяет вычислить запрос, представленный заданным деревом выражения.

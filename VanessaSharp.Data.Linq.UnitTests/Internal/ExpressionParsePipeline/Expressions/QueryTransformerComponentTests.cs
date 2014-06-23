@@ -16,6 +16,20 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
     [TestFixture]
     public sealed class QueryTransformerComponentTests : QueryTransformerTestsBase
     {
+        private Mock<IOneSMappingProvider> _mappingProviderMock;
+
+        private QueryTransformer _testedInstance;
+
+        /// <summary>
+        /// Инициализация теста.
+        /// </summary>
+        [SetUp]
+        public void SetUp()
+        {
+            _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
+            _testedInstance = new QueryTransformer(_mappingProviderMock.Object);
+        }
+        
         /// <summary>
         /// Тестирование преобразования запроса с выборкой элементов анонимного типа.
         /// </summary>
@@ -32,7 +46,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var query = CreateQuery(SOURCE_NAME, selectExpression);
 
             // Act
-            var result = new QueryTransformer().Transform(query);
+            var result = _testedInstance.Transform(query);
 
             // Assert
             var command = result.Command;
@@ -82,7 +96,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var query = new DataRecordsQuery("[source]", r => r.GetString("filter_field") == FILTER_VALUE, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
 
             // Act
-            var result = new QueryTransformer().Transform(query);
+            var result = _testedInstance.Transform(query);
 
             // Assert
             var command = result.Command;
@@ -111,7 +125,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sortKeyExpression, sortKind) }));
 
             // Act
-            var result = new QueryTransformer().Transform(query);
+            var result = _testedInstance.Transform(query);
 
             // Assert
             var command = result.Command;

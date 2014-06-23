@@ -21,7 +21,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// в <see cref="SimpleQuery"/>.
         /// </summary>
         /// <param name="expression">Выражение.</param>
-        public SimpleQuery Transform(Expression expression)
+        public ISimpleQuery Transform(Expression expression)
         {
             var handler = new SimpleQueryBuilder();
             var visitor = new QueryableExpressionVisitor(handler);

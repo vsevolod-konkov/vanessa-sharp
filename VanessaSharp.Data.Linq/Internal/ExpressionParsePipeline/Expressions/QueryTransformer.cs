@@ -24,8 +24,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private readonly IExpressionTransformMethods _expressionTransformMethods;
 
         /// <summary>Конструктор использования.</summary>
-        public QueryTransformer()
-            : this(ExpressionTransformMethods.Default)
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
+        public QueryTransformer(IOneSMappingProvider mappingProvider)
+            : this(new ExpressionTransformMethods(mappingProvider))
         {}
 
         /// <summary>Конструктор для unit-тестирования.</summary>
@@ -64,6 +65,32 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<OneSDataRecord>>() != null);
 
             return GetExpressionParseProduct(query, _recordSelectPart);
+        }
+
+        /// <summary>
+        /// Преобразование запроса в результат 
+        /// разбора выражения.
+        /// </summary>
+        /// <param name="query">Запрос.</param>
+        public CollectionReadExpressionParseProduct<T> Transform<T>(TupleQuery<T> query)
+        {
+            Contract.Requires<ArgumentNullException>(query != null);
+            Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<T>>() != null);
+
+            var selectPartProduct = _expressionTransformMethods.TransformSelectTypedRecord<T>();
+            
+            // TODO Копипаст
+            var selectPart = new SelectPartInfo<T>(
+                new SqlColumnListExpression(selectPartProduct.Columns),
+                new NoSideEffectItemReaderFactory<T>(selectPartProduct.SelectionFunc));
+
+            var sourceName = _expressionTransformMethods.GetTypedRecordSourceName<T>();
+
+            var queryStatement = new SqlQueryStatement(
+               selectPart.Statement, new SqlFromStatement(sourceName), null, null);
+
+            return GetExpressionParseProduct(
+                queryStatement, selectPart.ItemReaderFactory);
         }
 
         private CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(

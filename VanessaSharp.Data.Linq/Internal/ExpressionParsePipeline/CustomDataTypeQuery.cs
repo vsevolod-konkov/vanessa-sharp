@@ -45,9 +45,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         private readonly Expression<Func<OneSDataRecord, T>> _selectExpression;
 
         /// <summary>Преобразование.</summary>
-        public override ExpressionParseProduct Transform()
+        public override ExpressionParseProduct Transform(IOneSMappingProvider mappingProvider)
         {
-            return new QueryTransformer().Transform(this);
+            return new QueryTransformer(mappingProvider).Transform(this);
         }
     }
 }

@@ -104,7 +104,8 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             using (var dataContext = new OneSDataContext(Connection))
             {
-                var records = dataContext.GetRecords("Справочник.ТестовыйСправочник");
+                var records = from r in dataContext.GetRecords("Справочник.ТестовыйСправочник")
+                              select r;
 
                 var recordCounter = 0;
                 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
@@ -10,15 +11,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     /// </summary>
     internal sealed class ExpressionTransformMethods : IExpressionTransformMethods
     {
-        /// <summary>Экземпляр по умолчанию.</summary>
-        public static IExpressionTransformMethods Default
+        /// <summary>Конструктор.</summary>
+        /// <param name="mappingProvider">
+        /// Поставщик соответствий типов источникам данных.
+        /// </param>
+        public ExpressionTransformMethods(IOneSMappingProvider mappingProvider)
         {
-            get { return _default; }
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
+
+            _typedRecordParseProductBuilder = new TypedRecordParseProductBuilder(mappingProvider);
         }
-        private static readonly IExpressionTransformMethods _default = new ExpressionTransformMethods();
-        
-        private ExpressionTransformMethods()
-        {}
+
+        /// <summary>Построитель конструкций запроса для типизированных записей.</summary>
+        private readonly TypedRecordParseProductBuilder _typedRecordParseProductBuilder;
         
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
         /// <typeparam name="T">Тип элементов последовательности - результатов выборки.</typeparam>
@@ -46,6 +51,20 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             QueryParseContext context, LambdaExpression sortKeyExpression)
         {
             return OrderByExpressionTransformer.Transform(context, sortKeyExpression);
+        }
+
+        /// <summary>Получение имени источника данных для типизированной записи.</summary>
+        /// <typeparam name="T">Тип записи.</typeparam>
+        public string GetTypedRecordSourceName<T>()
+        {
+            return _typedRecordParseProductBuilder.GetTypedRecordSourceName<T>();
+        }
+
+        /// <summary>Преобразование получения типизированных записей.</summary>
+        /// <typeparam name="T">Тип записей.</typeparam>
+        public SelectionPartParseProduct<T> TransformSelectTypedRecord<T>()
+        {
+            return _typedRecordParseProductBuilder.GetSelectPartParseProductForTypedRecord<T>();
         }
     }
 }

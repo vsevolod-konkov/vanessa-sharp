@@ -48,6 +48,7 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="Internal\CollectionReadExpressionParseProductTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilderTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\SimpleQueryBuildingTestsBase.cs" />
     <Compile Include="Internal\ExpressionParserComponentTests.cs" />
     <Compile Include="Internal\ExpressionParserTests.cs" />
@@ -56,6 +57,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerTestsBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\WhereExpressionTransformerTests.cs" />
     <Compile Include="Internal\ItemEnumeratorTests.cs" />
+    <Compile Include="Internal\OneSMappingProviderTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactoryTests.cs" />
     <Compile Include="OneSDataRecordTests.cs" />

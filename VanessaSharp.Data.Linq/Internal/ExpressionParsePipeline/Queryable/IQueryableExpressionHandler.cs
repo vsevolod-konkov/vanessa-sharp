@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
@@ -48,6 +47,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// <summary>Получение всех записей.</summary>
         /// <param name="sourceName">Имя источника.</param>
         void HandleGettingRecords(string sourceName);
+
+        /// <summary>Получение всех типизированных записей.</summary>
+        /// <param name="dataType">Тип запрашиваемых записей.</param>
+        void HandleGettingTypedRecords(Type dataType);
     }
 
     [ContractClassFor(typeof(IQueryableExpressionHandler))]
@@ -69,8 +72,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             Contract.Requires<ArgumentNullException>(selectExpression != null);
             Contract.Requires<ArgumentException>(
                 selectExpression.Type.IsGenericType 
-                && selectExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
-                && selectExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+                && selectExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
         void IQueryableExpressionHandler.HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
@@ -117,6 +119,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         void IQueryableExpressionHandler.HandleGettingRecords(string sourceName)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
+        }
+
+        void IQueryableExpressionHandler.HandleGettingTypedRecords(Type dataType)
+        {
+            Contract.Requires<ArgumentNullException>(dataType != null);
         }
     }
 }
