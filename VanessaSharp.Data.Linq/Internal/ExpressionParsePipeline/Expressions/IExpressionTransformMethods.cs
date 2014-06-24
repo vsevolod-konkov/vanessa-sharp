@@ -19,11 +19,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             QueryParseContext context, Expression<Func<OneSDataRecord, T>> selectExpression);
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
+        /// <typeparam name="T">Тип элементов.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="filterExpression">Выражение фильтрации.</param>
-        SqlCondition TransformWhereExpression(
+        SqlCondition TransformWhereExpression<T>(
             QueryParseContext context,
-            Expression<Func<OneSDataRecord, bool>> filterExpression);
+            Expression<Func<T, bool>> filterExpression);
 
         /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
@@ -60,10 +61,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
+        /// <typeparam name="T">Тип элементов.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="filterExpression">Выражение фильтрации.</param>
         SqlCondition 
-            IExpressionTransformMethods.TransformWhereExpression(QueryParseContext context, Expression<Func<OneSDataRecord, bool>> filterExpression)
+            IExpressionTransformMethods.TransformWhereExpression<T>(QueryParseContext context, Expression<Func<T, bool>> filterExpression)
         {
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(filterExpression != null);

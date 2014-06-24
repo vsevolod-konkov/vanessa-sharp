@@ -11,8 +11,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Конструктор принимающий выражение записи данных.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи данных.</param>
-        private OrderByExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression)
-            : base(context, recordExpression)
+        private OrderByExpressionTransformer(
+            IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
+            : base(mappingProvider, context, recordExpression)
         {}
 
         /// <summary>Выражение указывающее на поле сортировки.</summary>
@@ -27,26 +28,30 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Фабрика преобразователя.</summary>
         private sealed class Factory : TransformerFactoryBase
         {
-            public override FieldAccessExpressionTransformerBase<SqlFieldExpression> Create(QueryParseContext context, ParameterExpression recordExpression)
+            public override FieldAccessExpressionTransformerBase<SqlFieldExpression> Create(
+                IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
             {
-                return new OrderByExpressionTransformer(context, recordExpression);
+                return new OrderByExpressionTransformer(mappingProvider, context, recordExpression);
             }
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора.</param>
         /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
         public static SqlFieldExpression Transform(
+            IOneSMappingProvider mappingProvider,
             QueryParseContext context,
             LambdaExpression sortKeyExpression)
         {
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Requires<ArgumentException>(sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
             Contract.Requires<ArgumentException>(sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
             Contract.Ensures(Contract.Result<SqlFieldExpression>() != null);
 
-            return Transform<Factory>(context, sortKeyExpression);
+            return Transform<Factory>(mappingProvider, context, sortKeyExpression);
         }
 
         /// <summary>Посещение доступа к полю.</summary>

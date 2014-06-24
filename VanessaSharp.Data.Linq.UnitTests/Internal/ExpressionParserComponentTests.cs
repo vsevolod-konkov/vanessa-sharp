@@ -132,31 +132,22 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             Assert.AreEqual(intValue, item.IntField);
         }
 
-        /// <summary>Тестирование парсинга запроса, который выбирает типизированные записи.</summary>
-        [Test]
-        public void TestParseWhenGetTypedRecords()
+        /// <summary>
+        /// Проверка корректного создания фабрики читателя типизированного кортежа.
+        /// </summary>
+        /// <param name="testedItemReaderFactory">
+        /// Тестируемая фабрика читателя типизированного кортежа
+        /// </param>
+        private static void AssertTypedTupleReaderFactory(IItemReaderFactory<AnyDataType> testedItemReaderFactory)
         {
-            // Arrange
-            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
-            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+            var noSideEffectReaderFactory = AssertAndCast<NoSideEffectItemReaderFactory<AnyDataType>>(testedItemReaderFactory);
+            AssertTypedTupleReader(noSideEffectReaderFactory.ItemReader);
+        }
 
-            // Act
-            var result = _testedInstance.Parse(testedExpression);
-
-            // Assert
-            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
-
-            Assert.AreEqual(
-                "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест",
-                product.Command.Sql
-                );
-
-            Assert.AreEqual(0, product.Command.Parameters.Count);
-
-            var itemReaderFactory = AssertAndCast<NoSideEffectItemReaderFactory<AnyDataType>>(product.ItemReaderFactory);
-            var itemReader = itemReaderFactory.ItemReader;
-
-            // Assert Item Reader
+        /// <summary>Проверка корректного создания читателя типизированного кортежа.</summary>
+        /// <param name="testedItemReader">Тестируемый читатель типизированного кортежа.</param>
+        private static void AssertTypedTupleReader(Func<IValueConverter, object[], AnyDataType> testedItemReader)
+        {
             const string TEST_NAME = "Лыжи";
             const int TEST_ID = 10;
             const decimal TEST_PRICE = 34.55m;
@@ -182,13 +173,64 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 .Setup(c => c.ToDateTime(It.IsAny<object>()))
                 .Returns<object>(o => (DateTime)o);
 
-            var actualItem = itemReader(valueConverterMock.Object, values);
+            var actualItem = testedItemReader(valueConverterMock.Object, values);
 
             Assert.IsNotNull(actualItem);
             Assert.AreEqual(TEST_NAME, actualItem.Name);
             Assert.AreEqual(TEST_ID, actualItem.Id);
             Assert.AreEqual(TEST_PRICE, actualItem.Price);
             Assert.AreEqual(testStartDate, actualItem.StartDate);
+        }
+
+        /// <summary>Тестирование парсинга запроса, который выбирает типизированные записи.</summary>
+        [Test]
+        public void TestParseWhenGetTypedRecords()
+        {
+            // Arrange
+            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест",
+                product.Command.Sql
+                );
+
+            Assert.AreEqual(0, product.Command.Parameters.Count);
+            AssertTypedTupleReaderFactory(product.ItemReaderFactory);
+        }
+
+        /// <summary>Тестирование парсинга запроса, который выбирает типизированные записи c фильтрацией.</summary>
+        [Test]
+        public void TestParseWhenGetTypedRecordsWithFilter()
+        {
+            // Arrange
+            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
+            query = query.Where(d => d.Name == "Тест");
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
+
+            Assert.AreEqual(1, product.Command.Parameters.Count);
+            var parameter = product.Command.Parameters[0];
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест WHERE Наименование = &" + parameter.Name,
+                product.Command.Sql
+                );
+
+
+            Assert.AreEqual("Тест", parameter.Value);
+            AssertTypedTupleReaderFactory(product.ItemReaderFactory);
         }
 
         public abstract class DataTypeBase

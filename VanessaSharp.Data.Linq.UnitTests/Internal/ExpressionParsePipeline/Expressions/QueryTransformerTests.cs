@@ -259,7 +259,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
             
-            var testedQuery = new TupleQuery<AnyData>();
+            var testedQuery = new TupleQuery<AnyData>(null);
 
             // Act
             var result = _testedInstance.Transform(testedQuery);
@@ -271,6 +271,69 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 );
 
             Assert.AreEqual(0, result.Command.Parameters.Count);
+            AssertCollectionReadExpressionParseProduct(anyDataReader, result);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryTransformer.Transform{T}(TupleQuery{T})"/>
+        /// с фильтром.
+        /// </summary>
+        [Test]
+        public void TestTransformTupleWithFilterQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Returns("Тест");
+
+            Expression<Func<AnyData, bool>> filterExpression = d => true;
+
+            string parameterName = null;
+            const string FILTER_VALUE = "filter_value";
+            _transformMethodsMock
+                .Setup(t => t.TransformWhereExpression(It.IsAny<QueryParseContext>(), filterExpression))
+                .Callback<QueryParseContext, Expression<Func<AnyData, bool>>>((ctx, e) =>
+                    {
+                        parameterName = ctx.Parameters.GetOrAddNewParameterName(FILTER_VALUE);
+                    })
+                .Returns(() =>
+                    new SqlBinaryRelationCondition(
+                        SqlBinaryRelationType.Equal, 
+                        new SqlFieldExpression("КраткоеИмя"),
+                        new SqlParameterExpression(parameterName)));
+                
+
+            Func<IValueConverter, object[], AnyData> anyDataReader = (c, v) => new AnyData();
+
+            var columns = new[]
+                {
+                    "Наименование", "Идентификатор", "Цена"
+                };
+
+            var selectPart = new SelectionPartParseProduct<AnyData>(
+                new ReadOnlyCollection<SqlExpression>(
+                    columns.Select(c => (SqlExpression)new SqlFieldExpression(c)).ToArray()),
+                anyDataReader);
+
+            _transformMethodsMock
+                .Setup(t => t.TransformSelectTypedRecord<AnyData>())
+                .Returns(selectPart);
+
+            var testedQuery = new TupleQuery<AnyData>(filterExpression);
+
+            // Act
+            var result = _testedInstance.Transform(testedQuery);
+
+            // Assert
+            Assert.AreEqual(1, result.Command.Parameters.Count);
+            var parameter = result.Command.Parameters[0];
+            
+            Assert.AreEqual(
+                "SELECT Наименование, Идентификатор, Цена FROM Тест WHERE КраткоеИмя = &" + parameter.Name,
+                result.Command.Sql
+                );
+            Assert.AreEqual(parameterName, parameter.Name);
+            
             AssertCollectionReadExpressionParseProduct(anyDataReader, result);
         }
     }

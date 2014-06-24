@@ -26,7 +26,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 
         /// <summary>Обработка фильтрации.</summary>
         /// <param name="filterExpression">Выражение фильтрации.</param>
-        void HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression);
+        void HandleFilter(LambdaExpression filterExpression);
 
         /// <summary>Обработка старта сортировки.</summary>
         /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
@@ -75,7 +75,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 && selectExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
-        void IQueryableExpressionHandler.HandleFilter(Expression<Func<OneSDataRecord, bool>> filterExpression)
+        void IQueryableExpressionHandler.HandleFilter(LambdaExpression filterExpression)
         {
             Contract.Requires<ArgumentNullException>(filterExpression != null);
         }

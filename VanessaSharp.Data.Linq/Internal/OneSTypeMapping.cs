@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Reflection;
 
 namespace VanessaSharp.Data.Linq.Internal
 {
@@ -24,6 +26,19 @@ namespace VanessaSharp.Data.Linq.Internal
             get { return _fieldMappings; }
         }
         private readonly ReadOnlyCollection<OneSFieldMapping> _fieldMappings;
+
+        /// <summary>Получение имени поля в источнике данных, соответствующего члену типа.</summary>
+        /// <param name="memberInfo">Член типа.</param>
+        public string GetFieldNameByMemberInfo(MemberInfo memberInfo)
+        {
+            Contract.Requires<ArgumentNullException>(memberInfo != null);
+
+            var fieldMapping = _fieldMappings.SingleOrDefault(m => m.MemberInfo.MetadataToken == memberInfo.MetadataToken);
+
+            return fieldMapping == null
+                       ? null
+                       : fieldMapping.FieldName;
+        }
 
         /// <summary>
         /// Имя источника данных 1С соответсвующего данному типу.

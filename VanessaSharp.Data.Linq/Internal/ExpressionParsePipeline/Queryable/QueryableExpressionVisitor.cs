@@ -229,8 +229,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 
             protected sealed override bool CheckExpressionAndHandle(IQueryableExpressionHandler handler, LambdaExpression lambdaExpression)
             {
-                const int EXPRESSION_SOURCE_TYPE_INDEX = 0;
-
                 var lambdaType = lambdaExpression.Type;
                 if (lambdaType.IsGenericType
                     && lambdaType.GetGenericTypeDefinition() == typeof(Func<,>))
@@ -273,11 +271,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 
             protected override bool CheckExpressionAndHandle(IQueryableExpressionHandler handler, LambdaExpression lambdaExpression)
             {
-                var typedFilterExpression = lambdaExpression as Expression<Func<OneSDataRecord, bool>>;
-                if (typedFilterExpression == null)
-                    return false;
-
-                handler.HandleFilter(typedFilterExpression);
+                handler.HandleFilter(lambdaExpression);
                 return true;
             }
         }

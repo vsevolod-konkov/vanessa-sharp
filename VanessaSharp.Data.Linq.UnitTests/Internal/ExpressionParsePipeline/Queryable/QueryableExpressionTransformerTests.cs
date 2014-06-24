@@ -242,7 +242,31 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             Assert.IsInstanceOf<TupleQuery<AnyDataType>>(result);
         }
 
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае запроса типизированных кортежей.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableTupleWithFilter()
+        {
+            // Arrange
+            Expression<Func<AnyDataType, bool>> filterExpression = d => d.Id == 5;
+
+            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
+            query = query.Where(filterExpression);
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            var typedQuery = AssertAndCast<TupleQuery<AnyDataType>>(result);
+            Assert.AreSame(filterExpression, typedQuery.Filter);
+        }
+
         public sealed class AnyDataType
-        {}
+        {
+            public int Id;
+        }
     }
 }

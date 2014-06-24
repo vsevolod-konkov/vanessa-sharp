@@ -86,8 +86,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
             var sourceName = _expressionTransformMethods.GetTypedRecordSourceName<T>();
 
+            var whereStatement = ParseFilterExpression(query.Filter);
+
             var queryStatement = new SqlQueryStatement(
-               selectPart.Statement, new SqlFromStatement(sourceName), null, null);
+               selectPart.Statement, new SqlFromStatement(sourceName), whereStatement, null);
 
             return GetExpressionParseProduct(
                 queryStatement, selectPart.ItemReaderFactory);
@@ -128,7 +130,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 new NoSideEffectItemReaderFactory<T>(part.SelectionFunc));
         }
 
-        private SqlWhereStatement ParseFilterExpression(Expression<Func<OneSDataRecord, bool>> filterExpression)
+        private SqlWhereStatement ParseFilterExpression<T>(Expression<Func<T, bool>> filterExpression)
         {
             if (filterExpression == null)
                 return null;

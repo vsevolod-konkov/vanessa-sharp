@@ -13,10 +13,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private readonly StackEngine _stackEngine = new StackEngine(); 
 
         /// <summary>Конструктор.</summary>
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи данных.</param>
-        private WhereExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression)
-            : base(context, recordExpression)
+        private WhereExpressionTransformer(IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
+            : base(mappingProvider, context, recordExpression)
         {}
 
         /// <summary>Получение результата трансформации.</summary>
@@ -29,26 +30,32 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private sealed class Factory : TransformerFactoryBase
         {
             /// <summary>Создание преобразователя выражения.</summary>
+            /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
             /// <param name="context">Контекст разбора запроса.</param>
             /// <param name="recordExpression">Выражение записи данных</param>
-            public override FieldAccessExpressionTransformerBase<SqlCondition> Create(QueryParseContext context, ParameterExpression recordExpression)
+            public override FieldAccessExpressionTransformerBase<SqlCondition> Create(
+                IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
             {
-                return new WhereExpressionTransformer(context, recordExpression);
+                return new WhereExpressionTransformer(mappingProvider, context, recordExpression);
             }
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
+        /// <typeparam name="T">Тип фильтруемых элементов.</typeparam>
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора.</param>
         /// <param name="filterExpression">Фильтрация выражения.</param>
-        public static SqlCondition Transform(
+        public static SqlCondition Transform<T>(
+            IOneSMappingProvider mappingProvider,
             QueryParseContext context, 
-            Expression<Func<OneSDataRecord, bool>> filterExpression)
+            Expression<Func<T, bool>> filterExpression)
         {
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(filterExpression != null);
             Contract.Ensures(Contract.Result<SqlCondition>() != null);
 
-            return Transform<Factory>(context, filterExpression);
+            return Transform<Factory>(mappingProvider, context, filterExpression);
         }
 
         /// <summary>Посещение доступа к полю.</summary>

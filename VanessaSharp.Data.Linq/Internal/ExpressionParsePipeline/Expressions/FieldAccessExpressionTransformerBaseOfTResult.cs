@@ -10,12 +10,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         where TResult : class
     {
         /// <summary>Конструктор.</summary>
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи данных.</param>
-        protected FieldAccessExpressionTransformerBase(QueryParseContext context, ParameterExpression recordExpression)
-            : base(context, recordExpression)
-        {
-        }
+        protected FieldAccessExpressionTransformerBase(IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
+            : base(mappingProvider, context, recordExpression)
+        {}
 
         /// <summary>Получение результата трансформации.</summary>
         protected abstract TResult GetTransformResult();
@@ -45,19 +45,20 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
         /// <summary>Преобразование лямбда-выражения.</summary>
         /// <typeparam name="TFactory">Тип фабрики преобразователя.</typeparam>
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="lambda">Преобразуемое лямбда выражение.</param>
-        protected static TResult Transform<TFactory>(QueryParseContext context, LambdaExpression lambda)
+        protected static TResult Transform<TFactory>(IOneSMappingProvider mappingProvider, QueryParseContext context, LambdaExpression lambda)
             where TFactory : TransformerFactoryBase,  new()
         {
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(lambda != null);
             Contract.Requires<ArgumentException>(lambda.Type.GetGenericTypeDefinition() == typeof(Func<,>));
-            Contract.Requires<ArgumentException>(lambda.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
             Contract.Ensures(Contract.Result<TResult>() != null);
             
             return new TFactory()
-                .Create(context, lambda.Parameters[0])
+                .Create(mappingProvider, context, lambda.Parameters[0])
                 .TransformBody(lambda.Body);
         }
 
@@ -67,10 +68,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         protected abstract class TransformerFactoryBase
         {
             /// <summary>Создание преобразователя выражения.</summary>
+            /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
             /// <param name="context">Контекст разбора запроса.</param>
             /// <param name="recordExpression">Выражение записи данных</param>
             public abstract FieldAccessExpressionTransformerBase<TResult> Create(
-                QueryParseContext context, ParameterExpression recordExpression);
+                IOneSMappingProvider mappingProvider,
+                QueryParseContext context,
+                ParameterExpression recordExpression);
         }
     }
 }

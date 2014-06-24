@@ -138,5 +138,65 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
         }
+
+        /// <summary>
+        /// Тестирование преобразования запроса фильтрации типизированных кортежей.
+        /// </summary>
+        [Test]
+        public void TestTransformFilterTypedTuple()
+        {
+            // Arrange
+            var typeMapping = new OneSTypeMapping(
+                "ТестовыйИсточник",
+                new ReadOnlyCollection<OneSFieldMapping>(
+                    new[]
+                        {
+                            CreateFieldMapping(d => d.Id, "Идентификатор"),
+                            CreateFieldMapping(d => d.Name, "Наименование"),
+                            CreateFieldMapping(d => d.Price, "Цена")
+                        }));
+
+            _mappingProviderMock
+                .Setup(p => p.GetTypeMapping(typeof(AnyData)))
+                .Returns(typeMapping);
+            
+            const string FILTER_VALUE = "filter_value";
+
+            Expression<Func<AnyData, bool>> filterExpression = d => d.Name == FILTER_VALUE;
+            
+            var query = new TupleQuery<AnyData>(filterExpression);
+
+            // Act
+            var result = _testedInstance.Transform(query);
+
+            // Assert
+            var command = result.Command;
+
+            Assert.AreEqual(1, command.Parameters.Count);
+            var parameter = command.Parameters[0];
+            Assert.AreEqual(FILTER_VALUE, parameter.Value);
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Наименование, Цена FROM ТестовыйИсточник WHERE Наименование = &" + parameter.Name, command.Sql);
+
+            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<AnyData>>(result);
+            Assert.IsInstanceOf<NoSideEffectItemReaderFactory<AnyData>>(parseProduct.ItemReaderFactory);
+        }
+
+        private static OneSFieldMapping CreateFieldMapping<T>(Expression<Func<AnyData, T>> accessor, string fieldName)
+        {
+            var memberInfo = ((MemberExpression)accessor.Body).Member;
+
+            return new OneSFieldMapping(memberInfo, fieldName);
+        }
+
+        public sealed class AnyData
+        {
+            public int Id;
+
+            public string Name;
+
+            public decimal Price;
+        }
     }
 }

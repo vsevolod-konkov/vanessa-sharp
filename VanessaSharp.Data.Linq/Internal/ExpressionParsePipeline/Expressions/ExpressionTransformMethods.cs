@@ -19,8 +19,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             Contract.Requires<ArgumentNullException>(mappingProvider != null);
 
+            _mappingProvider = mappingProvider;
             _typedRecordParseProductBuilder = new TypedRecordParseProductBuilder(mappingProvider);
         }
+
+        /// <summary>
+        /// Поставщик соответствий типам источников данных 1С.
+        /// </summary>
+        private readonly IOneSMappingProvider _mappingProvider;
 
         /// <summary>Построитель конструкций запроса для типизированных записей.</summary>
         private readonly TypedRecordParseProductBuilder _typedRecordParseProductBuilder;
@@ -36,12 +42,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
+        /// <typeparam name="T">Тип элементов.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="filterExpression">Фильтрация выражения.</param>
-        public SqlCondition TransformWhereExpression(
-            QueryParseContext context, Expression<Func<OneSDataRecord, bool>> filterExpression)
+        /// <param name="filterExpression">Выражение фильтрации.</param>
+        public SqlCondition TransformWhereExpression<T>(
+            QueryParseContext context, Expression<Func<T, bool>> filterExpression)
         {
-            return WhereExpressionTransformer.Transform(context, filterExpression);
+            return WhereExpressionTransformer.Transform(_mappingProvider, context, filterExpression);
         }
 
         /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
@@ -50,7 +57,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public SqlFieldExpression TransformOrderByExpression(
             QueryParseContext context, LambdaExpression sortKeyExpression)
         {
-            return OrderByExpressionTransformer.Transform(context, sortKeyExpression);
+            return OrderByExpressionTransformer.Transform(_mappingProvider, context, sortKeyExpression);
         }
 
         /// <summary>Получение имени источника данных для типизированной записи.</summary>

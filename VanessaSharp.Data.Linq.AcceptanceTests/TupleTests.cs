@@ -10,12 +10,12 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
     /// Тестирование получения данных.
     /// </summary>
     #if REAL_MODE
-    [TestFixture(TestMode.Real, false)]
-    [TestFixture(TestMode.Real, true)]
+    //[TestFixture(TestMode.Real, false)]
+    //[TestFixture(TestMode.Real, true)]
     #endif
     #if ISOLATED_MODE
     [TestFixture(TestMode.Isolated, false)]
-    [TestFixture(TestMode.Isolated, true)]
+    //[TestFixture(TestMode.Isolated, true)]
     #endif
     public sealed class TupleTests : ReadDataTestBase
     {
@@ -93,6 +93,69 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
                 AssertSql(
                     "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник");
+                AssertSqlParameters(new Dictionary<string, object>());
+            }
+        }
+
+        // TODO Копипаст GettingDataRecordsTests.TestSelectSimpleQuery
+        /// <summary>Тестирование выполнения простого запроса с фильтрацией.</summary>
+        [Test]
+        public void TestFilteringAndSelectQuery()
+        {
+            BeginDefineData();
+
+            Field<string>("СтроковоеПоле");
+            Field<double>("ЦелочисленноеПоле");
+            Field<double>("ЧисловоеПоле");
+            Field<bool>("БулевоПоле");
+            Field<DateTime>("ДатаПоле");
+
+            Row
+            (
+                "Тестирование", 
+                234, 546.323, true,
+                new DateTime(2014, 01, 15)
+            );
+
+
+            EndDefineData();
+
+            Assert.AreEqual(5, ExpectedFieldsCount);
+
+            using (var dataContext = new OneSDataContext(Connection))
+            {
+                var entries = from e in dataContext.Get<TestDictionary>()
+                              where e.StringField == "Тестирование"
+                              select new
+                                  {
+                                      String = e.StringField,
+                                      Integer = e.IntegerField,
+                                      Real = e.RealField,
+                                      Boolean = e.BooleanField,
+                                      Date = e.DateField
+                                  };
+
+                var recordCounter = 0;
+
+                foreach (var entry in entries)
+                {
+                    Assert.Less(recordCounter, ExpectedRowsCount);
+
+                    SetCurrentExpectedRow(recordCounter);
+
+                    Assert.AreEqual(ExpectedFieldValue("СтроковоеПоле"), entry.String);
+                    Assert.AreEqual(ExpectedFieldValue("ЦелочисленноеПоле"), entry.Integer);
+                    Assert.AreEqual(ExpectedFieldValue("ЧисловоеПоле"), entry.Real);
+                    Assert.AreEqual(ExpectedFieldValue("БулевоПоле"), entry.Boolean);
+                    Assert.AreEqual(ExpectedFieldValue("ДатаПоле"), entry.Date);
+
+                    ++recordCounter;
+                }
+
+                Assert.AreEqual(ExpectedRowsCount, recordCounter);
+
+                AssertSql(
+                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник");
                 AssertSqlParameters(new Dictionary<string, object>());
             }
         }

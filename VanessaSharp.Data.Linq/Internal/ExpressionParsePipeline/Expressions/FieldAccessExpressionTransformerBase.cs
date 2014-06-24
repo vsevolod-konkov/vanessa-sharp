@@ -35,15 +35,22 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
         private readonly ParameterExpression _recordExpression;
 
+        /// <summary>
+        /// Поставщик соответствий типам источников данных 1С.
+        /// </summary>
+        private readonly IOneSMappingProvider _mappingProvider;
+
         /// <summary>Конструктор.</summary>
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи данных.</param>
-        protected FieldAccessExpressionTransformerBase(QueryParseContext context, ParameterExpression recordExpression)
+        protected FieldAccessExpressionTransformerBase(IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
         {
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(recordExpression != null);
-            Contract.Requires<ArgumentException>(recordExpression.Type == typeof(OneSDataRecord));
 
+            _mappingProvider = mappingProvider;
             _context = context;
             _recordExpression = recordExpression;
         }
@@ -66,11 +73,32 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
                     return node;
                 }
-
-                throw CreateExpressionNotSupportedException(node);
             }
 
             return base.VisitMethodCall(node);
+        }
+
+        /// <summary>
+        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.MemberExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
+        protected override Expression VisitMember(MemberExpression node)
+        {
+            if (node.Expression == RecordExpression)
+            {
+                var typeMapping = _mappingProvider.GetTypeMapping(RecordExpression.Type);
+                var fieldName = typeMapping.GetFieldNameByMemberInfo(node.Member);
+                if (fieldName != null)
+                {
+                    VisitFieldAccess(new SqlFieldExpression(fieldName));
+                    return node;
+                }
+            }
+            
+            return base.VisitMember(node);
         }
 
         /// <summary>Посещение доступа к полю.</summary>
