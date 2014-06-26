@@ -201,18 +201,53 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                         itemType, InputItemType));
                 }
                 
+                if (InputItemType != _outputItemType)
+                {
+                    // TODO: Нормальное сообщение
+                    throw new InvalidOperationException();
+                }
+
                 Contract.Assert(InputItemType != typeof(OneSDataRecord));
 
-                return CreateTupleQuery(InputItemType, FilterExpression);
+                return CreateTupleQuery(InputItemType, _outputItemType, null, FilterExpression);
             }
 
-            /// <summary>Создание <see cref="TupleQuery{T}"/>.</summary>
-            /// <param name="dataType">Тип данных.</param>
-            /// <param name="filterExpression">Выражение фильтрации.</param>
-            private static ISimpleQuery CreateTupleQuery(Type dataType, LambdaExpression filterExpression)
+            // TODO : Копипаста
+            public ISimpleQuery CreateQuery(Type itemType, LambdaExpression selectExpression)
             {
-                var queryType = typeof(TupleQuery<>).MakeGenericType(dataType);
-                return (ISimpleQuery)Activator.CreateInstance(queryType, filterExpression);
+                if (InputItemType != itemType)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Тип \"{0}\" для получения записей неприемлем. Ожидался тип \"{1}\".",
+                        itemType, InputItemType));
+                }
+
+                if (InputItemType != _outputItemType && selectExpression == null)
+                {
+                    // TODO: Нормальное сообщение
+                    throw new InvalidOperationException();
+                }
+
+                if (selectExpression.ReturnType != _outputItemType)
+                {
+                    // TODO: Нормальное сообщение
+                    throw new InvalidOperationException();
+                }
+
+                Contract.Assert(InputItemType != typeof(OneSDataRecord));
+
+                return CreateTupleQuery(InputItemType, _outputItemType, selectExpression, FilterExpression);
+            }
+
+            /// <summary>Создание <see cref="TupleQuery{TInput, TOutput}"/>.</summary>
+            /// <param name="inputType">Тип данных исходной последовательности.</param>
+            /// <param name="outputType">Тип данных выходной последовательности.</param>
+            /// <param name="selectExpression">Выражение выборки.</param>
+            /// <param name="filterExpression">Выражение фильтрации.</param>
+            private static ISimpleQuery CreateTupleQuery(Type inputType, Type outputType, LambdaExpression selectExpression, LambdaExpression filterExpression)
+            {
+                var queryType = typeof(TupleQuery<,>).MakeGenericType(inputType, outputType);
+                return (ISimpleQuery)Activator.CreateInstance(queryType, selectExpression, filterExpression);
             }
 
             private void CheckLambdaExpression(LambdaExpression lambda)
@@ -299,7 +334,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// <summary>Создание объекта запроса.</summary>
             public ISimpleQuery CreateQuery(Type itemType)
             {
-                throw new NotSupportedException();
+                return _stateData.CreateQuery(itemType, _selectExpression);
             }
 
             /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>

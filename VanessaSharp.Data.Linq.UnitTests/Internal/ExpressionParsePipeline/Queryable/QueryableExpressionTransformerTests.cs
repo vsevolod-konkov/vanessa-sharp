@@ -239,7 +239,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            Assert.IsInstanceOf<TupleQuery<AnyDataType>>(result);
+            var tupleQuery = AssertAndCast<TupleQuery<AnyDataType, AnyDataType>>(result);
+            Assert.IsNull(tupleQuery.Selector);
+            Assert.IsNull(tupleQuery.Filter);
         }
 
         /// <summary>
@@ -260,8 +262,40 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var typedQuery = AssertAndCast<TupleQuery<AnyDataType>>(result);
+            var typedQuery = AssertAndCast<TupleQuery<AnyDataType, AnyDataType>>(result);
+            Assert.IsNull(typedQuery.Selector);
             Assert.AreSame(filterExpression, typedQuery.Filter);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае запроса типизированных кортежей.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableTupleWithSelect()
+        {
+            // Arrange
+            var selectExpression = Trait.Of<AnyDataType>().SelectExpression(d => new {DataId = d.Id});
+            var trait = selectExpression.GetTraitOfOutputType();
+
+            var query = TestHelperQueryProvider
+                .QueryOf<AnyDataType>()
+                .Select(selectExpression);
+            
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            var tupleQuery = AssertAndCastTupleQuery(trait, result);
+            Assert.AreSame(selectExpression, tupleQuery.Selector);
+            Assert.IsNull(tupleQuery.Filter);
+        }
+
+        private static TupleQuery<AnyDataType, TOutput> AssertAndCastTupleQuery<TOutput>(Trait<TOutput> outputTrait, ISimpleQuery query)
+        {
+            return AssertAndCast<TupleQuery<AnyDataType, TOutput>>(query);
         }
 
         public sealed class AnyDataType

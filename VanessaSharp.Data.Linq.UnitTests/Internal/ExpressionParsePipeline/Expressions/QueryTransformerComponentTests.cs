@@ -164,7 +164,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Expression<Func<AnyData, bool>> filterExpression = d => d.Name == FILTER_VALUE;
             
-            var query = new TupleQuery<AnyData>(filterExpression);
+            var query = new TupleQuery<AnyData, AnyData>(null, filterExpression);
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -183,12 +183,93 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.IsInstanceOf<NoSideEffectItemReaderFactory<AnyData>>(parseProduct.ItemReaderFactory);
         }
 
+        /// <summary>
+        /// Тестирование преобразования запроса выборки типизированных кортежей.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectTypedTuple()
+        {
+            // Arrange
+            var typeMapping = new OneSTypeMapping(
+                "ТестовыйИсточник",
+                new ReadOnlyCollection<OneSFieldMapping>(
+                    new[]
+                        {
+                            CreateFieldMapping(d => d.Id, "Идентификатор"),
+                            CreateFieldMapping(d => d.Name, "Наименование"),
+                            CreateFieldMapping(d => d.Price, "Цена")
+                        }));
+
+            _mappingProviderMock
+                .Setup(p => p.GetTypeMapping(typeof(AnyData)))
+                .Returns(typeMapping);
+
+            var selectExpression = Trait.Of<AnyData>().SelectExpression(d => new {d.Id, d.Price});
+
+            var query = CreateTupleQuery(selectExpression, null);
+
+            // Act
+            var result = _testedInstance.Transform(query);
+
+            // Assert
+            var command = result.Command;
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Цена FROM ТестовыйИсточник", command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            var factory = AssertAndCastNoSideEffectItemReaderFactory(result.ItemReaderFactory);
+            
+            // Test Item Reader
+            // TODO: Копипаста
+            var itemReader = factory.ItemReader;
+
+            // Arrange
+            const int INT32_VALUE = 34;
+            const decimal NUMBER_VALUE = 45.65m;
+
+            
+            var values = new object[] { INT32_VALUE, NUMBER_VALUE };
+            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
+            
+            valueConverterMock
+                .Setup(c => c.ToInt32(values[0]))
+                .Returns(INT32_VALUE)
+                .Verifiable();
+            valueConverterMock
+                .Setup(c => c.ToDecimal(values[1]))
+                .Returns(NUMBER_VALUE)
+                .Verifiable();
+
+            // Act
+            var item = itemReader(valueConverterMock.Object, values);
+
+
+            // Assert
+            Assert.AreEqual(INT32_VALUE, item.Id);
+            Assert.AreEqual(NUMBER_VALUE, item.Price);
+
+            valueConverterMock
+                .Verify(c => c.ToInt32(values[0]), Times.Once());
+            valueConverterMock
+                .Verify(c => c.ToDecimal(values[1]), Times.Once());
+            
+        }
+
         private static OneSFieldMapping CreateFieldMapping<T>(Expression<Func<AnyData, T>> accessor, string fieldName)
         {
             var memberInfo = ((MemberExpression)accessor.Body).Member;
 
             return new OneSFieldMapping(memberInfo, fieldName);
         }
+
+        private static TupleQuery<AnyData, T> CreateTupleQuery<T>(Expression<Func<AnyData, T>> selectExpression,
+                                                                  Expression<Func<AnyData, bool>> filterExpression)
+        {
+            return new TupleQuery<AnyData, T>(selectExpression, filterExpression);
+        }
+
+        
 
         public sealed class AnyData
         {

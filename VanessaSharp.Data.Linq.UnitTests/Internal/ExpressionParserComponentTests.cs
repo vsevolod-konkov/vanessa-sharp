@@ -23,7 +23,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         }
 
         private static NoSideEffectItemReaderFactory<T> AssertAndCastNoSideEffectItemReaderFactory<T>(
-            Trait<T> trait, IItemReaderFactory<T> itemReaderFactory)
+            IItemReaderFactory<T> itemReaderFactory)
         {
             return AssertAndCast<NoSideEffectItemReaderFactory<T>>(itemReaderFactory);
         }
@@ -111,7 +111,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 );
 
             var recordProduct = AssertAndCastCollectionReadExpressionParseProduct(trait, result);
-            var itemReaderFactory = AssertAndCastNoSideEffectItemReaderFactory(trait, recordProduct.ItemReaderFactory);
+            var itemReaderFactory = AssertAndCastNoSideEffectItemReaderFactory(recordProduct.ItemReaderFactory);
             var itemReader = itemReaderFactory.ItemReader;
 
             // Verify Item Reader
@@ -231,6 +231,63 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
             Assert.AreEqual("Тест", parameter.Value);
             AssertTypedTupleReaderFactory(product.ItemReaderFactory);
+        }
+
+        /// <summary>
+        /// Тестирование парсинга запроса, который выбирает типизированные записи c выборкой отдельных полей в анонимном типе.
+        /// </summary>
+        [Test]
+        public void TestParseWhenGetTypedRecordsWithSelect()
+        {
+            // Arrange
+            var query0 = TestHelperQueryProvider.QueryOf<AnyDataType>();
+            var query = query0.Select(d => new { d.Id, d.Price });
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            var trait = query.GetTrait();
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var product = AssertAndCastCollectionReadExpressionParseProduct(trait, result);
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Цена FROM Справочник.Тест",
+                product.Command.Sql
+                );
+            Assert.AreEqual(0, product.Command.Parameters.Count);
+
+            var typedFactory = AssertAndCastNoSideEffectItemReaderFactory(product.ItemReaderFactory);
+            var testedItemReader = typedFactory.ItemReader;
+
+            // TODO: Копипаста
+
+            const int TEST_ID = 10;
+            const decimal TEST_PRICE = 34.55m;
+
+            var values = new object[] { TEST_ID, TEST_PRICE };
+
+            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
+
+            valueConverterMock
+                .Setup(c => c.ToInt32(It.IsAny<object>()))
+                .Returns<object>(o => (int)o)
+                .Verifiable();
+
+            valueConverterMock
+                .Setup(c => c.ToDecimal(It.IsAny<object>()))
+                .Returns<object>(o => (decimal)o)
+                .Verifiable();
+
+            var actualItem = testedItemReader(valueConverterMock.Object, values);
+
+            Assert.IsNotNull(actualItem);
+            Assert.AreEqual(TEST_ID, actualItem.Id);
+            Assert.AreEqual(TEST_PRICE, actualItem.Price);
+            
+            valueConverterMock.Verify(c => c.ToInt32(values[0]));
+            valueConverterMock.Verify(c => c.ToDecimal(values[1]));
         }
 
         public abstract class DataTypeBase

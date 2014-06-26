@@ -24,27 +24,55 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 { OneSQueryExpressionHelper.DataRecordGetCharMethod, OneSQueryExpressionHelper.ValueConverterToCharMethod },
             };
 
+        private static readonly IDictionary<Type, MethodInfo>
+            _convertMethodsByType = new Dictionary<Type, MethodInfo>
+                {
+                    { typeof(string), OneSQueryExpressionHelper.ValueConverterToStringMethod },
+                    { typeof(char), OneSQueryExpressionHelper.ValueConverterToCharMethod },
+                    { typeof(byte), OneSQueryExpressionHelper.ValueConverterToByteMethod },
+                    { typeof(short), OneSQueryExpressionHelper.ValueConverterToInt16Method },
+                    { typeof(int), OneSQueryExpressionHelper.ValueConverterToInt32Method },
+                    { typeof(long), OneSQueryExpressionHelper.ValueConverterToInt64Method },
+                    { typeof(float), OneSQueryExpressionHelper.ValueConverterToFloatMethod },
+                    { typeof(double), OneSQueryExpressionHelper.ValueConverterToDoubleMethod },
+                    { typeof(decimal), OneSQueryExpressionHelper.ValueConverterToDecimalMethod },
+                    { typeof(bool), OneSQueryExpressionHelper.ValueConverterToBooleanMethod },
+                    { typeof(DateTime), OneSQueryExpressionHelper.ValueConverterToDateTimeMethod },
+                };
+
         /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>
         /// <param name="recordExpression">Параметр метода - выражение записи из которой производиться выборка.</param>
-        private SelectExpressionTransformer(ParameterExpression recordExpression)
+        /// <param name="typeMapping">Соответствие трансформируемого типа источнику данных.</param>
+        private SelectExpressionTransformer(ParameterExpression recordExpression, OneSTypeMapping typeMapping)
         {
             Contract.Requires<ArgumentNullException>(recordExpression != null);
 
             _recordExpression = recordExpression;
+            _typeMapping = typeMapping;
         }
 
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
-        /// <typeparam name="T">Тип элементов последовательности - результатов выборки.</typeparam>
+        /// <typeparam name="TInput">Тип элементов исходной последовательности.</typeparam>
+        /// <typeparam name="TOutput">Тип элементов выходной последовательности - результатов выборки.</typeparam>
+        /// <param name="mappingProvider">Поставщик соответствий типов источникам данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="expression">Преобразуемое выражение.</param>
-        public static SelectionPartParseProduct<T> Transform<T>(QueryParseContext context, Expression<Func<OneSDataRecord, T>> expression)
+        public static SelectionPartParseProduct<TOutput> Transform<TInput, TOutput>(IOneSMappingProvider mappingProvider, QueryParseContext context, Expression<Func<TInput, TOutput>> expression)
         {
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(expression != null);
-            Contract.Ensures(Contract.Result<SelectionPartParseProduct<T>>() != null);
+            Contract.Ensures(Contract.Result<SelectionPartParseProduct<TOutput>>() != null);
 
-            return new SelectExpressionTransformer(expression.Parameters[0])
-                            .TransformLambdaBody<T>(expression.Body);
+            var typeMapping = (typeof (TInput) == typeof(OneSDataRecord))
+                                  ? null
+                                  : mappingProvider.GetTypeMapping(typeof(TInput));
+
+            return new SelectExpressionTransformer(
+                expression.Parameters[0], 
+                typeMapping
+                )
+                .TransformLambdaBody<TOutput>(expression.Body);
         }
 
         /// <summary>Преобразование тела лямбды метода выборки данных.</summary>
@@ -64,6 +92,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
         /// <summary>Выражение соответствующая записи данных из которой делается выборка.</summary>
         private readonly ParameterExpression _recordExpression;
+
+        /// <summary>
+        /// Соответствие трансформируемого типа источнику данных.
+        /// </summary>
+        private readonly OneSTypeMapping _typeMapping;
 
         /// <summary>Выражения колонок.</summary>
         private readonly List<SqlExpression> _columns = new List<SqlExpression>();
@@ -129,7 +162,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             {
                 MethodInfo valueConverterMethod;
                 if (_methods.TryGetValue(node.Method, out valueConverterMethod))
-                    return GetGetValueAndConvertExpression(node, valueConverterMethod);
+                {
+                    var fieldName = GetConstant<string>(node.Arguments[0]);
+                    return GetFieldAccessExpression(fieldName, valueConverterMethod);
+                }
 
                 throw CreateExpressionNotSupportedException(node);
             }
@@ -138,17 +174,59 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
-        /// Получение выражения получения значения из массива и конвертация его к нужному типу.
+        /// Получение выражения получения значения поля записи.
         /// </summary>
-        /// <param name="node">Исходный узел вызова метода получения данных из записи <see cref="OneSDataRecord"/>.</param>
-        /// <param name="valueConverterMethod">Метод конвертации значения.</param>
-        private Expression GetGetValueAndConvertExpression(MethodCallExpression node, MethodInfo valueConverterMethod)
+        /// <param name="fieldName">Имя поля получаемого значения.</param>
+        /// <param name="valueConverterMethod">Метод конвертации к нужному типу.</param>
+        private Expression GetFieldAccessExpression(string fieldName, MethodInfo valueConverterMethod)
         {
-            var fieldName = GetConstant<string>(node.Arguments[0]);
             var index = GetFieldIndex(fieldName);
 
             var valueExpression = Expression.ArrayIndex(_valuesParameter, Expression.Constant(index));
             return Expression.Call(_converterParameter, valueConverterMethod, valueExpression);
+        }
+
+        /// <summary>
+        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.MemberExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
+        protected override Expression VisitMember(MemberExpression node)
+        {
+            if (_typeMapping != null)
+            {
+                var fieldName = _typeMapping.GetFieldNameByMemberInfo(node.Member);
+                if (fieldName != null)
+                {
+                    MethodInfo valueConverterMethod;
+                    if (!_convertMethodsByType.TryGetValue(node.Type, out valueConverterMethod))
+                    {
+                        throw new InvalidOperationException(string.Format(
+                            "Нельзя привести значение поля к типу \"{0}\". Для доступа к полю поддерживаются только следующие типы \"{1}\".",
+                            node.Type,
+                            string.Join(", ", _convertMethodsByType.Keys)));
+                    }
+
+                    return GetFieldAccessExpression(fieldName, valueConverterMethod);
+                }
+            }
+
+            return base.VisitMember(node);
+        }
+
+        /// <summary>
+        /// Просматривает выражение <see cref="T:System.Linq.Expressions.ParameterExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            throw new InvalidOperationException(
+                "Недопустимо использовать запись данных в качестве члена в выходной структуре. Можно использовать в выражении запись только для доступа к ее полям.");
         }
     }
 }

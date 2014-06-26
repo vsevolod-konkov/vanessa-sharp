@@ -72,19 +72,21 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// разбора выражения.
         /// </summary>
         /// <param name="query">Запрос.</param>
-        public CollectionReadExpressionParseProduct<T> Transform<T>(TupleQuery<T> query)
+        public CollectionReadExpressionParseProduct<TOutput> Transform<TInput, TOutput>(TupleQuery<TInput, TOutput> query)
         {
             Contract.Requires<ArgumentNullException>(query != null);
-            Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<T>>() != null);
+            Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<TOutput>>() != null);
 
-            var selectPartProduct = _expressionTransformMethods.TransformSelectTypedRecord<T>();
+            var selectPartProduct = (query.Selector == null)
+                                        ? _expressionTransformMethods.TransformSelectTypedRecord<TOutput>()
+                                        : _expressionTransformMethods.TransformSelectExpression(_context, query.Selector);
             
             // TODO Копипаст
-            var selectPart = new SelectPartInfo<T>(
+            var selectPart = new SelectPartInfo<TOutput>(
                 new SqlColumnListExpression(selectPartProduct.Columns),
-                new NoSideEffectItemReaderFactory<T>(selectPartProduct.SelectionFunc));
+                new NoSideEffectItemReaderFactory<TOutput>(selectPartProduct.SelectionFunc));
 
-            var sourceName = _expressionTransformMethods.GetTypedRecordSourceName<T>();
+            var sourceName = _expressionTransformMethods.GetTypedRecordSourceName<TInput>();
 
             var whereStatement = ParseFilterExpression(query.Filter);
 

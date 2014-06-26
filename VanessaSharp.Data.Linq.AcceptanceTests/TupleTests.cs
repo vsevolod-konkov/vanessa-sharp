@@ -10,12 +10,12 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
     /// Тестирование получения данных.
     /// </summary>
     #if REAL_MODE
-    //[TestFixture(TestMode.Real, false)]
-    //[TestFixture(TestMode.Real, true)]
+    [TestFixture(TestMode.Real, false)]
+    [TestFixture(TestMode.Real, true)]
     #endif
     #if ISOLATED_MODE
     [TestFixture(TestMode.Isolated, false)]
-    //[TestFixture(TestMode.Isolated, true)]
+    [TestFixture(TestMode.Isolated, true)]
     #endif
     public sealed class TupleTests : ReadDataTestBase
     {
@@ -155,8 +155,8 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 Assert.AreEqual(ExpectedRowsCount, recordCounter);
 
                 AssertSql(
-                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник");
-                AssertSqlParameters(new Dictionary<string, object>());
+                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1");
+                AssertSqlParameters(new Dictionary<string, object> { {"p1", "Тестирование"} });
             }
         }
     }

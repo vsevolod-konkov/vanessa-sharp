@@ -12,11 +12,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal interface IExpressionTransformMethods
     {
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
-        /// <typeparam name="T">Тип элементов последовательности - результатов выборки.</typeparam>
+        /// <typeparam name="TInput">Тип элементов исходной последовательности.</typeparam>
+        /// <typeparam name="TOutput">Тип элементов выходной последовательности - результатов выборки.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="selectExpression">Преобразуемое выражение.</param>
-        SelectionPartParseProduct<T> TransformSelectExpression<T>(
-            QueryParseContext context, Expression<Func<OneSDataRecord, T>> selectExpression);
+        SelectionPartParseProduct<TOutput> TransformSelectExpression<TInput, TOutput>(
+            QueryParseContext context, Expression<Func<TInput, TOutput>> selectExpression);
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
         /// <typeparam name="T">Тип элементов.</typeparam>
@@ -47,15 +48,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal abstract class ExpressionTransformMethodsContract : IExpressionTransformMethods
     {
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
-        /// <typeparam name="T">Тип элементов последовательности - результатов выборки.</typeparam>
+        /// <typeparam name="TInput">Тип элементов исходной последовательности.</typeparam>
+        /// <typeparam name="TOutput">Тип элементов выходной последовательности - результатов выборки.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="selectExpression">Преобразуемое выражение.</param>
-        SelectionPartParseProduct<T>
-            IExpressionTransformMethods.TransformSelectExpression<T>(QueryParseContext context, Expression<Func<OneSDataRecord, T>> selectExpression)
+        SelectionPartParseProduct<TOutput> IExpressionTransformMethods.TransformSelectExpression<TInput, TOutput>(
+           QueryParseContext context, Expression<Func<TInput, TOutput>> selectExpression)
         {
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(selectExpression != null);
-            Contract.Ensures(Contract.Result<SelectionPartParseProduct<T>>() != null);
+            Contract.Ensures(Contract.Result<SelectionPartParseProduct<TOutput>>() != null);
 
             return null;
         }

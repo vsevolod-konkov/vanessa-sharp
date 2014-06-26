@@ -36,8 +36,8 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
         public void TestTypedCreateCommand()
         {
             var command = TestedInstance.CreateCommand();
-            
-            Assert.IsNotNull(command);
+
+            Assert.IsInstanceOf<OneSCommand>(command);
             Assert.AreSame(TestedInstance, command.Connection);
         }
 
@@ -48,7 +48,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
             DbConnection dbConnection = TestedInstance;
             var command = dbConnection.CreateCommand();
             
-            Assert.IsNotNull(command);
+            Assert.IsInstanceOf<OneSCommand>(command);
             Assert.AreSame(dbConnection, command.Connection);
         }
     }

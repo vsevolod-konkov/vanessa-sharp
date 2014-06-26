@@ -341,49 +341,79 @@ namespace VanessaSharp.Data.Linq
         {
             get { return _valueConverterToStringMethod; }
         }
-        private static readonly MethodInfo _valueConverterToStringMethod = GetValueConverterMethod(c => c.ToString(""));
-
-        /// <summary>Метод <see cref="IValueConverter.ToInt32"/>.</summary>
-        public static MethodInfo ValueConverterToInt32Method
-        {
-            get { return _valueConverterToInt32Method; }
-        }
-        private static readonly MethodInfo _valueConverterToInt32Method = GetValueConverterMethod(c => c.ToInt32(0));
-
-        /// <summary>Метод <see cref="IValueConverter.ToDecimal"/>.</summary>
-        public static MethodInfo ValueConverterToDecimalMethod
-        {
-            get { return _valueConverterToDecimalMethod; }
-        }
-        private static readonly MethodInfo _valueConverterToDecimalMethod = GetValueConverterMethod(c => c.ToDecimal(0.0m));
-
-        /// <summary>Метод <see cref="IValueConverter.ToDouble"/>.</summary>
-        public static MethodInfo ValueConverterToDoubleMethod
-        {
-            get { return _valueConverterToDoubleMethod; }
-        }
-        private static readonly MethodInfo _valueConverterToDoubleMethod = GetValueConverterMethod(c => c.ToDouble(0));
-
-        /// <summary>Метод <see cref="IValueConverter.ToBoolean"/>.</summary>
-        public static MethodInfo ValueConverterToBooleanMethod
-        {
-            get { return _valueConverterToBooleanMethod; }
-        }
-        private static readonly MethodInfo _valueConverterToBooleanMethod = GetValueConverterMethod(c => c.ToBoolean(0));
-
-        /// <summary>Метод <see cref="IValueConverter.ToDateTime"/>.</summary>
-        public static MethodInfo ValueConverterToDateTimeMethod
-        {
-            get { return _valueConverterToDateTimeMethod; }
-        }
-        private static readonly MethodInfo _valueConverterToDateTimeMethod = GetValueConverterMethod(c => c.ToDateTime(0));
+        private static readonly MethodInfo _valueConverterToStringMethod = GetValueConverterMethod(c => c.ToString(null));
 
         /// <summary>Метод <see cref="IValueConverter.ToChar(object)"/>.</summary>
         public static MethodInfo ValueConverterToCharMethod
         {
             get { return _valueConverterToCharMethod; }
         }
-        private static readonly MethodInfo _valueConverterToCharMethod = GetValueConverterMethod(c => c.ToChar(""));
+        private static readonly MethodInfo _valueConverterToCharMethod = GetValueConverterMethod(c => c.ToChar(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToByte(object)"/>.</summary>
+        public static MethodInfo ValueConverterToByteMethod
+        {
+            get { return _valueConverterToByteMethod; }
+        }
+        private static readonly MethodInfo _valueConverterToByteMethod = GetValueConverterMethod(c => c.ToByte(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToInt16(object)"/>.</summary>
+        public static MethodInfo ValueConverterToInt16Method
+        {
+            get { return _valueConverterToInt16Method; }
+        }
+        private static readonly MethodInfo _valueConverterToInt16Method = GetValueConverterMethod(c => c.ToInt16(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToInt32"/>.</summary>
+        public static MethodInfo ValueConverterToInt32Method
+        {
+            get { return _valueConverterToInt32Method; }
+        }
+        private static readonly MethodInfo _valueConverterToInt32Method = GetValueConverterMethod(c => c.ToInt32(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToInt64"/>.</summary>
+        public static MethodInfo ValueConverterToInt64Method
+        {
+            get { return _valueConverterToInt64Method; }
+        }
+        private static readonly MethodInfo _valueConverterToInt64Method = GetValueConverterMethod(c => c.ToInt64(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToFloat"/>.</summary>
+        public static MethodInfo ValueConverterToFloatMethod
+        {
+            get { return _valueConverterToFloatMethod; }
+        }
+        private static readonly MethodInfo _valueConverterToFloatMethod = GetValueConverterMethod(c => c.ToFloat(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToDouble"/>.</summary>
+        public static MethodInfo ValueConverterToDoubleMethod
+        {
+            get { return _valueConverterToDoubleMethod; }
+        }
+        private static readonly MethodInfo _valueConverterToDoubleMethod = GetValueConverterMethod(c => c.ToDouble(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToDecimal"/>.</summary>
+        public static MethodInfo ValueConverterToDecimalMethod
+        {
+            get { return _valueConverterToDecimalMethod; }
+        }
+        private static readonly MethodInfo _valueConverterToDecimalMethod = GetValueConverterMethod(c => c.ToDecimal(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToBoolean"/>.</summary>
+        public static MethodInfo ValueConverterToBooleanMethod
+        {
+            get { return _valueConverterToBooleanMethod; }
+        }
+        private static readonly MethodInfo _valueConverterToBooleanMethod = GetValueConverterMethod(c => c.ToBoolean(null));
+
+        /// <summary>Метод <see cref="IValueConverter.ToDateTime"/>.</summary>
+        public static MethodInfo ValueConverterToDateTimeMethod
+        {
+            get { return _valueConverterToDateTimeMethod; }
+        }
+        private static readonly MethodInfo _valueConverterToDateTimeMethod = GetValueConverterMethod(c => c.ToDateTime(null));
+
+        
 
         /// <summary>
         /// Получение метода <see cref="IValueConverter"/>

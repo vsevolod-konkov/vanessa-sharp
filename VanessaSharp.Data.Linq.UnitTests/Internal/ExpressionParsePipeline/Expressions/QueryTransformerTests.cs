@@ -233,7 +233,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {}
 
         /// <summary>
-        /// Тестирование <see cref="QueryTransformer.Transform{T}(TupleQuery{T})"/>.
+        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>.
         /// </summary>
         [Test]
         public void TestTransformTupleQuery()
@@ -259,7 +259,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
             
-            var testedQuery = new TupleQuery<AnyData>(null);
+            var testedQuery = new TupleQuery<AnyData, AnyData>(null, null);
 
             // Act
             var result = _testedInstance.Transform(testedQuery);
@@ -275,7 +275,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="QueryTransformer.Transform{T}(TupleQuery{T})"/>
+        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>
         /// с фильтром.
         /// </summary>
         [Test]
@@ -319,7 +319,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
 
-            var testedQuery = new TupleQuery<AnyData>(filterExpression);
+            var testedQuery = new TupleQuery<AnyData, AnyData>(null, filterExpression);
 
             // Act
             var result = _testedInstance.Transform(testedQuery);
@@ -335,6 +335,66 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(parameterName, parameter.Name);
             
             AssertCollectionReadExpressionParseProduct(anyDataReader, result);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>
+        /// с выборкой.
+        /// </summary>
+        [Test]
+        public void TestTransformTupleWithSelectQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Returns("Тест");
+
+            var selectExpression = Trait.Of<AnyData>().SelectExpression(d => new {Id = 5, Name = "TestName"});
+
+            var expectedItemReader = CreateItemReader((c, v) => new { Id = c.ToInt32(v[0]), Name = c.ToString(v[1])});
+
+            var columns = new[]
+                {
+                    "Идентификатор", "Наименование"
+                };
+
+            var selectionPart = CreateSelectionPartParseProduct(
+                new ReadOnlyCollection<SqlExpression>(
+                    columns.Select(c => (SqlExpression) new SqlFieldExpression(c)).ToArray()),
+                expectedItemReader
+                );
+
+            _transformMethodsMock
+                .Setup(t => t.TransformSelectExpression(It.IsAny<QueryParseContext>(), selectExpression))
+                .Returns(selectionPart);
+
+            var testedQuery = CreateTupleQuery(selectExpression, null);
+
+            // Act
+            var result = _testedInstance.Transform(testedQuery);
+
+            // Assert
+            Assert.AreEqual(
+                "SELECT Идентификатор, Наименование FROM Тест",
+                result.Command.Sql
+                );
+
+            Assert.AreEqual(0, result.Command.Parameters.Count);
+
+            var factory = AssertAndCastNoSideEffectItemReaderFactory(result.ItemReaderFactory);
+
+            Assert.AreSame(expectedItemReader, factory.ItemReader);
+        }
+
+        private static Func<IValueConverter, object[], T> CreateItemReader<T>(Func<IValueConverter, object[], T> itemReader)
+        {
+            return itemReader;
+        }
+
+        private static TupleQuery<AnyData, T> CreateTupleQuery<T>(Expression<Func<AnyData, T>> selectExpression,
+                                                                  Expression<Func<AnyData, bool>> filterExpression)
+        {
+            return new TupleQuery<AnyData, T>(selectExpression, filterExpression);
         }
     }
 }

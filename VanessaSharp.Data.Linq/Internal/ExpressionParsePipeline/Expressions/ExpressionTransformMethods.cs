@@ -30,15 +30,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
         /// <summary>Построитель конструкций запроса для типизированных записей.</summary>
         private readonly TypedRecordParseProductBuilder _typedRecordParseProductBuilder;
-        
+
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
-        /// <typeparam name="T">Тип элементов последовательности - результатов выборки.</typeparam>
+        /// <typeparam name="TInput">Тип элементов исходной последовательности.</typeparam>
+        /// <typeparam name="TOutput">Тип элементов выходной последовательности - результатов выборки.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="selectExpression">Преобразуемое выражение.</param>
-        public SelectionPartParseProduct<T> TransformSelectExpression<T>(
-            QueryParseContext context, Expression<Func<OneSDataRecord, T>> selectExpression)
+        public SelectionPartParseProduct<TOutput> TransformSelectExpression<TInput, TOutput>(
+            QueryParseContext context, Expression<Func<TInput, TOutput>> selectExpression)
         {
-            return SelectExpressionTransformer.Transform(context, selectExpression);
+            return SelectExpressionTransformer.Transform(_mappingProvider, context, selectExpression);
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
