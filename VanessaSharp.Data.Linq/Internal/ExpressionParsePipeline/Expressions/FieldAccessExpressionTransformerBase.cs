@@ -64,7 +64,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected sealed override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node.Object == RecordExpression)
+            // TODO Рефакторинг
+            if (RecordExpression.Type == typeof(OneSDataRecord) && node.Object == RecordExpression)
             {
                 if (_getValueMethods.Contains(node.Method))
                 {
@@ -87,7 +88,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMember(MemberExpression node)
         {
-            if (node.Expression == RecordExpression)
+            // TODO Рефакторинг
+            if (RecordExpression.Type != typeof(OneSDataRecord) && node.Expression == RecordExpression)
             {
                 var typeMapping = _mappingProvider.GetTypeMapping(RecordExpression.Type);
                 var fieldName = typeMapping.GetFieldNameByMemberInfo(node.Member);

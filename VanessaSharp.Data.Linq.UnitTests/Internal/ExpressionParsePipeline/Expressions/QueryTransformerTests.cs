@@ -229,9 +229,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreSame(OneSDataRecordReaderFactory.Default, parseProduct.ItemReaderFactory);
         }
 
-        public sealed class AnyData
-        {}
-
         /// <summary>
         /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>.
         /// </summary>
@@ -259,7 +256,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
             
-            var testedQuery = new TupleQuery<AnyData, AnyData>(null, null);
+            var testedQuery = new TupleQuery<AnyData, AnyData>(null, null, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
 
             // Act
             var result = _testedInstance.Transform(testedQuery);
@@ -319,7 +316,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
 
-            var testedQuery = new TupleQuery<AnyData, AnyData>(null, filterExpression);
+            var testedQuery = new TupleQuery<AnyData, AnyData>(null, filterExpression, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
 
             // Act
             var result = _testedInstance.Transform(testedQuery);
@@ -334,6 +331,63 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 );
             Assert.AreEqual(parameterName, parameter.Name);
             
+            AssertCollectionReadExpressionParseProduct(anyDataReader, result);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>
+        /// с сортировкой.
+        /// </summary>
+        [Test]
+        public void TestTransformTupleWithSortQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Returns("Тест");
+
+            Expression<Func<AnyData, int>> sortKeyExpression1 = d => 4;
+            Expression<Func<AnyData, string>> sortKeyExpression2 = d => "test";
+
+            _transformMethodsMock
+                .Setup(t => t.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression1))
+                .Returns(new SqlFieldExpression("Приоритет"));
+            _transformMethodsMock
+                .Setup(t => t.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression2))
+                .Returns(new SqlFieldExpression("Ключ"));
+
+            Func<IValueConverter, object[], AnyData> anyDataReader = (c, v) => new AnyData();
+
+            var columns = new[]
+                {
+                    "Наименование", "Идентификатор", "Цена"
+                };
+
+            var selectPart = new SelectionPartParseProduct<AnyData>(
+                new ReadOnlyCollection<SqlExpression>(
+                    columns.Select(c => (SqlExpression)new SqlFieldExpression(c)).ToArray()),
+                anyDataReader);
+
+            _transformMethodsMock
+                .Setup(t => t.TransformSelectTypedRecord<AnyData>())
+                .Returns(selectPart);
+
+            var testedQuery = new TupleQuery<AnyData, AnyData>(null, null, new ReadOnlyCollection<SortExpression>(new []
+                {
+                    new SortExpression(sortKeyExpression1, SortKind.Ascending),
+                    new SortExpression(sortKeyExpression2, SortKind.Descending)
+                }));
+
+            // Act
+            var result = _testedInstance.Transform(testedQuery);
+
+            // Assert
+            Assert.AreEqual(
+                "SELECT Наименование, Идентификатор, Цена FROM Тест ORDER BY Приоритет, Ключ DESC",
+                result.Command.Sql
+                );
+            Assert.AreEqual(0, result.Command.Parameters.Count);
+
             AssertCollectionReadExpressionParseProduct(anyDataReader, result);
         }
 
@@ -389,12 +443,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         private static Func<IValueConverter, object[], T> CreateItemReader<T>(Func<IValueConverter, object[], T> itemReader)
         {
             return itemReader;
-        }
-
-        private static TupleQuery<AnyData, T> CreateTupleQuery<T>(Expression<Func<AnyData, T>> selectExpression,
-                                                                  Expression<Func<AnyData, bool>> filterExpression)
-        {
-            return new TupleQuery<AnyData, T>(selectExpression, filterExpression);
         }
     }
 }

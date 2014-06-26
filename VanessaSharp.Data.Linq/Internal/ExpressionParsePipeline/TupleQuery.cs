@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 
@@ -13,15 +15,27 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Конструктор.</summary>
         /// <param name="selector">Выражение выборки.</param>
         /// <param name="filter">Выражение фильтрации.</param>
-        public TupleQuery(Expression<Func<TInput, TOutput>> selector, Expression<Func<TInput, bool>> filter)
+        /// <param name="sorters">Выражения сортировки.</param>
+        public TupleQuery(Expression<Func<TInput, TOutput>> selector, Expression<Func<TInput, bool>> filter, ReadOnlyCollection<SortExpression> sorters)
         {
             Contract.Requires<ArgumentException>(
                 (typeof(TInput) == typeof(TOutput) && selector == null) 
                 || 
                 (typeof(TInput) == typeof(TOutput) || selector != null));
 
-            _filter = filter;
+            Contract.Requires<ArgumentNullException>(sorters != null);
+            Contract.Requires<ArgumentException>(sorters.All(s =>
+                {
+                    var type = s.KeyExpression.Type;
+
+                    return type.IsGenericType 
+                        && type.GetGenericTypeDefinition() == typeof (Func<,>) 
+                        && type.GetGenericArguments()[0] == typeof (TInput);
+                }));
+
             _selector = selector;
+            _filter = filter;
+            _sorters = sorters;
         }
 
         /// <summary>Выражение выборки.</summary>
@@ -37,6 +51,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             get { return _filter; }
         }
         private readonly Expression<Func<TInput, bool>> _filter;
+
+        /// <summary>Выражения сортировки.</summary>
+        public ReadOnlyCollection<SortExpression> Sorters
+        {
+            get { return _sorters; }
+        }
+        private readonly ReadOnlyCollection<SortExpression> _sorters;
 
         /// <summary>Преобразование.</summary>
         public ExpressionParseProduct Transform(IOneSMappingProvider mappingProvider)

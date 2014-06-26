@@ -85,8 +85,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Requires<ArgumentException>(
                sortKeyExpression.Type.IsGenericType
-               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
-               && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
         void IQueryableExpressionHandler.HandleOrderByDescending(LambdaExpression sortKeyExpression)
@@ -94,8 +93,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Requires<ArgumentException>(
                 sortKeyExpression.Type.IsGenericType
-                && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
-                && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+                && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
         void IQueryableExpressionHandler.HandleThenBy(LambdaExpression sortKeyExpression)
@@ -103,8 +101,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Requires<ArgumentException>(
                sortKeyExpression.Type.IsGenericType
-               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
-               && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
         void IQueryableExpressionHandler.HandleThenByDescending(LambdaExpression sortKeyExpression)
@@ -112,8 +109,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Requires<ArgumentException>(
                sortKeyExpression.Type.IsGenericType
-               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
-               && sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
+               && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
         void IQueryableExpressionHandler.HandleGettingRecords(string sourceName)

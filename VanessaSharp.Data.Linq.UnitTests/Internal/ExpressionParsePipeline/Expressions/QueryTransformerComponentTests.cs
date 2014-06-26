@@ -164,7 +164,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Expression<Func<AnyData, bool>> filterExpression = d => d.Name == FILTER_VALUE;
             
-            var query = new TupleQuery<AnyData, AnyData>(null, filterExpression);
+            var query = new TupleQuery<AnyData, AnyData>(null, filterExpression, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -178,6 +178,53 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Assert.AreEqual(
                 "SELECT Идентификатор, Наименование, Цена FROM ТестовыйИсточник WHERE Наименование = &" + parameter.Name, command.Sql);
+
+            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<AnyData>>(result);
+            Assert.IsInstanceOf<NoSideEffectItemReaderFactory<AnyData>>(parseProduct.ItemReaderFactory);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса сортировки типизированных кортежей.
+        /// </summary>
+        [Test]
+        public void TestTransformSorterTypedTuple()
+        {
+            // Arrange
+            var typeMapping = new OneSTypeMapping(
+                "ТестовыйИсточник",
+                new ReadOnlyCollection<OneSFieldMapping>(
+                    new[]
+                        {
+                            CreateFieldMapping(d => d.Id, "Идентификатор"),
+                            CreateFieldMapping(d => d.Name, "Наименование"),
+                            CreateFieldMapping(d => d.Price, "Цена")
+                        }));
+
+            _mappingProviderMock
+                .Setup(p => p.GetTypeMapping(typeof(AnyData)))
+                .Returns(typeMapping);
+
+            Expression<Func<AnyData, string>> sortKeyExpression1 = d => d.Name;
+            Expression<Func<AnyData, decimal>> sortKeyExpression2 = d => d.Price;
+
+            var query = new TupleQuery<AnyData, AnyData>(
+                null, 
+                null, 
+                new ReadOnlyCollection<SortExpression>(new []
+                    {
+                        new SortExpression(sortKeyExpression1, SortKind.Descending),
+                        new SortExpression(sortKeyExpression2, SortKind.Ascending), 
+                    }));
+
+            // Act
+            var result = _testedInstance.Transform(query);
+
+            // Assert
+            var command = result.Command;
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Наименование, Цена FROM ТестовыйИсточник ORDER BY Наименование DESC, Цена", command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
 
             var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<AnyData>>(result);
             Assert.IsInstanceOf<NoSideEffectItemReaderFactory<AnyData>>(parseProduct.ItemReaderFactory);
@@ -256,28 +303,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             
         }
 
+        // TODO Копипаста
         private static OneSFieldMapping CreateFieldMapping<T>(Expression<Func<AnyData, T>> accessor, string fieldName)
         {
             var memberInfo = ((MemberExpression)accessor.Body).Member;
 
             return new OneSFieldMapping(memberInfo, fieldName);
-        }
-
-        private static TupleQuery<AnyData, T> CreateTupleQuery<T>(Expression<Func<AnyData, T>> selectExpression,
-                                                                  Expression<Func<AnyData, bool>> filterExpression)
-        {
-            return new TupleQuery<AnyData, T>(selectExpression, filterExpression);
-        }
-
-        
-
-        public sealed class AnyData
-        {
-            public int Id;
-
-            public string Name;
-
-            public decimal Price;
         }
     }
 }

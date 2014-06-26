@@ -207,9 +207,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                     throw new InvalidOperationException();
                 }
 
-                Contract.Assert(InputItemType != typeof(OneSDataRecord));
-
-                return CreateTupleQuery(InputItemType, _outputItemType, null, FilterExpression);
+                return CreateTupleQuery(null);
             }
 
             // TODO : Копипаста
@@ -234,9 +232,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                     throw new InvalidOperationException();
                 }
 
+                return CreateTupleQuery(selectExpression);
+            }
+
+            /// <summary>Создание <see cref="TupleQuery{TInput, TOutput}"/>.</summary>
+            /// <param name="selectExpression">Выражение выборки.</param>
+            private ISimpleQuery CreateTupleQuery(LambdaExpression selectExpression)
+            {
                 Contract.Assert(InputItemType != typeof(OneSDataRecord));
 
-                return CreateTupleQuery(InputItemType, _outputItemType, selectExpression, FilterExpression);
+                return CreateTupleQuery(InputItemType, _outputItemType, selectExpression, FilterExpression, CreateSortExpressionList());
             }
 
             /// <summary>Создание <see cref="TupleQuery{TInput, TOutput}"/>.</summary>
@@ -244,10 +249,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// <param name="outputType">Тип данных выходной последовательности.</param>
             /// <param name="selectExpression">Выражение выборки.</param>
             /// <param name="filterExpression">Выражение фильтрации.</param>
-            private static ISimpleQuery CreateTupleQuery(Type inputType, Type outputType, LambdaExpression selectExpression, LambdaExpression filterExpression)
+            /// <param name="sortExpressions">Выражения сортировки.</param>
+            private static ISimpleQuery CreateTupleQuery(Type inputType, Type outputType, LambdaExpression selectExpression, LambdaExpression filterExpression, ReadOnlyCollection<SortExpression> sortExpressions)
             {
                 var queryType = typeof(TupleQuery<,>).MakeGenericType(inputType, outputType);
-                return (ISimpleQuery)Activator.CreateInstance(queryType, selectExpression, filterExpression);
+                return (ISimpleQuery)Activator.CreateInstance(queryType, selectExpression, filterExpression, sortExpressions);
             }
 
             private void CheckLambdaExpression(LambdaExpression lambda)

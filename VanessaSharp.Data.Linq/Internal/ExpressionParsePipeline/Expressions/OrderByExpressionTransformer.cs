@@ -9,6 +9,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal sealed class OrderByExpressionTransformer : FieldAccessExpressionTransformerBase<SqlFieldExpression>
     {
         /// <summary>Конструктор принимающий выражение записи данных.</summary>
+        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи данных.</param>
         private OrderByExpressionTransformer(
@@ -48,7 +49,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Requires<ArgumentException>(sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
-            Contract.Requires<ArgumentException>(sortKeyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
             Contract.Ensures(Contract.Result<SqlFieldExpression>() != null);
 
             return Transform<Factory>(mappingProvider, context, sortKeyExpression);

@@ -89,9 +89,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             var sourceName = _expressionTransformMethods.GetTypedRecordSourceName<TInput>();
 
             var whereStatement = ParseFilterExpression(query.Filter);
+            var orderByStatement = ParseSortExpressions(query.Sorters);
 
             var queryStatement = new SqlQueryStatement(
-               selectPart.Statement, new SqlFromStatement(sourceName), whereStatement, null);
+               selectPart.Statement, new SqlFromStatement(sourceName), whereStatement, orderByStatement);
 
             return GetExpressionParseProduct(
                 queryStatement, selectPart.ItemReaderFactory);

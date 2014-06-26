@@ -246,7 +246,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
         /// <summary>
         /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае запроса типизированных кортежей.
+        /// в случае запроса типизированных кортежей c фильтрацией.
         /// </summary>
         [Test]
         public void TestTransformQueryableTupleWithFilter()
@@ -265,6 +265,39 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var typedQuery = AssertAndCast<TupleQuery<AnyDataType, AnyDataType>>(result);
             Assert.IsNull(typedQuery.Selector);
             Assert.AreSame(filterExpression, typedQuery.Filter);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае запроса типизированных кортежей с сортировкой.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableTupleWithSorting()
+        {
+            // Arrange
+            Expression<Func<AnyDataType, int>> sortExpression1 = d => d.Id;
+            Expression<Func<AnyDataType, string>> sortExpression2 = d => d.Name;
+
+            var query = TestHelperQueryProvider
+                .QueryOf<AnyDataType>()
+                .OrderByDescending(sortExpression1)
+                .ThenBy(sortExpression2);
+
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            var typedQuery = AssertAndCast<TupleQuery<AnyDataType, AnyDataType>>(result);
+            Assert.IsNull(typedQuery.Selector);
+            Assert.AreEqual(2, typedQuery.Sorters.Count);
+
+            Assert.AreEqual(sortExpression1, typedQuery.Sorters[0].KeyExpression);
+            Assert.AreEqual(SortKind.Descending, typedQuery.Sorters[0].Kind);
+
+            Assert.AreEqual(sortExpression2, typedQuery.Sorters[1].KeyExpression);
+            Assert.AreEqual(SortKind.Ascending, typedQuery.Sorters[1].Kind);
         }
 
         /// <summary>
@@ -301,6 +334,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public sealed class AnyDataType
         {
             public int Id;
+
+            public string Name;
         }
     }
 }

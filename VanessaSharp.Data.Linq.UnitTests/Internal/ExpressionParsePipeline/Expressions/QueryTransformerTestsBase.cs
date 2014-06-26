@@ -27,5 +27,24 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             return AssertAndCast<NoSideEffectItemReaderFactory<T>>(factory);
         }
+
+        internal static TupleQuery<AnyData, T> CreateTupleQuery<T>(Expression<Func<AnyData, T>> selectExpression = null,
+                                                                  Expression<Func<AnyData, bool>> filterExpression = null,
+                                                                  ReadOnlyCollection<SortExpression> sorters = null)
+        {
+            if (sorters == null)
+                sorters = new ReadOnlyCollection<SortExpression>(new SortExpression[0]);
+
+            return new TupleQuery<AnyData, T>(selectExpression, filterExpression, sorters);
+        }
+
+        public sealed class AnyData
+        {
+            public int Id;
+
+            public string Name;
+
+            public decimal Price;
+        }
     }
 }

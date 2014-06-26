@@ -159,6 +159,64 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 AssertSqlParameters(new Dictionary<string, object> { {"p1", "Тестирование"} });
             }
         }
+
+        // TODO Копипаст GettingDataRecordsTests.TestSelectSimpleQuery
+        /// <summary>Тестирование выполнения запроса сортировки и выборки данных.</summary>
+        [Test]
+        public void TestSortingAndSelectQuery()
+        {
+            BeginDefineData();
+
+            Field<string>("СтроковоеПоле");
+            Field<double>("ЦелочисленноеПоле");
+            Field<bool>("БулевоПоле");
+            Field<DateTime>("ДатаПоле");
+
+            Row
+            (
+                "", 0, false,
+                new DateTime(100, 1, 1)
+            );
+            
+            Row
+            (
+                "Тестирование", 234, true,
+                new DateTime(2014, 01, 15)
+            );
+
+            EndDefineData();
+
+            Assert.AreEqual(4, ExpectedFieldsCount);
+
+            using (var dataContext = new OneSDataContext(Connection))
+            {
+                var entries = from e in dataContext.Get<TestDictionary>()
+                              orderby e.IntegerField, e.DateField descending
+                              select new { e.StringField, e.IntegerField, e.BooleanField, e.DateField };
+
+                var recordCounter = 0;
+
+                foreach (var entry in entries)
+                {
+                    Assert.Less(recordCounter, ExpectedRowsCount);
+
+                    SetCurrentExpectedRow(recordCounter);
+
+                    Assert.AreEqual(ExpectedFieldValue("СтроковоеПоле"), entry.StringField);
+                    Assert.AreEqual(ExpectedFieldValue("ЦелочисленноеПоле"), entry.IntegerField);
+                    Assert.AreEqual(ExpectedFieldValue("БулевоПоле"), entry.BooleanField);
+                    Assert.AreEqual(ExpectedFieldValue("ДатаПоле"), entry.DateField);
+
+                    ++recordCounter;
+                }
+
+                Assert.AreEqual(ExpectedRowsCount, recordCounter);
+
+                AssertSql(
+                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник ORDER BY ЦелочисленноеПоле, ДатаПоле DESC");
+                AssertSqlParameters(new Dictionary<string, object>());
+            }
+        }
     }
 
     /// <summary>Класс тестового справочника.</summary>

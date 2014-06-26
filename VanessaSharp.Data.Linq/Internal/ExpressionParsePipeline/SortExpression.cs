@@ -14,7 +14,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             Contract.Requires<ArgumentNullException>(keyExpression != null);
             Contract.Requires<ArgumentException>(keyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
-            Contract.Requires<ArgumentException>(keyExpression.Type.GetGenericArguments()[0] == typeof(OneSDataRecord));
 
             _keyExpression = keyExpression;
             _kind = kind;

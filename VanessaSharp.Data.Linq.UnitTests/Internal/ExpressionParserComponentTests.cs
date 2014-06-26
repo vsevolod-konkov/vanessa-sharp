@@ -290,6 +290,33 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             valueConverterMock.Verify(c => c.ToDecimal(values[1]));
         }
 
+        /// <summary>Тестирование парсинга запроса, который выбирает типизированные записи c сортировкой.</summary>
+        [Test]
+        public void TestParseWhenGetTypedRecordsWithSorting()
+        {
+            // Arrange
+            var query = TestHelperQueryProvider
+                .QueryOf<AnyDataType>()
+                .OrderBy(d => d.Price)
+                .ThenByDescending(d => d.StartDate);
+            
+            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
+
+            Assert.AreEqual(
+                "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест ORDER BY Цена, ДатаНачала DESC",
+                product.Command.Sql
+                );
+            Assert.AreEqual(0, product.Command.Parameters.Count);
+
+            AssertTypedTupleReaderFactory(product.ItemReaderFactory);
+        }
+
         public abstract class DataTypeBase
         {
             [OneSDataColumn("Наименование")]
