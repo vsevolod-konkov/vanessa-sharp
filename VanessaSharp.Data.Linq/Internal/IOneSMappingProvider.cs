@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Data.Linq.Internal
@@ -8,7 +7,7 @@ namespace VanessaSharp.Data.Linq.Internal
     /// Поставщик соответствия типам CLR
     /// данным 1С.
     /// </summary>
-    [ContractClass(typeof(IOneSMappingProviderContract))]
+    [ContractClass(typeof(OneSMappingProviderContract))]
     internal interface IOneSMappingProvider
     {
         /// <summary>
@@ -24,13 +23,20 @@ namespace VanessaSharp.Data.Linq.Internal
     }
 
     [ContractClassFor(typeof(IOneSMappingProvider))]
-    internal abstract class IOneSMappingProviderContract : IOneSMappingProvider
+    internal abstract class OneSMappingProviderContract : IOneSMappingProvider
     {
+        /// <summary>
+        /// Проверка типа на корректность использования его в виде 
+        /// типа записи данных из 1С.
+        /// </summary>
+        /// <param name="dataType">Тип данных.</param>
         void IOneSMappingProvider.CheckDataType(Type dataType)
         {
             Contract.Requires<ArgumentNullException>(dataType != null);
         }
 
+        /// <summary>Получения соответствия для типа.</summary>
+        /// <param name="dataType">Тип.</param>
         OneSTypeMapping IOneSMappingProvider.GetTypeMapping(Type dataType)
         {
             Contract.Requires<ArgumentNullException>(dataType != null);

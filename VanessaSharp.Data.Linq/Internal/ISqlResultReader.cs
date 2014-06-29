@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 namespace VanessaSharp.Data.Linq.Internal
 {
     /// <summary>Читатель табличных данных результата запроса.</summary>
-    [ContractClass(typeof(ISqlResultReaderContract))]
+    [ContractClass(typeof(SqlResultReaderContract))]
     internal interface ISqlResultReader : IDisposable
     {
         /// <summary>Передвигает курсор на следующую позицию.</summary>
@@ -28,11 +28,12 @@ namespace VanessaSharp.Data.Linq.Internal
     }
 
     [ContractClassFor(typeof(ISqlResultReader))]
-    internal abstract class ISqlResultReaderContract : ISqlResultReader
+    internal abstract class SqlResultReaderContract : ISqlResultReader
     {
         public abstract void Dispose();
         public abstract bool Read();
 
+        /// <summary>Количество колонок.</summary>
         int ISqlResultReader.FieldCount
         {
             get
@@ -43,6 +44,7 @@ namespace VanessaSharp.Data.Linq.Internal
             }
         }
 
+        /// <summary>Конвертер значений.</summary>
         IValueConverter ISqlResultReader.ValueConverter 
         { 
             get
@@ -53,6 +55,10 @@ namespace VanessaSharp.Data.Linq.Internal
             } 
         }
 
+        /// <summary>
+        /// Получение имени поля.
+        /// </summary>
+        /// <param name="fieldIndex">Индекс поля.</param>
         string ISqlResultReader.GetFieldName(int fieldIndex)
         {
             Contract.Requires<ArgumentOutOfRangeException>(fieldIndex >= 0 && fieldIndex < ((ISqlResultReader)this).FieldCount);
@@ -61,6 +67,8 @@ namespace VanessaSharp.Data.Linq.Internal
             return null;
         }
 
+        /// <summary>Получение значений из записи.</summary>
+        /// <param name="buffer">Буфер для записи.</param>
         void ISqlResultReader.GetValues(object[] buffer)
         {
             Contract.Requires<ArgumentNullException>(buffer != null);

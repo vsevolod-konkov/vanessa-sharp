@@ -47,7 +47,12 @@ namespace VanessaSharp.Data.Linq
         /// </summary>
         public OneSConnection Connection
         {
-            get { return _connection; }
+            get
+            {
+                Contract.Ensures(Contract.Result<OneSConnection>() != null);
+                
+                return _connection;
+            }
         }
         private readonly OneSConnection _connection;
 
@@ -57,9 +62,6 @@ namespace VanessaSharp.Data.Linq
         /// <param name="sourceName">Имя источника данных.</param>
         public IQueryable<OneSDataRecord> CreateGetRecordsQuery(string sourceName)
         {
-            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
-            Contract.Ensures(Contract.Result<IQueryable<OneSDataRecord>>() != null);
-
             return CreateQuery<OneSDataRecord>(OneSQueryExpressionHelper.GetRecordsExpression(sourceName));
         }
 
@@ -109,9 +111,11 @@ namespace VanessaSharp.Data.Linq
         /// <param name="expression">Дерево выражения, представляющее запрос LINQ.</param>
         public object Execute(Expression expression)
         {
+            // Конвейер выполнения выражения
+            
             return _expressionParser
-                .Parse(expression)
-                .Execute(_sqlCommandExecuter);
+                .Parse(expression) // Парсинг выражения - создание SQL-команды и читателя элементов
+                .Execute(_sqlCommandExecuter); // Выполнение SQL-команды и вычитка элементов данных.
         }
 
         /// <summary>

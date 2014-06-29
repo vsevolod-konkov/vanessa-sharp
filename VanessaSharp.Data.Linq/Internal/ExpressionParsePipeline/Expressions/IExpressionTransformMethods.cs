@@ -9,7 +9,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     /// Методы преобразования LINQ-выражений методов-запросов.
     /// </summary>
     [ContractClass(typeof(ExpressionTransformMethodsContract))]
-    internal interface IExpressionTransformMethods
+    internal interface IExpressionTransformMethods : ISourceResolver
     {
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
         /// <typeparam name="TInput">Тип элементов исходной последовательности.</typeparam>
@@ -32,10 +32,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
         SqlFieldExpression TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression);
 
-        /// <summary>Получение имени источника данных для типизированной записи.</summary>
-        /// <typeparam name="T">Тип записи.</typeparam>
-        string GetTypedRecordSourceName<T>();
-        
         /// <summary>Преобразование получения типизированных записей.</summary>
         /// <typeparam name="T">Тип записей.</typeparam>
         SelectionPartParseProduct<T> TransformSelectTypedRecord<T>();
@@ -88,15 +84,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return null;
         }
 
-        /// <summary>Получение имени источника данных для типизированной записи.</summary>
-        /// <typeparam name="T">Тип записи.</typeparam>
-        string IExpressionTransformMethods.GetTypedRecordSourceName<T>()
-        {
-            Contract.Ensures(!string.IsNullOrWhiteSpace(Contract.Result<string>()));
-
-            return null;
-        }
-
         /// <summary>Преобразование получения типизированных записей.</summary>
         /// <typeparam name="T">Тип записей.</typeparam>
         SelectionPartParseProduct<T> IExpressionTransformMethods.TransformSelectTypedRecord<T>()
@@ -105,5 +92,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
             return null;
         }
+
+        /// <summary>Получение имени источника данных для типизированной записи.</summary>
+        /// <typeparam name="T">Тип записи.</typeparam>
+        public abstract string ResolveSourceNameForTypedRecord<T>();
     }
 }

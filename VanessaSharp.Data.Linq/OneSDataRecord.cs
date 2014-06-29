@@ -9,6 +9,7 @@ namespace VanessaSharp.Data.Linq
     /// <summary>
     /// Запись табличных данных 1С.
     /// </summary>
+    [Serializable]
     public sealed class OneSDataRecord
     {
         /// <summary>Поля.</summary>
@@ -211,7 +212,7 @@ namespace VanessaSharp.Data.Linq
             Contract.Ensures(Contract.Result<int>() >= 0);
 
             var bufferSize = Math.Min(values.Length, _values.Count);
-            var buffer = _values.Take(bufferSize).Select(v => v.ToObject()).ToArray();
+            var buffer = _values.Take(bufferSize).Select(v => v.RawValue).ToArray();
             
             Array.Copy(buffer, values, bufferSize);
 

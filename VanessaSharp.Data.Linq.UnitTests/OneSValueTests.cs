@@ -39,7 +39,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
         }
 
         /// <summary>
-        /// Тестирование <see cref="OneSValue.ToObject"/>
+        /// Тестирование <see cref="OneSValue.RawValue"/>
         /// в случае если исходный объект не является нулевым.
         /// </summary>
         [Test]
@@ -47,12 +47,12 @@ namespace VanessaSharp.Data.Linq.UnitTests
         {
             CreateTestedInstance(new object());
 
-            Assert.AreSame(_rawValue, _testedInstance.ToObject());
+            Assert.AreSame(_rawValue, _testedInstance.RawValue);
             Assert.IsFalse(_testedInstance.IsNull);
         }
 
         /// <summary>
-        /// Тестирование <see cref="OneSValue.ToObject"/>
+        /// Тестирование <see cref="OneSValue.RawValue"/>
         /// в случае если исходный объект является нулевым.
         /// </summary>
         [Test]
@@ -60,7 +60,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
         {
             CreateTestedInstance(null);
 
-            Assert.IsNull(_testedInstance.ToObject());
+            Assert.IsNull(_testedInstance.RawValue);
             Assert.IsTrue(_testedInstance.IsNull);
         }
 

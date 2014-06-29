@@ -44,7 +44,7 @@
     <CodeContractsRunInBackground>True</CodeContractsRunInBackground>
     <CodeContractsShowSquigglies>True</CodeContractsShowSquigglies>
     <CodeContractsUseBaseLine>False</CodeContractsUseBaseLine>
-    <CodeContractsEmitXMLDocs>False</CodeContractsEmitXMLDocs>
+    <CodeContractsEmitXMLDocs>True</CodeContractsEmitXMLDocs>
     <CodeContractsCustomRewriterAssembly />
     <CodeContractsCustomRewriterClass />
     <CodeContractsLibPaths />
@@ -55,7 +55,7 @@
     <CodeContractsCacheAnalysisResults>True</CodeContractsCacheAnalysisResults>
     <CodeContractsFailBuildOnWarnings>False</CodeContractsFailBuildOnWarnings>
     <CodeContractsRuntimeCheckingLevel>Full</CodeContractsRuntimeCheckingLevel>
-    <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
+    <CodeContractsReferenceAssembly>Build</CodeContractsReferenceAssembly>
     <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -77,6 +77,10 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="Internal\ExpressionParsePipeline\ExplicitSourceDescription.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformService.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformService.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformerBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionTransformMethods.cs" />
@@ -85,11 +89,17 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\FieldAccessExpressionTransformerBaseOfTResult.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IExpressionTransformMethods.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\OrderByExpressionTransformer.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\ISimpleQuery.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\IQuery.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\IQueryOfT.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\ISourceDescription.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\ISourceResolver.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\IQueryableExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryFactory.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortKind.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SourceDescriptionByType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlOrderByStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSortFieldExpression.cs" />
@@ -98,11 +108,8 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryParseContext.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SelectionPartParseProduct.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\SelectExpressionTransformer.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\SimpleQuery.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\Queryable\SimpleQueryBuilder.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformer.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\CustomDataTypeQuery.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\DataRecordsQuery.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlAllColumnsExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlColumnListExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlColumnSetExpression.cs" />
@@ -115,7 +122,6 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlQueryStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSelectStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlWhereStatement.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\TupleQuery.cs" />
     <Compile Include="Internal\ExpressionParseProduct.cs" />
     <Compile Include="Internal\CollectionReadExpressionParseProduct.cs" />
     <Compile Include="Internal\ExpressionParser.cs" />

@@ -19,7 +19,12 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Читатель элементов.</summary>
         internal Func<IValueConverter, object[], T> ItemReader
         {
-            get { return _itemReader; }
+            get
+            {
+                Contract.Ensures(Contract.Result<Func<IValueConverter, object[], T>>() != null);
+                
+                return _itemReader;
+            }
         }
         private readonly Func<IValueConverter, object[], T> _itemReader;
 

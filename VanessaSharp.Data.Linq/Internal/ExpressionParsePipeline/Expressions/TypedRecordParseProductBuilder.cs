@@ -8,6 +8,7 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
+    // TODO Общий рефакторинг с SelectExpressionTransformer
     /// <summary>Построитель конструкций запроса для типизированных записей.</summary>
     internal sealed class TypedRecordParseProductBuilder
     {

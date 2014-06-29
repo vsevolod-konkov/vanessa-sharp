@@ -48,8 +48,13 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="Internal\CollectionReadExpressionParseProductTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\ExplicitSourceDescriptionTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformServiceTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilderTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\SimpleQueryBuildingTestsBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryBaseTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryFactoryTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SourceDescriptionByTypeTests.cs" />
     <Compile Include="Internal\ExpressionParserComponentTests.cs" />
     <Compile Include="Internal\ExpressionParserTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformerTests.cs" />

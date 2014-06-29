@@ -26,6 +26,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>
         /// Поставщик соответствий типам источников данных 1С.
         /// </summary>
+        internal IOneSMappingProvider MappingProvider
+        {
+            get { return _mappingProvider; }    
+        }
         private readonly IOneSMappingProvider _mappingProvider;
 
         /// <summary>Построитель конструкций запроса для типизированных записей.</summary>
@@ -63,7 +67,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
         /// <summary>Получение имени источника данных для типизированной записи.</summary>
         /// <typeparam name="T">Тип записи.</typeparam>
-        public string GetTypedRecordSourceName<T>()
+        public string ResolveSourceNameForTypedRecord<T>()
         {
             return _typedRecordParseProductBuilder.GetTypedRecordSourceName<T>();
         }

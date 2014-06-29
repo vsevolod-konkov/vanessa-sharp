@@ -93,7 +93,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             const string FILTER_VALUE = "filter_value";
 
             // Arrange
-            var query = new DataRecordsQuery("[source]", r => r.GetString("filter_field") == FILTER_VALUE, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
+            var query = CreateQuery("[source]", whereExpression: r => r.GetString("filter_field") == FILTER_VALUE);
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -121,8 +121,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Arrange
             Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("sort_field");
-            var query = new DataRecordsQuery("[source]", null,
-                new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sortKeyExpression, sortKind) }));
+            var query = CreateQuery("[source]", null, new SortExpression(sortKeyExpression, sortKind));
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -164,7 +163,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Expression<Func<AnyData, bool>> filterExpression = d => d.Name == FILTER_VALUE;
             
-            var query = new TupleQuery<AnyData, AnyData>(null, filterExpression, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
+            var query = CreateTupleQuery(filterExpression: filterExpression);
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -207,9 +206,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<AnyData, string>> sortKeyExpression1 = d => d.Name;
             Expression<Func<AnyData, decimal>> sortKeyExpression2 = d => d.Price;
 
-            var query = new TupleQuery<AnyData, AnyData>(
-                null, 
-                null, 
+            var query = CreateTupleQuery(
+                sorters:
                 new ReadOnlyCollection<SortExpression>(new []
                     {
                         new SortExpression(sortKeyExpression1, SortKind.Descending),
@@ -253,7 +251,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             var selectExpression = Trait.Of<AnyData>().SelectExpression(d => new {d.Id, d.Price});
 
-            var query = CreateTupleQuery(selectExpression, null);
+            var query = CreateTupleQuery(selectExpression);
 
             // Act
             var result = _testedInstance.Transform(query);

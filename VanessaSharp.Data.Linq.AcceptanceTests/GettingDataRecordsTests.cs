@@ -174,13 +174,13 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                         var fieldName = ExpectedFieldName(fieldIndex);
 
                         Assert.AreEqual(expectedFieldValue, values[fieldIndex]);
-                        Assert.AreEqual(expectedFieldValue, oneSValues[fieldIndex].ToObject());
-                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldIndex).ToObject());
-                        Assert.AreEqual(expectedFieldValue, record[fieldIndex].ToObject());
-                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldName).ToObject());
-                        Assert.AreEqual(expectedFieldValue, record[fieldName].ToObject());
-                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldIndex).ToObject());
-                        Assert.AreEqual(expectedFieldValue, record[ExpectedFieldName(fieldIndex)].ToObject());
+                        Assert.AreEqual(expectedFieldValue, oneSValues[fieldIndex].RawValue);
+                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldIndex).RawValue);
+                        Assert.AreEqual(expectedFieldValue, record[fieldIndex].RawValue);
+                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldName).RawValue);
+                        Assert.AreEqual(expectedFieldValue, record[fieldName].RawValue);
+                        Assert.AreEqual(expectedFieldValue, record.GetValue(fieldIndex).RawValue);
+                        Assert.AreEqual(expectedFieldValue, record[ExpectedFieldName(fieldIndex)].RawValue);
                         Assert.AreEqual(expectedFieldValue, getTypedValueById(fieldIndex));
                         Assert.AreEqual(expectedFieldValue, getTypedValueByName(fieldIndex));
                     } 

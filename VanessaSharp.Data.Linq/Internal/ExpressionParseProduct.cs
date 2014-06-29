@@ -20,7 +20,12 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Команда SQL-запроса.</summary>
         public SqlCommand Command
         {
-            get { return _command; }
+            get
+            {
+                Contract.Ensures(Contract.Result<SqlCommand>() != null);
+                
+                return _command;
+            }
         }
         private readonly SqlCommand _command;
 

@@ -49,7 +49,12 @@ namespace VanessaSharp.Data.Linq
         /// </summary>
         public OneSConnection Connection
         {
-            get { return _queryProvider.Connection; }
+            get
+            {
+                Contract.Ensures(Contract.Result<OneSConnection>() != null);
+
+                return _queryProvider.Connection;
+            }
         }
 
         /// <summary>

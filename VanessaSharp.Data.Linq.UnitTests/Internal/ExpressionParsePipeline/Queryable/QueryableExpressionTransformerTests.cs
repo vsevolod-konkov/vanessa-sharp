@@ -38,7 +38,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(expression);
 
             // Assert
-            AssertDataRecordsQuery(result);
+            AssertDataRecordQuery(result, SOURCE_NAME);
         }
 
         /// <summary>
@@ -60,10 +60,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertSimpleQuery(result);
+            var typedQuery = AssertDataRecordQuery(trait, result, SOURCE_NAME);
 
-            var typedQuery = AssertAndCastCustomDataTypeQuery(trait, result);
-            Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
+            Assert.AreEqual(selectExpression, typedQuery.Selector);
         }
 
         /// <summary>
@@ -82,7 +81,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertDataRecordsQuery(result, expectedFilter: filterExpression);
+            AssertDataRecordQuery(result, SOURCE_NAME, expectedFilter: filterExpression);
         }
 
         /// <summary>
@@ -101,7 +100,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertDataRecordsQuery(result, expectedSorters: expectedSorters);
+            AssertDataRecordQuery(result, SOURCE_NAME, expectedSorters: expectedSorters);
         }
 
 
@@ -214,14 +213,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertSimpleQuery(result, 
+            var typedQuery = AssertDataRecordQuery(
+                trait,
+                result,
+                SOURCE_NAME,
                 filterExpression, 
                 new SortExpression(sortKey1Expression, SortKind.Ascending), 
                 new SortExpression(sortKey2Expression, SortKind.Descending),
                 new SortExpression(sortKey3Expression, SortKind.Ascending));
 
-            var typedQuery = AssertAndCastCustomDataTypeQuery(trait, result);
-            Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
+            Assert.AreEqual(selectExpression, typedQuery.Selector);
         }
 
         /// <summary>
@@ -239,9 +240,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var tupleQuery = AssertAndCast<TupleQuery<AnyDataType, AnyDataType>>(result);
+            var tupleQuery = AssertAndCast<IQuery<AnyDataType, AnyDataType>>(result);
+            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(tupleQuery.Source);
             Assert.IsNull(tupleQuery.Selector);
             Assert.IsNull(tupleQuery.Filter);
+            Assert.AreEqual(0, tupleQuery.Sorters.Count);
         }
 
         /// <summary>
@@ -262,9 +265,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var typedQuery = AssertAndCast<TupleQuery<AnyDataType, AnyDataType>>(result);
+            var typedQuery = AssertAndCast<IQuery<AnyDataType, AnyDataType>>(result);
+            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(typedQuery.Source);
             Assert.IsNull(typedQuery.Selector);
             Assert.AreSame(filterExpression, typedQuery.Filter);
+            Assert.AreEqual(0, typedQuery.Sorters.Count);
         }
 
         /// <summary>
@@ -289,8 +294,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var typedQuery = AssertAndCast<TupleQuery<AnyDataType, AnyDataType>>(result);
+            var typedQuery = AssertAndCast<IQuery<AnyDataType, AnyDataType>>(result);
+            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(typedQuery.Source);
             Assert.IsNull(typedQuery.Selector);
+            Assert.IsNull(typedQuery.Filter);
+
             Assert.AreEqual(2, typedQuery.Sorters.Count);
 
             Assert.AreEqual(sortExpression1, typedQuery.Sorters[0].KeyExpression);
@@ -322,13 +330,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
             // Assert
             var tupleQuery = AssertAndCastTupleQuery(trait, result);
+            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(tupleQuery.Source);
             Assert.AreSame(selectExpression, tupleQuery.Selector);
             Assert.IsNull(tupleQuery.Filter);
+            Assert.AreEqual(0, tupleQuery.Sorters.Count);
         }
 
-        private static TupleQuery<AnyDataType, TOutput> AssertAndCastTupleQuery<TOutput>(Trait<TOutput> outputTrait, ISimpleQuery query)
+        private static IQuery<AnyDataType, TOutput> AssertAndCastTupleQuery<TOutput>(Trait<TOutput> outputTrait, IQuery query)
         {
-            return AssertAndCast<TupleQuery<AnyDataType, TOutput>>(query);
+            return AssertAndCast<IQuery<AnyDataType, TOutput>>(query);
         }
 
         public sealed class AnyDataType

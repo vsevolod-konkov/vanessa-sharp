@@ -8,7 +8,7 @@ namespace VanessaSharp.Data.Linq
     /// <summary>
     /// Интерфейс LINQ-провайдера 1С.
     /// </summary>
-    [ContractClass(typeof(IOneSQueryProviderContract))]
+    [ContractClass(typeof(OneSQueryProviderContract))]
     internal interface IOneSQueryProvider : IQueryProvider, IDisposable
     {
         /// <summary>
@@ -30,8 +30,11 @@ namespace VanessaSharp.Data.Linq
     }
 
     [ContractClassFor(typeof(IOneSQueryProvider))]
-    internal abstract class IOneSQueryProviderContract : IOneSQueryProvider
+    internal abstract class OneSQueryProviderContract : IOneSQueryProvider
     {
+        /// <summary>
+        /// Соединение к 1С.
+        /// </summary>
         OneSConnection IOneSQueryProvider.Connection
         {
             get
@@ -42,6 +45,10 @@ namespace VanessaSharp.Data.Linq
             }
         }
 
+        /// <summary>
+        /// Создание объекта запроса возвращающего записи из <paramref name="sourceName"/>.
+        /// </summary>
+        /// <param name="sourceName">Имя источника данных.</param>
         IQueryable<OneSDataRecord> IOneSQueryProvider.CreateGetRecordsQuery(string sourceName)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
@@ -50,6 +57,10 @@ namespace VanessaSharp.Data.Linq
             return null;
         }
 
+        /// <summary>
+        /// Создание объекта запроса возвращающего записи описываемые типом <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">Тип запрашиваемых записей.</typeparam>
         IQueryable<T> IOneSQueryProvider.CreateQueryOf<T>()
         {
             Contract.Ensures(Contract.Result<IQueryable<T>>() != null);

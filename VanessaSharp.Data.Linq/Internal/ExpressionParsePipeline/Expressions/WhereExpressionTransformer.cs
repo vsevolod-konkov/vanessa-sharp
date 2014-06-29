@@ -65,6 +65,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             _stackEngine.Push(fieldExpression);
         }
 
+        /// <summary>
+        /// Просматривает выражение <see cref="T:System.Linq.Expressions.ConstantExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitConstant(ConstantExpression node)
         {
             var parameterName = Context.Parameters.GetOrAddNewParameterName(node.Value);
@@ -74,6 +81,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return node;
         }
 
+        /// <summary>
+        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.BinaryExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitBinary(BinaryExpression node)
         {
             var result = DefaultVisitBinary(node);
@@ -112,10 +126,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
         #region Вспомогательные типы
 
+        /// <summary>
+        /// Стековая машина для разбора выражений.
+        /// </summary>
         private sealed class StackEngine
         {
+            /// <summary>Стек выражений.</summary>
             private readonly Stack<object> _stack = new Stack<object>(); 
 
+            /// <summary>Вставка выражения в стек.</summary>
             public void Push(SqlExpression expression)
             {
                 Contract.Requires<ArgumentNullException>(expression != null);
@@ -123,6 +142,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _stack.Push(expression);
             }
 
+            /// <summary>Вытягивание типизированного объекта из стека.</summary>
+            /// <typeparam name="T">Тип объекта.</typeparam>
             private T Pop<T>()
                 where T : class
             {
@@ -144,6 +165,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return result;
             }
 
+            /// <summary>Вытягивание двух выражений из стека и положение в стек созданного условия бинарного отношения.</summary>
+            /// <param name="relationType">Тип бинарного отношения.</param>
             public void BinaryRelation(SqlBinaryRelationType relationType)
             {
                 var secondOperand = Pop<SqlExpression>();
@@ -153,6 +176,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _stack.Push(condition);
             }
 
+            /// <summary>Получение условия.</summary>
             public SqlCondition GetCondition()
             {
                 return Pop<SqlCondition>();

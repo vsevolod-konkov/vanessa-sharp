@@ -7,7 +7,7 @@ namespace VanessaSharp.Data.Linq.Internal
     /// <summary>
     /// Интерфейс разборщика выражений.
     /// </summary>
-    [ContractClass(typeof(IExpressionParserContract))]
+    [ContractClass(typeof(ExpressionParserContract))]
     internal interface IExpressionParser
     {
         /// <summary>Разбор выражения.</summary>
@@ -23,7 +23,7 @@ namespace VanessaSharp.Data.Linq.Internal
     }
 
     [ContractClassFor(typeof(IExpressionParser))]
-    internal abstract class IExpressionParserContract : IExpressionParser
+    internal abstract class ExpressionParserContract : IExpressionParser
     {
         ExpressionParseProduct IExpressionParser.Parse(Expression expression)
         {

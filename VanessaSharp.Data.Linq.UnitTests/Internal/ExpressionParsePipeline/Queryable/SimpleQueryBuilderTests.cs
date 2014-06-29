@@ -7,16 +7,16 @@ using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Queryable
 {
-    /// <summary>Тестирование <see cref="SimpleQueryBuilder"/>.</summary>
+    /// <summary>Тестирование <see cref="QueryBuilder"/>.</summary>
     [TestFixture]
     public sealed class SimpleQueryBuilderTests : SimpleQueryBuildingTestsBase
     {
-        private SimpleQueryBuilder _testedInstance;
+        private QueryBuilder _testedInstance;
 
         [SetUp]
         public void SetUp()
         {
-            _testedInstance = new SimpleQueryBuilder();
+            _testedInstance = new QueryBuilder();
         }
 
         /// <summary>Тестирование построения запроса получения записей.</summary>
@@ -32,7 +32,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsQuery(result);
+            AssertDataRecordQuery(result, SOURCE_NAME);
         }
 
         /// <summary>Тестирование построения запроса выборки полей записей.</summary>
@@ -55,10 +55,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertSimpleQuery(result);
-            
-            var typedQuery = AssertAndCastCustomDataTypeQuery(traitOfOutputType, result);
-            Assert.AreEqual(expectedExpression, typedQuery.SelectExpression);
+            var typedQuery = AssertDataRecordQuery(traitOfOutputType, result, SOURCE_NAME);
+            Assert.AreEqual(expectedExpression, typedQuery.Selector);
         }
 
         /// <summary>Тестирование построения запроса с фильтрации записей.</summary>
@@ -78,7 +76,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsQuery(result, filterExpression);
+            AssertDataRecordQuery(result, SOURCE_NAME, filterExpression);
         }
 
         /// <summary>Тестирование построения запроса выборки и фильтрации записей.</summary>
@@ -103,12 +101,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertSimpleQuery(result, filterExpression);
-            var typedQuery = AssertAndCastCustomDataTypeQuery(traitOfOutputType, result);
-            Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
+            var typedQuery = AssertDataRecordQuery(traitOfOutputType, result, SOURCE_NAME, filterExpression);
+            Assert.AreEqual(selectExpression, typedQuery.Selector);
         }
 
-        private void TestBuildQueryWhenSorting(Action<SimpleQueryBuilder> queryBuilderAction,
+        private void TestBuildQueryWhenSorting(Action<QueryBuilder> queryBuilderAction,
                                                params SortExpression[] expectedSorters)
         {
             // Act
@@ -123,7 +120,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsQuery(result, expectedSorters: expectedSorters);
+            AssertDataRecordQuery(result, SOURCE_NAME, expectedSorters: expectedSorters);
         }
 
         [Test]
@@ -236,15 +233,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertSimpleQuery(
-                result, 
+            var typedQuery = AssertDataRecordQuery(
+                traitOfOutputType,
+                result,
+                SOURCE_NAME,
                 filterExpression,
                 new SortExpression(sortKey1Expression, SortKind.Descending),
                 new SortExpression(sortKey2Expression, SortKind.Descending),
                 new SortExpression(sortKey3Expression, SortKind.Ascending));
 
-            var typedQuery = AssertAndCastCustomDataTypeQuery(traitOfOutputType, result);
-            Assert.AreEqual(selectExpression, typedQuery.SelectExpression);
+            Assert.AreEqual(selectExpression, typedQuery.Selector);
         }
     }
 }

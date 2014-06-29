@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 namespace VanessaSharp.Data
 {
     /// <summary>Вспомогательные методы для конвертации значений.</summary>
+    [Serializable]
     internal sealed class ValueConverter : IValueConverter
     {
         /// <summary>Реализация по умолчанию.</summary>

@@ -11,15 +11,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
     /// <summary>Стандартная реализация <see cref="IQueryableExpressionHandler"/></summary>
     /// <remarks>
     /// Преобразовывает выражение генерируемое <see cref="Queryable"/>
-    /// в объект запроса <see cref="SimpleQuery"/>.
+    /// в объект запроса <see cref="IQuery"/>.
     /// </remarks>
-    internal sealed class SimpleQueryBuilder : IQueryableExpressionHandler
+    internal sealed class QueryBuilder : IQueryableExpressionHandler
     {
         /// <summary>Объект текущего состояния.</summary>
         private BuilderState _currentState;
 
         /// <summary>Конструктор.</summary>
-        public SimpleQueryBuilder()
+        public QueryBuilder()
         {
             _currentState = new StartingState();
         }
@@ -100,12 +100,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         }
 
         /// <summary>Построенный запрос, после обработки выражения.</summary>
-        public ISimpleQuery BuiltQuery
+        public IQuery BuiltQuery
         {
             get { return _currentState.BuiltQuery; }
         }
-
-        
 
         #region Классы состояний
 
@@ -120,12 +118,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// <param name="sortKind">Направление сортировки.</param>
             void AddSort(LambdaExpression sortKeyExpression, SortKind sortKind);
 
-            /// <summary>Создание объекта запроса.</summary>
+            /// <summary>Создание объекта запроса записей <see cref="OneSDataRecord"/>.</summary>
             /// <param name="sourceName">Имя источника.</param>
-            SimpleQuery CreateQuery(string sourceName);
+            IQuery CreateQuery(string sourceName);
 
-            /// <summary>Создание объекта запроса.</summary>
-            ISimpleQuery CreateQuery(Type itemType);
+            /// <summary>Создание объекта запроса типизированных записей.</summary>
+            /// <param name="itemType">Тип элементов входной последовательности.</param>
+            IQuery CreateQuery(Type itemType);
         }
 
         /// <summary>Данные состояний когда не происходило выборки.</summary>
@@ -150,10 +149,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// <summary>Выражение фильтрации записей.</summary>
             public LambdaExpression FilterExpression
             {
-                get { return _filterExpression; }
+                private get { return _filterExpression; }
                 
                 set
                 {
+                    if (_filterExpression != null)
+                    {
+                        throw new InvalidOperationException(string.Format(
+                            "Попытка установить выражение фильтрации \"{0}\" вызвало исключение, так как выражение фильтрации уже установлено \"{1}\".",
+                            value, _filterExpression));
+                    }
+                    
                     if (value != null)
                         CheckFilterExpression(value);
                     
@@ -172,47 +178,84 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             }
 
             /// <summary>Создание списка выражений сортировки.</summary>
-            public ReadOnlyCollection<SortExpression> CreateSortExpressionList()
+            private ReadOnlyCollection<SortExpression> CreateSortExpressionList()
             {
                 return new ReadOnlyCollection<SortExpression>(
                     _sortExpressionStack.ToArray());
             }
             
-            /// <summary>Выражение сортировки.</summary>
+            /// <summary>Стек выражений сортировки.</summary>
+            /// <remarks>Так как выражения сортировки обрабатываются в обратном направлении, с конца.</remarks>
             private readonly Stack<SortExpression> _sortExpressionStack = new Stack<SortExpression>();
 
-            /// <summary>Создание объекта запроса.</summary>
-            /// <param name="sourceName">Имя источника.</param>
-            public SimpleQuery CreateQuery(string sourceName)
+            /// <summary>
+            /// Проверка выражения выборки для создания запроса.
+            /// </summary>
+            /// <param name="selectExpression">Выражение выборки.</param>
+            private void CheckSelectExpressionForQuery(LambdaExpression selectExpression)
+            {
+                if (InputItemType != OutputItemType && selectExpression == null)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Если нет выражения выборки, то типы элементов входной и выходной последовательности должны совпадать."
+                        + " Это не так. Тип элементов входной последовательности \"{0}\". Тип элементов выходной последовательности\"{1}\".",
+                        InputItemType, OutputItemType));
+                }
+
+                if (selectExpression != null)
+                {
+                    CheckLambdaExpression(selectExpression);
+
+                    if (selectExpression.ReturnType != OutputItemType)
+                    {
+                        throw new InvalidOperationException(string.Format(
+                        "Тип элементов выходной последовательности должен совпадать с типом результата выражения выборки."
+                        + " Это не так. Тип элементов выходной последовательности \"{0}\". Тип результата выражения выборки \"{1}\" равен \"{2}\".",
+                        OutputItemType, selectExpression, selectExpression.ReturnType));
+                    }
+                }
+            }
+
+            /// <summary>Создание объекта запроса записей типа <see cref="OneSDataRecord"/>.</summary>
+            /// <param name="sourceName">Имя источника данных.</param>
+            public IQuery CreateQuery(string sourceName)
             {
                 Contract.Assert(InputItemType == typeof(OneSDataRecord));
-                
-                // TODO: Жесткий кастинг
-                return new DataRecordsQuery(sourceName, (Expression<Func<OneSDataRecord, bool>>)FilterExpression, CreateSortExpressionList());
+
+                return CreateQuery(sourceName, null);
+            }
+
+            /// <summary>
+            /// Создание объекта запроса записей типа <see cref="OneSDataRecord"/>.
+            /// </summary>
+            /// <param name="sourceName">Имя источника данных.</param>
+            /// <param name="selectExpression">Выражение выборки.</param>
+            public IQuery CreateQuery(string sourceName, LambdaExpression selectExpression)
+            {
+                Contract.Assert(InputItemType == typeof(OneSDataRecord));
+
+                CheckSelectExpressionForQuery(selectExpression);
+
+                return (selectExpression == null)
+                    ? QueryFactory.CreateQuery(sourceName, FilterExpression, CreateSortExpressionList())
+                    : QueryFactory.CreateQuery(sourceName, selectExpression, FilterExpression, CreateSortExpressionList());
             }
 
             /// <summary>Создание объекта запроса.</summary>
-            public ISimpleQuery CreateQuery(Type itemType)
+            public IQuery CreateQuery(Type itemType)
             {
-                if (InputItemType != itemType)
-                {
-                    throw new InvalidOperationException(string.Format(
-                        "Тип \"{0}\" для получения записей неприемлем. Ожидался тип \"{1}\".",
-                        itemType, InputItemType));
-                }
+                return CreateQuery(itemType, null);
+            }
+
+            /// <summary>
+            /// Создание запроса типизированных записей с указанием проекции элементов.
+            /// </summary>
+            /// <param name="itemType">Тип элементов входной последовательности.</param>
+            /// <param name="selectExpression">Выражение выборки элементов.</param>
+            public IQuery CreateQuery(Type itemType, LambdaExpression selectExpression)
+            {
+                Contract.Assert(itemType != typeof(OneSDataRecord));
                 
-                if (InputItemType != _outputItemType)
-                {
-                    // TODO: Нормальное сообщение
-                    throw new InvalidOperationException();
-                }
-
-                return CreateTupleQuery(null);
-            }
-
-            // TODO : Копипаста
-            public ISimpleQuery CreateQuery(Type itemType, LambdaExpression selectExpression)
-            {
                 if (InputItemType != itemType)
                 {
                     throw new InvalidOperationException(string.Format(
@@ -220,40 +263,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                         itemType, InputItemType));
                 }
 
-                if (InputItemType != _outputItemType && selectExpression == null)
-                {
-                    // TODO: Нормальное сообщение
-                    throw new InvalidOperationException();
-                }
+                CheckSelectExpressionForQuery(selectExpression);
 
-                if (selectExpression.ReturnType != _outputItemType)
-                {
-                    // TODO: Нормальное сообщение
-                    throw new InvalidOperationException();
-                }
-
-                return CreateTupleQuery(selectExpression);
-            }
-
-            /// <summary>Создание <see cref="TupleQuery{TInput, TOutput}"/>.</summary>
-            /// <param name="selectExpression">Выражение выборки.</param>
-            private ISimpleQuery CreateTupleQuery(LambdaExpression selectExpression)
-            {
-                Contract.Assert(InputItemType != typeof(OneSDataRecord));
-
-                return CreateTupleQuery(InputItemType, _outputItemType, selectExpression, FilterExpression, CreateSortExpressionList());
-            }
-
-            /// <summary>Создание <see cref="TupleQuery{TInput, TOutput}"/>.</summary>
-            /// <param name="inputType">Тип данных исходной последовательности.</param>
-            /// <param name="outputType">Тип данных выходной последовательности.</param>
-            /// <param name="selectExpression">Выражение выборки.</param>
-            /// <param name="filterExpression">Выражение фильтрации.</param>
-            /// <param name="sortExpressions">Выражения сортировки.</param>
-            private static ISimpleQuery CreateTupleQuery(Type inputType, Type outputType, LambdaExpression selectExpression, LambdaExpression filterExpression, ReadOnlyCollection<SortExpression> sortExpressions)
-            {
-                var queryType = typeof(TupleQuery<,>).MakeGenericType(inputType, outputType);
-                return (ISimpleQuery)Activator.CreateInstance(queryType, selectExpression, filterExpression, sortExpressions);
+                return (selectExpression == null)
+                           ? QueryFactory.CreateQuery(InputItemType, FilterExpression, CreateSortExpressionList())
+                           : QueryFactory.CreateQuery(selectExpression, FilterExpression, CreateSortExpressionList());
             }
 
             private void CheckLambdaExpression(LambdaExpression lambda)
@@ -261,7 +275,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 if (!VerifyLambdaType(lambda.Type))
                 {
                     throw new InvalidOperationException(String.Format(
-                        "Ошибочный тип \"{0}\" выражения \"{1}\". Ожидалось выражение типа \"{2}\", в котором первым типом-параметром будет \"{3}\".",
+                        "Ошибочный тип \"{0}\" выражения \"{1}\". Ожидалось выражение типа \"{2}\", в котором первым типом-параметром будет тип элементов входной последовательности \"{3}\".",
                         lambda, lambda.Type,
                         typeof(Func<,>), InputItemType));
                 }
@@ -328,32 +342,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 
             /// <summary>Создание объекта запроса.</summary>
             /// <param name="sourceName">Имя источника.</param>
-            public SimpleQuery CreateQuery(string sourceName)
+            public IQuery CreateQuery(string sourceName)
             {
                 Contract.Assert(_stateData.InputItemType == typeof(OneSDataRecord));
 
-                // TODO: Жесткий кастинг
-                return CreateDataTypeQuery(sourceName, (Expression<Func<OneSDataRecord, bool>>)_stateData.FilterExpression,
-                                           _stateData.CreateSortExpressionList(), _selectExpression);
+                return _stateData.CreateQuery(sourceName, _selectExpression);
             }
 
             /// <summary>Создание объекта запроса.</summary>
-            public ISimpleQuery CreateQuery(Type itemType)
+            public IQuery CreateQuery(Type itemType)
             {
+                Contract.Assert(_stateData.InputItemType != typeof(OneSDataRecord));
+                
                 return _stateData.CreateQuery(itemType, _selectExpression);
-            }
-
-            /// <summary>Создание запроса коллекции элементов кастомного типа.</summary>
-            /// <param name="source">Имя источника.</param>
-            /// <param name="filterExpression">Выражение фильтрации.</param>
-            /// <param name="sortExpressionList">Список выражений сортировки.</param>
-            /// <param name="selectExpression">Выражение выборки.</param>
-            private static SimpleQuery CreateDataTypeQuery(
-                string source, Expression<Func<OneSDataRecord, bool>> filterExpression,
-                ReadOnlyCollection<SortExpression> sortExpressionList, LambdaExpression selectExpression)
-            {
-                var queryType = typeof(CustomDataTypeQuery<>).MakeGenericType(selectExpression.ReturnType);
-                return (SimpleQuery)Activator.CreateInstance(queryType, source, filterExpression, sortExpressionList, selectExpression);
             }
 
             /// <summary>Получение типа элементов входной последовательности.</summary>
@@ -386,7 +387,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             }
 
             /// <summary>Построенный запрос, после обработки выражения.</summary>
-            public virtual ISimpleQuery BuiltQuery
+            public virtual IQuery BuiltQuery
             {
                 get
                 {
@@ -507,7 +508,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// <summary>Завершенное состояние.</summary>
         private sealed class EndedState : BuilderState
         {
-            public EndedState(ISimpleQuery builtQuery)
+            public EndedState(IQuery builtQuery)
             {
                 Contract.Requires<ArgumentNullException>(builtQuery != null);
 
@@ -515,19 +516,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             }
 
             /// <summary>Построенный запрос, после обработки выражения.</summary>
-            public override ISimpleQuery BuiltQuery
+            public override IQuery BuiltQuery
             {
                 get { return _builtQuery; }
             }
-            private readonly ISimpleQuery _builtQuery;
+            private readonly IQuery _builtQuery;
         }
 
         /// <summary>Состояние после получение записей из источника.</summary>
         private sealed class GettingRecordsState : BuilderState
         {
-            private readonly ISimpleQuery _builtQuery;
+            private readonly IQuery _builtQuery;
 
-            public GettingRecordsState(ISimpleQuery builtQuery)
+            public GettingRecordsState(IQuery builtQuery)
             {
                 _builtQuery = builtQuery;
             }
@@ -649,6 +650,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                     new SelectionStateData(_stateDataWithoutSelection, selectExpression));
             }
 
+            /// <summary>Определение тривиальной выборки.</summary>
+            /// <param name="lambda">Проверяемое выражение.</param>
             private static bool IsTrivial(LambdaExpression lambda)
             {
                 Contract.Assert(lambda.Parameters.Count == 1);

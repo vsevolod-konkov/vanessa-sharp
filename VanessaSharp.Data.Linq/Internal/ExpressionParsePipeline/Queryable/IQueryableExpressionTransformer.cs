@@ -7,29 +7,31 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 {
     /// <summary>
     /// Преобразователь linq-выражения <see cref="IQueryable{T}"/>
-    /// в <see cref="SimpleQuery"/>.
+    /// в <see cref="IQuery"/>.
     /// </summary>
-    [ContractClass(typeof(IQueryableExpressionTransformerContract))]
+    [ContractClass(typeof(QueryableExpressionTransformerContract))]
     internal interface IQueryableExpressionTransformer
     {
-        /// <summary>Преобразование linq-выражения <see cref="IQueryable{T}"/>
-        /// в <see cref="SimpleQuery"/>.
+        /// <summary>
+        /// Преобразование linq-выражения <see cref="IQueryable{T}"/>
+        /// в <see cref="IQuery"/>.
         /// </summary>
         /// <param name="expression">Выражение.</param>
-        ISimpleQuery Transform(Expression expression);
+        IQuery Transform(Expression expression);
     }
 
     [ContractClassFor(typeof(IQueryableExpressionTransformer))]
-    internal abstract class IQueryableExpressionTransformerContract : IQueryableExpressionTransformer
+    internal abstract class QueryableExpressionTransformerContract : IQueryableExpressionTransformer
     {
-        /// <summary>Преобразование linq-выражения <see cref="IQueryable{T}"/>
-        /// в <see cref="SimpleQuery"/>.
+        /// <summary>
+        /// Преобразование linq-выражения <see cref="IQueryable{T}"/>
+        /// в <see cref="IQuery"/>.
         /// </summary>
         /// <param name="expression">Выражение.</param>
-        ISimpleQuery IQueryableExpressionTransformer.Transform(Expression expression)
+        IQuery IQueryableExpressionTransformer.Transform(Expression expression)
         {
             Contract.Requires<ArgumentNullException>(expression != null);
-            Contract.Ensures(Contract.Result<ISimpleQuery>() != null);
+            Contract.Ensures(Contract.Result<IQuery>() != null);
 
             return null;
         }

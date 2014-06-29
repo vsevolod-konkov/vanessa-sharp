@@ -4,7 +4,7 @@ using System.Diagnostics.Contracts;
 namespace VanessaSharp.Data.Linq.Internal
 {
     /// <summary>Исполнитель SQL-запроса.</summary>
-    [ContractClass(typeof(ISqlCommandExecuterContract))]
+    [ContractClass(typeof(SqlCommandExecuterContract))]
     internal interface ISqlCommandExecuter : IDisposable
     {
         /// <summary>Выполнение SQL-запроса для получения табличных данных.</summary>
@@ -17,8 +17,10 @@ namespace VanessaSharp.Data.Linq.Internal
     }
 
     [ContractClassFor(typeof(ISqlCommandExecuter))]
-    internal abstract class ISqlCommandExecuterContract : ISqlCommandExecuter
+    internal abstract class SqlCommandExecuterContract : ISqlCommandExecuter
     {
+        /// <summary>Выполнение SQL-запроса для получения табличных данных.</summary>
+        /// <param name="command">Команда SQL-запроса.</param>
         ISqlResultReader ISqlCommandExecuter.ExecuteReader(SqlCommand command)
         {
             Contract.Requires<ArgumentNullException>(command != null);
@@ -27,6 +29,8 @@ namespace VanessaSharp.Data.Linq.Internal
             return null;
         }
 
+        /// <summary>Выполенение SQL-запроса для получения скалярного значения.</summary>
+        /// <param name="command">Команда SQL-запроса.</param>
         object ISqlCommandExecuter.ExecuteScalar(SqlCommand command)
         {
             Contract.Requires<ArgumentNullException>(command != null);
@@ -34,6 +38,10 @@ namespace VanessaSharp.Data.Linq.Internal
             return null;
         }
 
+        /// <summary>
+        /// Выполняет определяемые приложением задачи, связанные с удалением, высвобождением или сбросом неуправляемых ресурсов.
+        /// </summary>
+        /// <filterpriority>2</filterpriority>
         public abstract void Dispose();
     }
 }

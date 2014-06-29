@@ -6,7 +6,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 {
     /// <summary>
     /// Преобразователь linq-выражения <see cref="IQueryable{T}"/>
-    /// в <see cref="SimpleQuery"/>.
+    /// в <see cref="IQuery"/>.
     /// </summary>
     internal sealed class QueryableExpressionTransformer : IQueryableExpressionTransformer
     {
@@ -18,12 +18,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         private static readonly QueryableExpressionTransformer _default = new QueryableExpressionTransformer();
 
         /// <summary>Преобразование linq-выражения <see cref="IQueryable{T}"/>
-        /// в <see cref="SimpleQuery"/>.
+        /// в <see cref="IQuery"/>.
         /// </summary>
         /// <param name="expression">Выражение.</param>
-        public ISimpleQuery Transform(Expression expression)
+        public IQuery Transform(Expression expression)
         {
-            var handler = new SimpleQueryBuilder();
+            var handler = new QueryBuilder();
             var visitor = new QueryableExpressionVisitor(handler);
 
             try

@@ -8,7 +8,7 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Преобразователь запроса в объект <see cref="ExpressionParseProduct"/>.</summary>
-    internal sealed class QueryTransformer
+    internal sealed class QueryTransformer : IQueryTransformer
     {
         /// <summary>Часть запроса, отвечающая за выборку записи.</summary>
         private static readonly SelectPartInfo<OneSDataRecord>
@@ -17,11 +17,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         
         /// <summary>Контекст разбора запроса.</summary>
         private readonly QueryParseContext _context = new QueryParseContext();
-
-        /// <summary>
-        /// Преобразователь выражения выборки.
-        /// </summary>
-        private readonly IExpressionTransformMethods _expressionTransformMethods;
 
         /// <summary>Конструктор использования.</summary>
         /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
@@ -39,78 +34,69 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
-        /// Преобразование запроса в результат 
-        /// разбора выражения.
+        /// Методы преобразования выборки.
         /// </summary>
-        /// <typeparam name="T">Тип элементов результата.</typeparam>
-        /// <param name="query">Запрос.</param>
-        public CollectionReadExpressionParseProduct<T> Transform<T>(CustomDataTypeQuery<T> query)
+        internal IExpressionTransformMethods ExpressionTransformMethods
         {
-            Contract.Requires<ArgumentNullException>(query != null);
-            Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<T>>() != null);
-
-            var selectPart = ParseSelectExpression(query.SelectExpression);
-
-            return GetExpressionParseProduct(query, selectPart);
+            get { return _expressionTransformMethods; }
         }
+        private readonly IExpressionTransformMethods _expressionTransformMethods;
 
         /// <summary>
         /// Преобразование запроса в результат 
         /// разбора выражения.
         /// </summary>
         /// <param name="query">Запрос.</param>
-        public CollectionReadExpressionParseProduct<OneSDataRecord> Transform(DataRecordsQuery query)
+        public CollectionReadExpressionParseProduct<TOutput> Transform<TInput, TOutput>(IQuery<TInput, TOutput> query)
         {
-            Contract.Requires<ArgumentNullException>(query != null);
-            Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<OneSDataRecord>>() != null);
+            var selectPart = GetSelectPart(query);
+            var source = query.Source.GetSourceName(_expressionTransformMethods);
+            var whereStatement = ParseFilterExpression(query.Filter);
+            var orderByStatement = ParseSortExpressions(query.Sorters);
 
-            return GetExpressionParseProduct(query, _recordSelectPart);
+            var queryStatement = new SqlQueryStatement(
+                selectPart.Statement, new SqlFromStatement(source), whereStatement, orderByStatement);
+
+            return GetExpressionParseProduct(
+                queryStatement, selectPart.ItemReaderFactory);
         }
 
         /// <summary>
-        /// Преобразование запроса в результат 
-        /// разбора выражения.
+        /// Получение информации по выборке.
         /// </summary>
+        /// <typeparam name="TInput">Тип элементов входной последовательности.</typeparam>
+        /// <typeparam name="TOutput">Тип элементов выходной последовательности запроса.</typeparam>
         /// <param name="query">Запрос.</param>
-        public CollectionReadExpressionParseProduct<TOutput> Transform<TInput, TOutput>(TupleQuery<TInput, TOutput> query)
+        private SelectPartInfo<TOutput> GetSelectPart<TInput, TOutput>(IQuery<TInput, TOutput> query)
         {
-            Contract.Requires<ArgumentNullException>(query != null);
-            Contract.Ensures(Contract.Result<CollectionReadExpressionParseProduct<TOutput>>() != null);
-
-            var selectPartProduct = (query.Selector == null)
-                                        ? _expressionTransformMethods.TransformSelectTypedRecord<TOutput>()
-                                        : _expressionTransformMethods.TransformSelectExpression(_context, query.Selector);
+            SelectionPartParseProduct<TOutput> selectionPartParseProduct;
             
-            // TODO Копипаст
-            var selectPart = new SelectPartInfo<TOutput>(
-                new SqlColumnListExpression(selectPartProduct.Columns),
-                new NoSideEffectItemReaderFactory<TOutput>(selectPartProduct.SelectionFunc));
+            if (query.Selector == null)
+            {
+                if (typeof(TOutput) == typeof(OneSDataRecord))
+                    return (SelectPartInfo<TOutput>)(object)_recordSelectPart;
 
-            var sourceName = _expressionTransformMethods.GetTypedRecordSourceName<TInput>();
+                selectionPartParseProduct = _expressionTransformMethods
+                    .TransformSelectTypedRecord<TOutput>();
+            }
+            else
+            {
+                selectionPartParseProduct = _expressionTransformMethods
+                    .TransformSelectExpression(_context, query.Selector);
+            }
 
-            var whereStatement = ParseFilterExpression(query.Filter);
-            var orderByStatement = ParseSortExpressions(query.Sorters);
-
-            var queryStatement = new SqlQueryStatement(
-               selectPart.Statement, new SqlFromStatement(sourceName), whereStatement, orderByStatement);
-
-            return GetExpressionParseProduct(
-                queryStatement, selectPart.ItemReaderFactory);
+            return new SelectPartInfo<TOutput>(
+                new SqlColumnListExpression(selectionPartParseProduct.Columns),
+                new NoSideEffectItemReaderFactory<TOutput>(selectionPartParseProduct.SelectionFunc)
+                );
         }
 
-        private CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(
-            SimpleQuery query, SelectPartInfo<T> selectPart)
-        {
-            var whereStatement = ParseFilterExpression(query.Filter);
-            var orderByStatement = ParseSortExpressions(query.Sorters);
-
-            var queryStatement = new SqlQueryStatement(
-                selectPart.Statement, new SqlFromStatement(query.Source), whereStatement, orderByStatement);
-
-            return GetExpressionParseProduct(
-                queryStatement, selectPart.ItemReaderFactory);
-        }
-
+        /// <summary>
+        /// Конструирование результата парсинга для запроса последовательности элементов.
+        /// </summary>
+        /// <typeparam name="T">Тип элементов выходной последовательности.</typeparam>
+        /// <param name="queryStatement">Объект SQL-инструкции запроса.</param>
+        /// <param name="itemReaderFactory">Фабрика читателей элементов.</param>
         private CollectionReadExpressionParseProduct<T> GetExpressionParseProduct<T>(
             SqlQueryStatement queryStatement,
             IItemReaderFactory<T> itemReaderFactory)
@@ -122,17 +108,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 itemReaderFactory);
         }
 
-        private SelectPartInfo<T> ParseSelectExpression<T>(Expression<Func<OneSDataRecord, T>> selectExpression)
-        {
-            Contract.Requires<ArgumentNullException>(selectExpression != null);
-
-            var part = _expressionTransformMethods.TransformSelectExpression(_context, selectExpression);
-
-            return new SelectPartInfo<T>(
-                new SqlColumnListExpression(part.Columns),
-                new NoSideEffectItemReaderFactory<T>(part.SelectionFunc));
-        }
-
+        /// <summary>
+        /// Парсинг и преобразование выражения фильтрации
+        /// в часть where инструкции sql-запроса.
+        /// </summary>
+        /// <typeparam name="T">Тип элементов входной последовательности.</typeparam>
+        /// <param name="filterExpression">Выражение фильтрации элементов.</param>
         private SqlWhereStatement ParseFilterExpression<T>(Expression<Func<T, bool>> filterExpression)
         {
             if (filterExpression == null)
@@ -142,6 +123,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _expressionTransformMethods.TransformWhereExpression(_context, filterExpression));
         }
 
+        /// <summary>
+        /// Парсинг и преобразование списка выражений соритровки
+        /// в часть order by инструкции sql-запроса.
+        /// </summary>
+        /// <param name="sortExpressions">Список выражений сортировки.</param>
         private SqlOrderByStatement ParseSortExpressions(ReadOnlyCollection<SortExpression> sortExpressions)
         {
             Contract.Requires<ArgumentNullException>(sortExpressions != null);
@@ -157,6 +143,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     ));
         }
 
+        /// <summary>
+        /// Парсинг и преобразование выражения сортировки
+        /// в подвыражение order by инструкции sql-запроса.
+        /// </summary>
+        /// <param name="sortExpression">Выражение сортировки.</param>
         private SqlSortFieldExpression ParseSortExpression(SortExpression sortExpression)
         {
             Contract.Requires<ArgumentNullException>(sortExpression != null);
@@ -178,12 +169,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _itemReaderFactory = itemReaderFactory;
             }
 
+            /// <summary>
+            /// SELECT часть инструкции SQL-запроса.
+            /// </summary>
             public SqlSelectStatement Statement
             {
                 get { return _statement; }
             }
             private readonly SqlSelectStatement _statement;
 
+            /// <summary>
+            /// Фабрика читателей элементов из последовательности.
+            /// </summary>
             public IItemReaderFactory<T> ItemReaderFactory
             {
                 get { return _itemReaderFactory; }

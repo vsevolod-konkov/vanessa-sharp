@@ -55,9 +55,9 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>Читатель табличных данных из результата SQL-запроса.</summary>
         /// <remarks>Для проверки в тестах.</remarks>
-        internal ISqlResultReader SqlReader
+        internal bool IsSameSqlResultReader(ISqlResultReader otherSqlReader)
         {
-            get { return _sqlReader; }
+            return _sqlReader == otherSqlReader;
         }
 
         /// <summary>Читатель элемента из записи таблицы.</summary>

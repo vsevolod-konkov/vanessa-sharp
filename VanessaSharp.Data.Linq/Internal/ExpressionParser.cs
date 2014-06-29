@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable;
 
 namespace VanessaSharp.Data.Linq.Internal
@@ -20,7 +21,7 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Конструктор используемый для тестирования.</summary>
         /// <param name="queryableExpressionTransformer">
         /// Преобразователь linq-выражения <see cref="IQueryable{T}"/>
-        /// в <see cref="SimpleQuery"/>.
+        /// в <see cref="IQuery"/>.
         /// </param>
         /// <param name="mappingProvider">
         /// Поставщик соответствия типам CLR
@@ -35,6 +36,7 @@ namespace VanessaSharp.Data.Linq.Internal
             
             _queryableExpressionTransformer = queryableExpressionTransformer;
             _mappingProvider = mappingProvider;
+            _queryTransformService = new QueryTransformService(_mappingProvider);
         }
 
         /// <summary>Конструктор для инициализации экзеемпляра по умолчанию.</summary>
@@ -43,7 +45,7 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>
         /// Преобразователь linq-выражения <see cref="IQueryable{T}"/>
-        /// в <see cref="SimpleQuery"/>.
+        /// в <see cref="IQuery"/>.
         /// </summary>
         private readonly IQueryableExpressionTransformer _queryableExpressionTransformer;
 
@@ -53,13 +55,20 @@ namespace VanessaSharp.Data.Linq.Internal
         /// </summary>
         private readonly IOneSMappingProvider _mappingProvider;
 
+        /// <summary>
+        /// Сервис для преобразования запросов.
+        /// </summary>
+        private readonly IQueryTransformService _queryTransformService;
+
         /// <summary>Разбор выражения.</summary>
         /// <param name="expression">Выражение.</param>
         public ExpressionParseProduct Parse(Expression expression)
         {
+            // Конвейер преобразования
+            
             return _queryableExpressionTransformer
-                .Transform(expression)
-                .Transform(_mappingProvider);
+                .Transform(expression) // Queryable-выражение преобразуется в объект запроса
+                .Transform(_queryTransformService); // Объект запроса преобразовуется в конечный результат - SQL-команду и объект вычитки данных из резултата запроса
         }
 
         /// <summary>

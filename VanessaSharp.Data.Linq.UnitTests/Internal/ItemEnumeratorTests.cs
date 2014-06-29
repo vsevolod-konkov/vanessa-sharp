@@ -38,7 +38,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         [Test]
         public void TestInit()
         {
-            Assert.AreSame(_sqlResultReaderMock.Object, _testedInstance.SqlReader);
+            Assert.IsTrue(_testedInstance.IsSameSqlResultReader(_sqlResultReaderMock.Object));
             Assert.AreSame(_itemReader, _testedInstance.ItemReader);
 
             Assert.Throws<InvalidOperationException>(() => { var item = _testedInstance.Current; });

@@ -11,6 +11,13 @@ namespace VanessaSharp.Data.Linq.Internal
     /// </summary>
     internal sealed class OneSTypeMapping
     {
+        /// <summary>Конструктор.</summary>
+        /// <param name="sourceName">
+        /// Имя источника данных 1С соответсвующего данному типу.
+        /// </param>
+        /// <param name="fieldMappings">
+        /// Карты соответствия полей источника данных 1С членам типа.
+        /// </param>
         public OneSTypeMapping(string sourceName, ReadOnlyCollection<OneSFieldMapping> fieldMappings)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));

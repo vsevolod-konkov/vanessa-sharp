@@ -48,7 +48,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
-            var query = new DataRecordsQuery(SOURCE_NAME, null, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
+            var query = CreateQuery(SOURCE_NAME);
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -144,7 +144,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             const string FILTER_VALUE = "filter_value";
 
             // Arrange
-            var query = new DataRecordsQuery(SOURCE, r => r.GetString("any_field") == "Any", new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
+            var query = CreateQuery(SOURCE, r => r.GetString("any_field") == "Any");
 
             SetupTransformWhereExpression(query.Filter, FILTER_FIELD, FILTER_VALUE);
 
@@ -209,7 +209,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32(SORT_FIELD);
             var sortExpression = new SortExpression(sortKeyExpression, SortKind.Ascending);
 
-            var query = new DataRecordsQuery(SOURCE, null, new ReadOnlyCollection<SortExpression>(new[]{sortExpression}));
+            var query = CreateQuery(SOURCE, null, sortExpression);
 
             _transformMethodsMock
                 .Setup(m => m.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression))
@@ -249,14 +249,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 anyDataReader);
 
             _transformMethodsMock
-                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
                 .Returns("Тест");
 
             _transformMethodsMock
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
             
-            var testedQuery = new TupleQuery<AnyData, AnyData>(null, null, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
+            var testedQuery = CreateTupleQuery();
 
             // Act
             var result = _testedInstance.Transform(testedQuery);
@@ -280,7 +280,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _transformMethodsMock
-                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
                 .Returns("Тест");
 
             Expression<Func<AnyData, bool>> filterExpression = d => true;
@@ -316,7 +316,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
 
-            var testedQuery = new TupleQuery<AnyData, AnyData>(null, filterExpression, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
+            var testedQuery = CreateTupleQuery(filterExpression: filterExpression);
 
             // Act
             var result = _testedInstance.Transform(testedQuery);
@@ -343,7 +343,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _transformMethodsMock
-                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
                 .Returns("Тест");
 
             Expression<Func<AnyData, int>> sortKeyExpression1 = d => 4;
@@ -372,7 +372,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Setup(t => t.TransformSelectTypedRecord<AnyData>())
                 .Returns(selectPart);
 
-            var testedQuery = new TupleQuery<AnyData, AnyData>(null, null, new ReadOnlyCollection<SortExpression>(new []
+            var testedQuery = CreateTupleQuery(sorters: new ReadOnlyCollection<SortExpression>(new []
                 {
                     new SortExpression(sortKeyExpression1, SortKind.Ascending),
                     new SortExpression(sortKeyExpression2, SortKind.Descending)
@@ -400,7 +400,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _transformMethodsMock
-                .Setup(t => t.GetTypedRecordSourceName<AnyData>())
+                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
                 .Returns("Тест");
 
             var selectExpression = Trait.Of<AnyData>().SelectExpression(d => new {Id = 5, Name = "TestName"});

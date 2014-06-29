@@ -7,7 +7,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
     /// <summary>
     /// Обработчик парсинга выражений генерируемых <see cref="Queryable"/>.
     /// </summary>
-    [ContractClass(typeof(IQueryableExpressionHandlerContract))]
+    [ContractClass(typeof(QueryableExpressionHandlerContract))]
     internal interface IQueryableExpressionHandler
     {
         /// <summary>Обработка начала парсинга.</summary>
@@ -54,19 +54,25 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
     }
 
     [ContractClassFor(typeof(IQueryableExpressionHandler))]
-    internal abstract class IQueryableExpressionHandlerContract : IQueryableExpressionHandler
+    internal abstract class QueryableExpressionHandlerContract : IQueryableExpressionHandler
     {
+        /// <summary>Обработка начала парсинга.</summary>
         void IQueryableExpressionHandler.HandleStart()
         {}
 
+        /// <summary>Обработка завершения парсинга.</summary>
         void IQueryableExpressionHandler.HandleEnd()
         {}
 
+        /// <summary>Получение перечислителя.</summary>
+        /// <param name="itemType">Имя элемента.</param>
         void IQueryableExpressionHandler.HandleGettingEnumerator(Type itemType)
         {
             Contract.Requires<ArgumentNullException>(itemType != null);
         }
 
+        /// <summary>Обработка выборки.</summary>
+        /// <param name="selectExpression">Выражение выборки.</param>
         void IQueryableExpressionHandler.HandleSelect(LambdaExpression selectExpression)
         {
             Contract.Requires<ArgumentNullException>(selectExpression != null);
@@ -75,11 +81,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 && selectExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
+        /// <summary>Обработка фильтрации.</summary>
+        /// <param name="filterExpression">Выражение фильтрации.</param>
         void IQueryableExpressionHandler.HandleFilter(LambdaExpression filterExpression)
         {
             Contract.Requires<ArgumentNullException>(filterExpression != null);
+            Contract.Requires<ArgumentException>(
+               filterExpression.Type.IsGenericType
+               && filterExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>)
+               && filterExpression.Type.GetGenericArguments()[1] == typeof(bool));
         }
 
+        /// <summary>Обработка старта сортировки.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         void IQueryableExpressionHandler.HandleOrderBy(LambdaExpression sortKeyExpression)
         {
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
@@ -88,6 +102,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
+        /// <summary>Обработка старта сортировки, начиная с сортировки по убыванию..</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         void IQueryableExpressionHandler.HandleOrderByDescending(LambdaExpression sortKeyExpression)
         {
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
@@ -96,6 +112,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
+        /// <summary>Обработка продолжения сортировки, по вторичным ключам.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         void IQueryableExpressionHandler.HandleThenBy(LambdaExpression sortKeyExpression)
         {
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
@@ -104,6 +122,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
+        /// <summary>Обработка продолжения сортировки по убыванию, по вторичным ключам.</summary>
+        /// <param name="sortKeyExpression">Выражение получения ключа сортировки.</param>
         void IQueryableExpressionHandler.HandleThenByDescending(LambdaExpression sortKeyExpression)
         {
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
@@ -112,11 +132,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                && sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
         }
 
+        /// <summary>Получение всех записей.</summary>
+        /// <param name="sourceName">Имя источника.</param>
         void IQueryableExpressionHandler.HandleGettingRecords(string sourceName)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
         }
 
+        /// <summary>Получение всех типизированных записей.</summary>
+        /// <param name="dataType">Тип запрашиваемых записей.</param>
         void IQueryableExpressionHandler.HandleGettingTypedRecords(Type dataType)
         {
             Contract.Requires<ArgumentNullException>(dataType != null);

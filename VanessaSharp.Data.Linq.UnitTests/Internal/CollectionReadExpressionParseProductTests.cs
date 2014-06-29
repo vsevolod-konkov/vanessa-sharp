@@ -72,7 +72,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
             // Assert
             var enumerator = AssertAndCast<ItemEnumerator<OneSDataRecord>>(result);
-            Assert.AreSame(sqlResultReaderMock.Object, enumerator.SqlReader);
+            Assert.IsTrue(enumerator.IsSameSqlResultReader(sqlResultReaderMock.Object));
             Assert.AreSame(recordReader, enumerator.ItemReader);
 
             sqlCommandExecuterMock.Verify(e => e.ExecuteReader(_sqlCommand), Times.Once());

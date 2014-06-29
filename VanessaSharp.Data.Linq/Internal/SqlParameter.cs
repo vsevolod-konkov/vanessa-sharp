@@ -40,7 +40,14 @@ namespace VanessaSharp.Data.Linq.Internal
             get { return _value; }
         }
         private readonly object _value;
-        
+
+        /// <summary>
+        /// Указывает, равен ли текущий объект другому объекту того же типа.
+        /// </summary>
+        /// <returns>
+        /// true, если текущий объект равен параметру <paramref name="other"/>, в противном случае — false.
+        /// </returns>
+        /// <param name="other">Объект, который требуется сравнить с данным объектом.</param>
         public bool Equals(SqlParameter other)
         {
             if (ReferenceEquals(this, other))
@@ -52,11 +59,25 @@ namespace VanessaSharp.Data.Linq.Internal
             return (Name == other.Name && Equals(Value, other.Value));
         }
 
+        /// <summary>
+        /// Определяет, равен ли заданный объект <see cref="T:System.Object"/> текущему объекту <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// Значение true, если заданный объект <see cref="T:System.Object"/> равен текущему объекту <see cref="T:System.Object"/>; в противном случае — значение false.
+        /// </returns>
+        /// <param name="obj">Элемент <see cref="T:System.Object"/>, который требуется сравнить с текущим элементом <see cref="T:System.Object"/>. </param><filterpriority>2</filterpriority>
         public override bool Equals(object obj)
         {
             return Equals(obj as SqlParameter);
         }
 
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
             unchecked
@@ -66,6 +87,13 @@ namespace VanessaSharp.Data.Linq.Internal
             }
         }
 
+        /// <summary>
+        /// Возвращает объект <see cref="T:System.String"/>, который представляет текущий объект <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// Объект <see cref="T:System.String"/>, представляющий текущий объект <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
         public override string ToString()
         {
             return string.Format(

@@ -13,6 +13,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     /// </summary>
     internal sealed class SelectExpressionTransformer : ExpressionVisitorBase
     {
+        // TODO Рефакторинг
         private static readonly IDictionary<MethodInfo, MethodInfo>
             _methods = new Dictionary<MethodInfo, MethodInfo>
             {
@@ -173,6 +174,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return base.VisitMethodCall(node);
         }
 
+        // TODO Копипаста
         /// <summary>
         /// Получение выражения получения значения поля записи.
         /// </summary>

@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal
@@ -54,9 +54,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var sqlCommand = new SqlCommand("SQL", SqlParameter.EmptyCollection);
             var expressionParseProduct = new Mock<ExpressionParseProduct>(MockBehavior.Strict, sqlCommand).Object;
             
-            var simpleQueryMock = new Mock<SimpleQuery>(MockBehavior.Strict, "source", null, new ReadOnlyCollection<SortExpression>(new SortExpression[0]));
+            var simpleQueryMock = new Mock<IQuery>(MockBehavior.Strict);
             simpleQueryMock
-                .Setup(q => q.Transform(_mappingProviderMock.Object))
+                .Setup(q => q.Transform(It.IsAny<IQueryTransformService>()))
                 .Returns(expressionParseProduct)
                 .Verifiable();
 
@@ -74,7 +74,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             _queryableExpressionTransformerMock
                 .Verify(t => t.Transform(expression), Times.Once());
             simpleQueryMock
-                .Verify(q => q.Transform(_mappingProviderMock.Object), Times.Once());
+                .Verify(q => q.Transform(It.IsAny<IQueryTransformService>()), Times.Once());
         }
 
         /// <summary>

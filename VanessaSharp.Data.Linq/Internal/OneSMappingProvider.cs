@@ -34,7 +34,7 @@ namespace VanessaSharp.Data.Linq.Internal
                     string.Format("Тип не содержит атрибут \"{0}\".", typeof(OneSDataSourceAttribute)));
             }
 
-            if (dataType.GetConstructors().Count(c => c.GetParameters().Length == 0) == 0)
+            if (dataType.GetConstructors().All(c => c.GetParameters().Length > 0))
             {
                 throw new InvalidDataTypeException(
                     dataType,
@@ -81,6 +81,12 @@ namespace VanessaSharp.Data.Linq.Internal
             }
         }
 
+        /// <summary>
+        /// Добавление соответствия поля в результирующий список <paramref name="resultList"/>
+        /// в случае если член типа маркирован атрибутом <see cref="OneSDataColumnAttribute"/>.
+        /// </summary>
+        /// <param name="member">Член типа.</param>
+        /// <param name="resultList">Результирующий список соответствий.</param>
         private static void AddFieldMappingIfExists(MemberInfo member, List<OneSFieldMapping> resultList)
         {
             var columnAttrType = typeof(OneSDataColumnAttribute);
@@ -98,7 +104,8 @@ namespace VanessaSharp.Data.Linq.Internal
         public OneSTypeMapping GetTypeMapping(Type dataType)
         {
             Contract.Assert(dataType.IsDefined(typeof(OneSDataSourceAttribute), true));
-            var sourceName = ((OneSDataSourceAttribute)dataType.GetCustomAttributes(typeof (OneSDataSourceAttribute), true)[0])
+            
+            var sourceName = ((OneSDataSourceAttribute)dataType.GetCustomAttributes(typeof(OneSDataSourceAttribute), true)[0])
                     .SourceName;
             
             var fieldMappings = new List<OneSFieldMapping>();
