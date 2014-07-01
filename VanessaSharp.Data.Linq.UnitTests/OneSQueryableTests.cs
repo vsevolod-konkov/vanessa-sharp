@@ -4,12 +4,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests
 {
     /// <summary>Тесты на <see cref="OneSQueryable{T}"/>.</summary>
     [TestFixture]
-    public sealed class OneSQueryableTests : TestsBase
+    public sealed class OneSQueryableTests
     {
         /// <summary>
         /// Мок <see cref="IOneSQueryProvider"/>.
@@ -62,8 +63,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             _queryProviderMock
                 .Setup(provider => provider.Execute<IEnumerator<string>>(It.IsAny<Expression>()))
                 .Callback<Expression>(e => { actualExpression = e; })
-                .Returns(expectedEnumerator)
-                .Verifiable();
+                .Returns(expectedEnumerator);
 
             // Act
             var result = _testedInstance.GetEnumerator();
@@ -72,7 +72,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.AreSame(expectedEnumerator, result);
             _queryProviderMock.Verify(provider => provider.Execute<IEnumerator<string>>(It.IsAny<Expression>()), Times.Once());
 
-            var methodCallExpression = AssertAndCast<MethodCallExpression>(actualExpression);
+            var methodCallExpression = AssertEx.IsInstanceAndCastOf<MethodCallExpression>(actualExpression);
             Assert.AreSame(_expression, methodCallExpression.Object);
             Assert.AreEqual(OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<string>(), methodCallExpression.Method);
         }

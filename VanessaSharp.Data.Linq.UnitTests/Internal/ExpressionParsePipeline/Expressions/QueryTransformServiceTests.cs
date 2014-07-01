@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
 {
@@ -9,7 +10,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
     /// Тестирование <see cref="QueryTransformService"/>.
     /// </summary>
     [TestFixture]
-    public sealed class QueryTransformServiceTests : TestsBase
+    public sealed class QueryTransformServiceTests
     {
         /// <summary>
         /// Тестирование <see cref="QueryTransformService.CreateTransformer"/>
@@ -26,7 +27,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var result = testedService.CreateTransformer();
 
             // Assert
-            var typedTransformer = AssertAndCast<QueryTransformer>(result);
+            var typedTransformer = AssertEx.IsInstanceAndCastOf<QueryTransformer>(result);
             Assert.AreSame(expressionTransformMethods, typedTransformer.ExpressionTransformMethods);
         }
 
@@ -45,9 +46,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var result = testedService.CreateTransformer();
 
             // Assert
-            var typedTransformer = AssertAndCast<QueryTransformer>(result);
+            var typedTransformer = AssertEx.IsInstanceAndCastOf<QueryTransformer>(result);
             var typedTransformMethods =
-                AssertAndCast<ExpressionTransformMethods>(typedTransformer.ExpressionTransformMethods);
+                AssertEx.IsInstanceAndCastOf<ExpressionTransformMethods>(typedTransformer.ExpressionTransformMethods);
 
             Assert.AreSame(mappingProvider, typedTransformMethods.MappingProvider);
         }

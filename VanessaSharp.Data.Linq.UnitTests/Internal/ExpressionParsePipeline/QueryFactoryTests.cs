@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
 {
@@ -10,7 +11,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
     /// Тестирование <see cref="QueryFactory"/>.
     /// </summary>
     [TestFixture]
-    public sealed class QueryFactoryTests : TestsBase
+    public sealed class QueryFactoryTests
     {
         /// <summary>
         /// Тестирование 
@@ -30,8 +31,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var result = QueryFactory.CreateQuery(SOURCE_NAME, filter, sorters);
 
             // Assert
-            var typedQuery = AssertAndCast<QueryBase<OneSDataRecord, OneSDataRecord>>(result);
-            var typedSourceDescription = AssertAndCast<ExplicitSourceDescription>(typedQuery.Source);
+            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<OneSDataRecord, OneSDataRecord>>(result);
+            var typedSourceDescription = AssertEx.IsInstanceAndCastOf<ExplicitSourceDescription>(typedQuery.Source);
             Assert.AreEqual(SOURCE_NAME, typedSourceDescription.SourceName);
             Assert.IsNull(typedQuery.Selector);
             Assert.AreSame(filter, typedQuery.Filter);
@@ -57,8 +58,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var result = QueryFactory.CreateQuery(SOURCE_NAME, selector, filter, sorters);
 
             // Assert
-            var typedQuery = AssertAndCast<QueryBase<OneSDataRecord, OutputData>>(result);
-            var typedSourceDescription = AssertAndCast<ExplicitSourceDescription>(typedQuery.Source);
+            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<OneSDataRecord, OutputData>>(result);
+            var typedSourceDescription = AssertEx.IsInstanceAndCastOf<ExplicitSourceDescription>(typedQuery.Source);
             Assert.AreEqual(SOURCE_NAME, typedSourceDescription.SourceName);
             Assert.AreSame(selector, typedQuery.Selector);
             Assert.AreSame(filter, typedQuery.Filter);
@@ -81,7 +82,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var result = QueryFactory.CreateQuery(typeof(InputData), filter, sorters);
 
             // Assert
-            var typedQuery = AssertAndCast<QueryBase<InputData, InputData>>(result);
+            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<InputData, InputData>>(result);
             Assert.IsInstanceOf<SourceDescriptionByType<InputData>>(typedQuery.Source);
             Assert.IsNull(typedQuery.Selector);
             Assert.AreSame(filter, typedQuery.Filter);
@@ -105,7 +106,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var result = QueryFactory.CreateQuery(selector, filter, sorters);
 
             // Assert
-            var typedQuery = AssertAndCast<QueryBase<InputData, OutputData>>(result);
+            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<InputData, OutputData>>(result);
             Assert.IsInstanceOf<SourceDescriptionByType<InputData>>(typedQuery.Source);
             Assert.AreSame(selector, typedQuery.Selector);
             Assert.AreSame(filter, typedQuery.Filter);

@@ -64,13 +64,23 @@ namespace VanessaSharp.Data.Linq.UnitTests
             Assert.IsTrue(_testedInstance.IsNull);
         }
 
+        /// <summary>
+        /// Тестирование конвертации экземпляра <see cref="OneSValue"/>
+        /// в значение типа <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">Тип, в значение которого преобразуется тестируемый экземпляр.</typeparam>
+        /// <param name="expectedValue">Ожидаемое значение.</param>
+        /// <param name="convertedAction">
+        /// Выражение выполнения метода <see cref="IValueConverter"/>, необходимое для тестируемого действия.
+        /// </param>
+        /// <param name="testedAction">Тестируемое действие.</param>
         private void TestConvertTo<T>(T expectedValue, Expression<Func<IValueConverter, T>> convertedAction, Func<OneSValue, T> testedAction)
         {
             // Arrange
             _valueConverterMock
                 .Setup(convertedAction)
-                .Returns(expectedValue)
-                .Verifiable();
+                .Returns(expectedValue);
+
             var rawValue = new object();
             CreateTestedInstance(rawValue);
 
@@ -86,6 +96,13 @@ namespace VanessaSharp.Data.Linq.UnitTests
                 .Verify(verifiedLambda, Times.Once());
         }
 
+        /// <summary>
+        /// Замена в выражении вызова метода конвертера <see cref="IValueConverter"/>
+        /// аргумента на сырое значение, которое должно быть преобразовано.
+        /// </summary>
+        /// <typeparam name="T">Тип значения к которому делается преобразование метода <see cref="IValueConverter"/>.</typeparam>
+        /// <param name="convertedAction">Выражение вызова метода конвертора.</param>
+        /// <param name="rawValue">Сырое значение.</param>
         private static Expression<Func<IValueConverter, T>> SubstituteValue<T>(
             Expression<Func<IValueConverter, T>> convertedAction, object rawValue)
         {

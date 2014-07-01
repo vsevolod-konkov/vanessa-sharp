@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests
 {
@@ -31,15 +32,10 @@ namespace VanessaSharp.Data.Linq.UnitTests
         /// <summary>Создание записи.</summary>
         private static OneSDataRecord CreateRecord(IEnumerable<KeyValuePair<string, OneSValue>> fieldAndValues)
         {
-            var fields = ToReadOnly(GetFields(fieldAndValues));
-            var values = ToReadOnly(GetValues(fieldAndValues));
+            var fields = GetFields(fieldAndValues).ToReadOnly();
+            var values = GetValues(fieldAndValues).ToReadOnly();
 
             return new OneSDataRecord(fields, values);
-        }
-
-        private static ReadOnlyCollection<T> ToReadOnly<T>(IEnumerable<T> sequence)
-        {
-            return new ReadOnlyCollection<T>(sequence.ToArray());
         }
 
         private static IEnumerable<KeyValuePair<string, TOutput>> To<TInput, TOutput>(
@@ -80,7 +76,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
         /// Тестирование <see cref="OneSDataRecord.GetValues(object[])"/>
         /// и <see cref="OneSDataRecord.GetValues(OneSValue[])"/>.
         /// </summary>
-        private int TestGetValues<T>(IDictionary<string, T> fieldsAndValues, Func<T[], int> testedAction, int delta)
+        private static int TestGetValues<T>(IDictionary<string, T> fieldsAndValues, Func<T[], int> testedAction, int delta)
         {
             // Arrange
             var actualValuesCount = fieldsAndValues.Count;
@@ -145,7 +141,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
         private void GenerateFieldsAndValues(int count, out IList<string> fieldNames, out ReadOnlyCollection<OneSValue> values)
         {
             fieldNames = Enumerable.Range(0, count).Select(i => "Field" + i).ToArray();
-            values = ToReadOnly(Enumerable.Range(0, count).Select(i => new object()).Select(_));
+            values = Enumerable.Range(0, count).Select(i => new object()).Select(_).ToReadOnly();
         }
 
         /// <summary>Генерация колонок, значений и записи.</summary>
@@ -156,7 +152,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
             IList<string> fieldNames;
             GenerateFieldsAndValues(count, out fieldNames, out values);
 
-            return new OneSDataRecord(ToReadOnly(fieldNames), values);
+            return new OneSDataRecord(fieldNames.ToReadOnly(), values);
         }
 
         /// <summary>Тестирование получения по индексу.</summary>
@@ -206,7 +202,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
             fieldNames[TESTED_INDEX] = TESTED_NAME;
             var expectedValue = values[TESTED_INDEX];
-            var testedInstance = new OneSDataRecord(ToReadOnly(fieldNames), values);
+            var testedInstance = new OneSDataRecord(fieldNames.ToReadOnly(), values);
 
             // Act
             var actualValue = testedAction(testedInstance, TESTED_NAME);

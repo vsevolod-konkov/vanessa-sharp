@@ -11,22 +11,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
     /// Тесты на экземпляр <see cref="ExpressionParser"/>.
     /// </summary>
     [TestFixture]
-    public sealed class ExpressionParserComponentTests : TestsBase
+    public sealed class ExpressionParserComponentTests
     {
         /// <summary>Тестируемый экземпляр.</summary>
         private readonly ExpressionParser _testedInstance = ExpressionParser.Default;
-
-        private static CollectionReadExpressionParseProduct<T> AssertAndCastCollectionReadExpressionParseProduct<T>(
-            Trait<T> trait, ExpressionParseProduct product)
-        {
-            return AssertAndCast<CollectionReadExpressionParseProduct<T>>(product);
-        }
-
-        private static NoSideEffectItemReaderFactory<T> AssertAndCastNoSideEffectItemReaderFactory<T>(
-            IItemReaderFactory<T> itemReaderFactory)
-        {
-            return AssertAndCast<NoSideEffectItemReaderFactory<T>>(itemReaderFactory);
-        }
 
         /// <summary>Тестирование парсинга запроса, который выбирает целые записи.</summary>
         [Test]
@@ -41,14 +29,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             const string SORT_FIELD_2_NAME = "[sort_field_2]";
             const string SORT_FIELD_3_NAME = "[sort_field_3]";
 
-            var testedExpression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(SOURCE_NAME,
-                                q => q
-                                    .Where(r => r.GetString(FILTER_FIELD_NAME) == FILTER_VALUE)
-                                    .OrderBy(r => r.GetInt32(SORT_FIELD_1_NAME))
-                                    .OrderByDescending(r => r.GetString(SORT_FIELD_2_NAME))
-                                    .ThenBy(r => r.GetInt32(SORT_FIELD_3_NAME))
-                                );
+            var testedExpression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q
+                    .Where(r => r.GetString(FILTER_FIELD_NAME) == FILTER_VALUE)
+                    .OrderBy(r => r.GetInt32(SORT_FIELD_1_NAME))
+                    .OrderByDescending(r => r.GetString(SORT_FIELD_2_NAME))
+                    .ThenBy(r => r.GetInt32(SORT_FIELD_3_NAME))
+                    );
 
             // Act
             var result = _testedInstance.Parse(testedExpression);
@@ -64,7 +52,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 actual: command.Sql
                 );
 
-            var recordProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            var recordProduct = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(recordProduct.ItemReaderFactory);
         }
 
@@ -87,14 +75,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                      .SelectExpression(r => new { StringField = r.GetString(STRING_FIELD_NAME), IntField = r.GetInt32(INT32_FIELD_NAME) });
             var trait = selectExpression.GetTraitOfOutputType();
 
-            var testedExpression = TestHelperQueryProvider
-                                .BuildTestQueryExpression(SOURCE_NAME,
-                                q => q
-                                    .Where(r => r.GetString(FILTER_FIELD_NAME) == FILTER_VALUE)
-                                    .OrderBy(r => r.GetInt32(SORT_FIELD_1_NAME))
-                                    .ThenByDescending(r => r.GetString(SORT_FIELD_2_NAME))
-                                    .Select(selectExpression)
-                                );
+            var testedExpression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q
+                    .Where(r => r.GetString(FILTER_FIELD_NAME) == FILTER_VALUE)
+                    .OrderBy(r => r.GetInt32(SORT_FIELD_1_NAME))
+                    .ThenByDescending(r => r.GetString(SORT_FIELD_2_NAME))
+                    .Select(selectExpression)
+                    );
 
             // Act
             var result = _testedInstance.Parse(testedExpression);
@@ -110,8 +98,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 actual: command.Sql
                 );
 
-            var recordProduct = AssertAndCastCollectionReadExpressionParseProduct(trait, result);
-            var itemReaderFactory = AssertAndCastNoSideEffectItemReaderFactory(recordProduct.ItemReaderFactory);
+            var recordProduct = AssertEx.IsInstanceAndCastCollectionReadExpressionParseProduct(trait, result);
+            var itemReaderFactory = AssertEx.IsInstanceAndCastNoSideEffectItemReaderFactory(recordProduct.ItemReaderFactory);
             var itemReader = itemReaderFactory.ItemReader;
 
             // Verify Item Reader
@@ -140,7 +128,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         /// </param>
         private static void AssertTypedTupleReaderFactory(IItemReaderFactory<AnyDataType> testedItemReaderFactory)
         {
-            var noSideEffectReaderFactory = AssertAndCast<NoSideEffectItemReaderFactory<AnyDataType>>(testedItemReaderFactory);
+            var noSideEffectReaderFactory = AssertEx.IsInstanceAndCastOf<NoSideEffectItemReaderFactory<AnyDataType>>(testedItemReaderFactory);
             AssertTypedTupleReader(noSideEffectReaderFactory.ItemReader);
         }
 
@@ -194,7 +182,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var result = _testedInstance.Parse(testedExpression);
 
             // Assert
-            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
+            var product = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<AnyDataType>>(result);
 
             Assert.AreEqual(
                 "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест",
@@ -218,7 +206,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var result = _testedInstance.Parse(testedExpression);
 
             // Assert
-            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
+            var product = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<AnyDataType>>(result);
 
             Assert.AreEqual(1, product.Command.Parameters.Count);
             var parameter = product.Command.Parameters[0];
@@ -250,7 +238,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var result = _testedInstance.Parse(testedExpression);
 
             // Assert
-            var product = AssertAndCastCollectionReadExpressionParseProduct(trait, result);
+            var product = AssertEx.IsInstanceAndCastCollectionReadExpressionParseProduct(trait, result);
 
             Assert.AreEqual(
                 "SELECT Идентификатор, Цена FROM Справочник.Тест",
@@ -258,7 +246,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 );
             Assert.AreEqual(0, product.Command.Parameters.Count);
 
-            var typedFactory = AssertAndCastNoSideEffectItemReaderFactory(product.ItemReaderFactory);
+            var typedFactory = AssertEx.IsInstanceAndCastNoSideEffectItemReaderFactory(product.ItemReaderFactory);
             var testedItemReader = typedFactory.ItemReader;
 
             // TODO: Копипаста
@@ -306,7 +294,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var result = _testedInstance.Parse(testedExpression);
 
             // Assert
-            var product = AssertAndCast<CollectionReadExpressionParseProduct<AnyDataType>>(result);
+            var product = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<AnyDataType>>(result);
 
             Assert.AreEqual(
                 "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест ORDER BY Цена, ДатаНачала DESC",

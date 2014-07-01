@@ -49,7 +49,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
         [Test]
         public void TestGetRecords()
         {
-            const string SOURCE_NAME = "AnySource";
+            const string SOURCE_NAME = "Test";
             
             // Arrange
             var expectedQuery = new Mock<IQueryable<OneSDataRecord>>(MockBehavior.Strict).Object;
@@ -74,25 +74,24 @@ namespace VanessaSharp.Data.Linq.UnitTests
         public void TestGetOf()
         {
             // Arrange
-            var expectedQuery = new Mock<IQueryable<AnyData>>(MockBehavior.Strict).Object;
+            var expectedQuery = new Mock<IQueryable<SomeData>>(MockBehavior.Strict).Object;
 
             _queryProviderMock
-                .Setup(provider => provider.CreateQueryOf<AnyData>())
-                .Returns(expectedQuery)
-                .Verifiable();
+                .Setup(provider => provider.CreateQueryOf<SomeData>())
+                .Returns(expectedQuery);
 
             // Act
-            var result = _testedInstance.Get<AnyData>();
+            var result = _testedInstance.Get<SomeData>();
 
             // Assert
             Assert.AreSame(expectedQuery, result);
-            _queryProviderMock.Verify(provider => provider.CreateQueryOf<AnyData>(), Times.Once());
+            _queryProviderMock.Verify(provider => provider.CreateQueryOf<SomeData>(), Times.Once());
         }
 
         /// <summary>
         /// Тестовый тип.
         /// </summary>
-        public struct AnyData
+        public struct SomeData
         { }    
     }
 }

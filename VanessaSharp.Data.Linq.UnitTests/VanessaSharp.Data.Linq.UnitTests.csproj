@@ -12,6 +12,7 @@
     <AssemblyName>VanessaSharp.Data.Linq.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <CodeContractsAssemblyMode>1</CodeContractsAssemblyMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +23,40 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
+    <CodeContractsEnableRuntimeChecking>True</CodeContractsEnableRuntimeChecking>
+    <CodeContractsRuntimeOnlyPublicSurface>False</CodeContractsRuntimeOnlyPublicSurface>
+    <CodeContractsRuntimeThrowOnFailure>True</CodeContractsRuntimeThrowOnFailure>
+    <CodeContractsRuntimeCallSiteRequires>False</CodeContractsRuntimeCallSiteRequires>
+    <CodeContractsRuntimeSkipQuantifiers>False</CodeContractsRuntimeSkipQuantifiers>
+    <CodeContractsRunCodeAnalysis>False</CodeContractsRunCodeAnalysis>
+    <CodeContractsNonNullObligations>True</CodeContractsNonNullObligations>
+    <CodeContractsBoundsObligations>True</CodeContractsBoundsObligations>
+    <CodeContractsArithmeticObligations>False</CodeContractsArithmeticObligations>
+    <CodeContractsEnumObligations>False</CodeContractsEnumObligations>
+    <CodeContractsRedundantAssumptions>False</CodeContractsRedundantAssumptions>
+    <CodeContractsMissingPublicRequiresAsWarnings>True</CodeContractsMissingPublicRequiresAsWarnings>
+    <CodeContractsInferRequires>True</CodeContractsInferRequires>
+    <CodeContractsInferEnsures>False</CodeContractsInferEnsures>
+    <CodeContractsInferObjectInvariants>False</CodeContractsInferObjectInvariants>
+    <CodeContractsSuggestAssumptions>False</CodeContractsSuggestAssumptions>
+    <CodeContractsSuggestRequires>True</CodeContractsSuggestRequires>
+    <CodeContractsSuggestObjectInvariants>False</CodeContractsSuggestObjectInvariants>
+    <CodeContractsRunInBackground>True</CodeContractsRunInBackground>
+    <CodeContractsShowSquigglies>True</CodeContractsShowSquigglies>
+    <CodeContractsUseBaseLine>False</CodeContractsUseBaseLine>
+    <CodeContractsEmitXMLDocs>False</CodeContractsEmitXMLDocs>
+    <CodeContractsCustomRewriterAssembly />
+    <CodeContractsCustomRewriterClass />
+    <CodeContractsLibPaths />
+    <CodeContractsExtraRewriteOptions />
+    <CodeContractsExtraAnalysisOptions />
+    <CodeContractsSQLServerOption />
+    <CodeContractsBaseLineFile />
+    <CodeContractsCacheAnalysisResults>True</CodeContractsCacheAnalysisResults>
+    <CodeContractsFailBuildOnWarnings>False</CodeContractsFailBuildOnWarnings>
+    <CodeContractsRuntimeCheckingLevel>None</CodeContractsRuntimeCheckingLevel>
+    <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
+    <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -51,7 +86,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\ExplicitSourceDescriptionTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformServiceTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilderTests.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\Queryable\SimpleQueryBuildingTestsBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryBuildingTestsBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryBaseTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryFactoryTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SourceDescriptionByTypeTests.cs" />
@@ -74,11 +109,17 @@
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionVisitorTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerComponentTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\SelectExpressionTransformerTests.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\Queryable\SimpleQueryBuilderTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryBuilderTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlQueryStatementTests.cs" />
+    <Compile Include="Utility\AssertEx.cs" />
+    <Compile Include="Utility\Empty.cs" />
+    <Compile Include="Utility\EnumerableExtensions.cs" />
+    <Compile Include="Utility\ItemReaderTester.cs" />
+    <Compile Include="Utility\OneSMappingProviderMocker.cs" />
+    <Compile Include="Utility\OneSTypeMapper.cs" />
+    <Compile Include="Utility\QueryableExpression.cs" />
     <Compile Include="Utility\TestHelperQuery.cs" />
     <Compile Include="Utility\TestHelperQueryProvider.cs" />
-    <Compile Include="TestsBase.cs" />
     <Compile Include="Utility\Trait.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerTests.cs" />
   </ItemGroup>

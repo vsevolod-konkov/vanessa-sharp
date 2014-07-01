@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using Moq;
@@ -19,102 +18,43 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
     public sealed class QueryTransformerTests : QueryTransformerTestsBase
     {
         private Mock<IExpressionTransformMethods> _transformMethodsMock;
+        private Mock<ISourceDescription> _sourceDescriptionMock; 
         private QueryTransformer _testedInstance;
 
+        private const string SOURCE_NAME = "[source]";
+
+        private IQuery<TInput, TOutput> CreateQuery<TInput, TOutput>(Expression<Func<TInput, TOutput>> selector = null,
+                                                                     Expression<Func<TInput, bool>> filter = null,
+                                                                     params SortExpression[] sorters)
+        {
+            return CreateQuery(_sourceDescriptionMock.Object, selector, filter, sorters);
+        }
+
         private static SelectionPartParseProduct<T> CreateSelectionPartParseProduct<T>(
-            ReadOnlyCollection<SqlExpression> columns, Func<IValueConverter, object[], T> selectionFunc)
+            Func<IValueConverter, object[], T> selectionFunc, params string[] fields)
         {
-            return new SelectionPartParseProduct<T>(columns, selectionFunc);
+            return new SelectionPartParseProduct<T>(
+                fields.Select(c => (SqlExpression)new SqlFieldExpression(c)).ToReadOnly(),
+                selectionFunc);
         }
 
-        private static void AssertCollectionReadExpressionParseProduct<T>(
-            Func<IValueConverter, object[], T> expectedItemReader, CollectionReadExpressionParseProduct<T> result)
+        private SelectionPartParseProduct<TOutput> SetupTransformSelector<TInput, TOutput>(
+            Expression<Func<TInput, TOutput>> selector, Func<IValueConverter, object[], TOutput> expectedItemReader, params string[] expectedFields)
         {
-            var noSideItemReaderFactory = AssertAndCast<NoSideEffectItemReaderFactory<T>>(result.ItemReaderFactory);
-            Assert.AreSame(expectedItemReader, noSideItemReaderFactory.ItemReader);
-        }
-
-            /// <summary>Инициализация тестов.</summary>
-        [SetUp]
-        public void SetUp()
-        {
-            _transformMethodsMock = new Mock<IExpressionTransformMethods>(MockBehavior.Strict);
-            _testedInstance = new QueryTransformer(_transformMethodsMock.Object);
-        }
-        
-        /// <summary>Тестирование преобразования запроса простой выборки записей.</summary>
-        [Test]
-        public void TestTransformSelectOneSDataRecord()
-        {
-            // Arrange
-            const string SOURCE_NAME = "[source]";
-            var query = CreateQuery(SOURCE_NAME);
-
-            // Act
-            var result = _testedInstance.Transform(query);
-
-            // Assert
-            var command = result.Command;
-            Assert.AreEqual("SELECT * FROM " + SOURCE_NAME, command.Sql);
-            Assert.AreEqual(0, command.Parameters.Count);
-
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
-            Assert.AreSame(OneSDataRecordReaderFactory.Default, parseProduct.ItemReaderFactory);
-        }
-
-        private SelectionPartParseProduct<T> SetupTransformSelectExpression<T>(
-            Expression<Func<OneSDataRecord, T>> selectExpression, Func<IValueConverter, object[], T> expectedItemReader, params string[] expectedColumns)
-        {
-            var columnExpressions = Array.AsReadOnly(
-                expectedColumns
-                .Select(s => (SqlExpression)new SqlFieldExpression(s)).ToArray());
-
-            var selectionPart = CreateSelectionPartParseProduct(columnExpressions, expectedItemReader);
+            var selectionPart = CreateSelectionPartParseProduct(expectedItemReader, expectedFields);
 
             _transformMethodsMock
-                .Setup(m => m.TransformSelectExpression(It.IsAny<QueryParseContext>(), selectExpression))
+                .Setup(m => m.TransformSelectExpression(It.IsAny<QueryParseContext>(), selector))
                 .Returns(selectionPart);
 
             return selectionPart;
         }
 
-            /// <summary>
-        /// Тестирование преобразования запроса с выборкой элементов анонимного типа.
-        /// </summary>
-        [Test]
-        public void TestTransformSelectTuple()
-        {
-            const string SOURCE_NAME = "[source]";
-            const string FIRST_FIELD_NAME = "[first_field]";
-            const string SECOND_FIELD_NAME = "[second_field]";
-
-            // Arrange
-            var selectExpression = Trait.Of<OneSDataRecord>()
-                                        .SelectExpression(r => new { StringField = "any", IntField = -1 });
-
-            var selectionPart = SetupTransformSelectExpression(
-                selectExpression,
-                (vc, vs) => new {StringField = "Тест", IntField = 32},
-                FIRST_FIELD_NAME, SECOND_FIELD_NAME);
-
-            var query = CreateQuery(SOURCE_NAME, selectExpression);
-
-            // Act
-            var result = _testedInstance.Transform(query);
-
-            // Assert
-            var command = result.Command;
-            Assert.AreEqual("SELECT " + FIRST_FIELD_NAME + ", " + SECOND_FIELD_NAME + " FROM " + SOURCE_NAME, command.Sql);
-            Assert.AreEqual(0, command.Parameters.Count);
-
-            AssertCollectionReadExpressionParseProduct(selectionPart.SelectionFunc, result);
-        }
-
-        private void SetupTransformWhereExpression(Expression<Func<OneSDataRecord, bool>> filter, string filterField, string filterValue)
+        private void SetupTransformFilter<T>(Expression<Func<T, bool>> filter, string filterField, string filterValue)
         {
             _transformMethodsMock
                 .Setup(m => m.TransformWhereExpression(It.IsAny<QueryParseContext>(), filter))
-                .Returns<QueryParseContext, Expression<Func<OneSDataRecord, bool>>>((ctx, f) =>
+                .Returns<QueryParseContext, Expression<Func<T, bool>>>((ctx, f) =>
                 {
                     var parameterName = ctx.Parameters.GetOrAddNewParameterName(filterValue);
 
@@ -125,324 +65,213 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 });
         }
 
-        private static void AssertFilteringCommand(SqlCommand command, string expectedParameterValue, string expectedSqlPart)
+        private void SetupTransformSorter<T, TKey>(Expression<Func<T, TKey>> sortKeyExpression, string fieldName)
+        {
+            _transformMethodsMock
+                .Setup(t => t.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression))
+                .Returns(new SqlFieldExpression(fieldName));
+        }
+
+        private void VerifySourceDescription()
+        {
+            _sourceDescriptionMock
+                .Verify(sd => sd.GetSourceName(_transformMethodsMock.Object));
+        }
+
+        private static void AssertFilteringCommand(string expectedSqlPart, string expectedParameterValue, SqlCommand command)
         {
             Assert.AreEqual(1, command.Parameters.Count);
             var parameter = command.Parameters[0];
             Assert.AreEqual(expectedParameterValue, parameter.Value);
 
+            AssertSql(
+                expectedSqlPart + parameter.Name, command);
+        }
+
+        private static void AssertCollectionReadExpressionParseProduct<T>(
+            Func<IValueConverter, object[], T> expectedItemReader, CollectionReadExpressionParseProduct<T> result)
+        {
+            var noSideItemReaderFactory = AssertEx.IsInstanceAndCastOf<NoSideEffectItemReaderFactory<T>>(result.ItemReaderFactory);
+            Assert.AreSame(expectedItemReader, noSideItemReaderFactory.ItemReader);
+        }
+
+        private static void AssertSql(string expectedSql, SqlCommand command)
+        {
             Assert.AreEqual(
-                expectedSqlPart + parameter.Name, command.Sql);
-        }
-
-        /// <summary>Тестирование преобразования запроса простой выборки и фильтрации записей.</summary>
-        [Test]
-        public void TestTransformFilterOneSDataRecord()
-        {
-            const string SOURCE = "[source]";
-            const string FILTER_FIELD = "[filter_field]";
-            const string FILTER_VALUE = "filter_value";
-
-            // Arrange
-            var query = CreateQuery(SOURCE, r => r.GetString("any_field") == "Any");
-
-            SetupTransformWhereExpression(query.Filter, FILTER_FIELD, FILTER_VALUE);
-
-            // Act
-            var result = _testedInstance.Transform(query);
-
-            // Assert
-            AssertFilteringCommand(result.Command, 
-                expectedParameterValue: FILTER_VALUE,
-                expectedSqlPart: "SELECT * FROM " + SOURCE + " WHERE " + FILTER_FIELD + " = &");
-            
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
-            Assert.AreSame(OneSDataRecordReaderFactory.Default, parseProduct.ItemReaderFactory);
-        }
-
-        /// <summary>Тестирование преобразования запроса выборки и фильтрации данных.</summary>
-        [Test]
-        public void TestTransformSelectTuppleAndFilter()
-        {
-            const string SOURCE = "[source]";
-            const string FIRST_FIELD_NAME = "[first_field]";
-            const string SECOND_FIELD_NAME = "[second_field]";
-            const string FILTER_VALUE = "filter_value";
-
-            // Arrange
-            
-            // Where
-            Expression<Func<OneSDataRecord, bool>> filter = r => r.GetString("any_field") == "Any";
-            SetupTransformWhereExpression(filter, FIRST_FIELD_NAME, FILTER_VALUE);
-
-            // Select
-            var selectExpression = Trait.Of<OneSDataRecord>()
-                                        .SelectExpression(r => new { StringField = "any", IntField = -1 });
-
-            var selectionPart = SetupTransformSelectExpression(
-                selectExpression,
-                (vc, vs) => new {StringField = "Тест", IntField = 32},
-                FIRST_FIELD_NAME, SECOND_FIELD_NAME);
-                
-            // Query
-            var query = CreateQuery(SOURCE, selectExpression, filter);
-
-            // Act
-            var result = _testedInstance.Transform(query);
-
-            // Assert
-            AssertFilteringCommand(result.Command,
-                expectedParameterValue: FILTER_VALUE,
-                expectedSqlPart: "SELECT " + FIRST_FIELD_NAME + ", " + SECOND_FIELD_NAME + " FROM " + SOURCE + " WHERE " + FIRST_FIELD_NAME + " = &");
-            
-            AssertCollectionReadExpressionParseProduct(selectionPart.SelectionFunc, result);
-        }
-
-        /// <summary>Тестирование преобразования запроса простой выборки и сортировки записей по одному полю.</summary>
-        [Test]
-        public void TestTransformOrderByOneSDataRecord()
-        {
-            const string SOURCE = "[source]";
-            const string SORT_FIELD = "[sort_field]";
-
-            // Arrange
-            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32(SORT_FIELD);
-            var sortExpression = new SortExpression(sortKeyExpression, SortKind.Ascending);
-
-            var query = CreateQuery(SOURCE, null, sortExpression);
-
-            _transformMethodsMock
-                .Setup(m => m.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression))
-                .Returns(new SqlFieldExpression(SORT_FIELD));
-
-            // Act
-            var result = _testedInstance.Transform(query);
-
-            // Assert
-            var command = result.Command;
-
-            Assert.AreEqual(0, command.Parameters.Count);
-            Assert.AreEqual(
-                "SELECT * FROM " + SOURCE + " ORDER BY " + SORT_FIELD, command.Sql);
-
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
-            Assert.AreSame(OneSDataRecordReaderFactory.Default, parseProduct.ItemReaderFactory);
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>.
-        /// </summary>
-        [Test]
-        public void TestTransformTupleQuery()
-        {
-            // Arrange
-            Func<IValueConverter, object[], AnyData> anyDataReader = (c, v) => new AnyData();
-
-            var columns = new[]
-                {
-                    "Наименование", "Идентификатор", "Цена"
-                };
-
-            var selectPart = new SelectionPartParseProduct<AnyData>(
-                new ReadOnlyCollection<SqlExpression>(
-                    columns.Select(c => (SqlExpression) new SqlFieldExpression(c)).ToArray()),
-                anyDataReader);
-
-            _transformMethodsMock
-                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
-                .Returns("Тест");
-
-            _transformMethodsMock
-                .Setup(t => t.TransformSelectTypedRecord<AnyData>())
-                .Returns(selectPart);
-            
-            var testedQuery = CreateTupleQuery();
-
-            // Act
-            var result = _testedInstance.Transform(testedQuery);
-
-            // Assert
-            Assert.AreEqual(
-                "SELECT Наименование, Идентификатор, Цена FROM Тест",
-                result.Command.Sql
+                string.Format(expectedSql, SOURCE_NAME),
+                command.Sql
                 );
+        }
 
+        private void AssertResult<T>(
+            string expectedSql, Func<IValueConverter, object[], T> expectedItemReader,
+            CollectionReadExpressionParseProduct<T> result)
+        {
+            AssertSql(expectedSql, result.Command);
             Assert.AreEqual(0, result.Command.Parameters.Count);
-            AssertCollectionReadExpressionParseProduct(anyDataReader, result);
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>
-        /// с фильтром.
-        /// </summary>
-        [Test]
-        public void TestTransformTupleWithFilterQuery()
-        {
-            // Arrange
-            _transformMethodsMock
-                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
-                .Returns("Тест");
-
-            Expression<Func<AnyData, bool>> filterExpression = d => true;
-
-            string parameterName = null;
-            const string FILTER_VALUE = "filter_value";
-            _transformMethodsMock
-                .Setup(t => t.TransformWhereExpression(It.IsAny<QueryParseContext>(), filterExpression))
-                .Callback<QueryParseContext, Expression<Func<AnyData, bool>>>((ctx, e) =>
-                    {
-                        parameterName = ctx.Parameters.GetOrAddNewParameterName(FILTER_VALUE);
-                    })
-                .Returns(() =>
-                    new SqlBinaryRelationCondition(
-                        SqlBinaryRelationType.Equal, 
-                        new SqlFieldExpression("КраткоеИмя"),
-                        new SqlParameterExpression(parameterName)));
-                
-
-            Func<IValueConverter, object[], AnyData> anyDataReader = (c, v) => new AnyData();
-
-            var columns = new[]
-                {
-                    "Наименование", "Идентификатор", "Цена"
-                };
-
-            var selectPart = new SelectionPartParseProduct<AnyData>(
-                new ReadOnlyCollection<SqlExpression>(
-                    columns.Select(c => (SqlExpression)new SqlFieldExpression(c)).ToArray()),
-                anyDataReader);
-
-            _transformMethodsMock
-                .Setup(t => t.TransformSelectTypedRecord<AnyData>())
-                .Returns(selectPart);
-
-            var testedQuery = CreateTupleQuery(filterExpression: filterExpression);
-
-            // Act
-            var result = _testedInstance.Transform(testedQuery);
-
-            // Assert
-            Assert.AreEqual(1, result.Command.Parameters.Count);
-            var parameter = result.Command.Parameters[0];
-            
-            Assert.AreEqual(
-                "SELECT Наименование, Идентификатор, Цена FROM Тест WHERE КраткоеИмя = &" + parameter.Name,
-                result.Command.Sql
-                );
-            Assert.AreEqual(parameterName, parameter.Name);
-            
-            AssertCollectionReadExpressionParseProduct(anyDataReader, result);
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>
-        /// с сортировкой.
-        /// </summary>
-        [Test]
-        public void TestTransformTupleWithSortQuery()
-        {
-            // Arrange
-            _transformMethodsMock
-                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
-                .Returns("Тест");
-
-            Expression<Func<AnyData, int>> sortKeyExpression1 = d => 4;
-            Expression<Func<AnyData, string>> sortKeyExpression2 = d => "test";
-
-            _transformMethodsMock
-                .Setup(t => t.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression1))
-                .Returns(new SqlFieldExpression("Приоритет"));
-            _transformMethodsMock
-                .Setup(t => t.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression2))
-                .Returns(new SqlFieldExpression("Ключ"));
-
-            Func<IValueConverter, object[], AnyData> anyDataReader = (c, v) => new AnyData();
-
-            var columns = new[]
-                {
-                    "Наименование", "Идентификатор", "Цена"
-                };
-
-            var selectPart = new SelectionPartParseProduct<AnyData>(
-                new ReadOnlyCollection<SqlExpression>(
-                    columns.Select(c => (SqlExpression)new SqlFieldExpression(c)).ToArray()),
-                anyDataReader);
-
-            _transformMethodsMock
-                .Setup(t => t.TransformSelectTypedRecord<AnyData>())
-                .Returns(selectPart);
-
-            var testedQuery = CreateTupleQuery(sorters: new ReadOnlyCollection<SortExpression>(new []
-                {
-                    new SortExpression(sortKeyExpression1, SortKind.Ascending),
-                    new SortExpression(sortKeyExpression2, SortKind.Descending)
-                }));
-
-            // Act
-            var result = _testedInstance.Transform(testedQuery);
-
-            // Assert
-            Assert.AreEqual(
-                "SELECT Наименование, Идентификатор, Цена FROM Тест ORDER BY Приоритет, Ключ DESC",
-                result.Command.Sql
-                );
-            Assert.AreEqual(0, result.Command.Parameters.Count);
-
-            AssertCollectionReadExpressionParseProduct(anyDataReader, result);
-        }
-
-        /// <summary>
-        /// Тестирование <see cref="QueryTransformer.Transform{TInput,TOutput}(TupleQuery{TInput,TOutput})"/>
-        /// с выборкой.
-        /// </summary>
-        [Test]
-        public void TestTransformTupleWithSelectQuery()
-        {
-            // Arrange
-            _transformMethodsMock
-                .Setup(t => t.ResolveSourceNameForTypedRecord<AnyData>())
-                .Returns("Тест");
-
-            var selectExpression = Trait.Of<AnyData>().SelectExpression(d => new {Id = 5, Name = "TestName"});
-
-            var expectedItemReader = CreateItemReader((c, v) => new { Id = c.ToInt32(v[0]), Name = c.ToString(v[1])});
-
-            var columns = new[]
-                {
-                    "Идентификатор", "Наименование"
-                };
-
-            var selectionPart = CreateSelectionPartParseProduct(
-                new ReadOnlyCollection<SqlExpression>(
-                    columns.Select(c => (SqlExpression) new SqlFieldExpression(c)).ToArray()),
-                expectedItemReader
-                );
-
-            _transformMethodsMock
-                .Setup(t => t.TransformSelectExpression(It.IsAny<QueryParseContext>(), selectExpression))
-                .Returns(selectionPart);
-
-            var testedQuery = CreateTupleQuery(selectExpression, null);
-
-            // Act
-            var result = _testedInstance.Transform(testedQuery);
-
-            // Assert
-            Assert.AreEqual(
-                "SELECT Идентификатор, Наименование FROM Тест",
-                result.Command.Sql
-                );
-
-            Assert.AreEqual(0, result.Command.Parameters.Count);
-
-            var factory = AssertAndCastNoSideEffectItemReaderFactory(result.ItemReaderFactory);
-
-            Assert.AreSame(expectedItemReader, factory.ItemReader);
+            AssertCollectionReadExpressionParseProduct(expectedItemReader, result);
+            VerifySourceDescription();
         }
 
         private static Func<IValueConverter, object[], T> CreateItemReader<T>(Func<IValueConverter, object[], T> itemReader)
         {
             return itemReader;
+        }
+
+        /// <summary>Инициализация тестов.</summary>
+        [SetUp]
+        public void SetUp()
+        {
+            _sourceDescriptionMock = new Mock<ISourceDescription>(MockBehavior.Strict);
+            _transformMethodsMock = new Mock<IExpressionTransformMethods>(MockBehavior.Strict);
+            _testedInstance = new QueryTransformer(_transformMethodsMock.Object);
+
+            _sourceDescriptionMock
+                .Setup(sd => sd.GetSourceName(_transformMethodsMock.Object))
+                .Returns(SOURCE_NAME);
+        }
+        
+        /// <summary>
+        /// Тестирование преобразования запроса получения записей без проекции.
+        /// </summary>
+        [Test]
+        public void TestTransformGetDataRecordsQuery()
+        {
+            // Arrange
+            const string FILTER_VALUE = "filter_value";
+
+            var query = CreateQuery<OneSDataRecord, OneSDataRecord>(filter: r => true);
+
+            SetupTransformFilter(query.Filter, "ФильтрПоле", FILTER_VALUE);
+
+            // Act
+            var result = _testedInstance.Transform(query);
+
+            // Assert
+            AssertFilteringCommand(
+                "SELECT * FROM {0} WHERE ФильтрПоле = &",
+                FILTER_VALUE,
+                result.Command);
+            var parseProduct = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            Assert.AreSame(OneSDataRecordReaderFactory.Default, parseProduct.ItemReaderFactory);
+            VerifySourceDescription();
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса записей с проекцией на анонимный тип.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectDataRecordsQuery()
+        {
+            // Arrange
+            
+            // Select
+            var selector = Trait
+                .Of<OneSDataRecord>()
+                .SelectExpression(r => new { First = "any", Second = -1 });
+
+            var selectionPart = SetupTransformSelector(
+                selector,
+                (vc, vs) => new { First = "Тест", Second = 32},
+                "ПервоеПоле", "ВтороеПоле");
+
+            // Order by
+            Expression<Func<OneSDataRecord, int>> sortKeyExpression1 = r => 10;
+            SetupTransformSorter(sortKeyExpression1, "Ключ1");
+
+            Expression<Func<OneSDataRecord, string>> sortKeyExpression2 = r => "Test";
+            SetupTransformSorter(sortKeyExpression2, "Ключ2");
+
+            var query = CreateQuery(
+                selector, 
+                sorters: new[]
+                    {
+                        new SortExpression(sortKeyExpression1, SortKind.Descending),
+                        new SortExpression(sortKeyExpression2, SortKind.Ascending)
+                    });
+
+            // Act
+            var result = _testedInstance.Transform(query);
+
+            // Assert
+            AssertResult(
+                "SELECT ПервоеПоле, ВтороеПоле FROM {0} ORDER BY Ключ1 DESC, Ключ2",
+                selectionPart.SelectionFunc,
+                result
+                );
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса получения типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestTransformGetTypedRecordsQuery()
+        {
+            // Arrange
+            Func<IValueConverter, object[], SomeData> someDataReader = (c, v) => new SomeData();
+
+            var selectPart = CreateSelectionPartParseProduct(someDataReader, "Наименование", "Идентификатор", "Цена");
+
+            _transformMethodsMock
+                .Setup(t => t.TransformSelectTypedRecord<SomeData>())
+                .Returns(selectPart);
+
+            Expression<Func<SomeData, int>> sortKeyExpression1 = d => 5;
+            SetupTransformSorter(sortKeyExpression1, "Ключ1");
+
+            Expression<Func<SomeData, string>> sortKeyExpression2 = d => "Test";
+            SetupTransformSorter(sortKeyExpression2, "Ключ2");
+            
+            var testedQuery = CreateQuery<SomeData, SomeData>(sorters: 
+                new[]
+                    {
+                        new SortExpression(sortKeyExpression1, SortKind.Ascending),
+                        new SortExpression(sortKeyExpression2, SortKind.Descending)
+                    }
+                );
+
+            // Act
+            var result = _testedInstance.Transform(testedQuery);
+
+            // Assert
+            AssertResult(
+                "SELECT Наименование, Идентификатор, Цена FROM {0} ORDER BY Ключ1, Ключ2 DESC",
+                someDataReader,
+                result
+                );
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса выборки типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectTypedRecordsQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.ResolveSourceNameForTypedRecord<SomeData>())
+                .Returns("Тест");
+
+            Expression<Func<SomeData, bool>> filter = d => true;
+            SetupTransformFilter(filter, "КраткоеИмя", "Фильтр");
+
+            var selector = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => new { First = 5, Second = "TestName" });
+            var expectedItemReader = CreateItemReader((c, v) => new { First = 45, Second = "XXX" });
+            SetupTransformSelector(selector, expectedItemReader, "Первый", "Второй");
+
+            var testedQuery = CreateQuery(selector, filter);
+
+            // Act
+            var result = _testedInstance.Transform(testedQuery);
+
+            // Assert
+            AssertFilteringCommand(
+                "SELECT Первый, Второй FROM {0} WHERE КраткоеИмя = &",
+                "Фильтр", result.Command);
+            AssertCollectionReadExpressionParseProduct(expectedItemReader, result);
+            VerifySourceDescription();
         }
     }
 }

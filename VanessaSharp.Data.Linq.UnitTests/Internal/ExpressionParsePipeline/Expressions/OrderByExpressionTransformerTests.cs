@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
 {
@@ -41,18 +40,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// в случае если передано выражение получения значения поля типизированного кортежа.
         /// </summary>
         [Test]
-        public void TestTransfromTypedTupleField()
+        public void TestTransfromTypedRecordField()
         {
             // Arrange
             const string FIELD_NAME = "id_field";
             _mappingProviderMock
-                .Setup(p => p.GetTypeMapping(typeof (AnyData)))
-                .Returns(new OneSTypeMapping("X", new ReadOnlyCollection<OneSFieldMapping>(new[]
-                    {
-                        CreateFieldMapping(d => d.Id, FIELD_NAME)
-                    })));
-            
-            Expression<Func<AnyData, int>> sortKeyExpression = d => d.Id;
+                .BeginSetupGetTypeMappingFor<SomeData>("X")
+                    .FieldMap(d => d.Id, FIELD_NAME)
+                .End();
+
+            Expression<Func<SomeData, int>> sortKeyExpression = d => d.Id;
 
             // Act
             var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
@@ -61,17 +58,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(FIELD_NAME, result.FieldName);
         }
 
-        public sealed class AnyData
+        /// <summary>
+        /// Тип тестовой типизированной записи.
+        /// </summary>
+        public sealed class SomeData
         {
             public int Id;
-        }
-
-        // TODO Копипаста
-        private static OneSFieldMapping CreateFieldMapping<T>(Expression<Func<AnyData, T>> accessor, string fieldName)
-        {
-            var memberInfo = ((MemberExpression)accessor.Body).Member;
-
-            return new OneSFieldMapping(memberInfo, fieldName);
         }
     }
 }

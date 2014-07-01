@@ -1,18 +1,17 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Linq.Expressions;
-using System.Reflection;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Тестирование <see cref="WhereExpressionTransformer"/>.</summary>
     [TestFixture]
-    public sealed class WhereExpressionTransformerTests : TestsBase
+    public sealed class WhereExpressionTransformerTests
     {
         private const string FILTER_FIELD = "filter_field";
         private const int FILTER_VALUE = 24;
@@ -41,14 +40,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var parameters = context.Parameters.GetSqlParameters();
 
             // Assert
-            var binaryCondition = AssertAndCast<SqlBinaryRelationCondition>(result);
+            var binaryCondition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(result);
 
             Assert.AreEqual(expectedRelationType, binaryCondition.RelationType);
 
-            var fieldExpression = AssertAndCast<SqlFieldExpression>(binaryCondition.FirstOperand);
+            var fieldExpression = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(binaryCondition.FirstOperand);
             Assert.AreEqual(FILTER_FIELD, fieldExpression.FieldName);
 
-            var parameterExpression = AssertAndCast<SqlParameterExpression>(binaryCondition.SecondOperand);
+            var parameterExpression = AssertEx.IsInstanceAndCastOf<SqlParameterExpression>(binaryCondition.SecondOperand);
             var parameterName = parameterExpression.ParameterName;
 
             Assert.AreEqual(1, parameters.Count);
@@ -57,7 +56,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(FILTER_VALUE, parameter.Value);
         }
 
-        /// <summary>Тестирование преобразования бинарного отношения.</summary>
+        /// <summary>Тестирование преобразования бинарного отношения записей <see cref="OneSDataRecord"/>.</summary>
         /// <param name="testedFilter">Тестируемое выражение фильтрации.</param>
         /// <param name="expectedRelationType">Ожидаемый тип бинарного отношения в результирующем SQL-условии.</param>
         private void TestTransformWhenDataRecordBinaryRelation(Expression<Func<OneSDataRecord, bool>> testedFilter, SqlBinaryRelationType expectedRelationType)
@@ -68,31 +67,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// <summary>Тестирование преобразования бинарного отношения.</summary>
         /// <param name="testedFilter">Тестируемое выражение фильтрации.</param>
         /// <param name="expectedRelationType">Ожидаемый тип бинарного отношения в результирующем SQL-условии.</param>
-        private void TestTransformWhenTypedTupleBinaryRelation(Expression<Func<AnyData, bool>> testedFilter, SqlBinaryRelationType expectedRelationType)
+        private void TestTransformWhenTypedRecordBinaryRelation(Expression<Func<SomeData, bool>> testedFilter, SqlBinaryRelationType expectedRelationType)
         {
-            var typeMapping = new OneSTypeMapping(
-                "?",
-                new ReadOnlyCollection<OneSFieldMapping>(
-                    new[] {CreateFieldMapping(d => d.Id, FILTER_FIELD)}));
-
             _mappingProviderMock
-                .Setup(p => p.GetTypeMapping(typeof (AnyData)))
-                .Returns(typeMapping);
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.Id, FILTER_FIELD)
+                .End();
             
             TestTransformWhenBinaryRelation(testedFilter, expectedRelationType);
-        }
-
-        // TODO Копипаста QueryTransformerComponentTests
-        private static OneSFieldMapping CreateFieldMapping<T>(Expression<Func<AnyData, T>> accessor, string fieldName)
-        {
-            var memberInfo = ((MemberExpression)accessor.Body).Member;
-
-            return new OneSFieldMapping(memberInfo, fieldName);
-        }
-
-        public sealed class AnyData
-        {
-            public int Id;
         }
         
         /// <summary>
@@ -162,7 +144,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenTypedTupleEqual()
         {
-            TestTransformWhenTypedTupleBinaryRelation(d => d.Id == FILTER_VALUE, SqlBinaryRelationType.Equal);
+            TestTransformWhenTypedRecordBinaryRelation(d => d.Id == FILTER_VALUE, SqlBinaryRelationType.Equal);
         }
 
         /// <summary>
@@ -172,7 +154,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenTypedTupleNotEqual()
         {
-            TestTransformWhenTypedTupleBinaryRelation(d => d.Id != FILTER_VALUE, SqlBinaryRelationType.NotEqual);
+            TestTransformWhenTypedRecordBinaryRelation(d => d.Id != FILTER_VALUE, SqlBinaryRelationType.NotEqual);
         }
 
         /// <summary>
@@ -182,7 +164,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenTypedTupleGreater()
         {
-            TestTransformWhenTypedTupleBinaryRelation(d => d.Id > FILTER_VALUE, SqlBinaryRelationType.Greater);
+            TestTransformWhenTypedRecordBinaryRelation(d => d.Id > FILTER_VALUE, SqlBinaryRelationType.Greater);
         }
 
         /// <summary>
@@ -192,7 +174,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenTypedTupleGreaterOrEqual()
         {
-            TestTransformWhenTypedTupleBinaryRelation(d => d.Id >= FILTER_VALUE, SqlBinaryRelationType.GreaterOrEqual);
+            TestTransformWhenTypedRecordBinaryRelation(d => d.Id >= FILTER_VALUE, SqlBinaryRelationType.GreaterOrEqual);
         }
 
         /// <summary>
@@ -202,7 +184,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenTypedTupleLess()
         {
-            TestTransformWhenTypedTupleBinaryRelation(d => d.Id < FILTER_VALUE, SqlBinaryRelationType.Less);
+            TestTransformWhenTypedRecordBinaryRelation(d => d.Id < FILTER_VALUE, SqlBinaryRelationType.Less);
         }
 
         /// <summary>
@@ -212,7 +194,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenTypedTupleLessOrEqual()
         {
-            TestTransformWhenTypedTupleBinaryRelation(d => d.Id <= FILTER_VALUE, SqlBinaryRelationType.LessOrEqual);
+            TestTransformWhenTypedRecordBinaryRelation(d => d.Id <= FILTER_VALUE, SqlBinaryRelationType.LessOrEqual);
         }
 
         // TODO Надо подумать о желаемом поведении"
@@ -257,6 +239,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             // ?
+        }
+
+        /// <summary>
+        /// Тестовый тип записи.
+        /// </summary>
+        public sealed class SomeData
+        {
+            public int Id;
         }
     }
 }

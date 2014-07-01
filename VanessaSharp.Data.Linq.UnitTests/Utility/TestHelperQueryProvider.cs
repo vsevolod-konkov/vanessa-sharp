@@ -7,6 +7,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
     /// <summary>Вспомогательный класс для генерации linq-выражений.</summary>
     internal sealed class TestHelperQueryProvider : IQueryProvider
     {
+        /// <summary>Построение тестового выражения запроса данных.</summary>
+        /// <typeparam name="T">Тип элементов выходной последовательности.</typeparam>
+        /// <param name="queryable">Объект запроса.</param>
         public static Expression BuildTestQueryExpression<T>(IQueryable<T> queryable)
         {
             return Expression.Call(
@@ -14,28 +17,22 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
                 OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<T>());
         }
 
-        public static Expression BuildTestQueryExpression<T>(string source,
-                                                             Func<IQueryable<OneSDataRecord>, IQueryable<T>> queryAction)
+        public static IQueryable<OneSDataRecord> QueryOfDataRecords(string sourceName)
         {
-            var provider = new TestHelperQueryProvider();
-            var query = provider.CreateQuery<OneSDataRecord>(
-                OneSQueryExpressionHelper.GetRecordsExpression(source));
-
-            var resultQuery = queryAction(query);
-
-            return BuildTestQueryExpression(resultQuery);
+            return new TestHelperQueryProvider()
+                .CreateQuery<OneSDataRecord>(
+                    OneSQueryExpressionHelper.GetRecordsExpression(sourceName));
         }
 
-        public static Expression BuildTestQueryExpression(string source)
-        {
-            return BuildTestQueryExpression(source, q => q);
-        }
-
+        /// <summary>
+        /// Создание запроса получения типизированных записей.
+        /// </summary>
+        /// <typeparam name="T">Тип записей.</typeparam>
         public static IQueryable<T> QueryOf<T>()
         {
-            var provider = new TestHelperQueryProvider();
-            return provider.CreateQuery<T>(
-                OneSQueryExpressionHelper.GetTypedRecordsExpression<T>());
+            return new TestHelperQueryProvider()
+                .CreateQuery<T>(
+                    OneSQueryExpressionHelper.GetTypedRecordsExpression<T>());
         }
 
         public IQueryable CreateQuery(Expression expression)
@@ -43,6 +40,13 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             throw new NotSupportedException();
         }
 
+        /// <summary>
+        /// Создает объект <see cref="T:System.Linq.IQueryable`1"/>, который позволяет вычислить запрос, представленный заданным деревом выражения.
+        /// </summary>
+        /// <returns>
+        /// Объект <see cref="T:System.Linq.IQueryable`1"/>, который позволяет вычислить запрос, представленный заданным деревом выражения.
+        /// </returns>
+        /// <param name="expression">Дерево выражения, представляющее запрос LINQ.</param><typeparam name="TElement">Тип элементов возвращаемого объекта <see cref="T:System.Linq.IQueryable`1"/>.</typeparam>
         public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
         {
             return new TestHelperQuery<TElement>(this, expression);

@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal
 {
@@ -10,7 +10,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
     /// Тестирование <see cref="CollectionReadExpressionParseProduct{T}"/>.
     /// </summary>
     [TestFixture]
-    public sealed class CollectionReadExpressionParseProductTests : TestsBase
+    public sealed class CollectionReadExpressionParseProductTests
     {
         private SqlCommand _sqlCommand;
 
@@ -71,7 +71,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var result = _testedInstance.Execute(sqlCommandExecuterMock.Object);
 
             // Assert
-            var enumerator = AssertAndCast<ItemEnumerator<OneSDataRecord>>(result);
+            var enumerator = AssertEx.IsInstanceAndCastOf<ItemEnumerator<OneSDataRecord>>(result);
             Assert.IsTrue(enumerator.IsSameSqlResultReader(sqlResultReaderMock.Object));
             Assert.AreSame(recordReader, enumerator.ItemReader);
 

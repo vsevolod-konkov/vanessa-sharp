@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
@@ -20,6 +20,44 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
         private QueryTransformer _testedInstance;
 
+        private const string SOURCE_NAME = "[source]";
+
+        private static IQuery<OneSDataRecord, T> CreateDataRecordsQuery<T>(string source,
+                                                                            Expression<Func<OneSDataRecord, T>> selector,
+                                                                            Expression<Func<OneSDataRecord, bool>> filter = null,
+                                                                            params SortExpression[] sorters)
+        {
+            return CreateQuery(new ExplicitSourceDescription(source), selector, filter, sorters);
+        }
+
+        private static IQuery<OneSDataRecord, OneSDataRecord> CreateDataRecordsQuery(
+            string source,
+            Expression<Func<OneSDataRecord, bool>> filter = null,
+            params SortExpression[] sorters)
+        {
+            return CreateDataRecordsQuery<OneSDataRecord>(source, null, filter, sorters);
+        }
+
+        private static IQuery<SomeData, T> CreateTypedRecordsQuery<T>(Expression<Func<SomeData, T>> selectExpression,
+                                                                       Expression<Func<SomeData, bool>> filterExpression = null,
+                                                                       params SortExpression[] sorters)
+        {
+            return CreateQuery(SourceDescriptionByType<SomeData>.Instance, selectExpression, filterExpression, sorters);
+        }
+
+        private static IQuery<SomeData, SomeData> CreateTypedRecordsQuery(
+            Expression<Func<SomeData, bool>> filterExpression = null,
+            params SortExpression[] sorters)
+        {
+            return CreateTypedRecordsQuery<SomeData>(null, filterExpression, sorters);
+        }
+
+        private static NoSideEffectItemReaderFactory<T> AssertAndCastNoSideEffectItemReaderFactory<T>(
+           IItemReaderFactory<T> factory)
+        {
+            return AssertEx.IsInstanceAndCastOf<NoSideEffectItemReaderFactory<T>>(factory);
+        }
+
         /// <summary>
         /// Инициализация теста.
         /// </summary>
@@ -34,16 +72,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// Тестирование преобразования запроса с выборкой элементов анонимного типа.
         /// </summary>
         [Test]
-        public void TestTransformSelectTuple()
+        public void TestTransformSelectDataRecords()
         {
             // Arrange
-            const string SOURCE_NAME = "[source]";
+            
             const string FIRST_FIELD_NAME = "[string_field]";
             const string SECOND_FIELD_NAME = "[int_field]";
 
             var selectExpression = Trait.Of<OneSDataRecord>()
-                                        .SelectExpression(r => new { StringField = r.GetString(FIRST_FIELD_NAME), IntField = r.GetInt32(SECOND_FIELD_NAME) });
-            var query = CreateQuery(SOURCE_NAME, selectExpression);
+                                        .SelectExpression(r => new { First = r.GetString(FIRST_FIELD_NAME), Second = r.GetInt32(SECOND_FIELD_NAME) });
+            var query = CreateDataRecordsQuery(SOURCE_NAME, selectExpression);
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -57,43 +95,21 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var itemReader = noSideItemReaderFactory.ItemReader;
 
             // Тестирование полученного делегата чтения кортежа
-
-            // Arrange
-            const string STRING_VALUE = "Test";
-            const int INT32_VALUE = 34;
-
-            var values = new object[] { STRING_VALUE, INT32_VALUE };
-            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
-            valueConverterMock
-                .Setup(c => c.ToString(values[0]))
-                .Returns(STRING_VALUE)
-                .Verifiable();
-            valueConverterMock
-                .Setup(c => c.ToInt32(values[1]))
-                .Returns(INT32_VALUE)
-                .Verifiable();
-
-            // Act
-            var item = itemReader(valueConverterMock.Object, values);
-            
-            
-            // Assert
-            Assert.AreEqual(STRING_VALUE, item.StringField);
-            Assert.AreEqual(INT32_VALUE, item.IntField);
-            valueConverterMock
-                .Verify(c => c.ToString(values[0]), Times.Once());
-            valueConverterMock
-                .Verify(c => c.ToInt32(values[1]), Times.Once());
+            ItemReaderTester.For(itemReader, 2)
+                .Field(0, i => i.First, c => c.ToString(null), "Test")
+                .Field(1, i => i.Second, c => c.ToInt32(null), 34)
+                .Test();
         }
 
         /// <summary>Тестирование преобразования запроса простой выборки и фильтрации записей.</summary>
         [Test]
-        public void TestTransformFilterOneSDataRecord()
+        public void TestTransformFilterDataRecords()
         {
+            const string FILTER_FIELD = "[filter_field]";
             const string FILTER_VALUE = "filter_value";
 
             // Arrange
-            var query = CreateQuery("[source]", whereExpression: r => r.GetString("filter_field") == FILTER_VALUE);
+            var query = CreateDataRecordsQuery(SOURCE_NAME, r => r.GetString(FILTER_FIELD) == FILTER_VALUE);
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -106,22 +122,23 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(FILTER_VALUE, parameter.Value);
 
             Assert.AreEqual(
-                "SELECT * FROM [source] WHERE filter_field = &" + parameter.Name, command.Sql);
+                "SELECT * FROM "+ SOURCE_NAME + " WHERE " + FILTER_FIELD + " = &" + parameter.Name, command.Sql);
 
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            var parseProduct = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
         }
 
         /// <summary>Тестирование преобразования запроса простой выборки и сортировки записей.</summary>
         [TestCase("Ascending", "", Description = "Тестирование в случае сортировки по убыванию")]
         [TestCase("Descending", " DESC", Description = "Тестирование в случае сортировки по возрастанию")]
-        public void TestTransformOrderByOneSDataRecord(string sortKindString, string expectedSqlPart)
+        public void TestTransformOrderByDataRecords(string sortKindString, string expectedSqlPart)
         {
             var sortKind = (SortKind)Enum.Parse(typeof(SortKind), sortKindString);
 
             // Arrange
-            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32("sort_field");
-            var query = CreateQuery("[source]", null, new SortExpression(sortKeyExpression, sortKind));
+            const string SORT_FIELD = "[sort_field]";
+            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32(SORT_FIELD);
+            var query = CreateDataRecordsQuery(SOURCE_NAME, null, new SortExpression(sortKeyExpression, sortKind));
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -132,126 +149,111 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(0, command.Parameters.Count);
 
             Assert.AreEqual(
-                "SELECT * FROM [source] ORDER BY sort_field" + expectedSqlPart, command.Sql);
+                "SELECT * FROM "+ SOURCE_NAME + " ORDER BY " + SORT_FIELD + expectedSqlPart, command.Sql);
 
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            var parseProduct = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса типизированных кортежей.
+        /// </summary>
+        private void TestTransformTypedRecords(
+            Func<IList<SqlParameter>, string> expectedSqlPart,
+            int expectedSqlParametersCount,
+            Action<IList<SqlParameter>> sqlParamtersTester = null,
+            Expression<Func<SomeData, bool>> filter = null,
+            params SortExpression[] sorters
+            )
+        {
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                    .FieldMap(d => d.Id, "Идентификатор")
+                    .FieldMap(d => d.Name, "Наименование")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
+
+            var query = CreateTypedRecordsQuery(filter, sorters);
+
+            // Act
+            var result = _testedInstance.Transform(query);
+
+            // Assert
+            var command = result.Command;
+
+            Assert.AreEqual(expectedSqlParametersCount, command.Parameters.Count);
+            
+            var expectedSql = "SELECT Идентификатор, Наименование, Цена FROM ТестовыйИсточник " 
+                + expectedSqlPart(command.Parameters);
+            Assert.AreEqual(expectedSql, command.Sql);
+
+            if (sqlParamtersTester != null)
+                sqlParamtersTester(command.Parameters);
+
+            var parseProduct = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<SomeData>>(result);
+            var typedFactory = AssertEx.IsInstanceAndCastOf<NoSideEffectItemReaderFactory<SomeData>>(parseProduct.ItemReaderFactory);
+
+            ItemReaderTester.For(typedFactory.ItemReader, 3)
+                .Field(0, d => d.Id, c => c.ToInt32(null), 45)
+                .Field(1, d => d.Name, c => c.ToString(null), "Тестовый")
+                .Field(2, d => d.Price, c => c.ToDecimal(null), 45.5m)
+                .Test();
         }
 
         /// <summary>
         /// Тестирование преобразования запроса фильтрации типизированных кортежей.
         /// </summary>
         [Test]
-        public void TestTransformFilterTypedTuple()
+        public void TestTransformFilterTypedRecords()
         {
-            // Arrange
-            var typeMapping = new OneSTypeMapping(
-                "ТестовыйИсточник",
-                new ReadOnlyCollection<OneSFieldMapping>(
-                    new[]
-                        {
-                            CreateFieldMapping(d => d.Id, "Идентификатор"),
-                            CreateFieldMapping(d => d.Name, "Наименование"),
-                            CreateFieldMapping(d => d.Price, "Цена")
-                        }));
-
-            _mappingProviderMock
-                .Setup(p => p.GetTypeMapping(typeof(AnyData)))
-                .Returns(typeMapping);
-            
             const string FILTER_VALUE = "filter_value";
+            Expression<Func<SomeData, bool>> filter = d => d.Name == FILTER_VALUE;
 
-            Expression<Func<AnyData, bool>> filterExpression = d => d.Name == FILTER_VALUE;
-            
-            var query = CreateTupleQuery(filterExpression: filterExpression);
-
-            // Act
-            var result = _testedInstance.Transform(query);
-
-            // Assert
-            var command = result.Command;
-
-            Assert.AreEqual(1, command.Parameters.Count);
-            var parameter = command.Parameters[0];
-            Assert.AreEqual(FILTER_VALUE, parameter.Value);
-
-            Assert.AreEqual(
-                "SELECT Идентификатор, Наименование, Цена FROM ТестовыйИсточник WHERE Наименование = &" + parameter.Name, command.Sql);
-
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<AnyData>>(result);
-            Assert.IsInstanceOf<NoSideEffectItemReaderFactory<AnyData>>(parseProduct.ItemReaderFactory);
+            TestTransformTypedRecords(
+                parameters => "WHERE Наименование = &" + parameters[0].Name,
+                1,
+                parameters => Assert.AreEqual(FILTER_VALUE, parameters[0].Value),
+                filter
+                );
         }
 
         /// <summary>
         /// Тестирование преобразования запроса сортировки типизированных кортежей.
         /// </summary>
         [Test]
-        public void TestTransformSorterTypedTuple()
+        public void TestTransformSorterTypedRecords()
         {
-            // Arrange
-            var typeMapping = new OneSTypeMapping(
-                "ТестовыйИсточник",
-                new ReadOnlyCollection<OneSFieldMapping>(
-                    new[]
-                        {
-                            CreateFieldMapping(d => d.Id, "Идентификатор"),
-                            CreateFieldMapping(d => d.Name, "Наименование"),
-                            CreateFieldMapping(d => d.Price, "Цена")
-                        }));
-
-            _mappingProviderMock
-                .Setup(p => p.GetTypeMapping(typeof(AnyData)))
-                .Returns(typeMapping);
-
-            Expression<Func<AnyData, string>> sortKeyExpression1 = d => d.Name;
-            Expression<Func<AnyData, decimal>> sortKeyExpression2 = d => d.Price;
-
-            var query = CreateTupleQuery(
-                sorters:
-                new ReadOnlyCollection<SortExpression>(new []
-                    {
-                        new SortExpression(sortKeyExpression1, SortKind.Descending),
-                        new SortExpression(sortKeyExpression2, SortKind.Ascending), 
-                    }));
-
-            // Act
-            var result = _testedInstance.Transform(query);
-
-            // Assert
-            var command = result.Command;
-
-            Assert.AreEqual(
-                "SELECT Идентификатор, Наименование, Цена FROM ТестовыйИсточник ORDER BY Наименование DESC, Цена", command.Sql);
-            Assert.AreEqual(0, command.Parameters.Count);
-
-            var parseProduct = AssertAndCast<CollectionReadExpressionParseProduct<AnyData>>(result);
-            Assert.IsInstanceOf<NoSideEffectItemReaderFactory<AnyData>>(parseProduct.ItemReaderFactory);
+            Expression<Func<SomeData, string>> sortKeyExpression1 = d => d.Name;
+            Expression<Func<SomeData, decimal>> sortKeyExpression2 = d => d.Price;
+            
+            TestTransformTypedRecords(
+                parameters => "ORDER BY Наименование DESC, Цена",
+                0,
+                sorters: new [] { 
+                    new SortExpression(sortKeyExpression1, SortKind.Descending),
+                    new SortExpression(sortKeyExpression2, SortKind.Ascending)
+                    }
+                );
         }
 
         /// <summary>
         /// Тестирование преобразования запроса выборки типизированных кортежей.
         /// </summary>
         [Test]
-        public void TestTransformSelectTypedTuple()
+        public void TestTransformSelectTypedRecords()
         {
             // Arrange
-            var typeMapping = new OneSTypeMapping(
-                "ТестовыйИсточник",
-                new ReadOnlyCollection<OneSFieldMapping>(
-                    new[]
-                        {
-                            CreateFieldMapping(d => d.Id, "Идентификатор"),
-                            CreateFieldMapping(d => d.Name, "Наименование"),
-                            CreateFieldMapping(d => d.Price, "Цена")
-                        }));
-
             _mappingProviderMock
-                .Setup(p => p.GetTypeMapping(typeof(AnyData)))
-                .Returns(typeMapping);
+                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                    .FieldMap(d => d.Id, "Идентификатор")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
 
-            var selectExpression = Trait.Of<AnyData>().SelectExpression(d => new {d.Id, d.Price});
+            var selector = Trait.Of<SomeData>()
+                .SelectExpression(d => new {d.Id, d.Price});
 
-            var query = CreateTupleQuery(selectExpression);
+            var query = CreateTypedRecordsQuery(selector);
 
             // Act
             var result = _testedInstance.Transform(query);
@@ -265,48 +267,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             var factory = AssertAndCastNoSideEffectItemReaderFactory(result.ItemReaderFactory);
             
-            // Test Item Reader
-            // TODO: Копипаста
-            var itemReader = factory.ItemReader;
-
-            // Arrange
-            const int INT32_VALUE = 34;
-            const decimal NUMBER_VALUE = 45.65m;
-
-            
-            var values = new object[] { INT32_VALUE, NUMBER_VALUE };
-            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
-            
-            valueConverterMock
-                .Setup(c => c.ToInt32(values[0]))
-                .Returns(INT32_VALUE)
-                .Verifiable();
-            valueConverterMock
-                .Setup(c => c.ToDecimal(values[1]))
-                .Returns(NUMBER_VALUE)
-                .Verifiable();
-
-            // Act
-            var item = itemReader(valueConverterMock.Object, values);
-
-
-            // Assert
-            Assert.AreEqual(INT32_VALUE, item.Id);
-            Assert.AreEqual(NUMBER_VALUE, item.Price);
-
-            valueConverterMock
-                .Verify(c => c.ToInt32(values[0]), Times.Once());
-            valueConverterMock
-                .Verify(c => c.ToDecimal(values[1]), Times.Once());
-            
-        }
-
-        // TODO Копипаста
-        private static OneSFieldMapping CreateFieldMapping<T>(Expression<Func<AnyData, T>> accessor, string fieldName)
-        {
-            var memberInfo = ((MemberExpression)accessor.Body).Member;
-
-            return new OneSFieldMapping(memberInfo, fieldName);
+            ItemReaderTester.For(factory.ItemReader, 2)
+                .Field(0, d => d.Id, c => c.ToInt32(null), 34)
+                .Field(1, d => d.Price, c => c.ToDecimal(null), 45.65m)
+                .Test();
         }
     }
 }

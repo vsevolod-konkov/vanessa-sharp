@@ -30,7 +30,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
 
         public Type ElementType 
         { 
-            get { return typeof (T); }
+            get { return typeof(T); }
         }
 
         public Expression Expression

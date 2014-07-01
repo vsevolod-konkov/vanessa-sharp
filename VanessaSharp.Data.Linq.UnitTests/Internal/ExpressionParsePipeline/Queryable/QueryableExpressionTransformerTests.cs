@@ -12,7 +12,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
     /// Тестирование статических методов парсера выражений <see cref="QueryableExpressionTransformer"/>.
     /// </summary>
     [TestFixture]
-    public sealed class QueryableExpressionTransformerTests : SimpleQueryBuildingTestsBase
+    public sealed class QueryableExpressionTransformerTests : QueryBuildingTestsBase
     {
         /// <summary>Тестируемый экземпляр.</summary>
         private QueryableExpressionTransformer _testedInstance;
@@ -32,13 +32,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformGetRecordsQueryable()
         {
             // Arrange
-            var expression = TestHelperQueryProvider.BuildTestQueryExpression(SOURCE_NAME);
+            var expression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Expression;
 
             // Act
             var result = _testedInstance.Transform(expression);
 
             // Assert
-            AssertDataRecordQuery(result, SOURCE_NAME);
+            AssertDataRecordsQuery(result, SOURCE_NAME);
         }
 
         /// <summary>
@@ -50,19 +52,19 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformSelectingQueryable()
         {
             // Arrange
-            var selectExpression = Trait.Of<OneSDataRecord>()
+            var selector = Trait
+                .Of<OneSDataRecord>()
                 .SelectExpression(r => new { StringField = r.GetString("[string_field]"), IntField = r.GetInt32("[int_field]") });
-            var trait = selectExpression.GetTraitOfOutputType();
             
-            var testedExpression = BuildQueryableExpression(q => q.Select(selectExpression));
+            var testedExpression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q.Select(selector));
             
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var typedQuery = AssertDataRecordQuery(trait, result, SOURCE_NAME);
-
-            Assert.AreEqual(selectExpression, typedQuery.Selector);
+            AssertDataRecordsQuery(result, SOURCE_NAME, selector);
         }
 
         /// <summary>
@@ -74,14 +76,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformFilteringQueryable()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("filterField") == "filterValue";
-            var testedExpression = BuildQueryableExpression(q => q.Where(filterExpression));
+            Expression<Func<OneSDataRecord, bool>> filter = r => r.GetString("filterField") == "filterValue";
+            var testedExpression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q.Where(filter));
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertDataRecordQuery(result, SOURCE_NAME, expectedFilter: filterExpression);
+            AssertDataRecordsQuery(result, SOURCE_NAME, filter);
         }
 
         /// <summary>
@@ -94,13 +98,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             params SortExpression[] expectedSorters)
         {
             // Arrange
-            var testedExpression = BuildQueryableExpression(queryAction);
+            var testedExpression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(queryAction);
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertDataRecordQuery(result, SOURCE_NAME, expectedSorters: expectedSorters);
+            AssertDataRecordsQuery(result, SOURCE_NAME, expectedSorters: expectedSorters);
         }
 
 
@@ -113,12 +119,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformQueryableWithOrderBy()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field");
+            Expression<Func<OneSDataRecord, int>> sorter = r => r.GetInt32("sort_field");
             
             // Arrange-Act-Assert
             TestTransformSortingQueryable(
-                q => q.OrderBy(orderbyExpression),
-                new SortExpression(orderbyExpression, SortKind.Ascending)
+                q => q.OrderBy(sorter),
+                new SortExpression(sorter, SortKind.Ascending)
                 );
         }
 
@@ -131,12 +137,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformQueryableWithOrderByDescending()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field");
+            Expression<Func<OneSDataRecord, int>> sorter = r => r.GetInt32("sort_field");
 
             // Arrange-Act-Assert
             TestTransformSortingQueryable(
-                q => q.OrderByDescending(orderbyExpression),
-                new SortExpression(orderbyExpression, SortKind.Descending)
+                q => q.OrderByDescending(sorter),
+                new SortExpression(sorter, SortKind.Descending)
                 );
         }
 
@@ -151,14 +157,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformQueryableWithOrderByAndThenByDescending()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field_1");
-            Expression<Func<OneSDataRecord, string>> thenbyExpression = r => r.GetString("sort_field_2");
+            Expression<Func<OneSDataRecord, int>> sorter1 = r => r.GetInt32("sort_field_1");
+            Expression<Func<OneSDataRecord, string>> sorter2 = r => r.GetString("sort_field_2");
 
             // Arrange-Act-Assert
             TestTransformSortingQueryable(
-                q => q.OrderBy(orderbyExpression).ThenByDescending(thenbyExpression),
-                new SortExpression(orderbyExpression, SortKind.Ascending),
-                new SortExpression(thenbyExpression, SortKind.Descending)
+                q => q.OrderBy(sorter1).ThenByDescending(sorter2),
+                new SortExpression(sorter1, SortKind.Ascending),
+                new SortExpression(sorter2, SortKind.Descending)
                 );
         }
 
@@ -173,14 +179,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformQueryableWithOrderByDescendingAndThenBy()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, int>> orderbyExpression = r => r.GetInt32("sort_field_1");
-            Expression<Func<OneSDataRecord, string>> thenbyExpression = r => r.GetString("sort_field_2");
+            Expression<Func<OneSDataRecord, int>> sorter1 = r => r.GetInt32("sort_field_1");
+            Expression<Func<OneSDataRecord, string>> sorter2 = r => r.GetString("sort_field_2");
 
             // Arrange-Act-Assert
             TestTransformSortingQueryable(
-                q => q.OrderByDescending(orderbyExpression).ThenBy(thenbyExpression),
-                new SortExpression(orderbyExpression, SortKind.Descending),
-                new SortExpression(thenbyExpression, SortKind.Ascending)
+                q => q.OrderByDescending(sorter1).ThenBy(sorter2),
+                new SortExpression(sorter1, SortKind.Descending),
+                new SortExpression(sorter2, SortKind.Ascending)
                 );
         }
 
@@ -193,119 +199,104 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         {
 
             // Arrange
-            var selectExpression = Trait.Of<OneSDataRecord>()
+            var selector = Trait.Of<OneSDataRecord>()
                 .SelectExpression(r => new { StringField = r.GetString("[string_field]"), IntField = r.GetInt32("[int_field]") });
-            var trait = selectExpression.GetTraitOfOutputType();
 
-            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filter_field]") == "filter_value";
-            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("[sort_key1]");
-            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("[sort_key2]");
-            Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("[sort_key3]");
+            Expression<Func<OneSDataRecord, bool>> filter = r => r.GetString("[filter_field]") == "filter_value";
+            Expression<Func<OneSDataRecord, int>> sortKey1 = r => r.GetInt32("[sort_key1]");
+            Expression<Func<OneSDataRecord, string>> sortKey2 = r => r.GetString("[sort_key2]");
+            Expression<Func<OneSDataRecord, DateTime>> sortKey3 = r => r.GetDateTime("[sort_key3]");
 
-            var testedExpression = BuildQueryableExpression(q => q
-                    .Where(filterExpression)
-                    .OrderBy(sortKey1Expression)
-                    .ThenByDescending(sortKey2Expression)
-                    .ThenBy(sortKey3Expression)
-                    .Select(selectExpression));
+            var testedExpression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q
+                    .Where(filter)
+                    .OrderBy(sortKey1)
+                    .ThenByDescending(sortKey2)
+                    .ThenBy(sortKey3)
+                    .Select(selector));
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var typedQuery = AssertDataRecordQuery(
-                trait,
+            AssertDataRecordsQuery(
                 result,
                 SOURCE_NAME,
-                filterExpression, 
-                new SortExpression(sortKey1Expression, SortKind.Ascending), 
-                new SortExpression(sortKey2Expression, SortKind.Descending),
-                new SortExpression(sortKey3Expression, SortKind.Ascending));
-
-            Assert.AreEqual(selectExpression, typedQuery.Selector);
+                selector,
+                filter, 
+                new SortExpression(sortKey1, SortKind.Ascending), 
+                new SortExpression(sortKey2, SortKind.Descending),
+                new SortExpression(sortKey3, SortKind.Ascending));
         }
 
         /// <summary>
         /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае запроса типизированных кортежей.
+        /// в случае запроса типизированных записей.
         /// </summary>
         [Test]
-        public void TestTransformQueryableTuple()
+        public void TestTransformQueryableTypedRecords()
         {
             // Arrange
-            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
-            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Expression;
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var tupleQuery = AssertAndCast<IQuery<AnyDataType, AnyDataType>>(result);
-            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(tupleQuery.Source);
-            Assert.IsNull(tupleQuery.Selector);
-            Assert.IsNull(tupleQuery.Filter);
-            Assert.AreEqual(0, tupleQuery.Sorters.Count);
+           AssertTypedRecordsQuery<SomeData>(result);
         }
 
         /// <summary>
         /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае запроса типизированных кортежей c фильтрацией.
+        /// в случае запроса типизированных записей c фильтрацией.
         /// </summary>
         [Test]
-        public void TestTransformQueryableTupleWithFilter()
+        public void TestTransformQueryableTypedRecordsWithFilter()
         {
             // Arrange
-            Expression<Func<AnyDataType, bool>> filterExpression = d => d.Id == 5;
+            Expression<Func<SomeData, bool>> expectedFilter = d => d.Id == 5;
 
-            var query = TestHelperQueryProvider.QueryOf<AnyDataType>();
-            query = query.Where(filterExpression);
-            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Query(q => q.Where(expectedFilter));
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var typedQuery = AssertAndCast<IQuery<AnyDataType, AnyDataType>>(result);
-            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(typedQuery.Source);
-            Assert.IsNull(typedQuery.Selector);
-            Assert.AreSame(filterExpression, typedQuery.Filter);
-            Assert.AreEqual(0, typedQuery.Sorters.Count);
+            AssertTypedRecordsQuery(result, expectedFilter);
         }
 
         /// <summary>
         /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
-        /// в случае запроса типизированных кортежей с сортировкой.
+        /// в случае запроса типизированных записей с сортировкой.
         /// </summary>
         [Test]
-        public void TestTransformQueryableTupleWithSorting()
+        public void TestTransformQueryableTypedRecordsWithSorting()
         {
             // Arrange
-            Expression<Func<AnyDataType, int>> sortExpression1 = d => d.Id;
-            Expression<Func<AnyDataType, string>> sortExpression2 = d => d.Name;
+            Expression<Func<SomeData, int>> sortKeySelector1 = d => d.Id;
+            Expression<Func<SomeData, string>> sortKeySelector2 = d => d.Name;
 
-            var query = TestHelperQueryProvider
-                .QueryOf<AnyDataType>()
-                .OrderByDescending(sortExpression1)
-                .ThenBy(sortExpression2);
-
-            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Query(q => q
+                    .OrderByDescending(sortKeySelector1)
+                    .ThenBy(sortKeySelector2)
+                    );
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var typedQuery = AssertAndCast<IQuery<AnyDataType, AnyDataType>>(result);
-            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(typedQuery.Source);
-            Assert.IsNull(typedQuery.Selector);
-            Assert.IsNull(typedQuery.Filter);
-
-            Assert.AreEqual(2, typedQuery.Sorters.Count);
-
-            Assert.AreEqual(sortExpression1, typedQuery.Sorters[0].KeyExpression);
-            Assert.AreEqual(SortKind.Descending, typedQuery.Sorters[0].Kind);
-
-            Assert.AreEqual(sortExpression2, typedQuery.Sorters[1].KeyExpression);
-            Assert.AreEqual(SortKind.Ascending, typedQuery.Sorters[1].Kind);
+            AssertTypedRecordsQuery<SomeData>(
+                result,
+                null,
+                new SortExpression(sortKeySelector1, SortKind.Descending),
+                new SortExpression(sortKeySelector2, SortKind.Ascending));
         }
 
         /// <summary>
@@ -316,32 +307,23 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestTransformQueryableTupleWithSelect()
         {
             // Arrange
-            var selectExpression = Trait.Of<AnyDataType>().SelectExpression(d => new {DataId = d.Id});
-            var trait = selectExpression.GetTraitOfOutputType();
+            var selector = Trait.Of<SomeData>().SelectExpression(d => new {DataId = d.Id});
 
-            var query = TestHelperQueryProvider
-                .QueryOf<AnyDataType>()
-                .Select(selectExpression);
-            
-            var testedExpression = TestHelperQueryProvider.BuildTestQueryExpression(query);
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Query(q => q.Select(selector));
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            var tupleQuery = AssertAndCastTupleQuery(trait, result);
-            Assert.IsInstanceOf<SourceDescriptionByType<AnyDataType>>(tupleQuery.Source);
-            Assert.AreSame(selectExpression, tupleQuery.Selector);
-            Assert.IsNull(tupleQuery.Filter);
-            Assert.AreEqual(0, tupleQuery.Sorters.Count);
+            AssertTypedRecordsQuery(result, selector);
         }
 
-        private static IQuery<AnyDataType, TOutput> AssertAndCastTupleQuery<TOutput>(Trait<TOutput> outputTrait, IQuery query)
-        {
-            return AssertAndCast<IQuery<AnyDataType, TOutput>>(query);
-        }
-
-        public sealed class AnyDataType
+        /// <summary>
+        /// Тестовый тип записей.
+        /// </summary>
+        public sealed class SomeData
         {
             public int Id;
 

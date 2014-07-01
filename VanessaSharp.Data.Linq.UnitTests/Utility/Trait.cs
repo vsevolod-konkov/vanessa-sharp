@@ -15,11 +15,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             return new Trait<T>();
         }
 
-        public static Trait<T2> FromSelect<T1, T2>(this Trait<T1> trait, Expression<Func<T1, T2>> selectExpression)
-        {
-            return new Trait<T2>();
-        }
-
         public static Expression<Func<T1, T2>> SelectExpression<T1, T2>(this Trait<T1> trait,
                                                                         Expression<Func<T1, T2>> selectExpression)
         {
@@ -34,11 +29,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
         public static Trait<T2> GetTraitOfOutputType<T1, T2>(this Expression<Func<T1, T2>> selectExpression)
         {
             return new Trait<T2>();
-        }
-
-        public static Func<T1, T2> SelectFunc<T1, T2>(Trait<T1> inputTrait, Trait<T2> outputTrait, Func<T1, T2> func)
-        {
-            return func;
         }
     }
 

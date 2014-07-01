@@ -151,15 +151,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             HandlerSetupHandleFilter(filterExpression);
             HandlerSetupHandleGettingRecords(SOURCE_NAME);
 
-            var expression = TestHelperQueryProvider.BuildTestQueryExpression(
-                SOURCE_NAME, 
-                q => q
+            var expression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q
                     .Where(filterExpression)
                     .OrderBy(sortKey1Expression)
                     .ThenBy(sortKey2Expression)
                     .ThenByDescending(sortKey3Expression)
                     .Select(selectExpression));
-
             // Act
             _testedInstance.Visit(expression);
 
@@ -199,12 +198,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             HandlerSetupHandleThenBy(sortKey2Expression);
             HandlerSetupHandleGettingRecords(SOURCE_NAME);
 
-            var expression = TestHelperQueryProvider.BuildTestQueryExpression(
-                SOURCE_NAME,
-                q => q
+            var expression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q
                     .OrderByDescending(sortKey1Expression)
                     .ThenBy(sortKey2Expression));
-
             // Act
             _testedInstance.Visit(expression);
 
@@ -240,9 +238,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             HandlerSetupHandleThenBy(sortKey3Expression);
             HandlerSetupHandleGettingRecords(SOURCE_NAME);
 
-            var expression = TestHelperQueryProvider.BuildTestQueryExpression(
-                SOURCE_NAME,
-                q => q
+            var expression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .Query(q => q
                     .OrderBy(sortKey1Expression)
                     .OrderBy(sortKey2Expression)
                     .ThenBy(sortKey3Expression));

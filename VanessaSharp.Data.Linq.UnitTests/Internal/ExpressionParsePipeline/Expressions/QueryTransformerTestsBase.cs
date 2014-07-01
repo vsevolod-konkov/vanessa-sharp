@@ -1,92 +1,55 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using Moq;
-using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>
     /// Базовый класс для тестирования <see cref="QueryTransformer"/>.
     /// </summary>
-    public abstract class QueryTransformerTestsBase : TestsBase
+    public abstract class QueryTransformerTestsBase
     {
-        internal static IQuery<OneSDataRecord, OneSDataRecord> CreateQuery(string source,
-                                                                 Expression<Func<OneSDataRecord, bool>> whereExpression
-                                                                     = null,
-                                                                 params SortExpression[] orderbyExpressions)
+        /// <summary>Создание объекта запроса.</summary>
+        /// <typeparam name="TInput">
+        /// Тип элементов входной последовательности.
+        /// </typeparam>
+        /// <typeparam name="TOutput">
+        /// Тип элементов выходной последовательности.
+        /// </typeparam>
+        /// <param name="source">Описание источника.</param>
+        /// <param name="selector">Выражение выборки.</param>
+        /// <param name="filter">Выражение фильтрации.</param>
+        /// <param name="sorters">Выражения сортировки.</param>
+        internal static IQuery<TInput, TOutput> CreateQuery<TInput, TOutput>(
+            ISourceDescription source,
+            Expression<Func<TInput, TOutput>> selector = null,
+            Expression<Func<TInput, bool>> filter = null,
+            params SortExpression[] sorters)
         {
-            return CreateQuery<OneSDataRecord>(source, null, whereExpression, orderbyExpressions);
-        }
-
-        internal static IQuery<OneSDataRecord, T> CreateQuery<T>(string source,
-                                                              Expression<Func<OneSDataRecord, T>> selectExpression,
-                                                              Expression<Func<OneSDataRecord, bool>> whereExpression = null,
-                                                              params SortExpression[] orderbyExpressions)
-        {
-            var sourceDescriptionMock = new Mock<ISourceDescription>(MockBehavior.Strict);
-            sourceDescriptionMock
-                .Setup(sd => sd.GetSourceName(It.IsAny<ISourceResolver>()))
+            var queryMock = new Mock<IQuery<TInput, TOutput>>(MockBehavior.Strict);
+            queryMock
+                .SetupGet(q => q.Source)
                 .Returns(source);
-
-            var queryMock = new Mock<IQuery<OneSDataRecord, T>>(MockBehavior.Strict);
-            queryMock
-                .SetupGet(q => q.Source)
-                .Returns(sourceDescriptionMock.Object);
             queryMock
                 .SetupGet(q => q.Selector)
-                .Returns(selectExpression);
+                .Returns(selector);
             queryMock
                 .SetupGet(q => q.Filter)
-                .Returns(whereExpression);
+                .Returns(filter);
             queryMock
                 .SetupGet(q => q.Sorters)
-                .Returns(new ReadOnlyCollection<SortExpression>(orderbyExpressions));
+                .Returns(sorters.ToReadOnly());
 
             return queryMock.Object;
         }
 
-        internal static NoSideEffectItemReaderFactory<T> AssertAndCastNoSideEffectItemReaderFactory<T>(
-            IItemReaderFactory<T> factory)
-        {
-            return AssertAndCast<NoSideEffectItemReaderFactory<T>>(factory);
-        }
-
-        internal static IQuery<AnyData, AnyData> CreateTupleQuery(
-            Expression<Func<AnyData, bool>> filterExpression = null,
-            ReadOnlyCollection<SortExpression> sorters = null)
-        {
-            return CreateTupleQuery<AnyData>(null, filterExpression, sorters);
-        }
-
-        internal static IQuery<AnyData, T> CreateTupleQuery<T>(Expression<Func<AnyData, T>> selectExpression,
-                                                                  Expression<Func<AnyData, bool>> filterExpression = null,
-                                                                  ReadOnlyCollection<SortExpression> sorters = null)
-        {
-            if (sorters == null)
-                sorters = new ReadOnlyCollection<SortExpression>(new SortExpression[0]);
-
-            var queryMock = new Mock<IQuery<AnyData, T>>(MockBehavior.Strict);
-            queryMock
-                .SetupGet(q => q.Source)
-                .Returns(SourceDescriptionByType<AnyData>.Instance);
-            queryMock
-                .SetupGet(q => q.Selector)
-                .Returns(selectExpression);
-            queryMock
-                .SetupGet(q => q.Filter)
-                .Returns(filterExpression);
-            queryMock
-                .SetupGet(q => q.Sorters)
-                .Returns(sorters);
-
-            return queryMock.Object;
-        }
-
-        public sealed class AnyData
+        /// <summary>
+        /// Тестовая типизированная запись.
+        /// </summary>
+        public sealed class SomeData
         {
             public int Id;
 

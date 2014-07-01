@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests
 {
@@ -11,7 +12,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
     /// Тестирование <see cref="OneSQueryProvider"/>.
     /// </summary>
     [TestFixture]
-    public sealed class OneSQueryProviderTests : TestsBase
+    public sealed class OneSQueryProviderTests
     {
         /// <summary>Соединение.</summary>
         private OneSConnection _connection;
@@ -50,27 +51,27 @@ namespace VanessaSharp.Data.Linq.UnitTests
         [Test]
         public void TestCreateGetRecordsQuery()
         {
-            const string SOURCE_NAME = "AnySource";
+            const string SOURCE_NAME = "Test";
 
             // Act
             var result = _testedInstance.CreateGetRecordsQuery(SOURCE_NAME);
 
             // Assert
-            var query = AssertAndCast<OneSQueryable<OneSDataRecord>>(result);
+            var query = AssertEx.IsInstanceAndCastOf<OneSQueryable<OneSDataRecord>>(result);
 
             Assert.AreSame(_testedInstance, query.Provider);
 
-            var methodCallExpression = AssertAndCast<MethodCallExpression>(query.Expression);
+            var methodCallExpression = AssertEx.IsInstanceAndCastOf<MethodCallExpression>(query.Expression);
             Assert.AreEqual(OneSQueryExpressionHelper.GetRecordsMethodInfo, methodCallExpression.Method);
 
             Assert.AreEqual(1, methodCallExpression.Arguments.Count);
-            var argument = AssertAndCast<ConstantExpression>(methodCallExpression.Arguments[0]);
+            var argument = AssertEx.IsInstanceAndCastOf<ConstantExpression>(methodCallExpression.Arguments[0]);
 
             Assert.AreEqual(SOURCE_NAME, argument.Value);
         }
 
         /// <summary>Вспомогательный тип для тестов.</summary>
-        public struct AnyData
+        public struct SomeData
         {}
 
         /// <summary>
@@ -81,22 +82,21 @@ namespace VanessaSharp.Data.Linq.UnitTests
         {
             // Arrange
             _expressionParserMock
-                .Setup(p => p.CheckDataType(typeof(AnyData)))
-                .Verifiable();
+                .Setup(p => p.CheckDataType(typeof(SomeData)));
 
             // Act
-            var result = _testedInstance.CreateQueryOf<AnyData>();
+            var result = _testedInstance.CreateQueryOf<SomeData>();
 
             // Assert
-            var query = AssertAndCast<OneSQueryable<AnyData>>(result);
+            var query = AssertEx.IsInstanceAndCastOf<OneSQueryable<SomeData>>(result);
 
             Assert.AreSame(_testedInstance, query.Provider);
 
-            var methodCallExpression = AssertAndCast<MethodCallExpression>(query.Expression);
-            Assert.AreEqual(OneSQueryExpressionHelper.GetGetTypedRecordsMethodInfo<AnyData>(), methodCallExpression.Method);
+            var methodCallExpression = AssertEx.IsInstanceAndCastOf<MethodCallExpression>(query.Expression);
+            Assert.AreEqual(OneSQueryExpressionHelper.GetGetTypedRecordsMethodInfo<SomeData>(), methodCallExpression.Method);
 
             _expressionParserMock
-                .Verify(p => p.CheckDataType(typeof(AnyData)), Times.Once());
+                .Verify(p => p.CheckDataType(typeof(SomeData)), Times.Once());
         }
 
         /// <summary>
@@ -121,20 +121,18 @@ namespace VanessaSharp.Data.Linq.UnitTests
             // Arrange
             const string EXPECTED_RESULT = "[Result]";
 
-            var expectedCommand = new SqlCommand("[SQL]", new ReadOnlyCollection<SqlParameter>(new SqlParameter[0]));
+            var expectedCommand = new SqlCommand("[SQL]", Empty.ReadOnly<SqlParameter>());
 
             var productMock = new Mock<ExpressionParseProduct>(MockBehavior.Strict, expectedCommand);
             productMock
-                .Setup(p => p.Execute(It.IsAny<ISqlCommandExecuter>()))
-                .Returns(EXPECTED_RESULT)
-                .Verifiable();
+                .Setup(p => p.Execute(_sqlCommandExecuterMock.Object))
+                .Returns(EXPECTED_RESULT);
 
             Expression<Func<string>> expression = () => "Some string";
 
             _expressionParserMock
                 .Setup(parser => parser.Parse(expression))
-                .Returns(productMock.Object)
-                .Verifiable();
+                .Returns(productMock.Object);
 
             // Act
             var result = _testedInstance.Execute<string>(expression);
