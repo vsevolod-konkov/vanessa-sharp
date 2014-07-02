@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
-using System.Reflection;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
@@ -10,22 +8,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     /// <summary>Базовый класс преобразования выражения с доступом к полям источника.</summary>
     internal abstract class FieldAccessExpressionTransformerBase : ExpressionTransformerBase
     {
-        private static readonly ISet<MethodInfo>
-            _getValueMethods = new HashSet<MethodInfo>
-            {
-                OneSQueryExpressionHelper.DataRecordGetCharMethod,
-                OneSQueryExpressionHelper.DataRecordGetStringMethod,
-                OneSQueryExpressionHelper.DataRecordGetByteMethod,
-                OneSQueryExpressionHelper.DataRecordGetInt16Method,
-                OneSQueryExpressionHelper.DataRecordGetInt32Method,
-                OneSQueryExpressionHelper.DataRecordGetInt64Method,
-                OneSQueryExpressionHelper.DataRecordGetFloatMethod,
-                OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
-                OneSQueryExpressionHelper.DataRecordGetDecimalMethod,
-                OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
-                OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
-            };
-
         /// <summary>Контекст разбора запроса.</summary>
         protected QueryParseContext Context
         {
@@ -33,31 +15,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
         private readonly QueryParseContext _context;
 
-        /// <summary>Выражение записи данных.</summary>
-        protected ParameterExpression RecordExpression
-        {
-            get { return _recordExpression; }
-        }
-        private readonly ParameterExpression _recordExpression;
-
-        /// <summary>
-        /// Поставщик соответствий типам источников данных 1С.
-        /// </summary>
-        private readonly IOneSMappingProvider _mappingProvider;
+        /// <summary>Стратегия посещения доступа к полю.</summary>
+        private readonly FieldAccessVisitorStrategy _fieldAccessVisitorStrategy;
 
         /// <summary>Конструктор.</summary>
-        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="recordExpression">Выражение записи данных.</param>
-        protected FieldAccessExpressionTransformerBase(IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
+        /// <param name="fieldAccessVisitorStrategy">Стратегия посещения доступа к полю.</param>
+        protected FieldAccessExpressionTransformerBase(QueryParseContext context, FieldAccessVisitorStrategy fieldAccessVisitorStrategy)
         {
-            Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
-            Contract.Requires<ArgumentNullException>(recordExpression != null);
+            Contract.Requires<ArgumentNullException>(fieldAccessVisitorStrategy != null);
 
-            _mappingProvider = mappingProvider;
             _context = context;
-            _recordExpression = recordExpression;
+            _fieldAccessVisitorStrategy = fieldAccessVisitorStrategy;
         }
 
         /// <summary>
@@ -69,19 +39,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected sealed override Expression VisitMethodCall(MethodCallExpression node)
         {
-            // TODO Рефакторинг
-            if (RecordExpression.Type == typeof(OneSDataRecord) && node.Object == RecordExpression)
-            {
-                if (_getValueMethods.Contains(node.Method))
-                {
-                    var fieldName = GetConstant<string>(node.Arguments[0]);
-                    VisitFieldAccess(new SqlFieldExpression(fieldName));
-
-                    return node;
-                }
-            }
-
-            return base.VisitMethodCall(node);
+            return _fieldAccessVisitorStrategy
+                .VisitMethodCall(node, n => base.VisitMethodCall(n));
         }
 
         /// <summary>
@@ -93,23 +52,63 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMember(MemberExpression node)
         {
-            // TODO Рефакторинг
-            if (RecordExpression.Type != typeof(OneSDataRecord) && node.Expression == RecordExpression)
-            {
-                var typeMapping = _mappingProvider.GetTypeMapping(RecordExpression.Type);
-                var fieldName = typeMapping.GetFieldNameByMemberInfo(node.Member);
-                if (fieldName != null)
-                {
-                    VisitFieldAccess(new SqlFieldExpression(fieldName));
-                    return node;
-                }
-            }
-            
-            return base.VisitMember(node);
+            return _fieldAccessVisitorStrategy
+                .VisitMember(node, n => base.VisitMember(n));
         }
 
-        /// <summary>Посещение доступа к полю.</summary>
-        /// <param name="fieldExpression">Выражение доступа к полю источника.</param>
-        protected abstract void VisitFieldAccess(SqlFieldExpression fieldExpression);
+        /// <summary>
+        /// Создание стратегии посещения доступа к полю.
+        /// </summary>
+        /// <param name="fieldAccessVisitor">Стратегия посещения доступа к полям.</param>
+        /// <param name="recordExpression">Выражение записи.</param>
+        /// <param name="mappingProvider">Поставщик соответствий типам CLR источников данных 1С.</param>
+        protected static FieldAccessVisitorStrategy CreateFieldAccessVisitorStrategy(
+            IFieldAccessVisitorForOnlySql fieldAccessVisitor, ParameterExpression recordExpression, IOneSMappingProvider mappingProvider)
+        {
+            Contract.Requires<ArgumentNullException>(fieldAccessVisitor != null);
+            Contract.Requires<ArgumentNullException>(recordExpression != null);
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
+
+            return FieldAccessVisitorStrategy.Create(
+                new FieldAccessVisitorAdapter(fieldAccessVisitor),
+                recordExpression,
+                mappingProvider);
+        }
+
+        /// <summary>Интерфейс посещения узлов доступа к полям только для построения SQL.</summary>
+        protected interface IFieldAccessVisitorForOnlySql
+        {
+            /// <summary>Посещение узла доступа к полю.</summary>
+            /// <param name="fieldExpression">SQL-Выражение поля.</param>
+            void VisitFieldAccess(SqlFieldExpression fieldExpression);
+        }
+
+        /// <summary>
+        /// Адаптер интерфейсов.
+        /// </summary>
+        private sealed class FieldAccessVisitorAdapter : IFieldAccessVisitor
+        {
+            /// <summary>
+            /// Объект визитора с адаптируемым интерфейсом.
+            /// </summary>
+            private readonly IFieldAccessVisitorForOnlySql _adapteeVisitor;
+
+            public FieldAccessVisitorAdapter(IFieldAccessVisitorForOnlySql adapteeVisitor)
+            {
+                Contract.Requires<ArgumentNullException>(adapteeVisitor != null);
+                
+                _adapteeVisitor = adapteeVisitor;
+            }
+
+            /// <summary>Посещение узла доступа к полю записи.</summary>
+            /// <param name="fieldExpression">SQL-Выражение поля.</param>
+            /// <param name="fieldType">Тип поля.</param>
+            public Expression VisitFieldAccess(SqlFieldExpression fieldExpression, Type fieldType)
+            {
+                _adapteeVisitor.VisitFieldAccess(fieldExpression);
+
+                return null;
+            }
+        }
     }
 }

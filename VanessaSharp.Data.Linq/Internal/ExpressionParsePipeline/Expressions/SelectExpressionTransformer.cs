@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
@@ -11,33 +9,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     /// </summary>
     internal sealed class SelectExpressionTransformer : ExpressionVisitorBase
     {
-        // TODO Рефакторинг
-        private static readonly ISet<MethodInfo>
-            _methods = new HashSet<MethodInfo>
-            {
-                OneSQueryExpressionHelper.DataRecordGetStringMethod,
-                OneSQueryExpressionHelper.DataRecordGetCharMethod,
-                OneSQueryExpressionHelper.DataRecordGetByteMethod,
-                OneSQueryExpressionHelper.DataRecordGetInt16Method,
-                OneSQueryExpressionHelper.DataRecordGetInt32Method,
-                OneSQueryExpressionHelper.DataRecordGetInt64Method,
-                OneSQueryExpressionHelper.DataRecordGetFloatMethod,
-                OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
-                OneSQueryExpressionHelper.DataRecordGetDecimalMethod,
-                OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
-                OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
-            };
-
         /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>
-        /// <param name="recordExpression">Параметр метода - выражение записи из которой производиться выборка.</param>
-        /// <param name="typeMapping">Соответствие трансформируемого типа источнику данных.</param>
-        private SelectExpressionTransformer(ParameterExpression recordExpression, OneSTypeMapping typeMapping)
+        /// <param name="fieldAccessVisitorStrategy">Стратегия посещения доступа к полю.</param>
+        /// <param name="columnExpressionBuilder">Построитель выражений для колонок выборки.</param>
+        private SelectExpressionTransformer(FieldAccessVisitorStrategy fieldAccessVisitorStrategy, ColumnExpressionBuilder columnExpressionBuilder)
         {
-            Contract.Requires<ArgumentNullException>(recordExpression != null);
-
-            _recordExpression = recordExpression;
-            _typeMapping = typeMapping;
-            _columnExpressionBuilder = new ColumnExpressionBuilder(_converterParameter, _valuesParameter);
+            _fieldAccessVisitorStrategy = fieldAccessVisitorStrategy;
+            _columnExpressionBuilder = columnExpressionBuilder;
         }
 
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
@@ -53,13 +31,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(expression != null);
             Contract.Ensures(Contract.Result<SelectionPartParseProduct<TOutput>>() != null);
 
-            var typeMapping = (typeof (TInput) == typeof(OneSDataRecord))
-                                  ? null
-                                  : mappingProvider.GetTypeMapping(typeof(TInput));
+            var columnBuilder = new ColumnExpressionBuilder();
+            var fieldAccessVisitorStrategy = FieldAccessVisitorStrategy.Create(columnBuilder, expression.Parameters[0], mappingProvider);
 
             return new SelectExpressionTransformer(
-                expression.Parameters[0], 
-                typeMapping
+                fieldAccessVisitorStrategy,
+                columnBuilder
                 )
                 .TransformLambdaBody<TOutput>(expression.Body);
         }
@@ -79,21 +56,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 CreateItemReader<T>(resultExpression));
         }
 
-        /// <summary>Выражение соответствующая записи данных из которой делается выборка.</summary>
-        private readonly ParameterExpression _recordExpression;
-
-        /// <summary>
-        /// Соответствие трансформируемого типа источнику данных.
-        /// </summary>
-        private readonly OneSTypeMapping _typeMapping;
-
-        /// <summary>Параметр для результирующего делегата создания элемента - конвертер значений.</summary>
-        private readonly ParameterExpression _converterParameter 
-            = Expression.Parameter(typeof(IValueConverter), "valueConverter");
-
-        /// <summary>Параметр для результирующего делегата создания элемента - массив вычитанных значений.</summary>
-        private readonly ParameterExpression _valuesParameter
-            = Expression.Parameter(typeof(object[]), "values");
+        /// <summary>Стратегия посещения доступа к полю.</summary>
+        private readonly FieldAccessVisitorStrategy _fieldAccessVisitorStrategy;
 
         /// <summary>Построитель выражений для колонок выборки.</summary>
         private readonly ColumnExpressionBuilder _columnExpressionBuilder;
@@ -106,7 +70,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private Func<IValueConverter, object[], T> CreateItemReader<T>(Expression body)
         {
             return Expression
-                .Lambda<Func<IValueConverter, object[], T>>(body, _converterParameter, _valuesParameter)
+                .Lambda<Func<IValueConverter, object[], T>>(body, _columnExpressionBuilder.ConverterParameter, _columnExpressionBuilder.ValuesParameter)
                 .Compile();
         }
 
@@ -115,7 +79,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// </summary>
         /// <remarks>
         /// Заменяет методы получения значений из записи <see cref="OneSDataRecord"/>
-        /// на получение значений из массива <see cref="_valuesParameter"/> вычитанных значений.
+        /// на получение значений из массива вычитанных значений.
         /// </remarks>
         /// <returns>
         /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
@@ -123,19 +87,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node.Object == _recordExpression)
-            {
-                if (_methods.Contains(node.Method))
-                {
-                    var fieldName = GetConstant<string>(node.Arguments[0]);
-
-                    return _columnExpressionBuilder.GetColumnAccessExpression(fieldName, node.Type);
-                }
-
-                throw CreateExpressionNotSupportedException(node);
-            }
-            
-            return base.VisitMethodCall(node);
+            return _fieldAccessVisitorStrategy
+                .VisitMethodCall(node, n => base.VisitMethodCall(n));
         }
 
         /// <summary>
@@ -147,14 +100,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMember(MemberExpression node)
         {
-            if (_typeMapping != null)
-            {
-                var fieldName = _typeMapping.GetFieldNameByMemberInfo(node.Member);
-                return _columnExpressionBuilder
-                    .GetColumnAccessExpression(fieldName, node.Type);
-            }
-
-            return base.VisitMember(node);
+            return _fieldAccessVisitorStrategy
+                .VisitMember(node, n => base.VisitMember(n));
         }
 
         /// <summary>

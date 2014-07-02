@@ -30,14 +30,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <typeparam name="T">Тип записей.</typeparam>
         public SelectionPartParseProduct<T> GetSelectPartParseProductForTypedRecord<T>()
         {
-            var converterParameter = Expression.Parameter(typeof(IValueConverter));
-            var valuesParameter = Expression.Parameter(typeof(object[]));
-            var columnBuilder = new ColumnExpressionBuilder(converterParameter, valuesParameter);
+            var columnBuilder = new ColumnExpressionBuilder();
 
             var readerLambda = Expression.Lambda<Func<IValueConverter, object[], T>>(
                 GetReaderBody(columnBuilder, typeof(T)), 
-                converterParameter, 
-                valuesParameter);
+                columnBuilder.ConverterParameter, 
+                columnBuilder.ValuesParameter);
 
             return new SelectionPartParseProduct<T>(
                 columnBuilder.Columns,

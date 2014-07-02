@@ -9,25 +9,34 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Построитель выражений для запроса колонок.</summary>
-    internal sealed class ColumnExpressionBuilder
+    internal sealed class ColumnExpressionBuilder : IFieldAccessVisitor
     {
-        /// <summary>Параметр для результирующего делегата создания элемента - конвертер значений.</summary>
-        private readonly ParameterExpression _converterParameter;
-
-        /// <summary>Параметр для результирующего делегата создания элемента - массив вычитанных значений.</summary>
-        private readonly ParameterExpression _valuesParameter;
-
         /// <summary>Список выражений колонок.</summary>
         private readonly List<SqlExpression> _columns = new List<SqlExpression>();
 
-        public ColumnExpressionBuilder(ParameterExpression converterParameter, ParameterExpression valuesParameter)
+        /// <summary>Параметр для результирующего делегата создания элемента - конвертер значений.</summary>
+        public ParameterExpression ConverterParameter
         {
-            Contract.Requires<ArgumentNullException>(converterParameter != null);
-            Contract.Requires<ArgumentNullException>(valuesParameter != null);
+            get
+            {
+                Contract.Ensures(Contract.Result<ParameterExpression>() != null);
 
-            _converterParameter = converterParameter;
-            _valuesParameter = valuesParameter;
+                return _converterParameter;
+            }
         }
+        private readonly ParameterExpression _converterParameter = Expression.Parameter(typeof(IValueConverter), "valueConverter");
+
+        /// <summary>Параметр для результирующего делегата создания элемента - массив вычитанных значений.</summary>
+        public ParameterExpression ValuesParameter
+        {
+            get
+            {
+                Contract.Ensures(Contract.Result<ParameterExpression>() != null);
+
+                return _valuesParameter;
+            }
+        }
+        private readonly ParameterExpression _valuesParameter = Expression.Parameter(typeof(object[]), "values");
 
         /// <summary>
         /// Получение выражения получения значения колонки, которое является полем записи.
@@ -49,7 +58,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// </summary>
         /// <param name="columnExpression">Выражение колонки.</param>
         /// <param name="columnType">Тип, который требуется для колонки.</param>
-        private Expression GetColumnAccessExpression(SqlExpression columnExpression, Type columnType)
+        public Expression GetColumnAccessExpression(SqlExpression columnExpression, Type columnType)
         {
             Contract.Requires<ArgumentNullException>(columnExpression != null);
             Contract.Requires<ArgumentNullException>(columnType != null);
@@ -68,8 +77,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             var index = GetColumnIndex(columnExpression);
 
-            var valueExpression = Expression.ArrayIndex(_valuesParameter, Expression.Constant(index));
-            return Expression.Call(_converterParameter, valueConverterMethod, valueExpression);
+            var valueExpression = Expression.ArrayIndex(ValuesParameter, Expression.Constant(index));
+            return Expression.Call(ConverterParameter, valueConverterMethod, valueExpression);
         }
 
         /// <summary>Получение индекса колонки по его выражению.</summary>
@@ -100,6 +109,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 
                 return new ReadOnlyCollection<SqlExpression>(_columns);
             }
+        }
+
+        /// <summary>Посещение узла доступа к полю записи.</summary>
+        /// <param name="fieldExpression">SQL-Выражение поля.</param>
+        /// <param name="fieldType">Тип поля.</param>
+        Expression IFieldAccessVisitor.VisitFieldAccess(SqlFieldExpression fieldExpression, Type fieldType)
+        {
+            return GetColumnAccessExpression(fieldExpression, fieldType);
         }
     }
 }

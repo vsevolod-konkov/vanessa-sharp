@@ -5,32 +5,30 @@ using System.Linq.Expressions;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
     /// <summary>
-    /// Базовый класс всех посетителей со вспомогательными 
-    /// методами.
+    /// Вспомогетельные методы для выражений.
     /// </summary>
-    internal abstract class ExpressionVisitorBase : ExpressionVisitor
+    internal static class ExpressionHelper
     {
-        // TODO Удалить
         /// <summary>Создание исключения, что выражение не поддерживается.</summary>
         /// <param name="expression">Неподдерживаемое выражение.</param>
-        protected static Exception CreateExpressionNotSupportedException(Expression expression)
+        public static Exception CreateExpressionNotSupportedException(this Expression expression)
         {
             Contract.Requires<ArgumentNullException>(expression != null);
 
-            return new NotSupportedException(string.Format("Выражение \"{0}\" не поддерживается.", expression));
+            return new NotSupportedException(string.Format(
+                "Выражение \"{0}\" не поддерживается.", expression));
         }
 
-        // TODO Удалить
         /// <summary>Получение константы.</summary>
         /// <typeparam name="T">Тип константы.</typeparam>
         /// <param name="expression">Выражение.</param>
-        protected static T GetConstant<T>(Expression expression)
+        public static T GetConstant<T>(this Expression expression)
         {
             Contract.Requires<ArgumentNullException>(expression != null);
 
             var constExpression = expression as ConstantExpression;
             if (constExpression == null)
-                throw CreateExpressionNotSupportedException(expression);
+                throw expression.CreateExpressionNotSupportedException();
 
             return (T)constExpression.Value;
         }

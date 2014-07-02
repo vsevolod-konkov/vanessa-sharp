@@ -10,15 +10,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal sealed class WhereExpressionTransformer : FieldAccessExpressionTransformerBase<SqlCondition>
     {
         /// <summary>Стековая машина для генерации условия.</summary>
-        private readonly StackEngine _stackEngine = new StackEngine(); 
+        private readonly StackEngine _stackEngine;
 
         /// <summary>Конструктор.</summary>
-        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="recordExpression">Выражение записи данных.</param>
-        private WhereExpressionTransformer(IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
-            : base(mappingProvider, context, recordExpression)
-        {}
+        /// <param name="fieldAccessVisitorStrategy">Стратегия посещения доступа к полю.</param>
+        /// <param name="stackEngine">Стековая машина для генерации условия.</param>
+        private WhereExpressionTransformer(QueryParseContext context,
+                                           FieldAccessVisitorStrategy fieldAccessVisitorStrategy,
+                                           StackEngine stackEngine)
+            : base(context, fieldAccessVisitorStrategy)
+        {
+            _stackEngine = stackEngine;
+        }
 
         /// <summary>Получение результата трансформации.</summary>
         protected override SqlCondition GetTransformResult()
@@ -36,7 +40,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public override FieldAccessExpressionTransformerBase<SqlCondition> Create(
                 IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
             {
-                return new WhereExpressionTransformer(mappingProvider, context, recordExpression);
+                var stackEngine = new StackEngine();
+                var fieldAccessVisitorStrategy = CreateFieldAccessVisitorStrategy(stackEngine, recordExpression, mappingProvider);
+                
+                return new WhereExpressionTransformer(context, fieldAccessVisitorStrategy, stackEngine);
             }
         }
 
@@ -56,13 +63,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Ensures(Contract.Result<SqlCondition>() != null);
 
             return Transform<Factory>(mappingProvider, context, filterExpression);
-        }
-
-        /// <summary>Посещение доступа к полю.</summary>
-        /// <param name="fieldExpression">Выражение доступа к полю источника.</param>
-        protected override void VisitFieldAccess(SqlFieldExpression fieldExpression)
-        {
-            _stackEngine.Push(fieldExpression);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>
         /// Стековая машина для разбора выражений.
         /// </summary>
-        private sealed class StackEngine
+        private sealed class StackEngine : IFieldAccessVisitorForOnlySql
         {
             /// <summary>Стек выражений.</summary>
             private readonly Stack<object> _stack = new Stack<object>(); 
@@ -180,6 +180,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public SqlCondition GetCondition()
             {
                 return Pop<SqlCondition>();
+            }
+
+            /// <summary>Посещение узла доступа к полю.</summary>
+            /// <param name="fieldExpression">SQL-Выражение поля.</param>
+            void IFieldAccessVisitorForOnlySql.VisitFieldAccess(SqlFieldExpression fieldExpression)
+            {
+                Push(fieldExpression);
             }
         }
 

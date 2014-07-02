@@ -10,11 +10,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         where TResult : class
     {
         /// <summary>Конструктор.</summary>
-        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="recordExpression">Выражение записи данных.</param>
-        protected FieldAccessExpressionTransformerBase(IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
-            : base(mappingProvider, context, recordExpression)
+        /// <param name="fieldAccessVisitorStrategy">Стратегия посещения доступа к полю.</param>
+        protected FieldAccessExpressionTransformerBase(QueryParseContext context, FieldAccessVisitorStrategy fieldAccessVisitorStrategy)
+            : base(context, fieldAccessVisitorStrategy)
         {}
 
         /// <summary>Получение результата трансформации.</summary>

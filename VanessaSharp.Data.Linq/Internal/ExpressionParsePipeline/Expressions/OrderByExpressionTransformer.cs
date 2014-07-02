@@ -9,21 +9,23 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal sealed class OrderByExpressionTransformer : FieldAccessExpressionTransformerBase<SqlFieldExpression>
     {
         /// <summary>Конструктор принимающий выражение записи данных.</summary>
-        /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="recordExpression">Выражение записи данных.</param>
+        /// <param name="fieldAccessVisitorStrategy">Стратегия посещения доступа к полю.</param>
+        /// <param name="fieldHolder">Хранитель выражения поля.</param>
         private OrderByExpressionTransformer(
-            IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
-            : base(mappingProvider, context, recordExpression)
-        {}
+            QueryParseContext context, FieldAccessVisitorStrategy fieldAccessVisitorStrategy, FieldHolder fieldHolder)
+            : base(context, fieldAccessVisitorStrategy)
+        {
+            _fieldHolder = fieldHolder;
+        }
 
         /// <summary>Выражение указывающее на поле сортировки.</summary>
-        private SqlFieldExpression _fieldExpression;
+        private readonly FieldHolder _fieldHolder;
 
         /// <summary>Получение результата трансформации.</summary>
         protected override SqlFieldExpression GetTransformResult()
         {
-            return _fieldExpression;
+            return _fieldHolder.FieldExpression;
         }
 
         /// <summary>Фабрика преобразователя.</summary>
@@ -32,7 +34,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public override FieldAccessExpressionTransformerBase<SqlFieldExpression> Create(
                 IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
             {
-                return new OrderByExpressionTransformer(mappingProvider, context, recordExpression);
+                var fieldHolder = new FieldHolder();
+                var fieldAccessVisitorStrategy = CreateFieldAccessVisitorStrategy(
+                    fieldHolder, recordExpression, mappingProvider);
+                
+                return new OrderByExpressionTransformer(context, fieldAccessVisitorStrategy, fieldHolder);
             }
         }
 
@@ -54,18 +60,25 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return Transform<Factory>(mappingProvider, context, sortKeyExpression);
         }
 
-        /// <summary>Посещение доступа к полю.</summary>
-        /// <param name="fieldExpression">Выражение доступа к полю источника.</param>
-        protected override void VisitFieldAccess(SqlFieldExpression fieldExpression)
+        /// <summary>Держатель выражения поля.</summary>
+        private sealed class FieldHolder : IFieldAccessVisitorForOnlySql
         {
-            if (_fieldExpression != null)
-            {
-                throw new InvalidOperationException(string.Format(
-                    "Неоднозначность результата поля для сортировки: \"{0}\" и \"{1}\".",
-                    _fieldExpression.FieldName, fieldExpression.FieldName));
-            }
+            /// <summary>Выражение поле.</summary>
+            public SqlFieldExpression FieldExpression { get; private set; }
 
-            _fieldExpression = fieldExpression;
+            /// <summary>Посещение узла доступа к полю.</summary>
+            /// <param name="fieldExpression">SQL-Выражение поля.</param>
+            void IFieldAccessVisitorForOnlySql.VisitFieldAccess(SqlFieldExpression fieldExpression)
+            {
+                if (FieldExpression != null)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Неоднозначность результата поля для сортировки: \"{0}\" и \"{1}\".",
+                        FieldExpression.FieldName, fieldExpression.FieldName));
+                }
+
+                FieldExpression = fieldExpression;
+            }
         }
     }
 }
