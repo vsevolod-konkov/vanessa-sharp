@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
-    // TODO Общий рефакторинг с SelectExpressionTransformer
     /// <summary>Построитель конструкций запроса для типизированных записей.</summary>
     internal sealed class TypedRecordParseProductBuilder
     {
         private readonly IOneSMappingProvider _mappingProvider;
 
+        /// <summary>Конструктор.</summary>
+        /// <param name="mappingProvider">
+        /// Поставщик соответствия типов CLR и источников данных 1С.
+        /// </param>
         public TypedRecordParseProductBuilder(IOneSMappingProvider mappingProvider)
         {
             _mappingProvider = mappingProvider;
@@ -30,84 +30,52 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <typeparam name="T">Тип записей.</typeparam>
         public SelectionPartParseProduct<T> GetSelectPartParseProductForTypedRecord<T>()
         {
-            // TODO Рефакторить
-            // TODO Копипаста с SelectionTransformer
-            
-            var fields = new List<string>();
-            var members = new List<MemberInfo>();
+            var converterParameter = Expression.Parameter(typeof(IValueConverter));
+            var valuesParameter = Expression.Parameter(typeof(object[]));
+            var columnBuilder = new ColumnExpressionBuilder(converterParameter, valuesParameter);
 
-            var typeMapping = _mappingProvider.GetTypeMapping(typeof(T));
-            foreach (var fieldMapping in typeMapping.FieldMappings)
-            {
-                fields.Add(fieldMapping.FieldName);
-                members.Add(fieldMapping.MemberInfo);
-            }
+            var readerLambda = Expression.Lambda<Func<IValueConverter, object[], T>>(
+                GetReaderBody(columnBuilder, typeof(T)), 
+                converterParameter, 
+                valuesParameter);
 
             return new SelectionPartParseProduct<T>(
-                GetColumnExpressions(fields), 
-                CreateReader<T>(members));
+                columnBuilder.Columns,
+                readerLambda.Compile());
         }
 
-        private static ReadOnlyCollection<SqlExpression> GetColumnExpressions(IEnumerable<string> fieldNames)
+        private Expression GetReaderBody(
+            ColumnExpressionBuilder columnBuilder,
+            Type type)
         {
-            return new ReadOnlyCollection<SqlExpression>(
-                fieldNames
-                    .Select(f => (SqlExpression)new SqlFieldExpression(f))
+            return GetReaderBody(
+                columnBuilder, 
+                type, 
+                _mappingProvider.GetTypeMapping(type).FieldMappings);
+        }
+
+        private static Expression GetReaderBody(
+            ColumnExpressionBuilder columnBuilder,
+            Type type,
+            IEnumerable<OneSFieldMapping> fieldMappings)
+        {
+            return Expression.MemberInit(
+                Expression.New(type), 
+                fieldMappings
+                    .Select(fm => GetMemberBinding(columnBuilder, fm))
                     .ToArray());
         }
 
-        private static Func<IValueConverter, object[], T> CreateReader<T>(IEnumerable<MemberInfo> members)
+        private static MemberBinding GetMemberBinding(
+            ColumnExpressionBuilder columnBuilder,
+            OneSFieldMapping fieldMapping)
         {
-            var converterParameter = Expression.Parameter(typeof(IValueConverter));
-            var valuesParameter = Expression.Parameter(typeof(object[]));
+            return Expression.Bind(
+                fieldMapping.MemberInfo,
+                columnBuilder.GetColumnAccessExpression(
+                    fieldMapping.FieldName,
+                    fieldMapping.MemberInfo.GetMemberType()));
 
-            return Expression.Lambda<Func<IValueConverter, object[], T>>(
-                CreateReaderExpression(converterParameter, valuesParameter, typeof(T), members.ToArray()),
-                converterParameter, valuesParameter)
-                .Compile();
-        }
-
-        private static Expression CreateReaderExpression(
-            ParameterExpression converterParameter,
-            ParameterExpression valuesParameter, 
-            Type type,
-            IList<MemberInfo> members)
-        {
-            var createObjectExpression = Expression.New(type);
-            var memberBindings = new List<MemberBinding>();
-
-            for (var index = 0; index < members.Count; index++)
-            {
-                var memberBinding = Expression.Bind(
-                    members[index],
-                    CreateGetValueExpression(converterParameter, valuesParameter, GetMemberType(members[index]), index));
-                memberBindings.Add(memberBinding);
-            }
-
-            return Expression.MemberInit(createObjectExpression, memberBindings);
-        }
-
-        private static Type GetMemberType(MemberInfo memberInfo)
-        {
-            var propertyInfo = memberInfo as PropertyInfo;
-            if (propertyInfo != null)
-                return propertyInfo.PropertyType;
-
-            return ((FieldInfo)memberInfo).FieldType;
-        }
-
-        private static Expression CreateGetValueExpression(
-            ParameterExpression converterParameter,
-            ParameterExpression valuesParameter,
-            Type memberType,
-            int index)
-        {
-            var valueExpression = Expression.ArrayIndex(valuesParameter, Expression.Constant(index));
-
-            return Expression.Call(
-                converterParameter, 
-                OneSQueryExpressionHelper.GetValueConvertMethod(memberType), 
-                valueExpression);
         }
     }
 }

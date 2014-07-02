@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
-using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
@@ -14,37 +12,21 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal sealed class SelectExpressionTransformer : ExpressionVisitorBase
     {
         // TODO Рефакторинг
-        private static readonly IDictionary<MethodInfo, MethodInfo>
-            _methods = new Dictionary<MethodInfo, MethodInfo>
+        private static readonly ISet<MethodInfo>
+            _methods = new HashSet<MethodInfo>
             {
-                { OneSQueryExpressionHelper.DataRecordGetStringMethod, OneSQueryExpressionHelper.ValueConverterToStringMethod },
-                { OneSQueryExpressionHelper.DataRecordGetCharMethod, OneSQueryExpressionHelper.ValueConverterToCharMethod },
-                { OneSQueryExpressionHelper.DataRecordGetByteMethod, OneSQueryExpressionHelper.ValueConverterToByteMethod },
-                { OneSQueryExpressionHelper.DataRecordGetInt16Method, OneSQueryExpressionHelper.ValueConverterToInt16Method },
-                { OneSQueryExpressionHelper.DataRecordGetInt32Method, OneSQueryExpressionHelper.ValueConverterToInt32Method },
-                { OneSQueryExpressionHelper.DataRecordGetInt64Method, OneSQueryExpressionHelper.ValueConverterToInt64Method },
-                { OneSQueryExpressionHelper.DataRecordGetFloatMethod, OneSQueryExpressionHelper.ValueConverterToFloatMethod },
-                { OneSQueryExpressionHelper.DataRecordGetDoubleMethod, OneSQueryExpressionHelper.ValueConverterToDoubleMethod },
-                { OneSQueryExpressionHelper.DataRecordGetDecimalMethod, OneSQueryExpressionHelper.ValueConverterToDecimalMethod },
-                { OneSQueryExpressionHelper.DataRecordGetDateTimeMethod, OneSQueryExpressionHelper.ValueConverterToDateTimeMethod },
-                { OneSQueryExpressionHelper.DataRecordGetBooleanMethod, OneSQueryExpressionHelper.ValueConverterToBooleanMethod }
+                OneSQueryExpressionHelper.DataRecordGetStringMethod,
+                OneSQueryExpressionHelper.DataRecordGetCharMethod,
+                OneSQueryExpressionHelper.DataRecordGetByteMethod,
+                OneSQueryExpressionHelper.DataRecordGetInt16Method,
+                OneSQueryExpressionHelper.DataRecordGetInt32Method,
+                OneSQueryExpressionHelper.DataRecordGetInt64Method,
+                OneSQueryExpressionHelper.DataRecordGetFloatMethod,
+                OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
+                OneSQueryExpressionHelper.DataRecordGetDecimalMethod,
+                OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
+                OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
             };
-
-        private static readonly IDictionary<Type, MethodInfo>
-            _convertMethodsByType = new Dictionary<Type, MethodInfo>
-                {
-                    { typeof(string), OneSQueryExpressionHelper.ValueConverterToStringMethod },
-                    { typeof(char), OneSQueryExpressionHelper.ValueConverterToCharMethod },
-                    { typeof(byte), OneSQueryExpressionHelper.ValueConverterToByteMethod },
-                    { typeof(short), OneSQueryExpressionHelper.ValueConverterToInt16Method },
-                    { typeof(int), OneSQueryExpressionHelper.ValueConverterToInt32Method },
-                    { typeof(long), OneSQueryExpressionHelper.ValueConverterToInt64Method },
-                    { typeof(float), OneSQueryExpressionHelper.ValueConverterToFloatMethod },
-                    { typeof(double), OneSQueryExpressionHelper.ValueConverterToDoubleMethod },
-                    { typeof(decimal), OneSQueryExpressionHelper.ValueConverterToDecimalMethod },
-                    { typeof(bool), OneSQueryExpressionHelper.ValueConverterToBooleanMethod },
-                    { typeof(DateTime), OneSQueryExpressionHelper.ValueConverterToDateTimeMethod },
-                };
 
         /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>
         /// <param name="recordExpression">Параметр метода - выражение записи из которой производиться выборка.</param>
@@ -55,6 +37,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
             _recordExpression = recordExpression;
             _typeMapping = typeMapping;
+            _columnExpressionBuilder = new ColumnExpressionBuilder(_converterParameter, _valuesParameter);
         }
 
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
@@ -92,7 +75,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             var resultExpression = Visit(lambdaBody);
 
             return new SelectionPartParseProduct<T>(
-                new ReadOnlyCollection<SqlExpression>(_columns),
+                _columnExpressionBuilder.Columns,
                 CreateItemReader<T>(resultExpression));
         }
 
@@ -104,13 +87,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// </summary>
         private readonly OneSTypeMapping _typeMapping;
 
-        /// <summary>Выражения колонок.</summary>
-        private readonly List<SqlExpression> _columns = new List<SqlExpression>();
-
-        /// <summary>Имена колонок полей.</summary>
-        /// <remarks>Для быстрого поиска.</remarks>
-        private readonly List<string> _fieldNames = new List<string>(); 
-
         /// <summary>Параметр для результирующего делегата создания элемента - конвертер значений.</summary>
         private readonly ParameterExpression _converterParameter 
             = Expression.Parameter(typeof(IValueConverter), "valueConverter");
@@ -118,6 +94,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Параметр для результирующего делегата создания элемента - массив вычитанных значений.</summary>
         private readonly ParameterExpression _valuesParameter
             = Expression.Parameter(typeof(object[]), "values");
+
+        /// <summary>Построитель выражений для колонок выборки.</summary>
+        private readonly ColumnExpressionBuilder _columnExpressionBuilder;
 
         /// <summary>
         /// Создание делегата создателя элемента вычитываемого из записи.
@@ -129,26 +108,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return Expression
                 .Lambda<Func<IValueConverter, object[], T>>(body, _converterParameter, _valuesParameter)
                 .Compile();
-        }
-
-        /// <summary>Получение индекса поля по имени.</summary>
-        /// <param name="fieldName">Имя поля.</param>
-        private int GetFieldIndex(string fieldName)
-        {
-            var index = _fieldNames.IndexOf(fieldName);
-            if (index == -1)
-                return AddNewField(fieldName);
-
-            return index;
-        }
-
-        /// <summary>Добавление вычитки нового поля.</summary>
-        private int AddNewField(string fieldName)
-        {
-            _columns.Add(new SqlFieldExpression(fieldName));
-            _fieldNames.Add(fieldName);
-
-            return _fieldNames.Count - 1;
         }
 
         /// <summary>
@@ -166,31 +125,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             if (node.Object == _recordExpression)
             {
-                MethodInfo valueConverterMethod;
-                if (_methods.TryGetValue(node.Method, out valueConverterMethod))
+                if (_methods.Contains(node.Method))
                 {
                     var fieldName = GetConstant<string>(node.Arguments[0]);
-                    return GetFieldAccessExpression(fieldName, valueConverterMethod);
+
+                    return _columnExpressionBuilder.GetColumnAccessExpression(fieldName, node.Type);
                 }
 
                 throw CreateExpressionNotSupportedException(node);
             }
             
             return base.VisitMethodCall(node);
-        }
-
-        // TODO Копипаста
-        /// <summary>
-        /// Получение выражения получения значения поля записи.
-        /// </summary>
-        /// <param name="fieldName">Имя поля получаемого значения.</param>
-        /// <param name="valueConverterMethod">Метод конвертации к нужному типу.</param>
-        private Expression GetFieldAccessExpression(string fieldName, MethodInfo valueConverterMethod)
-        {
-            var index = GetFieldIndex(fieldName);
-
-            var valueExpression = Expression.ArrayIndex(_valuesParameter, Expression.Constant(index));
-            return Expression.Call(_converterParameter, valueConverterMethod, valueExpression);
         }
 
         /// <summary>
@@ -205,19 +150,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             if (_typeMapping != null)
             {
                 var fieldName = _typeMapping.GetFieldNameByMemberInfo(node.Member);
-                if (fieldName != null)
-                {
-                    MethodInfo valueConverterMethod;
-                    if (!_convertMethodsByType.TryGetValue(node.Type, out valueConverterMethod))
-                    {
-                        throw new InvalidOperationException(string.Format(
-                            "Нельзя привести значение поля к типу \"{0}\". Для доступа к полю поддерживаются только следующие типы \"{1}\".",
-                            node.Type,
-                            string.Join(", ", _convertMethodsByType.Keys)));
-                    }
-
-                    return GetFieldAccessExpression(fieldName, valueConverterMethod);
-                }
+                return _columnExpressionBuilder
+                    .GetColumnAccessExpression(fieldName, node.Type);
             }
 
             return base.VisitMember(node);

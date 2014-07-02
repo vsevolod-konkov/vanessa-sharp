@@ -49,7 +49,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// </summary>
         /// <param name="columnExpression">Выражение колонки.</param>
         /// <param name="columnType">Тип, который требуется для колонки.</param>
-        public Expression GetColumnAccessExpression(SqlExpression columnExpression, Type columnType)
+        private Expression GetColumnAccessExpression(SqlExpression columnExpression, Type columnType)
         {
             Contract.Requires<ArgumentNullException>(columnExpression != null);
             Contract.Requires<ArgumentNullException>(columnType != null);
