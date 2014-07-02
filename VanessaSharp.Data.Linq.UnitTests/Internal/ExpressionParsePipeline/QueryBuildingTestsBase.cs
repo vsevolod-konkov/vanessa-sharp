@@ -5,7 +5,7 @@ using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
-namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Queryable
+namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
 {
     /// <summary>
     /// Базовый класс для тестирования построения <see cref="IQuery{TInput, TOutput}"/>.
@@ -75,7 +75,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             params SortExpression[] expectedSorters)
         {
 
-            var typedQuery = AssertEx.IsInstanceAndCastOf<IQuery<OneSDataRecord, T>>(testedQuery);
+            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<OneSDataRecord, T>>(testedQuery);
             
             AssertDataRecordsQuery(typedQuery, expectedSourceName, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters);
         }
@@ -96,7 +96,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             Expression<Func<TInput, bool>> expectedFilter = null,
             params SortExpression[] expectedSorters)
         {
-            var typedQuery = AssertEx.IsInstanceAndCastOf<IQuery<TInput, TOutput>>(testedQuery);
+            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<TInput, TOutput>>(testedQuery);
             AssertTypedRecordsQuery(typedQuery, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters);
         }
 

@@ -24,13 +24,13 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         [SetUp]
         public void SetUp()
         {
-            _sqlCommand = new SqlCommand("SQL", SqlParameter.EmptyCollection);
+            _sqlCommand = new SqlCommand("SQL", Empty.ReadOnly<SqlParameter>());
             _itemReaderFactoryMock = new Mock<IItemReaderFactory<OneSDataRecord>>(MockBehavior.Strict);
 
             _testedInstance = new CollectionReadExpressionParseProduct<OneSDataRecord>(_sqlCommand, _itemReaderFactoryMock.Object);
         }
 
-        private static OneSDataRecord ReadRecord(object[] values)
+        private static OneSDataRecord ReadRecordForTest(object[] values)
         {
             throw new InvalidOperationException("Этот метод нельзя вызывать.");
         }
@@ -48,24 +48,21 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         public void TestExecute()
         {
             // Arrange
-            Func<object[], OneSDataRecord> recordReader = ReadRecord;
+            Func<object[], OneSDataRecord> recordReader = ReadRecordForTest;
 
             _itemReaderFactoryMock
                 .Setup(f => f.CreateItemReader(It.IsAny<ISqlResultReader>()))
-                .Returns(recordReader)
-                .Verifiable();
+                .Returns(recordReader);
             
             var sqlResultReaderMock = new Mock<ISqlResultReader>(MockBehavior.Strict);
             sqlResultReaderMock
                 .SetupGet(r => r.FieldCount)
-                .Returns(0)
-                .Verifiable();
+                .Returns(0);
             
             var sqlCommandExecuterMock = new Mock<ISqlCommandExecuter>(MockBehavior.Strict);
             sqlCommandExecuterMock
                 .Setup(e => e.ExecuteReader(_sqlCommand))
-                .Returns(sqlResultReaderMock.Object)
-                .Verifiable();
+                .Returns(sqlResultReaderMock.Object);
 
             // Act
             var result = _testedInstance.Execute(sqlCommandExecuterMock.Object);

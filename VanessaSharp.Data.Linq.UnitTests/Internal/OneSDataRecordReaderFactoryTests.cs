@@ -27,16 +27,13 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var sqlReaderMock = new Mock<ISqlResultReader>(MockBehavior.Strict);
             sqlReaderMock
                 .SetupGet(r => r.ValueConverter)
-                .Returns(valueConverter)
-                .Verifiable();
+                .Returns(valueConverter);
             sqlReaderMock
                 .SetupGet(r => r.FieldCount)
-                .Returns(expectedFields.Length)
-                .Verifiable();
+                .Returns(expectedFields.Length);
             sqlReaderMock
                 .Setup(r => r.GetFieldName(It.IsAny<int>()))
-                .Returns<int>(i => expectedFields[i])
-                .Verifiable();
+                .Returns<int>(i => expectedFields[i]);
 
             // Act
             var result = OneSDataRecordReaderFactory.Default.CreateItemReader(sqlReaderMock.Object);

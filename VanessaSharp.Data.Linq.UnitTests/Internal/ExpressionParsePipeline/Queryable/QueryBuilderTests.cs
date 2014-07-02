@@ -63,19 +63,19 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestBuildQueryWhenFiltering()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filterField]") == "filterValue";
+            Expression<Func<OneSDataRecord, bool>> expectedFilter = r => r.GetString("[filterField]") == "filterValue";
 
             // Act
             _testedInstance.HandleStart();
             _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
-            _testedInstance.HandleFilter(filterExpression);
+            _testedInstance.HandleFilter(expectedFilter);
             _testedInstance.HandleGettingRecords(SOURCE_NAME);
             _testedInstance.HandleEnd();
 
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsQuery(result, SOURCE_NAME, filterExpression);
+            AssertDataRecordsQuery(result, SOURCE_NAME, expectedFilter);
         }
 
         /// <summary>Тестирование построения запроса выборки и фильтрации записей.</summary>
@@ -83,24 +83,24 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestBuildQueryWhenFilteringAndSelectingTuple()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filterField]") == "filterValue";
-            var selectExpression = Trait
+            Expression<Func<OneSDataRecord, bool>> expectedFilter = r => r.GetString("[filterField]") == "filterValue";
+            var expectedSelector = Trait
                      .Of<OneSDataRecord>()
                      .SelectExpression(r => new { Name = r.GetString("name"), Value = r.GetInt32("value") });
-            var traitOfOutputType = selectExpression.GetTraitOfOutputType();
+            var traitOfOutputType = expectedSelector.GetTraitOfOutputType();
 
             // Act
             _testedInstance.HandleStart();
             _testedInstance.HandleGettingEnumerator(traitOfOutputType.Type);
-            _testedInstance.HandleSelect(selectExpression);
-            _testedInstance.HandleFilter(filterExpression);
+            _testedInstance.HandleSelect(expectedSelector);
+            _testedInstance.HandleFilter(expectedFilter);
             _testedInstance.HandleGettingRecords(SOURCE_NAME);
             _testedInstance.HandleEnd();
 
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsQuery(result, SOURCE_NAME, selectExpression, filterExpression);
+            AssertDataRecordsQuery(result, SOURCE_NAME, expectedSelector, expectedFilter);
         }
 
         private void TestBuildQueryWhenSorting(Action<QueryBuilder> queryBuilderAction,
@@ -203,28 +203,28 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestBuildQueryComplex()
         {
             // Arrange
-            Expression<Func<OneSDataRecord, bool>> filterExpression = r => r.GetString("[filterField]") == "filterValue";
+            Expression<Func<OneSDataRecord, bool>> expectedFilter = r => r.GetString("[filterField]") == "filterValue";
 
-            Expression<Func<OneSDataRecord, int>> sortKey1Expression = r => r.GetInt32("any_field");
-            Expression<Func<OneSDataRecord, string>> sortKey2Expression = r => r.GetString("any_field");
-            Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("any_field");
+            Expression<Func<OneSDataRecord, int>> sortKey1 = r => r.GetInt32("any_field");
+            Expression<Func<OneSDataRecord, string>> sortKey2 = r => r.GetString("any_field");
+            Expression<Func<OneSDataRecord, DateTime>> sortKey3 = r => r.GetDateTime("any_field");
 
-            var selectExpression = Trait
+            var expectedSelector = Trait
                      .Of<OneSDataRecord>()
                      .SelectExpression(r => new { Name = r.GetString("name"), Value = r.GetInt32("value") });
-            var traitOfOutputType = selectExpression.GetTraitOfOutputType();
+            var traitOfOutputType = expectedSelector.GetTraitOfOutputType();
 
             // Act
             _testedInstance.HandleStart();
             _testedInstance.HandleGettingEnumerator(traitOfOutputType.Type);
             
-            _testedInstance.HandleSelect(selectExpression);
+            _testedInstance.HandleSelect(expectedSelector);
 
-            _testedInstance.HandleThenBy(sortKey3Expression);
-            _testedInstance.HandleThenByDescending(sortKey2Expression);
-            _testedInstance.HandleOrderByDescending(sortKey1Expression);
+            _testedInstance.HandleThenBy(sortKey3);
+            _testedInstance.HandleThenByDescending(sortKey2);
+            _testedInstance.HandleOrderByDescending(sortKey1);
 
-            _testedInstance.HandleFilter(filterExpression);
+            _testedInstance.HandleFilter(expectedFilter);
             _testedInstance.HandleGettingRecords(SOURCE_NAME);
             _testedInstance.HandleEnd();
 
@@ -234,11 +234,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             AssertDataRecordsQuery(
                 result,
                 SOURCE_NAME,
-                selectExpression,
-                filterExpression,
-                new SortExpression(sortKey1Expression, SortKind.Descending),
-                new SortExpression(sortKey2Expression, SortKind.Descending),
-                new SortExpression(sortKey3Expression, SortKind.Ascending));
+                expectedSelector,
+                expectedFilter,
+                new SortExpression(sortKey1, SortKind.Descending),
+                new SortExpression(sortKey2, SortKind.Descending),
+                new SortExpression(sortKey3, SortKind.Ascending));
         }
     }
 }

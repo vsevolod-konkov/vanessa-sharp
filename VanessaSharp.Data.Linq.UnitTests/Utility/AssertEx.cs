@@ -18,27 +18,5 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
 
             return (T)value;
         }
-
-        public static CollectionReadExpressionParseProduct<T> IsInstanceAndCastCollectionReadExpressionParseProduct<T>(
-            Trait<T> trait, ExpressionParseProduct product)
-        {
-            return IsInstanceAndCastOf<CollectionReadExpressionParseProduct<T>>(product);
-        }
-
-        public static NoSideEffectItemReaderFactory<T> IsInstanceAndCastNoSideEffectItemReaderFactory<T>(
-            IItemReaderFactory<T> itemReaderFactory)
-        {
-            return IsInstanceAndCastOf<NoSideEffectItemReaderFactory<T>>(itemReaderFactory);
-        }
-
-        public static IQuery<OneSDataRecord, T> IsInstanceAndCastDataRecordsQuery<T>(IQuery query)
-        {
-            return IsInstanceAndCastOf<IQuery<OneSDataRecord, T>>(query);
-        }
-
-        public static IQuery<OneSDataRecord, T> IsInstanceAndCastDataRecordsQuery<T>(Trait<T> trait, IQuery query)
-        {
-            return IsInstanceAndCastDataRecordsQuery<T>(query);
-        }
     }
 }

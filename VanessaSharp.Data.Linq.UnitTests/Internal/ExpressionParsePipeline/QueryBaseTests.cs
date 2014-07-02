@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using Moq;
+﻿using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
 {
@@ -18,7 +18,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             // Arrange
             var query = new Mock<QueryBase<InputData, OutputData>>(MockBehavior.Strict).Object;
             var expressionParseProduct = new CollectionReadExpressionParseProduct<OutputData>(
-                new SqlCommand("SQL", new ReadOnlyCollection<SqlParameter>(new SqlParameter[0])), 
+                new SqlCommand("SQL", Empty.ReadOnly<SqlParameter>()), 
                 new Mock<IItemReaderFactory<OutputData>>(MockBehavior.Strict).Object);
 
             var queryTransformerMock = new Mock<IQueryTransformer>(MockBehavior.Strict);

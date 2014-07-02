@@ -26,8 +26,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             _sqlResultReaderMock = new Mock<ISqlResultReader>(MockBehavior.Strict);
             _sqlResultReaderMock
                 .SetupGet(r => r.FieldCount)
-                .Returns(FIELDS_COUNT)
-                .Verifiable();
+                .Returns(FIELDS_COUNT);
 
             _recordReaderMock = new RecordReaderMock();
             _itemReader = _recordReaderMock.ReadRecord;
@@ -52,8 +51,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         {
             // Arrange
             _sqlResultReaderMock
-                .Setup(r => r.Dispose())
-                .Verifiable();
+                .Setup(r => r.Dispose());
 
             // Act
             _testedInstance.Dispose();
@@ -72,8 +70,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             // Arrange
             _sqlResultReaderMock
                 .Setup(r => r.Read())
-                .Returns(false)
-                .Verifiable();
+                .Returns(false);
 
             // Act
             var result = _testedInstance.MoveNext();
@@ -97,8 +94,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
             _sqlResultReaderMock
                 .Setup(r => r.Read())
-                .Returns(true)
-                .Verifiable();
+                .Returns(true);
 
             _sqlResultReaderMock
                 .Setup(r => r.GetValues(It.IsAny<object[]>()))
@@ -106,15 +102,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                     {
                         Assert.AreEqual(FIELDS_COUNT, values.Length);
                         Array.Copy(buffer, values, FIELDS_COUNT);
-                    })
-                .Verifiable();
+                    });
 
             for (var counter = 1; counter <= recordsCount; counter++)
             {
                 // Arrange reader
                 _recordReaderMock.Reset();
                 _recordReaderMock.ExpectedRecord = new OneSDataRecord(
-                    new ReadOnlyCollection<string>(new string[0]), new ReadOnlyCollection<OneSValue>(new OneSValue[0]));
+                     Utility.Empty.ReadOnly<string>(), Utility.Empty.ReadOnly<OneSValue>());
 
                 for (var field = 0; field < FIELDS_COUNT; field++)
                     buffer[field] = new object();
@@ -147,16 +142,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             // Arrange
             _sqlResultReaderMock
                 .Setup(r => r.Read())
-                .Returns(() => recordsCounter++ < recordsCount)
-                .Verifiable();
+                .Returns(() => recordsCounter++ < recordsCount);
 
             _sqlResultReaderMock
-                .Setup(r => r.GetValues(It.IsAny<object[]>()))
-                .Verifiable();
+                .Setup(r => r.GetValues(It.IsAny<object[]>()));
 
             _recordReaderMock.ExpectedRecord = new OneSDataRecord(
-                new ReadOnlyCollection<string>(new string[0]),
-                new ReadOnlyCollection<OneSValue>(new OneSValue[0]));
+                Utility.Empty.ReadOnly<string>(),
+                Utility.Empty.ReadOnly<OneSValue>());
 
             for (var counter = 1; counter <= recordsCount; counter++)
             {

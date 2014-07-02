@@ -5,6 +5,7 @@ using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable;
+using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal
 {
@@ -51,19 +52,17 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 .Returns("test");
             var expression = expressionMock.Object;
 
-            var sqlCommand = new SqlCommand("SQL", SqlParameter.EmptyCollection);
+            var sqlCommand = new SqlCommand("SQL", Empty.ReadOnly<SqlParameter>());
             var expressionParseProduct = new Mock<ExpressionParseProduct>(MockBehavior.Strict, sqlCommand).Object;
             
-            var simpleQueryMock = new Mock<IQuery>(MockBehavior.Strict);
-            simpleQueryMock
+            var queryMock = new Mock<IQuery>(MockBehavior.Strict);
+            queryMock
                 .Setup(q => q.Transform(It.IsAny<IQueryTransformService>()))
-                .Returns(expressionParseProduct)
-                .Verifiable();
+                .Returns(expressionParseProduct);
 
             _queryableExpressionTransformerMock
                 .Setup(t => t.Transform(expression))
-                .Returns(simpleQueryMock.Object)
-                .Verifiable();
+                .Returns(queryMock.Object);
 
             // Act
             var result = _testedInstance.Parse(expression);
@@ -73,7 +72,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
             _queryableExpressionTransformerMock
                 .Verify(t => t.Transform(expression), Times.Once());
-            simpleQueryMock
+            queryMock
                 .Verify(q => q.Transform(It.IsAny<IQueryTransformService>()), Times.Once());
         }
 
@@ -85,19 +84,18 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         {
             // Arrange
             _mappingProviderMock
-                .Setup(p => p.CheckDataType(typeof(AnyData)))
-                .Verifiable();
+                .Setup(p => p.CheckDataType(typeof(SomeData)));
 
             // Act
-            _testedInstance.CheckDataType(typeof(AnyData));
+            _testedInstance.CheckDataType(typeof(SomeData));
 
             // Assert
             _mappingProviderMock
-                .Verify(p => p.CheckDataType(typeof(AnyData)), Times.Once());
+                .Verify(p => p.CheckDataType(typeof(SomeData)), Times.Once());
         }
 
         /// <summary>Вспомогательный тип данных для тестирования.</summary>
-        public struct AnyData
+        public struct SomeData
         {}
     }
 }

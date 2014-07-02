@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
@@ -11,7 +10,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
     /// Тестирование <see cref="QueryFactory"/>.
     /// </summary>
     [TestFixture]
-    public sealed class QueryFactoryTests
+    public sealed class QueryFactoryTests : QueryBuildingTestsBase
     {
         /// <summary>
         /// Тестирование 
@@ -21,22 +20,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
         public void TestCreateDataRecordsQuery()
         {
             // Arrange
-            const string SOURCE_NAME = "test";
-            
             Expression<Func<OneSDataRecord, bool>> filter = r => true;
-            Expression<Func<OneSDataRecord, int>> sorter = r => 5;
-            var sorters = new ReadOnlyCollection<SortExpression>(new[] {new SortExpression(sorter, SortKind.Ascending)});
+            Expression<Func<OneSDataRecord, int>> sortKey = r => 5;
+            var sorter = new SortExpression(sortKey, SortKind.Ascending);
             
             // Act
-            var result = QueryFactory.CreateQuery(SOURCE_NAME, filter, sorters);
+            var result = QueryFactory.CreateQuery(SOURCE_NAME, filter, new[] {sorter}.ToReadOnly());
 
             // Assert
-            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<OneSDataRecord, OneSDataRecord>>(result);
-            var typedSourceDescription = AssertEx.IsInstanceAndCastOf<ExplicitSourceDescription>(typedQuery.Source);
-            Assert.AreEqual(SOURCE_NAME, typedSourceDescription.SourceName);
-            Assert.IsNull(typedQuery.Selector);
-            Assert.AreSame(filter, typedQuery.Filter);
-            Assert.AreSame(sorters, typedQuery.Sorters);
+            AssertDataRecordsQuery(result, SOURCE_NAME, filter, sorter);
         }
 
         /// <summary>
@@ -47,23 +39,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
         public void TestCreateSelectDataRecordsQuery()
         {
             // Arrange
-            const string SOURCE_NAME = "test";
-
             Expression<Func<OneSDataRecord, OutputData>> selector = r => new OutputData();
             Expression<Func<OneSDataRecord, bool>> filter = r => true;
-            Expression<Func<OneSDataRecord, int>> sorter = r => 5;
-            var sorters = new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sorter, SortKind.Ascending) });
+            Expression<Func<OneSDataRecord, int>> sortKey = r => 5;
+            var sorter = new SortExpression(sortKey, SortKind.Ascending);
 
             // Act
-            var result = QueryFactory.CreateQuery(SOURCE_NAME, selector, filter, sorters);
+            var result = QueryFactory.CreateQuery(SOURCE_NAME, selector, filter, new[]{sorter}.ToReadOnly());
 
             // Assert
-            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<OneSDataRecord, OutputData>>(result);
-            var typedSourceDescription = AssertEx.IsInstanceAndCastOf<ExplicitSourceDescription>(typedQuery.Source);
-            Assert.AreEqual(SOURCE_NAME, typedSourceDescription.SourceName);
-            Assert.AreSame(selector, typedQuery.Selector);
-            Assert.AreSame(filter, typedQuery.Filter);
-            Assert.AreSame(sorters, typedQuery.Sorters);
+            AssertDataRecordsQuery(result, SOURCE_NAME, selector, filter, sorter);
         }
 
         /// <summary>
@@ -75,18 +60,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
         {
             // Arrange
             Expression<Func<InputData, bool>> filter = r => true;
-            Expression<Func<InputData, int>> sorter = r => 5;
-            var sorters = new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sorter, SortKind.Ascending) });
+            Expression<Func<InputData, int>> sortKey = r => 5;
+            var sorter = new SortExpression(sortKey, SortKind.Ascending);
 
             // Act
-            var result = QueryFactory.CreateQuery(typeof(InputData), filter, sorters);
+            var result = QueryFactory.CreateQuery(typeof(InputData), filter, new[]{sorter}.ToReadOnly());
 
             // Assert
-            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<InputData, InputData>>(result);
-            Assert.IsInstanceOf<SourceDescriptionByType<InputData>>(typedQuery.Source);
-            Assert.IsNull(typedQuery.Selector);
-            Assert.AreSame(filter, typedQuery.Filter);
-            Assert.AreSame(sorters, typedQuery.Sorters);
+            AssertTypedRecordsQuery(result, filter, sorter);
         }
 
         /// <summary>
@@ -99,18 +80,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             // Arrange
             Expression<Func<InputData, OutputData>> selector = r => new OutputData();
             Expression<Func<InputData, bool>> filter = r => true;
-            Expression<Func<InputData, int>> sorter = r => 5;
-            var sorters = new ReadOnlyCollection<SortExpression>(new[] { new SortExpression(sorter, SortKind.Ascending) });
+            Expression<Func<InputData, int>> sortKey = r => 5;
+            var sorter = new SortExpression(sortKey, SortKind.Ascending);
 
             // Act
-            var result = QueryFactory.CreateQuery(selector, filter, sorters);
+            var result = QueryFactory.CreateQuery(selector, filter, new[]{sorter}.ToReadOnly());
 
             // Assert
-            var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<InputData, OutputData>>(result);
-            Assert.IsInstanceOf<SourceDescriptionByType<InputData>>(typedQuery.Source);
-            Assert.AreSame(selector, typedQuery.Selector);
-            Assert.AreSame(filter, typedQuery.Filter);
-            Assert.AreSame(sorters, typedQuery.Sorters);
+            AssertTypedRecordsQuery(result, selector, filter, sorter);
         }
 
         public sealed class InputData

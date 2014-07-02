@@ -86,7 +86,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\ExplicitSourceDescriptionTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformServiceTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilderTests.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryBuildingTestsBase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\QueryBuildingTestsBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryBaseTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryFactoryTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SourceDescriptionByTypeTests.cs" />
