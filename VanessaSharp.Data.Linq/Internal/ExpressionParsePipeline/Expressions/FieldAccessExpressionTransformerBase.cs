@@ -13,12 +13,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private static readonly ISet<MethodInfo>
             _getValueMethods = new HashSet<MethodInfo>
             {
+                OneSQueryExpressionHelper.DataRecordGetCharMethod,
                 OneSQueryExpressionHelper.DataRecordGetStringMethod,
+                OneSQueryExpressionHelper.DataRecordGetByteMethod,
+                OneSQueryExpressionHelper.DataRecordGetInt16Method,
                 OneSQueryExpressionHelper.DataRecordGetInt32Method,
+                OneSQueryExpressionHelper.DataRecordGetInt64Method,
+                OneSQueryExpressionHelper.DataRecordGetFloatMethod,
                 OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
+                OneSQueryExpressionHelper.DataRecordGetDecimalMethod,
                 OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
                 OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
-                OneSQueryExpressionHelper.DataRecordGetCharMethod,
             };
 
         /// <summary>Контекст разбора запроса.</summary>

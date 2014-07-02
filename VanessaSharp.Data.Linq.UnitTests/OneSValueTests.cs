@@ -122,6 +122,27 @@ namespace VanessaSharp.Data.Linq.UnitTests
             TestConvertTo("Test", c => c.ToString(It.IsAny<object>()), v => (string)v);
         }
 
+        /// <summary>Тестирование конвертации в <see cref="char"/>.</summary>
+        [Test]
+        public void TestConvertChar()
+        {
+            TestConvertTo('Z', c => c.ToChar(It.IsAny<object>()), v => (char)v);
+        }
+
+        /// <summary>Тестирование конвертации в <see cref="byte"/>.</summary>
+        [Test]
+        public void TestConvertByte()
+        {
+            TestConvertTo((byte)0x10, c => c.ToByte(It.IsAny<object>()), v => (byte)v);
+        }
+
+        /// <summary>Тестирование конвертации в <see cref="short"/>.</summary>
+        [Test]
+        public void TestConvertInt16()
+        {
+            TestConvertTo((short)10, c => c.ToInt16(It.IsAny<object>()), v => (short)v);
+        }
+
         /// <summary>Тестирование конвертации в <see cref="int"/>.</summary>
         [Test]
         public void TestConvertInt32()
@@ -129,11 +150,32 @@ namespace VanessaSharp.Data.Linq.UnitTests
             TestConvertTo(10, c => c.ToInt32(It.IsAny<object>()), v => (int)v);
         }
 
+        /// <summary>Тестирование конвертации в <see cref="long"/>.</summary>
+        [Test]
+        public void TestConvertInt64()
+        {
+            TestConvertTo(4325325656346L, c => c.ToInt64(It.IsAny<object>()), v => (long)v);
+        }
+
+        /// <summary>Тестирование конвертации в <see cref="float"/>.</summary>
+        [Test]
+        public void TestConvertFloat()
+        {
+            TestConvertTo(14.54f, c => c.ToFloat(It.IsAny<object>()), v => (float)v);
+        }
+
         /// <summary>Тестирование конвертации в <see cref="double"/>.</summary>
         [Test]
         public void TestConvertDouble()
         {
             TestConvertTo(14.54, c => c.ToDouble(It.IsAny<object>()), v => (double)v);
+        }
+
+        /// <summary>Тестирование конвертации в <see cref="decimal"/>.</summary>
+        [Test]
+        public void TestConvertDecimal()
+        {
+            TestConvertTo(14.54m, c => c.ToDecimal(It.IsAny<object>()), v => (decimal)v);
         }
 
         /// <summary>Тестирование конвертации в <see cref="bool"/>.</summary>
@@ -148,13 +190,6 @@ namespace VanessaSharp.Data.Linq.UnitTests
         public void TestConvertDateTime()
         {
             TestConvertTo(DateTime.Now, c => c.ToDateTime(It.IsAny<object>()), v => (DateTime)v);
-        }
-
-        /// <summary>Тестирование конвертации в <see cref="char"/>.</summary>
-        [Test]
-        public void TestConvertChar()
-        {
-            TestConvertTo('Z', c => c.ToChar(It.IsAny<object>()), v => (char)v);
         }
     }
 }

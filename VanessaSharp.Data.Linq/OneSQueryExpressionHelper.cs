@@ -297,6 +297,27 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _dataRecordGetStringMethod = GetDataRecordMethod(r => r.GetString(""));
 
+        /// <summary>Метод <see cref="OneSDataRecord.GetChar(string)"/>.</summary>
+        public static MethodInfo DataRecordGetCharMethod
+        {
+            get { return _dataRecordGetCharMethod; }
+        }
+        private static readonly MethodInfo _dataRecordGetCharMethod = GetDataRecordMethod(r => r.GetChar(""));
+
+        /// <summary>Метод <see cref="OneSDataRecord.GetByte(string)"/>.</summary>
+        public static MethodInfo DataRecordGetByteMethod
+        {
+            get { return _dataRecordGetByteMethod; }
+        }
+        private static readonly MethodInfo _dataRecordGetByteMethod = GetDataRecordMethod(r => r.GetByte(""));
+
+        /// <summary>Метод <see cref="OneSDataRecord.GetInt16(string)"/>.</summary>
+        public static MethodInfo DataRecordGetInt16Method
+        {
+            get { return _dataRecordGetInt16Method; }
+        }
+        private static readonly MethodInfo _dataRecordGetInt16Method = GetDataRecordMethod(r => r.GetInt16(""));
+
         /// <summary>Метод <see cref="OneSDataRecord.GetInt32(string)"/>.</summary>
         public static MethodInfo DataRecordGetInt32Method
         {
@@ -304,12 +325,33 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _dataRecordGetInt32Method = GetDataRecordMethod(r => r.GetInt32(""));
 
+        /// <summary>Метод <see cref="OneSDataRecord.GetInt64(string)"/>.</summary>
+        public static MethodInfo DataRecordGetInt64Method
+        {
+            get { return _dataRecordGetInt64Method; }
+        }
+        private static readonly MethodInfo _dataRecordGetInt64Method = GetDataRecordMethod(r => r.GetInt64(""));
+
+        /// <summary>Метод <see cref="OneSDataRecord.GetFloat(string)"/>.</summary>
+        public static MethodInfo DataRecordGetFloatMethod
+        {
+            get { return _dataRecordGetFloatMethod; }
+        }
+        private static readonly MethodInfo _dataRecordGetFloatMethod = GetDataRecordMethod(r => r.GetFloat(""));
+
         /// <summary>Метод <see cref="OneSDataRecord.GetDouble(string)"/>.</summary>
         public static MethodInfo DataRecordGetDoubleMethod
         {
             get { return _dataRecordGetDoubleMethod; }
         }
         private static readonly MethodInfo _dataRecordGetDoubleMethod = GetDataRecordMethod(r => r.GetDouble(""));
+
+        /// <summary>Метод <see cref="OneSDataRecord.GetDecimal(string)"/>.</summary>
+        public static MethodInfo DataRecordGetDecimalMethod
+        {
+            get { return _dataRecordGetDecimalMethod; }
+        }
+        private static readonly MethodInfo _dataRecordGetDecimalMethod = GetDataRecordMethod(r => r.GetDecimal(""));
 
         /// <summary>Метод <see cref="OneSDataRecord.GetBoolean(string)"/>.</summary>
         public static MethodInfo DataRecordGetBooleanMethod
@@ -324,13 +366,6 @@ namespace VanessaSharp.Data.Linq
             get { return _dataRecordGetDateTimeMethod; }
         }
         private static readonly MethodInfo _dataRecordGetDateTimeMethod = GetDataRecordMethod(r => r.GetDateTime(""));
-
-        /// <summary>Метод <see cref="OneSDataRecord.GetChar(string)"/>.</summary>
-        public static MethodInfo DataRecordGetCharMethod
-        {
-            get { return _dataRecordGetCharMethod; }
-        }
-        private static readonly MethodInfo _dataRecordGetCharMethod = GetDataRecordMethod(r => r.GetChar(""));
 
         #endregion
 
@@ -413,8 +448,6 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _valueConverterToDateTimeMethod = GetValueConverterMethod(c => c.ToDateTime(null));
 
-        
-
         /// <summary>
         /// Получение метода <see cref="IValueConverter"/>
         /// для конвертации значения к типу <paramref name="type"/>.
@@ -434,12 +467,16 @@ namespace VanessaSharp.Data.Linq
         private static readonly Dictionary<Type, MethodInfo> _valueConvertMethodsMap = new Dictionary<Type, MethodInfo>
             {
                 { typeof(string), ValueConverterToStringMethod },
+                { typeof(char), ValueConverterToCharMethod },
+                { typeof(byte), ValueConverterToByteMethod },
+                { typeof(short), ValueConverterToInt16Method },
                 { typeof(int), ValueConverterToInt32Method },
-                { typeof(decimal), ValueConverterToDecimalMethod },
+                { typeof(long), ValueConverterToInt64Method },
+                { typeof(float), ValueConverterToFloatMethod },
                 { typeof(double), ValueConverterToDoubleMethod },
+                { typeof(decimal), ValueConverterToDecimalMethod },
                 { typeof(bool), ValueConverterToBooleanMethod },
-                { typeof(DateTime), ValueConverterToDateTimeMethod },
-                { typeof(char), ValueConverterToCharMethod }
+                { typeof(DateTime), ValueConverterToDateTimeMethod }
             };
 
         #endregion

@@ -18,11 +18,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             _methods = new Dictionary<MethodInfo, MethodInfo>
             {
                 { OneSQueryExpressionHelper.DataRecordGetStringMethod, OneSQueryExpressionHelper.ValueConverterToStringMethod },
-                { OneSQueryExpressionHelper.DataRecordGetInt32Method, OneSQueryExpressionHelper.ValueConverterToInt32Method },
-                { OneSQueryExpressionHelper.DataRecordGetDoubleMethod, OneSQueryExpressionHelper.ValueConverterToDoubleMethod },
-                { OneSQueryExpressionHelper.DataRecordGetDateTimeMethod, OneSQueryExpressionHelper.ValueConverterToDateTimeMethod },
-                { OneSQueryExpressionHelper.DataRecordGetBooleanMethod, OneSQueryExpressionHelper.ValueConverterToBooleanMethod },
                 { OneSQueryExpressionHelper.DataRecordGetCharMethod, OneSQueryExpressionHelper.ValueConverterToCharMethod },
+                { OneSQueryExpressionHelper.DataRecordGetByteMethod, OneSQueryExpressionHelper.ValueConverterToByteMethod },
+                { OneSQueryExpressionHelper.DataRecordGetInt16Method, OneSQueryExpressionHelper.ValueConverterToInt16Method },
+                { OneSQueryExpressionHelper.DataRecordGetInt32Method, OneSQueryExpressionHelper.ValueConverterToInt32Method },
+                { OneSQueryExpressionHelper.DataRecordGetInt64Method, OneSQueryExpressionHelper.ValueConverterToInt64Method },
+                { OneSQueryExpressionHelper.DataRecordGetFloatMethod, OneSQueryExpressionHelper.ValueConverterToFloatMethod },
+                { OneSQueryExpressionHelper.DataRecordGetDoubleMethod, OneSQueryExpressionHelper.ValueConverterToDoubleMethod },
+                { OneSQueryExpressionHelper.DataRecordGetDecimalMethod, OneSQueryExpressionHelper.ValueConverterToDecimalMethod },
+                { OneSQueryExpressionHelper.DataRecordGetDateTimeMethod, OneSQueryExpressionHelper.ValueConverterToDateTimeMethod },
+                { OneSQueryExpressionHelper.DataRecordGetBooleanMethod, OneSQueryExpressionHelper.ValueConverterToBooleanMethod }
             };
 
         private static readonly IDictionary<Type, MethodInfo>

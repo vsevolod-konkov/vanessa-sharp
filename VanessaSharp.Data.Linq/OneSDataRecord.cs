@@ -52,6 +52,72 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Получение значения <see cref="char"/> по имени колонки.
+        /// </summary>
+        /// <param name="columnName">Имя колонка.</param>
+        public char GetChar(string columnName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
+
+            return (char)GetValue(columnName);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="char"/> по индексу.
+        /// </summary>
+        /// <param name="index">Индекс колонки.</param>
+        public char GetChar(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+
+            return (char)GetValue(index);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="byte"/> по имени колонки.
+        /// </summary>
+        /// <param name="columnName">Имя колонка.</param>
+        public byte GetByte(string columnName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
+
+            return (byte)GetValue(columnName);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="byte"/> по индексу.
+        /// </summary>
+        /// <param name="index">Индекс колонки.</param>
+        public byte GetByte(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+
+            return (byte)GetValue(index);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="short"/> по имени колонки.
+        /// </summary>
+        /// <param name="columnName">Имя колонка.</param>
+        public short GetInt16(string columnName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
+
+            return (short)GetValue(columnName);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="short"/> по индексу.
+        /// </summary>
+        /// <param name="index">Индекс колонки.</param>
+        public short GetInt16(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+
+            return (short)GetValue(index);
+        }
+
+        /// <summary>
         /// Получение значения <see cref="int"/> по имени колонки.
         /// </summary>
         /// <param name="columnName">Имя колонка.</param>
@@ -74,6 +140,50 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Получение значения <see cref="long"/> по имени колонки.
+        /// </summary>
+        /// <param name="columnName">Имя колонка.</param>
+        public long GetInt64(string columnName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
+
+            return (long)GetValue(columnName);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="long"/> по индексу.
+        /// </summary>
+        /// <param name="index">Индекс колонки.</param>
+        public long GetInt64(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+
+            return (long)GetValue(index);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="float"/> по имени колонки.
+        /// </summary>
+        /// <param name="columnName">Имя колонка.</param>
+        public float GetFloat(string columnName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
+
+            return (float)GetValue(columnName);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="float"/> по индексу.
+        /// </summary>
+        /// <param name="index">Индекс колонки.</param>
+        public float GetFloat(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+
+            return (float)GetValue(index);
+        }
+
+        /// <summary>
         /// Получение значения <see cref="double"/> по имени колонки.
         /// </summary>
         /// <param name="columnName">Имя колонка.</param>
@@ -93,6 +203,28 @@ namespace VanessaSharp.Data.Linq
             Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
 
             return (double)GetValue(index);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="decimal"/> по имени колонки.
+        /// </summary>
+        /// <param name="columnName">Имя колонка.</param>
+        public decimal GetDecimal(string columnName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
+
+            return (decimal)GetValue(columnName);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="decimal"/> по индексу.
+        /// </summary>
+        /// <param name="index">Индекс колонки.</param>
+        public decimal GetDecimal(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+
+            return (decimal)GetValue(index);
         }
 
         /// <summary>
@@ -137,28 +269,6 @@ namespace VanessaSharp.Data.Linq
             Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
 
             return (DateTime)GetValue(index);
-        }
-
-        /// <summary>
-        /// Получение значения <see cref="char"/> по имени колонки.
-        /// </summary>
-        /// <param name="columnName">Имя колонка.</param>
-        public char GetChar(string columnName)
-        {
-            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
-
-            return (char)GetValue(columnName);
-        }
-
-        /// <summary>
-        /// Получение значения <see cref="char"/> по индексу.
-        /// </summary>
-        /// <param name="index">Индекс колонки.</param>
-        public char GetChar(int index)
-        {
-            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
-
-            return (char)GetValue(index);
         }
 
         /// <summary>

@@ -46,6 +46,33 @@ namespace VanessaSharp.Data.Linq
             return value.ConvertTo((c, v) => c.ToString(v));
         }
 
+        /// <summary>Приведение к <see cref="char"/>.</summary>
+        /// <param name="value">Приводимое значение.</param>
+        public static explicit operator char(OneSValue value)
+        {
+            Contract.Requires<ArgumentNullException>(value != null);
+
+            return value.ConvertTo((c, v) => c.ToChar(v));
+        }
+
+        /// <summary>Приведение к <see cref="byte"/>.</summary>
+        /// <param name="value">Приводимое значение.</param>
+        public static explicit operator byte(OneSValue value)
+        {
+            Contract.Requires<ArgumentNullException>(value != null);
+
+            return value.ConvertTo((c, v) => c.ToByte(v));
+        }
+
+        /// <summary>Приведение к <see cref="short"/>.</summary>
+        /// <param name="value">Приводимое значение.</param>
+        public static explicit operator short(OneSValue value)
+        {
+            Contract.Requires<ArgumentNullException>(value != null);
+
+            return value.ConvertTo((c, v) => c.ToInt16(v));
+        }
+
         /// <summary>Приведение к <see cref="int"/>.</summary>
         /// <param name="value">Приводимое значение.</param>
         public static explicit operator int(OneSValue value)
@@ -55,6 +82,24 @@ namespace VanessaSharp.Data.Linq
             return value.ConvertTo((c, v) => c.ToInt32(v));
         }
 
+        /// <summary>Приведение к <see cref="long"/>.</summary>
+        /// <param name="value">Приводимое значение.</param>
+        public static explicit operator long(OneSValue value)
+        {
+            Contract.Requires<ArgumentNullException>(value != null);
+
+            return value.ConvertTo((c, v) => c.ToInt64(v));
+        }
+
+        /// <summary>Приведение к <see cref="float"/>.</summary>
+        /// <param name="value">Приводимое значение.</param>
+        public static explicit operator float(OneSValue value)
+        {
+            Contract.Requires<ArgumentNullException>(value != null);
+
+            return value.ConvertTo((c, v) => c.ToFloat(v));
+        }
+
         /// <summary>Приведение к <see cref="double"/>.</summary>
         /// <param name="value">Приводимое значение.</param>
         public static explicit operator double(OneSValue value)
@@ -62,6 +107,15 @@ namespace VanessaSharp.Data.Linq
             Contract.Requires<ArgumentNullException>(value != null);
 
             return value.ConvertTo((c, v) => c.ToDouble(v));
+        }
+
+        /// <summary>Приведение к <see cref="decimal"/>.</summary>
+        /// <param name="value">Приводимое значение.</param>
+        public static explicit operator decimal(OneSValue value)
+        {
+            Contract.Requires<ArgumentNullException>(value != null);
+
+            return value.ConvertTo((c, v) => c.ToDecimal(v));
         }
 
         /// <summary>Приведение к <see cref="bool"/>.</summary>
@@ -80,15 +134,6 @@ namespace VanessaSharp.Data.Linq
             Contract.Requires<ArgumentNullException>(value != null);
 
             return value.ConvertTo((c, v) => c.ToDateTime(v));
-        }
-
-        /// <summary>Приведение к <see cref="char"/>.</summary>
-        /// <param name="value">Приводимое значение.</param>
-        public static explicit operator char(OneSValue value)
-        {
-            Contract.Requires<ArgumentNullException>(value != null);
-
-            return value.ConvertTo((c, v) => c.ToChar(v));
         }
 
         /// <summary>

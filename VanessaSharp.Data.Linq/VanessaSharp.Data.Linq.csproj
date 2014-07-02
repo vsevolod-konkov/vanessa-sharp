@@ -78,6 +78,7 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="Internal\ExpressionParsePipeline\ExplicitSourceDescription.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\ColumnExpressionBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformService.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformService.cs" />
