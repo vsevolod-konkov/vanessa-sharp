@@ -40,11 +40,13 @@ namespace VanessaSharp.Proxy.Common
             get { return _proxy.ProxyWrapper; }
         }
 
-        /// <summary>Динамическое получение значения члена нижележащего объекта.</summary>
+        /// <summary>Динамическое обращение к члену нижележащего объекта.</summary>
         /// <param name="memberName">Имя члена.</param>
-        public object _(string memberName)
+        public object this[string memberName]
         {
-            return _proxy._(memberName);
+            get { return _proxy.GetMemberValue(memberName); }
+
+            set { _proxy.SetMemberValue(memberName, value);}
         }
 
         /// <summary>Попытка конвертации в требуемый тип.</summary>

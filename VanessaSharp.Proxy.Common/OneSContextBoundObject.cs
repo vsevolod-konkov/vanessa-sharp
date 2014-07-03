@@ -10,7 +10,7 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="comObject">RCW-обертка над 1С-объектом.</param>
         /// <param name="proxyWrapper">Обертыватель 1С-объектов.</param>
         /// <param name="globalContext">Глобальный контекст.</param>
-        public OneSContextBoundObject(object comObject, IOneSProxyWrapper proxyWrapper, OneSGlobalContext globalContext)
+        internal protected OneSContextBoundObject(object comObject, IOneSProxyWrapper proxyWrapper, OneSGlobalContext globalContext)
             : base(comObject, proxyWrapper)
         {
             Contract.Requires<ArgumentNullException>(globalContext != null);

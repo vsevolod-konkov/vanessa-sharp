@@ -30,7 +30,9 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
             queryResultMock
                 .Setup(r => r.Choose())
                 .Returns(
-                    CreateQueryResultSelection(tableData.Rows.GetEnumerator(), mapNames));
+                    CreateQueryResultSelection(
+                        tableData.Rows.Select(r => r.Select(GetOneSRawValue).ToArray()).GetEnumerator(),
+                        mapNames));
 
             return queryResultMock.Object;
         }
@@ -114,6 +116,36 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                     .Returns<string>(name => rowsEnumerator.Current[mapNames[name]]);
 
             return resultSelectionMock.Object;
+        }
+
+        /// <summary>
+        /// Имитация получения значения которое возвращает 1С.
+        /// </summary>
+        /// <param name="value">Исходное значение.</param>
+        public static object GetOneSRawValue(object value)
+        {
+            if (value is char)
+                return new string((char)value, 1);
+
+            if (value is byte)
+                return (double)(byte)value;
+
+            if (value is short)
+                return (double)(short)value;
+
+            if (value is int)
+                return (double)(int)value;
+
+            if (value is long)
+                return (double)(long)value;
+
+            if (value is float)
+                return (double)(float)value;
+
+            if (value is decimal)
+                return (double)(decimal)value;
+
+            return value;
         }
     }
 }

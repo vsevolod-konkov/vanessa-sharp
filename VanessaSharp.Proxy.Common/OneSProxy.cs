@@ -99,7 +99,7 @@ namespace VanessaSharp.Proxy.Common
 
         /// <summary>Динамическое получение значения члена нижележащего объекта.</summary>
         /// <param name="memberName">Имя члена.</param>
-        public object _(string memberName)
+        public object GetMemberValue(string memberName)
         {
             object result;
             try
@@ -116,20 +116,52 @@ namespace VanessaSharp.Proxy.Common
             return result;
         }
 
+        /// <summary>Динамическое установка значения члена нижележащего объекта.</summary>
+        /// <param name="memberName">Имя члена.</param>
+        /// <param name="value">Устанавливаемое значение.</param>
+        public void SetMemberValue(string memberName, object value)
+        {
+            try
+            {
+                TrySetMember(GetSetMemberBinder(memberName), value);
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException(string.Format(
+                    "Произошла ошибка при получении значения члена \"{0}\". Ошибка: {1}",
+                    memberName, e.Message));
+            }
+        }
+
+        private static readonly IEnumerable<CSharpArgumentInfo> _argumentInfos = new CSharpArgumentInfo[0];
+        private static readonly Type _oneSProxyType = typeof(OneSProxy);
+
         private GetMemberBinder GetGetMemberBinder(string memberName)
         {
             GetMemberBinder binder;
-            if (!_memberBinders.TryGetValue(memberName, out binder))
+            if (!_getMemberBinders.TryGetValue(memberName, out binder))
             {
                 binder = (GetMemberBinder)Binder.GetMember(CSharpBinderFlags.None, memberName, _oneSProxyType, _argumentInfos);
-                _memberBinders.Add(memberName, binder);
+                _getMemberBinders.Add(memberName, binder);
             }
 
             return binder;
         }
-        private readonly Dictionary<string, GetMemberBinder> _memberBinders = new Dictionary<string, GetMemberBinder>(); 
-        private static readonly IEnumerable<CSharpArgumentInfo> _argumentInfos = new CSharpArgumentInfo[0];
-        private static readonly Type _oneSProxyType = typeof(OneSProxy);
+        private readonly Dictionary<string, GetMemberBinder> _getMemberBinders = new Dictionary<string, GetMemberBinder>(); 
+        
+
+        private SetMemberBinder GetSetMemberBinder(string memberName)
+        {
+            SetMemberBinder binder;
+            if (!_setMemberBinders.TryGetValue(memberName, out binder))
+            {
+                binder = (SetMemberBinder)Binder.SetMember(CSharpBinderFlags.None, memberName, _oneSProxyType, _argumentInfos);
+                _setMemberBinders.Add(memberName, binder);
+            }
+
+            return binder;
+        }
+        private readonly Dictionary<string, SetMemberBinder> _setMemberBinders = new Dictionary<string, SetMemberBinder>(); 
 
         /// <summary>Попытка конвертации в требуемый тип.</summary>
         /// <param name="binder">Привязчик.</param>

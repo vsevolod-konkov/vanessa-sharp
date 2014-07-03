@@ -83,6 +83,12 @@ namespace VanessaSharp.AcceptanceTests.Utility
             _dataBuilder.AddField<T>(name);
         }
 
+        /// <summary>Определение поля табличных данных для теста.</summary>
+        protected void Field(string name, Type type)
+        {
+            _dataBuilder.AddField(name, type);
+        }
+
         /// <summary>
         /// Определение строки в табличных данных для теста.
         /// </summary>
@@ -177,7 +183,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
             void AssertSql(string expectedSql);
 
-            void AssertSqlParameters(IDictionary<string, object> expectedSqlParamters);
+            void AssertSqlParameters(IDictionary<string, object> expectedSqlParameters);
         }
 
         private sealed class RealModeStrategy : ITestModeStrategy
@@ -191,7 +197,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
             public void AssertSql(string expectedSql)
             {}
 
-            public void AssertSqlParameters(IDictionary<string, object> expectedSqlParamters)
+            public void AssertSqlParameters(IDictionary<string, object> expectedSqlParameters)
             {}
         }
 
@@ -227,9 +233,9 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 Assert.AreEqual(expectedSql, _query.Text);
             }
 
-            public void AssertSqlParameters(IDictionary<string, object> expectedSqlParamters)
+            public void AssertSqlParameters(IDictionary<string, object> expectedSqlParameters)
             {
-                CollectionAssert.AreEquivalent(expectedSqlParamters, _parameters);
+                CollectionAssert.AreEquivalent(expectedSqlParameters, _parameters);
             }
         }
 

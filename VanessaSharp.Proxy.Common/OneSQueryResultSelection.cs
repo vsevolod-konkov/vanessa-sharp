@@ -36,7 +36,7 @@
         /// <param name="fieldName">Имя поля.</param>
         public object Get(string fieldName)
         {
-            return _(fieldName);
+            return this[fieldName];
         }
     }
 }
