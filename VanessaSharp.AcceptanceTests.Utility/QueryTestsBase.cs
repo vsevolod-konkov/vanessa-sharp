@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -174,15 +175,20 @@ namespace VanessaSharp.AcceptanceTests.Utility
             /// <summary>Конструктор.</summary>
             /// <param name="connection">Соединение.</param>
             /// <param name="expectedData">Стратегия режима тестирования.</param>
+            /// <param name="expectedRowIndexes">Индексы строк из ожидаемых данных.</param>
             /// <param name="testModeStrategy">Стратегия режима тестирования</param>
-            public TestingContext(OneSConnection connection, TableData expectedData, ITestModeStrategy testModeStrategy)
+            public TestingContext(
+                OneSConnection connection, TableData expectedData,
+                ReadOnlyCollection<int> expectedRowIndexes, ITestModeStrategy testModeStrategy)
             {
                 Contract.Requires<ArgumentNullException>(connection != null);
                 Contract.Requires<ArgumentNullException>(expectedData != null);
+                Contract.Requires<ArgumentNullException>(expectedRowIndexes != null);
                 Contract.Requires<ArgumentNullException>(testModeStrategy != null);
 
                 _connection = connection;
                 _expectedData = expectedData;
+                _expectedRowIndexes = expectedRowIndexes;
                 _testModeStrategy = testModeStrategy;
             }
 
@@ -233,6 +239,18 @@ namespace VanessaSharp.AcceptanceTests.Utility
             {
                 return _expectedData.Rows[rowIndex][fieldIndex];
             }
+
+            /// <summary>Индексы строк из ожидаемых данных.</summary>
+            public ReadOnlyCollection<int> ExpectedRowIndexes
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<ReadOnlyCollection<int>>() != null);
+
+                    return _expectedRowIndexes;
+                }
+            }
+            private readonly ReadOnlyCollection<int> _expectedRowIndexes;
 
             /// <summary>
             /// Проверка вызовов выполнения методов объекта запроса 1С.
@@ -363,7 +381,8 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 return this;
             }
 
-            private DefinedExpectedDataBuilderState GetNextState(IEnumerable<TExpectedData> rows)
+            private DefinedExpectedDataBuilderState GetNextState(
+                IEnumerable<TExpectedData> rows, ReadOnlyCollection<int> expectedRowIndexes)
             {
                 foreach (var row in rows)
                 {
@@ -373,7 +392,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
                 var tableData = _tableDataBuilder.Build();
                 _testModeStrategy.SetUp(tableData);
-                var testingContext = new TestingContext(_connection, tableData, _testModeStrategy);
+                var testingContext = new TestingContext(_connection, tableData, expectedRowIndexes, _testModeStrategy);
 
                 return new DefinedExpectedDataBuilderState(testingContext, _testingAction);
             }
@@ -394,7 +413,8 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 var expectedData = GetExpectedData();
 
                 return GetNextState(
-                    rowIndexes.Select(i => expectedData[i]));
+                    rowIndexes.Select(i => expectedData[i]),
+                    new ReadOnlyCollection<int>(rowIndexes));
             }
 
             /// <summary>
@@ -405,8 +425,13 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 get
                 {
                     Contract.Ensures(Contract.Result<DefinedExpectedDataBuilderState>() != null);
-                    
-                    return GetNextState(GetExpectedData());
+
+                    var expectedData = GetExpectedData();
+                    var expectedRowIndexes = new ReadOnlyCollection<int>(
+                        Enumerable.Range(0, expectedData.Count).ToArray()
+                        );
+
+                    return GetNextState(expectedData, expectedRowIndexes);
                 }
             }
         }

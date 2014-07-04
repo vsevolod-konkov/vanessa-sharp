@@ -6,7 +6,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
     /// Имя поля в источнике данных 1С.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
-    internal sealed class FieldAttribute : Attribute
+    public sealed class FieldAttribute : Attribute
     {
         public FieldAttribute(string fieldName)
         {

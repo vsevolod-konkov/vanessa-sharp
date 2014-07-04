@@ -51,10 +51,10 @@
     <Compile Include="FirstTests.cs" />
     <Compile Include="GettingDataRecordsTests.cs" />
     <Compile Include="LinqReadDataTestBase.cs" />
-    <Compile Include="LinqTests.cs" />
+    <Compile Include="LinqReadDataTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TupleTests.cs" />
+    <Compile Include="TestDictionary.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VanessaSharp.AcceptanceTests.Utility\VanessaSharp.AcceptanceTests.Utility.csproj">
