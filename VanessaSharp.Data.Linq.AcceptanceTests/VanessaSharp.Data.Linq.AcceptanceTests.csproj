@@ -50,6 +50,7 @@
     </Compile>
     <Compile Include="FirstTests.cs" />
     <Compile Include="GettingDataRecordsTests.cs" />
+    <Compile Include="LinqReadDataRecordsTests.cs" />
     <Compile Include="LinqReadDataTestBase.cs" />
     <Compile Include="LinqReadDataTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />

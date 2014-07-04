@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility;
 using VanessaSharp.AcceptanceTests.Utility.ExpectedData;
@@ -10,11 +8,21 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
     /// <summary>
     /// Тесты на linq-запросы.
     /// </summary>
-    [TestFixture]
+    /// <summary>
+    /// Тестирование получения данных.
+    /// </summary>
+    #if REAL_MODE
+    [TestFixture(TestMode.Real, false)]
+    [TestFixture(TestMode.Real, true)]
+    #endif
+    #if ISOLATED_MODE
+    [TestFixture(TestMode.Isolated, false)]
+    [TestFixture(TestMode.Isolated, true)]
+    #endif
     public sealed class LinqReadDataTests : LinqReadDataTestBase
     {
-        public LinqReadDataTests()
-            : base(TestMode.Real, true)
+        public LinqReadDataTests(TestMode testMode, bool shouldBeOpen) 
+            : base(testMode, shouldBeOpen)
         {
         }
 
@@ -42,7 +50,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                   Char = r.GetChar("СимвольноеПоле")
                               })
 
-                .AssertSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник")
+                .ExpectedSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник")
 
                 .AssertItem<ExpectedTestDictionary>((expected, actual) =>
                     {
@@ -58,6 +66,16 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     })
 
                 .BeginDefineExpectedData
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+                    .Field(d => d.UndoundStringField)
+                    .Field(d => d.CharField)
 
                     .AllRows
 
@@ -90,10 +108,10 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                               }
                 )
 
-                .AssertSql(
+                .ExpectedSql(
                     "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1")
 
-                .AssertSqlParameter("p1", "Тестирование")
+                .ExpectedSqlParameter("p1", "Тестирование")
 
                 .AssertItem<ExpectedTestDictionary>((expected, actual) =>
                     {
@@ -110,7 +128,17 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
                 .BeginDefineExpectedData
 
-                .Rows(0)
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+                    .Field(d => d.UndoundStringField)
+                    .Field(d => d.CharField)
+
+                    .Rows(0)
 
                 .EndDefineExpectedData
 
@@ -142,7 +170,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                UnboundString = r.GetString("НеограниченноеСтроковоеПоле"),
                                Char = r.GetChar("СимвольноеПоле")
                            })
-                .AssertSql(
+                .ExpectedSql(
                     "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле"
                     + " FROM Справочник.ТестовыйСправочник ORDER BY ЦелочисленноеПоле, ДатаПоле DESC, СтроковоеПоле")
 
@@ -161,7 +189,17 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
                 .BeginDefineExpectedData
 
-                .Rows(1, 0)
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+                    .Field(d => d.UndoundStringField)
+                    .Field(d => d.CharField)
+
+                    .Rows(1, 0)
 
                 .EndDefineExpectedData
 
@@ -178,7 +216,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     select e
                 )
 
-                .AssertSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник")
+                .ExpectedSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник")
 
                 .AssertItem<ExpectedTestDictionary>((expected, actual) =>
                     {
@@ -194,6 +232,16 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     })
 
                 .BeginDefineExpectedData
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+                    .Field(d => d.UndoundStringField)
+                    .Field(d => d.CharField)
 
                     .AllRows
 
@@ -222,9 +270,9 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                               }
                 )
 
-                .AssertSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1")
+                .ExpectedSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1")
 
-                .AssertSqlParameter("p1", "Тестирование")
+                .ExpectedSqlParameter("p1", "Тестирование")
 
                 .AssertItem<ExpectedTestDictionary>((expected, actual) =>
                     {
@@ -236,7 +284,15 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     })
 
                 .BeginDefineExpectedData
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+
                     .Rows(0)
+
                 .EndDefineExpectedData
 
             .Run();
@@ -254,7 +310,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                                         
                                         select new { e.StringField, e.IntegerField, e.BooleanField, e.DateField })
 
-                .AssertSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник ORDER BY ЦелочисленноеПоле, ДатаПоле DESC")
+                .ExpectedSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник ORDER BY ЦелочисленноеПоле, ДатаПоле DESC")
 
                 .AssertItem<ExpectedTestDictionary>((expected, actual) =>
                     {
@@ -265,6 +321,11 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     })
 
                 .BeginDefineExpectedData
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
 
                     .Rows(1, 0)
 

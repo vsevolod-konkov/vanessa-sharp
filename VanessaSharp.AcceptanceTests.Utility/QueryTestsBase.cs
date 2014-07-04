@@ -375,10 +375,33 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
                 var info = ExpectedDataHelper.ExtractFieldInfo(fieldAccessor);
 
-                _tableDataBuilder.AddField(info.Name, info.Type);
-                _fieldAccessors.Add(info.Accessor);
+                AddFieldDefinition(info.Name, info.Type, info.Accessor);
 
                 return this;
+            }
+
+            /// <summary>
+            /// Описания поля, чей тип и значения не проверяются.
+            /// </summary>
+            /// <param name="fieldName">Имя поля.</param>
+            public DefiningExpectedDataBuilderState<TExpectedData> AnyField(string fieldName)
+            {
+                Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
+                Contract.Ensures(Contract.Result<DefiningExpectedDataBuilderState<TExpectedData>>() != null);
+
+                AddFieldDefinition(fieldName, typeof(AnyType), d => AnyType.Instance);
+
+                return this;
+            }
+
+            private void AddFieldDefinition(string fieldName, Type fieldType, Func<TExpectedData, object> fieldAccessor)
+            {
+                Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
+                Contract.Requires<ArgumentNullException>(fieldType != null);
+                Contract.Requires<ArgumentNullException>(fieldAccessor != null);
+
+                _tableDataBuilder.AddField(fieldName, fieldType);
+                _fieldAccessors.Add(fieldAccessor);
             }
 
             private DefinedExpectedDataBuilderState GetNextState(

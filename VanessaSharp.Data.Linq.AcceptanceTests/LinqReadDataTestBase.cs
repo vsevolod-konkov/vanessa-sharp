@@ -50,7 +50,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 _queryAction = queryAction;
             }
 
-            public BuilderState2<T> AssertSql(string sql)
+            public BuilderState2<T> ExpectedSql(string sql)
             {
                 return new BuilderState2<T>(_innerState, _queryAction, sql);
             }
@@ -70,7 +70,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 _expectedSql = expectedSql;
             }
 
-            public BuilderState2<T> AssertSqlParameter(string name, object value)
+            public BuilderState2<T> ExpectedSqlParameter(string name, object value)
             {
                 _expectedSqlParameters.Add(name, value);
 
