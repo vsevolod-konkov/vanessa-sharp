@@ -16,35 +16,45 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             : base(testMode, shouldBeOpen)
         { }
 
-        protected new BuilderState0 Test
+        /// <summary>Начало описания теста.</summary>
+        protected new InitBuilderState Test
         {
-            get
-            {
-                return new BuilderState0(base.Test);
-            }
+            get { return new InitBuilderState(base.Test); }
         }
 
-        protected sealed class BuilderState0
+        #region Типы для встроенного DSL языка описания тестов
+
+        /// <summary>Начальное состояние описания теста.</summary>
+        protected new sealed class InitBuilderState
         {
             private readonly QueryTestsBase.InitBuilderState _innerState;
 
-            public BuilderState0(InitBuilderState innerState)
+            public InitBuilderState(QueryTestsBase.InitBuilderState innerState)
             {
                 _innerState = innerState;
             }
 
-            public BuilderState1<T> Query<T>(Func<OneSDataContext, IQueryable<T>> queryAction)
+            /// <summary>Описание тестируемого запроса.</summary>
+            /// <typeparam name="T">
+            /// Тип элементов последовательности возвращаемых запросом.
+            /// </typeparam>
+            /// <param name="queryAction">Функция получения запроса.</param>
+            public QueryDefinedBuilderState<T> Query<T>(Func<OneSDataContext, IQueryable<T>> queryAction)
             {
-                return new BuilderState1<T>(_innerState, queryAction);
+                return new QueryDefinedBuilderState<T>(_innerState, queryAction);
             }
         }
 
-        protected sealed class BuilderState1<T>
+        /// <summary>Состояние после описания тестируемого запроса.</summary>
+        /// <typeparam name="T">
+        /// Тип элементов последовательности возвращаемых запросом.
+        /// </typeparam>
+        protected sealed class QueryDefinedBuilderState<T>
         {
             private readonly QueryTestsBase.InitBuilderState _innerState;
             private readonly Func<OneSDataContext, IQueryable<T>> _queryAction;
 
-            public BuilderState1(InitBuilderState innerState, Func<OneSDataContext, IQueryable<T>> queryAction)
+            public QueryDefinedBuilderState(QueryTestsBase.InitBuilderState innerState, Func<OneSDataContext, IQueryable<T>> queryAction)
             {
                 _innerState = innerState;
                 _queryAction = queryAction;
@@ -63,7 +73,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             private readonly string _expectedSql;
             private readonly Dictionary<string, object> _expectedSqlParameters = new Dictionary<string, object>();
 
-            public BuilderState2(InitBuilderState innerState, Func<OneSDataContext, IQueryable<T>> queryAction, string expectedSql)
+            public BuilderState2(QueryTestsBase.InitBuilderState innerState, Func<OneSDataContext, IQueryable<T>> queryAction, string expectedSql)
             {
                 _innerState = innerState;
                 _queryAction = queryAction;
@@ -130,5 +140,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 }
             }
         }
+
+        #endregion
     }
 }

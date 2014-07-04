@@ -9,7 +9,9 @@ using VanessaSharp.Data.Linq.PredefinedData;
 
 namespace VanessaSharp.Data.Linq.AcceptanceTests
 {
-    
+    /// <summary>
+    /// Тестирование LINQ-запросов для вычитки записей <see cref="OneSDataRecord"/>.
+    /// </summary>
     #if REAL_MODE
     [TestFixture(TestMode.Real, false)]
     [TestFixture(TestMode.Real, true)]
@@ -18,12 +20,14 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
     [TestFixture(TestMode.Isolated, false)]
     [TestFixture(TestMode.Isolated, true)]
     #endif
-    public class LinqReadDataRecordsTests : QueryTestsBase
+    public sealed class LinqReadDataRecordsTests : QueryTestsBase
     {
         public LinqReadDataRecordsTests(TestMode testMode, bool shouldBeOpen)
             : base(testMode, shouldBeOpen)
         {}
 
+        /// <summary>Получение типизированного читателя значения поля по индексу.</summary>
+        /// <param name="typedFieldValueGetters">Массив типизированных читателей полей по индексу.</param>
         private static Func<int, object> GetTypedFieldValueGetterById(params Func<int, object>[] typedFieldValueGetters)
         {
             return index =>
@@ -36,6 +40,9 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             };
         }
 
+        /// <summary>Получение типизированного читателя значения поля по наименованию поля.</summary>
+        /// <param name="ctx">Контекст тестирования.</param>
+        /// <param name="typedFieldValueGetters">Массив типизированных читателей полей по наименованию поля.</param>
         private static Func<int, object> GetTypedFieldValueGetterByName(TestingContext ctx, params Func<string, object>[] typedFieldValueGetters)
         {
             return index =>
@@ -48,127 +55,32 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             };
         }
 
-        private new BuilderState0 Test
+        /// <summary>Получение конвертера занчений по индекс поля.</summary>
+        /// <param name="converters">Конвертеры</param>
+        private static Func<int, OneSValue, object> GetConvertedValue(params Func<OneSValue, object>[] converters)
         {
-           get { return new BuilderState0(base.Test); }
-        }
-
-        protected sealed class BuilderState0
-        {
-            private readonly QueryTestsBase.InitBuilderState _innerState;
-
-            public BuilderState0(InitBuilderState innerState)
-            {
-                _innerState = innerState;
-            }
-
-            public BuilderState1 Query(Func<OneSDataContext, IQueryable<OneSDataRecord>> queryAction)
-            {
-                return new BuilderState1(_innerState, queryAction);
-            }
-        }
-
-        protected sealed class BuilderState1
-        {
-            private readonly QueryTestsBase.InitBuilderState _innerState;
-            private readonly Func<OneSDataContext, IQueryable<OneSDataRecord>> _queryAction;
-
-            public BuilderState1(InitBuilderState innerState, Func<OneSDataContext, IQueryable<OneSDataRecord>> queryAction)
-            {
-                _innerState = innerState;
-                _queryAction = queryAction;
-            }
-
-            public BuilderState2 ExpectedSql(string sql)
-            {
-                return new BuilderState2(_innerState, _queryAction, sql);
-            }
-        }
-
-        protected sealed class BuilderState2
-        {
-            private readonly QueryTestsBase.InitBuilderState _innerState;
-            private readonly Func<OneSDataContext, IQueryable<OneSDataRecord>> _queryAction;
-            private readonly string _expectedSql;
-            private readonly Dictionary<string, object> _expectedSqlParameters = new Dictionary<string, object>();
-
-            public BuilderState2(InitBuilderState innerState, Func<OneSDataContext, IQueryable<OneSDataRecord>> queryAction, string expectedSql)
-            {
-                _innerState = innerState;
-                _queryAction = queryAction;
-                _expectedSql = expectedSql;
-            }
-
-            public BuilderState2 ExpectedSqlParameter(string name, object value)
-            {
-                _expectedSqlParameters.Add(name, value);
-
-                return this;
-            }
-
-            private DefiningExpectedDataBuilderState<ExpectedTestDictionary> DefineActionAndExpectedFields()
-            {
-                return _innerState
-
-                    .Action(
-                        ctx => TestReadRecords(ctx, _queryAction, _expectedSql, _expectedSqlParameters))
-
-                    .BeginDefineExpectedDataFor<ExpectedTestDictionary>()
-
-                    .AnyField(Fields.Catalog.Ref.GetLocalizedName())
-                    .AnyField(Fields.Catalog.Code.GetLocalizedName())
-                    .AnyField(Fields.Catalog.Description.GetLocalizedName())
-                    .AnyField(Fields.Catalog.DeletionMark.GetLocalizedName())
-                    .AnyField(Fields.Catalog.Presentation.GetLocalizedName())
-                    .AnyField(Fields.Catalog.Predefined.GetLocalizedName())
-
-                    .Field(d => d.StringField)
-                    .Field(d => d.IntField)
-                    .Field(d => d.NumberField)
-                    .Field(d => d.BooleanField)
-                    .Field(d => d.DateField)
-                    .Field(d => d.DateTimeField)
-                    .Field(d => d.TimeField)
-                    .Field(d => d.UndoundStringField)
-                    .Field(d => d.CharField);
-            }
-
-            public FinalBuilderState ExpectedRows(params int[] rowIndexes)
-            {
-                return DefineActionAndExpectedFields()
-                    .Rows(rowIndexes)
-                    .EndDefineExpectedData;
-            }
-
-            public FinalBuilderState ExpectAllRows
-            {
-                get
+            return (index, value) =>
                 {
-                    return DefineActionAndExpectedFields()
-                        .AllRows
-                        .EndDefineExpectedData;
-                }
-            }
+                    var conveter = converters[index];
+                    if (conveter == null)
+                        throw new ArgumentOutOfRangeException("index");
+
+                    return conveter(value);
+                };
+
         }
 
-        protected sealed class BuilderState3<TExpectedData>
+        /// <summary>Начало описания теста.</summary>
+        private new InitBuilderState Test
         {
-            private readonly ActionDefinedBuilderState _innerState;
-
-            public BuilderState3(ActionDefinedBuilderState innerState)
-            {
-                _innerState = innerState;
-            }
-
-            public DefiningExpectedDataBuilderState<TExpectedData> BeginDefineExpectedData
-            {
-                get
-                {
-                    return _innerState.BeginDefineExpectedDataFor<TExpectedData>();
-                }
-            }
+           get { return new InitBuilderState(base.Test); }
         }
 
+        /// <summary>Тестирование чтения записей.</summary>
+        /// <param name="ctx">Контекст тестирования.</param>
+        /// <param name="queryAction">Действия получения тестового linq-запроса.</param>
+        /// <param name="expectedSql">Ожидаемый SQL-запрос передаваемый в 1С.</param>
+        /// <param name="expectedSqlParameters">Ожидаемые параметры SQL-запроса передаваемые в 1С.</param>
         private static void TestReadRecords(TestingContext ctx,
                                             Func<OneSDataContext, IQueryable<OneSDataRecord>> queryAction,
                                             string expectedSql, Dictionary<string, object> expectedSqlParameters)
@@ -182,14 +94,18 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 foreach (var record in records)
                 {
                     Assert.Less(recordCounter, ctx.ExpectedRowsCount);
+                    
                     Assert.AreEqual(ctx.ExpectedFieldsCount, record.Fields.Count);
 
+                    // Чтение сырых значений
                     var rawValues = new object[ctx.ExpectedFieldsCount];
                     Assert.AreEqual(ctx.ExpectedFieldsCount, record.GetValues(rawValues));
 
+                    // Чтение обернутых значений
                     var oneSValues = new OneSValue[ctx.ExpectedFieldsCount];
                     Assert.AreEqual(ctx.ExpectedFieldsCount, record.GetValues(oneSValues));
 
+                    // Тестирование чтения полей по отдельности
                     Func<int, object> getStringValueById = index => record.GetString(index);
                     Func<int, object> getDateTimeValueById = index => record.GetDateTime(index);
 
@@ -232,6 +148,24 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                         s => record.GetChar(s)
                         );
 
+                    var converter = GetConvertedValue(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        v => (string)v,
+                        v => (int)v,
+                        v => (double)v,
+                        v => (bool)v,
+                        v => (DateTime)v,
+                        v => (DateTime)v,
+                        v => (DateTime)v,
+                        v => (string)v,
+                        v => (char)v
+                        );
+
 
                     for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
                     {
@@ -240,19 +174,21 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
                         var expectedFieldValue = ctx.ExpectedValue(recordCounter, fieldIndex);
                         var expectedRawFieldValue = QueryResultMockFactory.GetOneSRawValue(expectedFieldValue);
-                        var fieldName = ctx.ExpectedFieldName(fieldIndex);
+                        var expectedFieldName = ctx.ExpectedFieldName(fieldIndex);
 
+                        // Сравнение сырых значений
                         Assert.AreEqual(expectedRawFieldValue, rawValues[fieldIndex]);
                         Assert.AreEqual(expectedRawFieldValue, oneSValues[fieldIndex].RawValue);
                         Assert.AreEqual(expectedRawFieldValue, record.GetValue(fieldIndex).RawValue);
                         Assert.AreEqual(expectedRawFieldValue, record[fieldIndex].RawValue);
-                        Assert.AreEqual(expectedRawFieldValue, record.GetValue(fieldName).RawValue);
-                        Assert.AreEqual(expectedRawFieldValue, record[fieldName].RawValue);
+                        Assert.AreEqual(expectedRawFieldValue, record.GetValue(expectedFieldName).RawValue);
+                        Assert.AreEqual(expectedRawFieldValue, record[expectedFieldName].RawValue);
                         Assert.AreEqual(expectedRawFieldValue, record.GetValue(fieldIndex).RawValue);
-                        Assert.AreEqual(expectedRawFieldValue, record[ctx.ExpectedFieldName(fieldIndex)].RawValue);
                         
+                        // Сравнение значений приведенных к требумому типу
                         Assert.AreEqual(expectedFieldValue, getTypedValueById(fieldIndex));
                         Assert.AreEqual(expectedFieldValue, getTypedValueByName(fieldIndex));
+                        Assert.AreEqual(expectedFieldValue, converter(fieldIndex, record.GetValue(fieldIndex)));
                     }
 
                     ++recordCounter;
@@ -305,5 +241,134 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             .Run();
         }
+
+        #region Типы для внутреннего DSL описания тестов
+
+        /// <summary>Начальное состояние описания теста.</summary>
+        private new sealed class InitBuilderState
+        {
+            /// <summary>Внутреннее состояние.</summary>
+            private readonly QueryTestsBase.InitBuilderState _innerState;
+
+            public InitBuilderState(QueryTestsBase.InitBuilderState innerState)
+            {
+                _innerState = innerState;
+            }
+
+            /// <summary>Описание тестируемого linq-запроса.</summary>
+            /// <param name="queryAction">
+            /// Действие создания запроса.
+            /// </param>
+            public QueryDefinedBuilderState Query(Func<OneSDataContext, IQueryable<OneSDataRecord>> queryAction)
+            {
+                return new QueryDefinedBuilderState(_innerState, queryAction);
+            }
+        }
+
+        /// <summary>
+        /// Состояние после описания тестируюемого запроса.
+        /// </summary>
+        private sealed class QueryDefinedBuilderState
+        {
+            private readonly QueryTestsBase.InitBuilderState _innerState;
+            private readonly Func<OneSDataContext, IQueryable<OneSDataRecord>> _queryAction;
+
+            public QueryDefinedBuilderState(QueryTestsBase.InitBuilderState innerState, Func<OneSDataContext, IQueryable<OneSDataRecord>> queryAction)
+            {
+                _innerState = innerState;
+                _queryAction = queryAction;
+            }
+
+            /// <summary>Описание ожидаемого sql-запроса отправляемого в 1С.</summary>
+            /// <param name="sql">Ожидаемый sql-запрос.</param>
+            public DefiningActionBuilderState ExpectedSql(string sql)
+            {
+                return new DefiningActionBuilderState(_innerState, _queryAction, sql);
+            }
+        }
+
+        /// <summary>
+        /// Состояние описания тестируемого действия.
+        /// </summary>
+        private sealed class DefiningActionBuilderState
+        {
+            private readonly QueryTestsBase.InitBuilderState _innerState;
+            private readonly Func<OneSDataContext, IQueryable<OneSDataRecord>> _queryAction;
+            private readonly string _expectedSql;
+            private readonly Dictionary<string, object> _expectedSqlParameters = new Dictionary<string, object>();
+
+            public DefiningActionBuilderState(QueryTestsBase.InitBuilderState innerState, Func<OneSDataContext, IQueryable<OneSDataRecord>> queryAction, string expectedSql)
+            {
+                _innerState = innerState;
+                _queryAction = queryAction;
+                _expectedSql = expectedSql;
+            }
+
+            /// <summary>Описания ожидаемого параметра sql-запроса отправляемого в 1С.</summary>
+            /// <param name="name">Имя параметра.</param>
+            /// <param name="value">Значения параметра.</param>
+            public DefiningActionBuilderState ExpectedSqlParameter(string name, object value)
+            {
+                _expectedSqlParameters.Add(name, value);
+
+                return this;
+            }
+
+            private DefiningExpectedDataBuilderState<ExpectedTestDictionary> DefineActionAndExpectedFields()
+            {
+                return _innerState
+
+                    .Action(
+                        ctx => TestReadRecords(ctx, _queryAction, _expectedSql, _expectedSqlParameters))
+
+                    .BeginDefineExpectedDataFor<ExpectedTestDictionary>()
+
+                    .AnyField(Fields.Catalog.Ref.GetLocalizedName())
+                    .AnyField(Fields.Catalog.Code.GetLocalizedName())
+                    .AnyField(Fields.Catalog.Description.GetLocalizedName())
+                    .AnyField(Fields.Catalog.DeletionMark.GetLocalizedName())
+                    .AnyField(Fields.Catalog.Presentation.GetLocalizedName())
+                    .AnyField(Fields.Catalog.Predefined.GetLocalizedName())
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+                    .Field(d => d.UndoundStringField)
+                    .Field(d => d.CharField);
+            }
+
+            /// <summary>
+            /// Описание того, какие строки ожидаеются в результате запроса, и в каком порядке.
+            /// </summary>
+            /// <param name="rowIndexes">
+            /// Индексы строки.
+            /// </param>
+            public FinalBuilderState ExpectedRows(params int[] rowIndexes)
+            {
+                return DefineActionAndExpectedFields()
+                    .Rows(rowIndexes)
+                    .EndDefineExpectedData;
+            }
+
+            /// <summary>
+            /// Указывает, что следует ожидать все строки ожидаемых данных,
+            /// в исходном порядке.
+            /// </summary>
+            public FinalBuilderState ExpectAllRows
+            {
+                get
+                {
+                    return DefineActionAndExpectedFields()
+                        .AllRows
+                        .EndDefineExpectedData;
+                }
+            }
+        }
+
+        #endregion
     }
 }
