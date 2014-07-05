@@ -22,6 +22,39 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             get { return new InitBuilderState(base.Test); }
         }
 
+        private static void TestDataQuery<TExpectedRecord, TActualRecord>(
+            TestingContext testingContext, 
+            Func<OneSDataContext, IQueryable<TActualRecord>> queryAction,
+            Action<TExpectedRecord, TActualRecord> testingRecordAction,
+            string expectedSql,
+            IDictionary<string, object> expectedSqlParameters)
+        {
+            using (var dataContext = new OneSDataContext(testingContext.Connection))
+            {
+                var query = queryAction(dataContext);
+
+                var recordCounter = 0;
+
+                var expectedData = ExpectedDataHelper.GetExpectedData<TExpectedRecord>();
+
+                foreach (var actualRecord in query)
+                {
+                    Assert.Less(recordCounter, testingContext.ExpectedRowsCount);
+
+                    var expectedRow = expectedData[testingContext.ExpectedRowIndexes[recordCounter]];
+
+                    testingRecordAction(expectedRow, actualRecord);
+
+                    ++recordCounter;
+                }
+
+                Assert.AreEqual(testingContext.ExpectedRowsCount, recordCounter);
+
+                testingContext.AssertSql(expectedSql);
+                testingContext.AssertSqlParameters(expectedSqlParameters);
+            }
+        }
+
         #region Типы для встроенного DSL языка описания тестов
 
         /// <summary>Начальное состояние описания теста.</summary>
@@ -60,78 +93,83 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 _queryAction = queryAction;
             }
 
-            public BuilderState2<T> ExpectedSql(string sql)
+            /// <summary>
+            /// Описание ожидаемого sql-запроса полученного из linq-запроса, отправляемого в 1С.
+            /// </summary>
+            /// <param name="sql">Ожидаемый sql-запрос.</param>
+            /// <returns></returns>
+            public ActionDefiningBuilderState<T> ExpectedSql(string sql)
             {
-                return new BuilderState2<T>(_innerState, _queryAction, sql);
+                return new ActionDefiningBuilderState<T>(_innerState, _queryAction, sql);
             }
         }
 
-        protected sealed class BuilderState2<T>
+        /// <summary>Состояние определения тестирующего действия.</summary>
+        /// <typeparam name="T">
+        /// Тип элементов последовательности возвращаемых тестовым запросом.
+        /// </typeparam>
+        protected sealed class ActionDefiningBuilderState<T>
         {
             private readonly QueryTestsBase.InitBuilderState _innerState;
             private readonly Func<OneSDataContext, IQueryable<T>> _queryAction;
             private readonly string _expectedSql;
             private readonly Dictionary<string, object> _expectedSqlParameters = new Dictionary<string, object>();
 
-            public BuilderState2(QueryTestsBase.InitBuilderState innerState, Func<OneSDataContext, IQueryable<T>> queryAction, string expectedSql)
+            public ActionDefiningBuilderState(QueryTestsBase.InitBuilderState innerState, Func<OneSDataContext, IQueryable<T>> queryAction, string expectedSql)
             {
                 _innerState = innerState;
                 _queryAction = queryAction;
                 _expectedSql = expectedSql;
             }
 
-            public BuilderState2<T> ExpectedSqlParameter(string name, object value)
+            /// <summary>
+            /// Описание ожидаемого парметра sql-запроса отправляемого в 1С.
+            /// </summary>
+            /// <param name="name">Имя параметра.</param>
+            /// <param name="value">Значение параметра.</param>
+            public ActionDefiningBuilderState<T> ExpectedSqlParameter(string name, object value)
             {
                 _expectedSqlParameters.Add(name, value);
 
                 return this;
             }
 
-            public BuilderState3<TExpectedData> AssertItem<TExpectedData>(Action<TExpectedData, T> testingAction)
+            /// <summary>
+            /// Описание действия
+            /// проверяющего элементы последовательности
+            /// возвращенных тестируемым запросом.
+            /// </summary>
+            /// <typeparam name="TExpectedData">Тип ожидаемых данных.</typeparam>
+            /// <param name="testingAction">Действие проверки.</param>
+            public ActionDefinedBuilderState<TExpectedData> AssertItem<TExpectedData>(Action<TExpectedData, T> testingAction)
             {
-                return new BuilderState3<TExpectedData>(
+                return new ActionDefinedBuilderState<TExpectedData>(
                     _innerState.Action(
                         ctx => TestingAction(ctx, testingAction)));
             }
 
             private void TestingAction<TExpectedData>(TestingContext testingContext, Action<TExpectedData, T> testingAction)
             {
-                using (var dataContext = new OneSDataContext(testingContext.Connection))
-                {
-                    var query = _queryAction(dataContext);
-
-                    var recordCounter = 0;
-
-                    var expectedData = ExpectedDataHelper.GetExpectedData<TExpectedData>();
-
-                    foreach (var entry in query)
-                    {
-                        Assert.Less(recordCounter, testingContext.ExpectedRowsCount);
-
-                        var expectedRow = expectedData[testingContext.ExpectedRowIndexes[recordCounter]];
-
-                        testingAction(expectedRow, entry);
-
-                        ++recordCounter;
-                    }
-
-                    Assert.AreEqual(testingContext.ExpectedRowsCount, recordCounter);
-
-                    testingContext.AssertSql(_expectedSql);
-                    testingContext.AssertSqlParameters(_expectedSqlParameters);
-                }
+                TestDataQuery(testingContext, _queryAction, testingAction, _expectedSql, _expectedSqlParameters);
             }
         }
 
-        protected sealed class BuilderState3<TExpectedData>
+        /// <summary>Состояние определения тестового действия.</summary>
+        /// <typeparam name="TExpectedData">
+        /// Тип ожидаемых данных.
+        /// </typeparam>
+        protected sealed class ActionDefinedBuilderState<TExpectedData>
         {
             private readonly ActionDefinedBuilderState _innerState;
 
-            public BuilderState3(ActionDefinedBuilderState innerState)
+            public ActionDefinedBuilderState(ActionDefinedBuilderState innerState)
             {
                 _innerState = innerState;
             }
 
+            /// <summary>
+            /// Начало опеределения ожидаемых данных.
+            /// </summary>
             public DefiningExpectedDataBuilderState<TExpectedData> BeginDefineExpectedData
             {
                 get
