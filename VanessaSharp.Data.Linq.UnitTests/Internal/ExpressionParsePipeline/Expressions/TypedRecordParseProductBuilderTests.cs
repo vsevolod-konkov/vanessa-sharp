@@ -77,6 +77,36 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
+        /// Тестирование метода <see cref="TypedRecordParseProductBuilder.GetSelectPartParseProductForTypedRecord{T}"/>
+        /// с полем типа <see cref="object"/>.
+        /// </summary>
+        [Test]
+        public void TestGetSelectPartParseProductForTypedRecordWithWeakTyping()
+        {
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeDataWithWeakTyping>("???")
+                    .FieldMap(d => d.Name, "Наименование")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
+
+            // Act
+            var result = _testedInstance.GetSelectPartParseProductForTypedRecord<SomeDataWithWeakTyping>();
+
+            // Assert
+            CollectionAssert.AreEqual(
+                new[] { "Наименование", "Цена" }.Select(fieldName => new SqlFieldExpression(fieldName)),
+                result.Columns
+                );
+
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, d => (string)(OneSValue)d.Name, c => c.ToString(null), "Тест")
+                    .Field(1, d => (decimal)d.Price, c => c.ToDecimal(null), 454.56m)
+                .Test();
+        }
+
+        /// <summary>
         /// Тип тестовой типизированной записи.
         /// </summary>
         public sealed class SomeData
@@ -86,6 +116,17 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public int Id { get; set; }
 
             public decimal Price { get; set; }
+        }
+
+        /// <summary>
+        /// Тип тестовой типизированной записи,
+        /// с полями слабой типизации <see cref="object"/> и <see cref="OneSValue"/>.
+        /// </summary>
+        public sealed class SomeDataWithWeakTyping
+        {
+            public object Name { get; set; }
+
+            public OneSValue Price { get; set; }
         }
     }
 }

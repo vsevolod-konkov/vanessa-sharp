@@ -104,6 +104,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 OneSQueryExpressionHelper.DataRecordGetDecimalMethod,
                 OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
                 OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
+                OneSQueryExpressionHelper.DataRecordGetValueMethod
             };
             
             public DataRecordStrategy(

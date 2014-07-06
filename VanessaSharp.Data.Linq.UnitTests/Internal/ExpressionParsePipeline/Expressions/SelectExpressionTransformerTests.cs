@@ -76,7 +76,36 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование парсинга выражения получение экземпляра анонимного типа выборкой полей из типизированного кортежа.
+        /// Тестирование парсинга выражения получение экземпляра анонимного типа выборкой полей из записи.
+        /// </summary>
+        [Test]
+        public void TestTransformDataRecordGetValue()
+        {
+            // Arrange
+            const string FIRST_FIELD_NAME = "[string_field]";
+            const string SECOND_FIELD_NAME = "[int_field]";
+
+            var selectExpression = Trait.Of<OneSDataRecord>()
+                                        .SelectExpression(r => new { FirstField = r.GetValue(FIRST_FIELD_NAME), SecondField = r.GetValue(SECOND_FIELD_NAME) });
+
+            // Act
+            var result = SelectExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            CollectionAssert.AreEqual(
+                new[] { new SqlFieldExpression(FIRST_FIELD_NAME), new SqlFieldExpression(SECOND_FIELD_NAME) },
+                result.Columns);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, i => (string)i.FirstField, c => c.ToString(null), "Test")
+                    .Field(1, i => (int)i.SecondField, c => c.ToInt32(null), 34)
+                .Test();
+        }
+
+        /// <summary>
+        /// Тестирование парсинга выражения получение экземпляра анонимного типа выборкой полей типизированной записи.
         /// </summary>
         [Test]
         public void TestTransformSelectorTypedRecord()
@@ -113,6 +142,48 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
+        /// Тестирование парсинга выражения получение экземпляра
+        /// анонимного типа выборкой полей типизированной записи
+        /// со слаботипизированными полями типа <see cref="object"/>
+        /// и <see cref="OneSValue"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectorTypedRecordWithWeakTyping()
+        {
+            // Arrange
+            const string ID_FIELD_NAME = "Идентификатор";
+            const string NAME_FIELD_NAME = "Наименование";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeDataWithWeakTyping>("?")
+                    .FieldMap(d => d.Id, ID_FIELD_NAME)
+                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                .End();
+
+            var selectExpression = Trait
+                .Of<SomeDataWithWeakTyping>()
+                .SelectExpression(d => new { d.Id, d.Name });
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            CollectionAssert.AreEquivalent(
+                new[] { new SqlFieldExpression(ID_FIELD_NAME), new SqlFieldExpression(NAME_FIELD_NAME) },
+                result.Columns);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, i => (int)(OneSValue)i.Id, c => c.ToInt32(null), 34)
+                    .Field(1, i => (string)i.Name, c => c.ToString(null), "Test")
+                .Test();
+        }
+
+        #region Тестовые типы
+
+        /// <summary>
         /// Тестовый тип записи.
         /// </summary>
         public sealed class SomeData
@@ -123,5 +194,19 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             public decimal Price;
         }
+
+        /// <summary>
+        /// Тестовый тип записи со слаботипизированными полями.
+        /// </summary>
+        public sealed class SomeDataWithWeakTyping
+        {
+            public object Id;
+
+            public OneSValue Name;
+
+            public decimal Price;
+        }
+
+        #endregion
     }
 }

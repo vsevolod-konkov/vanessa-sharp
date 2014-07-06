@@ -51,7 +51,7 @@ namespace VanessaSharp.Data.Linq
         {
             return ExtractMethodInfo(expression);
         }
-        
+
         /// <summary>
         /// Метод <see cref="OneSQueryMethods.GetRecords"/>.
         /// </summary>
@@ -367,6 +367,12 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _dataRecordGetDateTimeMethod = GetDataRecordMethod(r => r.GetDateTime(""));
 
+        public static MethodInfo DataRecordGetValueMethod
+        {
+            get {  return _dataRecordGetValueMethod; }
+        }
+        private static readonly MethodInfo _dataRecordGetValueMethod = GetDataRecordMethod(r => r.GetValue(""));
+
         #endregion
 
         #region Методы IValueConverter
@@ -478,6 +484,26 @@ namespace VanessaSharp.Data.Linq
                 { typeof(bool), ValueConverterToBooleanMethod },
                 { typeof(DateTime), ValueConverterToDateTimeMethod }
             };
+
+        #endregion
+
+
+        #region Конструктор OneSValue
+
+        /// <summary>Конструктор <see cref="OneSValue"/>.</summary>
+        public static ConstructorInfo OneSValueConstructor
+        {
+            get { return _oneSValueConstructor; }
+        }
+
+        private static readonly ConstructorInfo _oneSValueConstructor = GetOneSValueConstructor();
+
+        private static ConstructorInfo GetOneSValueConstructor()
+        {
+            Expression<Func<OneSValue>> lambda = () => new OneSValue(null, null);
+
+            return ((NewExpression)lambda.Body).Constructor;
+        }
 
         #endregion
 

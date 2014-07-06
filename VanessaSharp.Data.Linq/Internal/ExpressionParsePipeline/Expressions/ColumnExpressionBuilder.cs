@@ -20,6 +20,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             get
             {
                 Contract.Ensures(Contract.Result<ParameterExpression>() != null);
+                Contract.Ensures(Contract.Result<ParameterExpression>().Type == typeof(IValueConverter));
 
                 return _converterParameter;
             }
@@ -32,6 +33,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             get
             {
                 Contract.Ensures(Contract.Result<ParameterExpression>() != null);
+                Contract.Ensures(Contract.Result<ParameterExpression>().Type == typeof(object[]));
 
                 return _valuesParameter;
             }
@@ -63,22 +65,52 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(columnExpression != null);
             Contract.Requires<ArgumentNullException>(columnType != null);
 
-            return GetColumnAccessExpression(
+            if (columnType.IsAssignableFrom(typeof(OneSValue)))
+            {
+                var getOneSValueExpression = GetColumnAccessAndOneSValueExpression(columnExpression);
+                return (columnType == typeof(OneSValue))
+                    ? getOneSValueExpression
+                    : Expression.Convert(getOneSValueExpression, columnType);
+            }
+
+            return GetColumnAccessAndConvertExpression(
                 columnExpression,
                 OneSQueryExpressionHelper.GetValueConvertMethod(columnType));
+        }
+
+        /// <summary>
+        /// Получение выражения получения значения колонки записи с конветацией.
+        /// </summary>
+        /// <param name="columnExpression">Выражение колонки.</param>
+        /// <param name="valueConverterMethod">Метод конвертации к нужному типу.</param>
+        private Expression GetColumnAccessAndConvertExpression(SqlExpression columnExpression, MethodInfo valueConverterMethod)
+        {
+            return Expression.Call(
+                ConverterParameter, 
+                valueConverterMethod, 
+                GetValueExpression(columnExpression));
+        }
+
+        /// <summary>
+        /// Получение выражения получения значения <see cref="OneSValue"/> колонки записи.
+        /// </summary>
+        /// <param name="columnExpression">Выражение колонки.</param>
+        private Expression GetColumnAccessAndOneSValueExpression(SqlExpression columnExpression)
+        {
+            return Expression.New(
+                OneSQueryExpressionHelper.OneSValueConstructor,
+                GetValueExpression(columnExpression),
+                ConverterParameter);
         }
 
         /// <summary>
         /// Получение выражения получения значения колонки записи.
         /// </summary>
         /// <param name="columnExpression">Выражение колонки.</param>
-        /// <param name="valueConverterMethod">Метод конвертации к нужному типу.</param>
-        private Expression GetColumnAccessExpression(SqlExpression columnExpression, MethodInfo valueConverterMethod)
+        private Expression GetValueExpression(SqlExpression columnExpression)
         {
             var index = GetColumnIndex(columnExpression);
-
-            var valueExpression = Expression.ArrayIndex(ValuesParameter, Expression.Constant(index));
-            return Expression.Call(ConverterParameter, valueConverterMethod, valueExpression);
+            return Expression.ArrayIndex(ValuesParameter, Expression.Constant(index));
         }
 
         /// <summary>Получение индекса колонки по его выражению.</summary>

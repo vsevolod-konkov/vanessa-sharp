@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility;
 using VanessaSharp.AcceptanceTests.Utility.ExpectedData;
@@ -207,6 +208,55 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
              .Run();
         }
 
+        /// <summary>
+        /// Тестирование linq-запроса записей <see cref="OneSDataRecord"/>
+        /// с последующей выборкой используя метод <see cref="OneSDataRecord.GetValue(string)"/>.
+        /// </summary>
+        [Test]
+        public void TestSelectGetValueDataRecordsQuery()
+        {
+            Test
+                .Query(dataContext =>
+
+                              from r in dataContext.GetRecords("Справочник.ТестовыйСправочник")
+                              select new
+                              {
+                                  StringField = r.GetValue("СтроковоеПоле"),
+                                  IntegerField = r.GetValue("ЦелочисленноеПоле"),
+                                  NumberField = r.GetValue("ЧисловоеПоле"),
+                                  BooleanField = r.GetValue("БулевоПоле"),
+                                  DateField = r.GetValue("ДатаПоле"),
+                                  CharField = r.GetValue("СимвольноеПоле")
+                              })
+
+                .ExpectedSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник")
+
+                .AssertItem<ExpectedTestDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.StringField, (string)actual.StringField);
+                    Assert.AreEqual(expected.IntField, (int)actual.IntegerField);
+                    Assert.AreEqual(expected.NumberField, (double)actual.NumberField);
+                    Assert.AreEqual(expected.BooleanField, (bool)actual.BooleanField);
+                    Assert.AreEqual(expected.DateField, (DateTime)actual.DateField);
+                    Assert.AreEqual(expected.CharField, (char)actual.CharField);
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.CharField)
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
         /// <summary>Тестирование выполнения запроса получения типизированных записей.</summary>
         [Test]
         public void TestGetTypedRecordsQuery()
@@ -329,6 +379,96 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     .Field(d => d.DateField)
 
                     .Rows(1, 0)
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
+        /// Тестовая типизированная запись с полями имеющие слаботипизированные типы,
+        /// такие как <see cref="object"/> и <see cref="OneSValue"/>.
+        /// </summary>
+        [OneSDataSource("Справочник.ТестовыйСправочник")]
+        public sealed class TestDictionaryWithWeakTyping
+        {
+            [OneSDataColumn("ДатаПоле")]
+            public object DateField;
+
+            [OneSDataColumn("ДатаВремяПоле")]
+            public OneSValue DateTimeField;
+
+            [OneSDataColumn("ВремяПоле")]
+            public DateTime TimeField;
+        }
+
+        /// <summary>
+        /// Тестирование получения типизированных записей
+        /// с полями имеющие слаботипизированные типы.
+        /// </summary>
+        [Test]
+        public void TestGetTypedRecordsWithWeakTyping()
+        {
+            Test
+                .Query(dataContext =>
+                       
+                        from d in dataContext.Get<TestDictionaryWithWeakTyping>() 
+                        select d)
+
+                .ExpectedSql("SELECT ДатаПоле, ДатаВремяПоле, ВремяПоле FROM Справочник.ТестовыйСправочник")
+
+                .AssertItem<ExpectedTestDictionary>((expected, actual) =>
+                    {
+                        Assert.IsInstanceOf<OneSValue>(actual.DateField);
+                        Assert.AreEqual(expected.DateField, (DateTime)(OneSValue)actual.DateField);
+                        
+                        Assert.AreEqual(expected.DateTimeField, (DateTime)actual.DateTimeField);
+
+                        Assert.AreEqual(expected.TimeField, actual.TimeField);
+                    })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
+        /// Тестирование выборки типизированных записей
+        /// с полями имеющие слаботипизированные типы.
+        /// </summary>
+        [Test]
+        public void TestSelectTypedRecordsWithWeakTyping()
+        {
+            Test
+                .Query(dataContext =>
+
+                        from d in dataContext.Get<TestDictionaryWithWeakTyping>()
+                        select new { d.DateField, d.DateTimeField} )
+
+                .ExpectedSql("SELECT ДатаПоле, ДатаВремяПоле FROM Справочник.ТестовыйСправочник")
+
+                .AssertItem<ExpectedTestDictionary>((expected, actual) =>
+                {
+                    Assert.IsInstanceOf<OneSValue>(actual.DateField);
+                    Assert.AreEqual(expected.DateField, (DateTime)(OneSValue)actual.DateField);
+
+                    Assert.AreEqual(expected.DateTimeField, (DateTime)actual.DateTimeField);
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+
+                    .AllRows
 
                 .EndDefineExpectedData
 
