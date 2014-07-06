@@ -20,9 +20,9 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
     [TestFixture(TestMode.Isolated, false)]
     [TestFixture(TestMode.Isolated, true)]
     #endif
-    public sealed class LinqReadDataRecordsTests : QueryTestsBase
+    public sealed class ReadDataRecordsTests : QueryTestsBase
     {
-        public LinqReadDataRecordsTests(TestMode testMode, bool shouldBeOpen)
+        public ReadDataRecordsTests(TestMode testMode, bool shouldBeOpen)
             : base(testMode, shouldBeOpen)
         {}
 

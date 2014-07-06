@@ -100,7 +100,6 @@
     <Compile Include="Mocks\TypeDescriptionMockFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryTestsBase.cs" />
-    <Compile Include="ReadDataTestBase.cs" />
     <Compile Include="TestMode.cs" />
     <Compile Include="TestsBase.cs" />
   </ItemGroup>

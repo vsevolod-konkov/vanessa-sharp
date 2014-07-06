@@ -10,9 +10,9 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
     /// <summary>
     /// Базовый класс для тестов на linq-запросы.
     /// </summary>
-    public abstract class LinqReadDataTestBase : QueryTestsBase
+    public abstract class ReadDataTestBase : QueryTestsBase
     {
-        protected LinqReadDataTestBase(TestMode testMode, bool shouldBeOpen)
+        protected ReadDataTestBase(TestMode testMode, bool shouldBeOpen)
             : base(testMode, shouldBeOpen)
         { }
 
