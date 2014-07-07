@@ -55,7 +55,7 @@ namespace VanessaSharp.Data
 
             /// <summary>Открытие соединение.</summary>
             /// <returns>Объект состояния открытого соединения.</returns>
-            public sealed override StateObject OpenConnection()
+            public sealed override StateObject OpenConnection(ConnectorCreationParams creationParams)
             {
                 throw new InvalidOperationException("Соединение уже открыто.");
             }

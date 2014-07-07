@@ -49,7 +49,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         {
             _connection = (_testMode == TestMode.Real)
                 ? new OneSConnection(TestConnectionString)
-                : new OneSConnection(CreateOneSConnectorFactoryForIsolatedMode()) { ConnectionString = TestConnectionString };
+                : new OneSConnection(CreateOneSConnectorFactoryForIsolatedMode(), null) { ConnectionString = TestConnectionString };
             
             if (_shouldBeOpen)
                 _connection.Open();

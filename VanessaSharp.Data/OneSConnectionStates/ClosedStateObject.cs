@@ -19,12 +19,12 @@ namespace VanessaSharp.Data
 
             /// <summary>Открытие соединение.</summary>
             /// <returns>Объект состояния открытого соединения.</returns>
-            public override StateObject OpenConnection()
+            public override StateObject OpenConnection(ConnectorCreationParams creationParams)
             {
                 if (string.IsNullOrEmpty(ConnectionString))
                     throw new InvalidOperationException("Строка соединения не задана.");
 
-                return OpenStateObject.Create(
+                return OpenStateObject.Create(creationParams,
                     GetConnectionParameters());
             }
 

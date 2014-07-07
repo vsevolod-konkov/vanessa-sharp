@@ -66,6 +66,7 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="ConnectorCreationParams.cs" />
     <Compile Include="CreateWrapParameters.cs" />
     <Compile Include="DisposableWrapper.cs" />
     <Compile Include="IGlobalContext.cs" />

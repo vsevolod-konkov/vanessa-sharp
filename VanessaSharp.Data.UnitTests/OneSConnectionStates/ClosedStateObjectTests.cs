@@ -67,6 +67,8 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
             const string TEST_VERSION = "X.X";
 
             // Arrange
+            var creationParams = new ConnectorCreationParams();
+
             var globalContext = new Mock<IGlobalContext>(MockBehavior.Strict).Object;
             
             var connectorMock = new Mock<IOneSConnector>(MockBehavior.Strict);
@@ -89,7 +91,7 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
                 .Verifiable();
 
             _connectorFactoryMock
-                .Setup(f => f.Create(It.IsAny<string>()))
+                .Setup(f => f.Create(creationParams))
                 .Returns(connectorMock.Object)
                 .Verifiable();
 
@@ -98,10 +100,10 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
             _testedInstance.PoolCapacity = TEST_POOL_CAPACITY;
 
             // Act
-            var openState = _testedInstance.OpenConnection();
+            var openState = _testedInstance.OpenConnection(creationParams);
 
             // Assert
-            _connectorFactoryMock.Verify(f => f.Create(OneSConnectorFactory.DefaultVersion));
+            _connectorFactoryMock.Verify(f => f.Create(creationParams), Times.Once());
 
             connectorMock.VerifySet(f => f.PoolTimeout = (uint)TEST_POOL_TIMEOUT, Times.Once());
             connectorMock.VerifySet(f => f.PoolCapacity = (uint)TEST_POOL_CAPACITY, Times.Once());

@@ -15,6 +15,11 @@ namespace VanessaSharp.Data
         /// <summary>Состояние соединения.</summary>
         private StateObject _state;
 
+        /// <summary>
+        /// Рекомендуемые параметры создания коннектора к информационной базе 1С.
+        /// </summary>
+        private readonly ConnectorCreationParams _connectorCreationParams;
+
         [ContractInvariantMethod]
         private void Invariant()
         {
@@ -28,11 +33,13 @@ namespace VanessaSharp.Data
         /// <summary>Конструктор принимающий состояние соединения.</summary>
         /// <remarks>Для модульных тестов.</remarks>
         /// <param name="state">Состояние соединения</param>
-        internal OneSConnection(StateObject state)
+        /// <param name="connectorCreationParams">Рекомендуемые параметры создания коннектора к информационной базе 1С.</param>
+        internal OneSConnection(StateObject state, ConnectorCreationParams connectorCreationParams)
         {
             Contract.Requires<ArgumentNullException>(state != null);
 
             _state = state;
+            _connectorCreationParams = connectorCreationParams;
         }
 
         /// <summary>Глобальный контекст.</summary>
@@ -59,13 +66,21 @@ namespace VanessaSharp.Data
         
         /// <summary>Конструктор принимающий фабрику подключений.</summary>
         /// <param name="connectorFactory">Фабрика подключений.</param>
-        public OneSConnection(IOneSConnectorFactory connectorFactory)
-            : this(StateObject.CreateDefault(connectorFactory))
+        /// <param name="connectorCreationParams">Рекомендуемые параметры создания коннектора к информационной базе 1С.</param>
+        public OneSConnection(
+            IOneSConnectorFactory connectorFactory, ConnectorCreationParams connectorCreationParams)
+            : this(StateObject.CreateDefault(connectorFactory), connectorCreationParams)
         {}
 
-        /// <summary>Конструктор.</summary>
+        /// <summary>Конструктор принимающий только параметры создания коннектора к 1С.</summary>
+        /// <param name="connectorCreationParams">Рекомендуемые параметры создания коннектора к информационной базе 1С.</param>
+        public OneSConnection(ConnectorCreationParams connectorCreationParams)
+            : this((IOneSConnectorFactory)null, connectorCreationParams)
+        { }
+
+        /// <summary>Конструктор без аргументов.</summary>
         public OneSConnection()
-            : this((IOneSConnectorFactory)null)
+            : this((ConnectorCreationParams)null)
         {}
 
         /// <summary>Конструктор.</summary>
@@ -189,7 +204,7 @@ namespace VanessaSharp.Data
         /// </remarks>
         public override void Open()
         {
-            ChangeState(_state.OpenConnection());
+            ChangeState(_state.OpenConnection(_connectorCreationParams));
         }
 
         /// <summary>Версия сервера.</summary>

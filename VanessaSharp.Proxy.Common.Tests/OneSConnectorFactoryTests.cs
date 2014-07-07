@@ -19,7 +19,7 @@ namespace VanessaSharp.Proxy.Common.Tests
             {
                 appDomain.DoCallBack(() =>
                 {
-                    var connector = OneSConnectorFactory.Default.Create("8.2");
+                    var connector = OneSConnectorFactory.Default.Create(new ConnectorCreationParams { Version = "8.2"});
                     connector.Dispose();
                 });
             }
@@ -32,14 +32,14 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// <summary>Копирование файлов сборки.</summary>
         private static void CopyProxyAssemblyFiles()
         {
-            const string sourcePath = @"..\..\..\VanessaSharp.Proxy.V82\bin";
+            const string SOURCE_PATH = @"..\..\..\VanessaSharp.Proxy.V82\bin";
             var assemblyFiles = new[] { 
                                         "VanessaSharp.Proxy.V82.dll",
                                       };
             var parentDirectory = new DirectoryInfo(@".").Name;
             
             foreach (var assemblyFile in assemblyFiles)
-                File.Copy(Path.Combine(sourcePath, parentDirectory, assemblyFile), assemblyFile, true);
+                File.Copy(Path.Combine(SOURCE_PATH, parentDirectory, assemblyFile), assemblyFile, true);
         }
     }
 }

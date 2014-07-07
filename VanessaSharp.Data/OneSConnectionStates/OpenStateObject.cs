@@ -18,15 +18,16 @@ namespace VanessaSharp.Data
             { }
 
             /// <summary>Подключение к базе 1С.</summary>
+            /// <param name="creationParams">Рекомендуемые параметры создания коннектора к информационной базе 1С.</param>
             /// <param name="parameters">Параметры подключения.</param>
             /// <param name="version">Версия.</param>
-            private static IGlobalContext Connect(ConnectionParameters parameters, out string version)
+            private static IGlobalContext Connect(ConnectorCreationParams creationParams, ConnectionParameters parameters, out string version)
             {
                 Contract.Requires<ArgumentNullException>(parameters != null);
 
                 var connectorFactory = parameters.ConnectorFactory ?? OneSConnectorFactory.Default;
 
-                using (var connector = connectorFactory.Create(OneSConnectorFactory.DefaultVersion))
+                using (var connector = connectorFactory.Create(creationParams))
                 {
                     connector.PoolTimeout = (uint)parameters.PoolTimeout;
                     connector.PoolCapacity = (uint)parameters.PoolCapacity;
@@ -37,13 +38,14 @@ namespace VanessaSharp.Data
             }
 
             /// <summary>Создание экземпляра состояния.</summary>
+            /// <param name="creationParams">Рекомендуемые параметры создания коннектора к информационной базе 1С.</param>
             /// <param name="parameters">Параметры подключения.</param>
-            public static StateObject Create(ConnectionParameters parameters)
+            public static StateObject Create(ConnectorCreationParams creationParams, ConnectionParameters parameters)
             {
                 Contract.Requires<ArgumentNullException>(parameters != null);
 
                 string version;
-                var globalContext = Connect(parameters, out version);
+                var globalContext = Connect(creationParams, parameters, out version);
                 try
                 {
                     return new OpenStateObject(parameters, globalContext, version);

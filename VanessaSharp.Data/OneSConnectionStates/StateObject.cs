@@ -39,7 +39,7 @@ namespace VanessaSharp.Data
 
             /// <summary>Открытие соединение.</summary>
             /// <returns>Объект состояния открытого соединения.</returns>
-            public abstract StateObject OpenConnection();
+            public abstract StateObject OpenConnection(ConnectorCreationParams creationParams);
 
             /// <summary>Закрытие соединения.</summary>
             /// <returns>Объект закрытого состояния.</returns>
@@ -134,7 +134,7 @@ namespace VanessaSharp.Data
                 : base(connectorFactory)
             { }
 
-            public override StateObject OpenConnection()
+            public override StateObject OpenConnection(ConnectorCreationParams creationParams)
             {
                 Contract.Ensures(Contract.Result<StateObject>() != null);
 

@@ -15,7 +15,7 @@ namespace VanessaSharp.Proxy.Common.Tests.Integration
         [SetUp]
         public void SetUp()
         {
-            _connector = OneSConnectorFactory.Create();
+            _connector = OneSConnectorFactory.Default.Create(null);
         }
 
         /// <summary>Очистка ресурсов теста.</summary>

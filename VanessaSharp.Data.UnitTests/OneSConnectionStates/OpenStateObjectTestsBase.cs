@@ -86,7 +86,7 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
         [Test]
         public void TestOpenConnection()
         {
-            Assert.Throws<InvalidOperationException>(() => TestedInstance.OpenConnection());
+            Assert.Throws<InvalidOperationException>(() => TestedInstance.OpenConnection(new ConnectorCreationParams()));
         }
 
         /// <summary>

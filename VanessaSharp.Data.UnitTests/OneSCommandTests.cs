@@ -138,7 +138,7 @@ namespace VanessaSharp.Data.UnitTests
         {
             // Arrange
             var stateMock = new Mock<MockConnectionState>(MockBehavior.Strict);
-            var connection = new OneSConnection(stateMock.Object);
+            var connection = new OneSConnection(stateMock.Object, null);
             var transaction = (isNullTransaction)
                 ? null
                 : new OneSTransaction(connection);

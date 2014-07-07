@@ -21,6 +21,8 @@ namespace VanessaSharp.Data.UnitTests
         /// <summary>Тестируемый экземпляр соединения.</summary>
         private OneSConnection _testedInstance;
 
+        private ConnectorCreationParams _connectorCreationParams;
+
         /// <summary>Тестирование получения свойства.</summary>
         /// <typeparam name="TProperty">Тип свойства.</typeparam>
         /// <param name="propertyValue">Значение тестируемого свойства.</param>
@@ -68,7 +70,8 @@ namespace VanessaSharp.Data.UnitTests
         public void SetUp()
         {
             _stateMock = new Mock<MockConnectionState>(MockBehavior.Strict);
-            _testedInstance = new OneSConnection(_stateMock.Object);
+            _connectorCreationParams = new ConnectorCreationParams();
+            _testedInstance = new OneSConnection(_stateMock.Object, _connectorCreationParams);
         }
 
         /// <summary>Тестирование получения свойства <see cref="OneSConnection.ConnectionString"/>.</summary>
@@ -136,8 +139,7 @@ namespace VanessaSharp.Data.UnitTests
                 .Returns(startState);
             _stateMock
                 .Setup(changeStateAction)
-                .Returns(endStateMock.Object)
-                .Verifiable();
+                .Returns(endStateMock.Object);
 
             // Act
             testedConnectionAction(_testedInstance);
@@ -167,7 +169,7 @@ namespace VanessaSharp.Data.UnitTests
                 ConnectionState.Closed,
                 ConnectionState.Open,
                 c => c.Open(),
-                o => o.OpenConnection()
+                o => o.OpenConnection(_connectorCreationParams)
                 );
         }
 

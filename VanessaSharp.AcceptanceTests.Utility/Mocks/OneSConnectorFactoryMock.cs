@@ -10,13 +10,12 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
     {
         /// <summary>Событие запроса на создания объекта 1С.</summary>
         public event EventHandler<NewOneSObjectEventArgs> NewOneSObjectAsking;
-        
-        /// <summary>Создание соединения в зависимости от версии.</summary>
-        /// <param name="version">Версия.</param>
+
+        /// <summary>Создание коннектора.</summary>
+        /// <param name="creationParams">Параметры-рекомендации создания коннектора.</param>
         /// <returns>Возвращает объект коннектора к информационной БД определенной версии.</returns>
-        /// <exception cref="ArgumentNullException">В случае, если значение <paramref name="version"/> было пустым.</exception>
-        /// <exception cref="InvalidOperationException">В случае, если фабрика не может создать экземпляр коннектора заданной версии.</exception>
-        public IOneSConnector Create(string version)
+        /// <exception cref="InvalidOperationException">В случае, если фабрика не смогла создать экземпляр коннектора.</exception>
+        public IOneSConnector Create(ConnectorCreationParams creationParams)
         {
             return new OneSConnectorMock(AskOneSNewObject);
         }
