@@ -151,5 +151,19 @@ namespace VanessaSharp.Data.Linq
         {
             get { return _rawValue; }
         }
+
+        /// <summary>
+        /// Возвращает объект <see cref="T:System.String"/>, который представляет текущий объект <see cref="T:System.Object"/>.
+        /// </summary>
+        /// <returns>
+        /// Объект <see cref="T:System.String"/>, представляющий текущий объект <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override string ToString()
+        {
+            return IsNull
+                       ? "[null]"
+                       : RawValue.ToString();
+        }
     }
 }

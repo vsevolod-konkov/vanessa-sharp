@@ -172,6 +172,10 @@
       <Project>{F159DEE7-6216-4335-82DF-556FF74084A1}</Project>
       <Name>VanessaSharp.Data</Name>
     </ProjectReference>
+    <ProjectReference Include="..\VanessaSharp.Proxy.Common\VanessaSharp.Proxy.Common.csproj">
+      <Project>{F584A6A1-469D-4755-9BE0-26241F56E452}</Project>
+      <Name>VanessaSharp.Proxy.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

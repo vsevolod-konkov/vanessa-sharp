@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using VanessaSharp.Proxy.Common;
 using NUnit.Framework;
 
 namespace VanessaSharp.Proxy.Common.Tests
@@ -36,7 +35,6 @@ namespace VanessaSharp.Proxy.Common.Tests
             const string sourcePath = @"..\..\..\VanessaSharp.Proxy.V82\bin";
             var assemblyFiles = new[] { 
                                         "VanessaSharp.Proxy.V82.dll",
-                                        "Interop.V82.dll" 
                                       };
             var parentDirectory = new DirectoryInfo(@".").Name;
             

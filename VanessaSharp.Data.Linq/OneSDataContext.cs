@@ -29,6 +29,16 @@ namespace VanessaSharp.Data.Linq
             Contract.Requires<ArgumentNullException>(connection != null);
         }
 
+        /// <summary>Конструктор.</summary>
+        /// <param name="connectionString">
+        /// Строка соединения к информационной базе 1С.
+        /// </param>
+        public OneSDataContext(string connectionString)
+            : this(new OneSConnection(connectionString))
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(connectionString));
+        }
+
         [ContractInvariantMethod]
         private void Invariant()
         {

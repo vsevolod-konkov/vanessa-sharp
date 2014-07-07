@@ -1,39 +1,20 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using System.Runtime.InteropServices;
+﻿using VanessaSharp.Interop.V82;
 using VanessaSharp.Proxy.Common;
-using V82;
 
 namespace VanessaSharp.Proxy.V82
 {
     /// <summary>Реализация интерфейса <see cref="IOneSConnector"/> для версии 1С 8.2.</summary>
-    public sealed class OneSConnector : IOneSConnector
+    public sealed class OneSConnector : OneSConnectorBase, IOneSConnector
     {
-        /// <summary>COM-соединитель с 1С.</summary>
-        private readonly DisposableWrapper<IV8COMConnector2> _comConnector;
-
         /// <summary>Конструктор принимающий COM-объект соединителя к 1С.</summary>
         /// <param name="comConnector">COM-объект соединителя к 1С.</param>
-        internal OneSConnector(IV8COMConnector2 comConnector)
-        {
-            Contract.Requires<ArgumentNullException>(comConnector != null, "comConnector не может быть null");
-
-            _comConnector = comConnector.WrapToDisposable();
-        }
+        internal OneSConnector(IV8COMConnector2 comConnector) : base(comConnector)
+        {}
 
         /// <summary>Создание COM-соединителя с 1С.</summary>
         private static IV8COMConnector2 CreateComConnector()
         {
-            try
-            {
-                return new COMConnectorClass();
-            }
-            catch (COMException e)
-            {
-                throw new InvalidOperationException(string.Format(
-                    "Не удалось создать экземпляр COM-объекта 1С. Убедитесь что 1С установлена на машине. Исходная ошибка: \"{0}\".", 
-                    e.Message), e);
-            }
+            return GetNewComConnector(() => new COMConnector());
         }
 
         /// <summary>Конструктор без аргументов.</summary>
@@ -41,50 +22,25 @@ namespace VanessaSharp.Proxy.V82
             : this(CreateComConnector())
         {}
 
-        /// <summary>Соединение с информационной базой.</summary>
-        /// <param name="connectString">Строка соединения.</param>
-        /// <returns>Возвращает объект глобального контекста.</returns>
-        public IGlobalContext Connect(string connectString)
+        /// <summary>
+        /// RCW-обертка соединителя к информационной БД 1С.
+        /// </summary>
+        private new IV8COMConnector2 ComConnector
         {
-            Contract.Requires<ArgumentNullException>(!string.IsNullOrEmpty(connectString));
-            
-            var result = InvokeConnect(connectString);
-            if (result == null)
-                throw new InvalidOperationException("Соединитель к 1С вернул null при соединении.");
-
-            return new OneSGlobalContext(result);
+            get { return (IV8COMConnector2)base.ComConnector; }
         }
 
         /// <summary>
-        /// Нижележащий объект.
-        /// </summary>
-        private IV8COMConnector2 ComConnector
-        {
-            get { return _comConnector.Object; }
-        }
-
-        /// <summary>
-        /// Выполнение соединения с информационной базой 1С.
+        /// Выполнение метода соединения объекта <see cref="OneSConnectorBase.ComConnector"/>.
         /// </summary>
         /// <param name="connectString">Строка соединения.</param>
-        /// <returns>Возвращает объект глобального контекста.</returns>
-        private dynamic InvokeConnect(string connectString)
+        protected override object ComConnect(string connectString)
         {
-            try
-            {
-                return ComConnector.Connect(connectString);
-            }
-            catch (COMException e)
-            {
-                throw new InvalidOperationException(
-                    string.Format(
-                        "Ошибка подключения к информационной базе 1C. Строка соединения: \"{0}\". Код ошибки: \"{1}\". Сообщение: \"{2}\".",
-                        connectString, e.ErrorCode, e.Message), e);
-            }
+            return ComConnector.Connect(connectString);
         }
 
         /// <summary>Время ожидания подключения.</summary>
-        public uint PoolTimeout
+        public override uint PoolTimeout
         {
             get
             {
@@ -97,7 +53,7 @@ namespace VanessaSharp.Proxy.V82
         }
 
         /// <summary>Мощность подключения.</summary>
-        public uint PoolCapacity
+        public override uint PoolCapacity
         {
             get
             {
@@ -109,14 +65,8 @@ namespace VanessaSharp.Proxy.V82
             }
         }
 
-        /// <summary>Освобождение ресурсов.</summary>
-        public void Dispose()
-        {
-            _comConnector.Dispose();
-        }
-
-        /// <summary>Версия 1С.</summary>
-        string IOneSConnector.Version
+        /// <summary>Версия.</summary>
+        public override string Version
         {
             get { return "8.2"; }
         }

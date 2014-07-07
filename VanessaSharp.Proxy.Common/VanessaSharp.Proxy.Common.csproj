@@ -94,6 +94,7 @@
     <Compile Include="IOneSType.cs" />
     <Compile Include="OneSArray.cs" />
     <Compile Include="OneSArrayOfT.cs" />
+    <Compile Include="OneSConnectorBase.cs" />
     <Compile Include="OneSConnectorFactory.cs" />
     <Compile Include="OneSContextBoundObject.cs" />
     <Compile Include="OneSGlobalContext.cs" />

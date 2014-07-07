@@ -41,6 +41,10 @@
       <HintPath>..\externals\NUnit\framework\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="VanessaSharp.Interop.V82">
+      <HintPath>..\VanessaSharp.Proxy.V82\VanessaSharp.Interop.V82.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\ProductInfo.cs">
@@ -64,17 +68,6 @@
       <Project>{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}</Project>
       <Name>VanessaSharp.Proxy.V82</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="V82">
-      <Guid>{2EC2A380-9200-4067-AE35-A6586D1B2888}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
-    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

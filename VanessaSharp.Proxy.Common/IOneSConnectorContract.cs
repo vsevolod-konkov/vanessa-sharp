@@ -9,7 +9,7 @@ namespace VanessaSharp.Proxy.Common
     {
         IGlobalContext IOneSConnector.Connect(string connectString)
         {
-            Contract.Requires<ArgumentException>(!string.IsNullOrEmpty(connectString), "Строка соединения не может быть пустой.");
+            Contract.Requires<ArgumentException>(!string.IsNullOrWhiteSpace(connectString), "Строка соединения не может быть пустой.");
             Contract.Ensures(Contract.Result<IGlobalContext>() != null);
 
             return null;

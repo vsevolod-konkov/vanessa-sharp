@@ -4,7 +4,7 @@ using NUnit.Framework;
 using System;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
-using V82;
+using VanessaSharp.Interop.V82;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Proxy.V82.Tests
@@ -20,7 +20,7 @@ namespace VanessaSharp.Proxy.V82.Tests
         /// <param name="action">Дополнительное действие над моком соединения.</param>
         /// <param name="mockComConnector">Мок.</param>
         private OneSConnector InitTestingInstanceForConnect(
-            Action<ISetup<IV8COMConnector2, dynamic>> action, out Mock<IV8COMConnector2> mockComConnector)
+            Action<ISetup<IV8COMConnector2, object>> action, out Mock<IV8COMConnector2> mockComConnector)
         {
             mockComConnector = new Mock<IV8COMConnector2>();
             var setup = mockComConnector.Setup(c => c.Connect(It.IsAny<string>()));
