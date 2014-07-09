@@ -3,7 +3,8 @@ using System.Linq;
 
 namespace VanessaSharp.Data.Linq
 {
-    // TODO Прототип
+#if PROTOTYPE
+    
     public class OneSCatalogDataContext
     {
         public IQueryable<OneSDataRecord> GetRecords(string tableName)
@@ -21,4 +22,6 @@ namespace VanessaSharp.Data.Linq
             throw new NotImplementedException();
         }
     }
+
+#endif
 }

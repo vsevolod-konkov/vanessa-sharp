@@ -4,7 +4,8 @@ using System.Reflection;
 
 namespace VanessaSharp.Data.Linq
 {
-    // TODO Прототип
+#if PROTOTYPE
+
     public sealed class OneSTypeMapperBuilder
     {
         public OneSDataSourceMapperBuilder<T> AddSource<T>(string sourceName)
@@ -29,4 +30,6 @@ namespace VanessaSharp.Data.Linq
             throw new NotImplementedException();
         }
     }
+
+#endif
 }

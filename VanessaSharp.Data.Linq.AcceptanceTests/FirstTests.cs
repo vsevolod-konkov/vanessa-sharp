@@ -5,6 +5,7 @@ using VanessaSharp.AcceptanceTests.Utility;
 
 namespace VanessaSharp.Data.Linq.AcceptanceTests
 {
+#if PROTOTYPE
     [TestFixture]
     public sealed class FirstTests
     {
@@ -143,6 +144,5 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             public char Char;
         }
     }
-
-    
+#endif
 }

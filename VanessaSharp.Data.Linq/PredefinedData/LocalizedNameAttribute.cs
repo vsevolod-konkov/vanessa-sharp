@@ -2,7 +2,6 @@
 
 namespace VanessaSharp.Data.Linq.PredefinedData
 {
-    // TODO: Временное решение, связанное с локализацией названий таблиц и полей
     /// <summary>Атрибут локализованного имени.</summary>
     internal sealed class LocalizedNameAttribute : Attribute
     {

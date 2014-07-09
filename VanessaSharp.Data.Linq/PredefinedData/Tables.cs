@@ -1,6 +1,6 @@
 ﻿namespace VanessaSharp.Data.Linq.PredefinedData
 {
-    // TODO: 
+#if PROTOTYPE
     /// <summary>Виды источников данных 1С.</summary>
     internal enum Tables
     {
@@ -13,4 +13,5 @@
         [LocalizedName("Справочник")]
         Catalog,
     }
+#endif
 }

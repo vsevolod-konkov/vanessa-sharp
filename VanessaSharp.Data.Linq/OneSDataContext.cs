@@ -93,10 +93,11 @@ namespace VanessaSharp.Data.Linq
             return _queryProvider.CreateQueryOf<T>();
         }
 
-        // TODO Прототип
+#if PROTOTYPE
         public OneSCatalogDataContext Catalogs
         {
             get { throw new NotImplementedException(); }
         }
+#endif
     }
 }

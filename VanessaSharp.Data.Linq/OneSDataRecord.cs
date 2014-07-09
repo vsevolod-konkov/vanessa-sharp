@@ -301,11 +301,14 @@ namespace VanessaSharp.Data.Linq
             }
         }
 
-        // TODO: Прототип
+#if PROTOTYPE
+        
         public dynamic AsDynamic()
         {
             throw new NotImplementedException();
         }
+
+#endif
 
         /// <summary>Коллекция полей.</summary>
         public IList<string> Fields

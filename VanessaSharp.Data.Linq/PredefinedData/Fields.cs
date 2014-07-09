@@ -2,10 +2,11 @@
 
 namespace VanessaSharp.Data.Linq.PredefinedData
 {
-    // TODO: Прототип
     /// <summary>Поля.</summary>
     public static class Fields
     {
+        /// <summary>Получение локализованного значения.</summary>
+        /// <param name="value">Значение.</param>
         public static string GetLocalizedName(this Catalog value)
         {
             var enumType = typeof(Catalog);
