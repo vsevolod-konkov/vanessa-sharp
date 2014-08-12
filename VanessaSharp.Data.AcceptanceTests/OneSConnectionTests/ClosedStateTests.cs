@@ -39,6 +39,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
             Assert.AreEqual(TestCatalog, TestedInstance.Database);
             Assert.AreEqual(TestCatalog, TestedInstance.DataSource);
             Assert.AreEqual(0, TestedInstance.ConnectionTimeout);
+            Assert.IsNull(TestedInstance.CurrentTransaction);
         }
 
         /// <summary>
@@ -130,6 +131,14 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
             {
                 TestedInstance.IsExclusiveMode = true;
             });
+        }
+
+        /// <summary>Тестирование метода <see cref="OneSConnection.BeginTransaction()"/>.</summary>
+        [Test]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestBeginTransaction()
+        {
+            TestedInstance.BeginTransaction();
         }
     }
 }

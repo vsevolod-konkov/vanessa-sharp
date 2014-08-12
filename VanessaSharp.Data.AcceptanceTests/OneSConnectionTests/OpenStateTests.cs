@@ -53,6 +53,8 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
             Assert.IsNotEmpty(TestedInstance.ServerVersion);
 
             Assert.IsFalse(TestedInstance.IsExclusiveMode);
+
+            Assert.IsNull(TestedInstance.CurrentTransaction);
         }
 
         /// <summary>Тестирование поведения свойства <see cref="OneSConnection.PoolTimeout"/>.</summary>

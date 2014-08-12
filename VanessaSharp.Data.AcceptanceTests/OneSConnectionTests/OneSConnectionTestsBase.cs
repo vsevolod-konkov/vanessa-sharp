@@ -19,11 +19,5 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSConnectionTests
         {
             get { return base.Connection; }
         }
-
-        /// <summary>Закрытие свойства.</summary>
-        private new OneSConnection Connection
-        {
-            get { return base.Connection; }
-        }
     }
 }

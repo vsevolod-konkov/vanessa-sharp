@@ -124,6 +124,7 @@
     <Compile Include="OneSParameterCollectionTests.cs" />
     <Compile Include="OneSParameterTests\InitTests.cs" />
     <Compile Include="OneSParameterTests\ChangePropertiesTests.cs" />
+    <Compile Include="OneSTransactionTests.cs" />
     <Compile Include="TestCheckNotImplementedAttribute.cs" />
     <Compile Include="OneSCommandTests\FailedExecuteTests.cs" />
     <Compile Include="OneSCommandTests\GeneralExecuteTestsBase.cs" />
