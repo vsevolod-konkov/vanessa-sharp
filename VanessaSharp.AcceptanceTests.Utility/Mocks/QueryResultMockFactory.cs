@@ -80,20 +80,9 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                 .SetupGet(c => c.Name)
                 .Returns(field.Name);
 
-            var getter = columnMock
-                .SetupGet(c => c.ValueType);
-
-            if (field.Type == typeof(AnyType))
-            {
-                getter
-                    .Throws(new InvalidOperationException(
-                        string.Format("Неизвестный тип колонки \"{0}\".", field.Name)));
-            }
-            else
-            {
-                getter
-                    .Returns(TypeDescriptionMockFactory.Create(field.Type));
-            }
+            columnMock
+                .SetupGet(c => c.ValueType)
+                .Returns(TypeDescriptionMockFactory.Create(field.Type));
 
             return columnMock.Object;
         }

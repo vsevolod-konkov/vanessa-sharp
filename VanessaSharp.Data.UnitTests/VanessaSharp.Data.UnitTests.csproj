@@ -50,6 +50,9 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="ConnectionStringHelperTests.cs" />
+    <Compile Include="DataReading\DataReaderFieldInfoCollectionLoaderTests.cs" />
+    <Compile Include="DataReading\DataReaderFieldInfoFixedCollectionTests.cs" />
+    <Compile Include="DataReading\LazyDataReaderFieldInfoCollectionTests.cs" />
     <Compile Include="DisposableMock.cs" />
     <Compile Include="ExecuteReaderTests.cs" />
     <Compile Include="IDisposableMock.cs" />

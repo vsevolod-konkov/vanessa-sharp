@@ -1,6 +1,7 @@
 ﻿using System;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
@@ -12,15 +13,19 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     /// </summary>
     public abstract class OpenStateTestBase : OneSDataReaderComponentTestBase
     {
-        /// <summary>Мок для <see cref="ITypeDescriptionConverter"/>.</summary>
-        internal Mock<ITypeDescriptionConverter> ValueTypeConverterMock { get; private set; }
+        /// <summary>
+        /// Мок для <see cref="IDataReaderFieldInfoCollection"/>.
+        /// </summary>
+        internal Mock<IDataReaderFieldInfoCollection> DataReaderFieldInfoCollectionMock { get; private set; }
 
-        /// <summary>Создание тестового экземпляра <see cref="ITypeDescriptionConverter"/>.</summary>
-        internal sealed override ITypeDescriptionConverter CreateValueTypeConverter()
+        /// <summary>
+        /// Создание тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
+        /// </summary>
+        internal sealed override IDataReaderFieldInfoCollection CreateDataReaderFieldInfoCollection()
         {
-            ValueTypeConverterMock = new Mock<ITypeDescriptionConverter>(MockBehavior.Strict);
+            DataReaderFieldInfoCollectionMock = new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict);
 
-            return ValueTypeConverterMock.Object;
+            return DataReaderFieldInfoCollectionMock.Object;
         }
 
         /// <summary>Мок для <see cref="IValueConverter"/>.</summary>
@@ -38,25 +43,14 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         protected Mock<IQueryResult> QueryResultMock { get; private set; }
 
         /// <summary>
-        /// Проверка вызова <see cref="IDisposable.Dispose"/> 
-        /// у <see cref="QueryResultColumnsMock"/>.
-        /// </summary>
-        protected void VerifyColumnsDispose()
-        {
-            VerifyDispose(QueryResultColumnsMock);
-        }
-
-        /// <summary>
-        /// Установка рeализации <see cref="IQueryResultColumnsCollection.Count"/>
-        /// у мока <see cref="QueryResultColumnsMock"/>.
+        /// Установка рeализации <see cref="IQueryResultColumnsCollection.Count"/>.
         /// </summary>
         /// <param name="columnsCount">Количество колонок.</param>
         protected void SetupColumnsGetCount(int columnsCount)
         {
-            QueryResultColumnsMock
-                .SetupGet(cs => cs.Count)
-                .Returns(columnsCount)
-                .Verifiable();
+            DataReaderFieldInfoCollectionMock
+                .SetupGet(c => c.Count)
+                .Returns(columnsCount);
         }
 
         /// <summary>
@@ -77,20 +71,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             return CreateQueryResultSelectionMock(QueryResultMock);
         }
 
-        /// <summary>Мок для <see cref="IQueryResultColumnsCollection"/>.</summary>
-        protected Mock<IQueryResultColumnsCollection> QueryResultColumnsMock { get; private set; }
-
         /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
         protected sealed override IQueryResult CreateQueryResult()
         {
-            QueryResultColumnsMock = CreateDisposableMock<IQueryResultColumnsCollection>();
-
             QueryResultMock = new Mock<IQueryResult>(MockBehavior.Strict);
-            QueryResultMock
-                .SetupGet(r => r.Columns)
-                .Returns(QueryResultColumnsMock.Object)
-                .Verifiable();
-
             OnAfterInitQueryResultMock();
 
             return QueryResultMock.Object;
@@ -138,10 +122,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Act & Assert
             Assert.AreEqual(TEST_FIELD_COUNT, TestedInstance.FieldCount);
 
-            QueryResultMock.VerifyGet(r => r.Columns, Times.Once());
-            QueryResultColumnsMock.VerifyGet(cs => cs.Count, Times.Once());
-
-            VerifyColumnsDispose();
+            DataReaderFieldInfoCollectionMock.VerifyGet(cs => cs.Count);
         }
 
         /// <summary>Тестирование метода <see cref="OneSDataReader.GetDataTypeName"/>.</summary>
@@ -160,23 +141,21 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
         /// <summary>Установка получения колонки.</summary>
         /// <param name="index">Индекс колонки.</param>
-        /// <param name="column">Экземпляр получаемой колонки.</param>
-        private void SetupGetColumn(int index, IQueryResultColumn column)
+        /// <param name="fieldInfo">Поле читателя.</param>
+        private void SetupGetColumn(int index, DataReaderFieldInfo fieldInfo)
         {
             SetupColumnsGetCount(index + 1);
 
-            QueryResultColumnsMock
-                .Setup(cs => cs.Get(It.IsAny<int>()))
-                .Returns(column)
-                .Verifiable();
+            DataReaderFieldInfoCollectionMock
+                .Setup(c => c[index])
+                .Returns(fieldInfo);
         }
 
         /// <summary>Проверка получения полонки.</summary>
         /// <param name="index">Индекс колонки.</param>
         private void VerifyGetColumn(int index)
         {
-            QueryResultMock.Verify(r => r.Columns);
-            QueryResultColumnsMock.Verify(cs => cs.Get(index), Times.Once());
+            DataReaderFieldInfoCollectionMock.Verify(c => c[index]);
         }
 
         /// <summary>Тестирование <see cref="OneSDataReader.GetName"/>.</summary>
@@ -187,13 +166,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             const int TEST_FIELD_ORDINAL = 3;
 
             // Arrange
-            var columnMock = CreateDisposableMock<IQueryResultColumn>();
-            columnMock
-                .SetupGet(c => c.Name)
-                .Returns(TEST_FIELD_NAME)
-                .Verifiable();
+            var fieldInfo = new DataReaderFieldInfo(TEST_FIELD_NAME, typeof(object));
 
-            SetupGetColumn(TEST_FIELD_ORDINAL, columnMock.Object);
+            SetupGetColumn(TEST_FIELD_ORDINAL, fieldInfo);
 
             // Act
             var actualName = TestedInstance.GetName(TEST_FIELD_ORDINAL);
@@ -202,10 +177,6 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             Assert.AreEqual(TEST_FIELD_NAME, actualName);
 
             VerifyGetColumn(TEST_FIELD_ORDINAL);
-            columnMock.VerifyGet(c => c.Name, Times.Once());
-
-            VerifyColumnsDispose();
-            VerifyDispose(columnMock);
         }
 
         /// <summary>
@@ -217,35 +188,18 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             const int TEST_FIELD_ORDINAL = 3;
 
             // Arrange
-            var valueTypeMock = CreateDisposableMock<ITypeDescription>();
-
-            var columnMock = CreateDisposableMock<IQueryResultColumn>();
-            columnMock
-                .SetupGet(c => c.ValueType)
-                .Returns(valueTypeMock.Object)
-                .Verifiable();
-
-            SetupGetColumn(TEST_FIELD_ORDINAL, columnMock.Object);
-
             var expectedType = typeof(decimal);
-            ValueTypeConverterMock
-                .Setup(c => c.ConvertFrom(It.IsAny<ITypeDescription>()))
-                .Returns(expectedType)
-                .Verifiable();
+            var fieldInfo = new DataReaderFieldInfo("[SomeName]", expectedType);
+            
+            SetupGetColumn(TEST_FIELD_ORDINAL, fieldInfo);
 
             // Act
             var actualType = TestedInstance.GetFieldType(TEST_FIELD_ORDINAL);
 
             // Assert
             Assert.AreEqual(expectedType, actualType);
-
+            
             VerifyGetColumn(TEST_FIELD_ORDINAL);
-            columnMock.VerifyGet(c => c.ValueType, Times.Once());
-            ValueTypeConverterMock.Verify(c => c.ConvertFrom(valueTypeMock.Object), Times.Once());
-
-            VerifyColumnsDispose();
-            VerifyDispose(columnMock);
-            VerifyDispose(valueTypeMock);
         }
 
         /// <summary>
@@ -259,31 +213,18 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             const string TEST_COLUMN_NAME = "Test";
             const int TEST_EXPECTED_ORDINAL = 2;
 
-            var columnMock = CreateDisposableMock<IQueryResultColumn>();
-            var column = columnMock.Object;
-
             SetupColumnsGetCount(TEST_EXPECTED_ORDINAL + 1);
 
-            QueryResultColumnsMock
-                .Setup(cs => cs.Find(It.IsAny<string>()))
-                .Returns(column)
-                .Verifiable();
-
-            QueryResultColumnsMock
-                .Setup(cs => cs.IndexOf(It.IsAny<IQueryResultColumn>()))
+            DataReaderFieldInfoCollectionMock
+                .Setup(c => c.IndexOf(TEST_COLUMN_NAME))
                 .Returns(TEST_EXPECTED_ORDINAL)
                 .Verifiable();
                
             // Act & Assert
             Assert.AreEqual(TEST_EXPECTED_ORDINAL, TestedInstance.GetOrdinal(TEST_COLUMN_NAME));
 
-            QueryResultColumnsMock
-                .Verify(cs => cs.Find(TEST_COLUMN_NAME), Times.Once());
-            QueryResultColumnsMock
-                .Verify(cs => cs.IndexOf(column), Times.Once());
-            VerifyColumnsDispose();
-
-            VerifyDispose(columnMock);
+            DataReaderFieldInfoCollectionMock
+                .Verify(c => c.IndexOf(TEST_COLUMN_NAME));
         }
 
         /// <summary>
@@ -296,10 +237,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Arrange
             const string TEST_COLUMN_NAME = "Test";
 
-            QueryResultColumnsMock
-                .Setup(cs => cs.Find(It.IsAny<string>()))
-                .Returns<IQueryResultColumn>(null)
-                .Verifiable();
+            DataReaderFieldInfoCollectionMock
+                .Setup(c => c.IndexOf(TEST_COLUMN_NAME))
+                .Returns(-1);
 
             // Act & Assert
             Assert.Throws<IndexOutOfRangeException>(() =>
@@ -307,9 +247,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                     var ordinal = TestedInstance.GetOrdinal(TEST_COLUMN_NAME);
                 });
 
-            QueryResultColumnsMock
-                .Verify(cs => cs.Find(TEST_COLUMN_NAME), Times.Once());
-            VerifyColumnsDispose();
+            DataReaderFieldInfoCollectionMock
+                .Verify(c => c.IndexOf(TEST_COLUMN_NAME));
         }
 
         /// <summary>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
@@ -130,7 +131,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             TestedInstance = new OneSDataReader(
                 CreateQueryResult(),  
-                CreateValueTypeConverter(),
+                CreateDataReaderFieldInfoCollection(),
                 CreateValueConverter());
 
             ScenarioAfterInitTestedInstance();
@@ -139,8 +140,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
         protected abstract IQueryResult CreateQueryResult();
 
-        /// <summary>Создание тестового экземпляра <see cref="ITypeDescriptionConverter"/>.</summary>
-        internal abstract ITypeDescriptionConverter CreateValueTypeConverter();
+        /// <summary>
+        /// Создание тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
+        /// </summary>
+        internal abstract IDataReaderFieldInfoCollection CreateDataReaderFieldInfoCollection();
 
         /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>
         internal abstract IValueConverter CreateValueConverter();

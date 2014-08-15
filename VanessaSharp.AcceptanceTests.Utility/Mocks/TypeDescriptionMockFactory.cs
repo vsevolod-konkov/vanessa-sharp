@@ -20,6 +20,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                     { typeof(bool), "Булево"},
                     { typeof(DateTime), "Дата" },
                     { typeof(Guid), "XXX"},
+                    { typeof(AnyType), "?"}
                 };
 
         /// <summary>

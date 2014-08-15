@@ -132,6 +132,11 @@
     </Compile>
     <Compile Include="ChangeParameterNameEventArgs.cs" />
     <Compile Include="CurrentVersionNotImplementedAttribute.cs" />
+    <Compile Include="DataReading\DataReaderFieldInfo.cs" />
+    <Compile Include="DataReading\LazyDataReaderFieldInfoCollection.cs" />
+    <Compile Include="DataReading\DataReaderFieldInfoFixedCollection.cs" />
+    <Compile Include="DataReading\DataReaderFieldInfoCollectionLoader.cs" />
+    <Compile Include="DataReading\IDataReaderFieldInfoCollection.cs" />
     <Compile Include="IGlobalContextProvider.cs" />
     <Compile Include="IOneSTypeConverter.cs" />
     <Compile Include="ITransactionManager.cs" />

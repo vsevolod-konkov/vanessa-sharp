@@ -1,6 +1,7 @@
 ﻿using System;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
@@ -29,10 +30,12 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             _case = @case;
         }
 
-        /// <summary>Создание тестового экземпляра <see cref="ITypeDescriptionConverter"/>.</summary>
-        internal override ITypeDescriptionConverter CreateValueTypeConverter()
+        /// <summary>
+        /// Создание тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
+        /// </summary>
+        internal override IDataReaderFieldInfoCollection CreateDataReaderFieldInfoCollection()
         {
-            return new Mock<ITypeDescriptionConverter>(MockBehavior.Strict).Object;
+            return new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict).Object;
         }
 
         /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>

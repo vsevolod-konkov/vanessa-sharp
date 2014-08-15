@@ -3,6 +3,7 @@ using System.Collections;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
+using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
@@ -22,9 +23,6 @@ namespace VanessaSharp.Data
         /// <summary>Результат запроса.</summary>
         private readonly IQueryResult _queryResult;
 
-        /// <summary>Сервис перевода типов.</summary>
-        private readonly ITypeDescriptionConverter _typeDescriptionConverter;
-
         /// <summary>Сервис перевода значений.</summary>
         private readonly IValueConverter _valueConverter;
 
@@ -34,30 +32,55 @@ namespace VanessaSharp.Data
         /// <summary>Выборка из результата запроса.</summary>
         private IQueryResultSelection _queryResultSelection;
 
+        /// <summary>Коллекция с информацией по полям.</summary>
+        private readonly IDataReaderFieldInfoCollection _fieldInfoCollection;
+
         /// <summary>Инварианты класса.</summary>
         [ContractInvariantMethod]
         private void Invariant()
         {
             Contract.Invariant(_queryResult != null);
-            Contract.Invariant(_typeDescriptionConverter != null);
+            Contract.Invariant(_fieldInfoCollection != null);
             Contract.Invariant(_valueConverter != null);
         }
 
-        /// <summary>Конструктор принимающий результат запроса и сервис перевода типов.</summary>
+        /// <summary>
+        /// Конструктор принимающий 
+        /// результат запроса и коллекцию описания полей и сервис перевода значений.
+        /// </summary>
+        /// <param name="queryResult">Результат запроса данных у 1С.</param>
+        /// <param name="fieldInfoCollection">Коллекция с информацией по полям.</param>
+        /// <param name="valueConverter">Сервис перевода значений.</param>
+        internal OneSDataReader(
+            IQueryResult queryResult,
+            IDataReaderFieldInfoCollection fieldInfoCollection,
+            IValueConverter valueConverter)
+        {
+            Contract.Requires<ArgumentNullException>(queryResult != null);
+            Contract.Requires<ArgumentNullException>(fieldInfoCollection != null);
+            Contract.Requires<ArgumentNullException>(valueConverter != null);
+
+            _queryResult = queryResult;
+            _fieldInfoCollection = fieldInfoCollection;
+            _valueConverter = valueConverter;
+        }
+
+        /// <summary>
+        /// Конструктор принимающий
+        /// результат запроса 
+        /// сервис перевода типов
+        /// и сервис перевода значений.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         /// <param name="typeDescriptionConverter">Сервис перевода типов.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
-        internal OneSDataReader(IQueryResult queryResult, ITypeDescriptionConverter typeDescriptionConverter, IValueConverter valueConverter)
+        private OneSDataReader(IQueryResult queryResult, ITypeDescriptionConverter typeDescriptionConverter, IValueConverter valueConverter)
+            : this(queryResult, DataReaderFieldInfoCollectionLoader.Create(queryResult, typeDescriptionConverter), valueConverter)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(typeDescriptionConverter != null);
             Contract.Requires<ArgumentNullException>(valueConverter != null);
-
-            _queryResult = queryResult;
-            _typeDescriptionConverter = typeDescriptionConverter;
-            _valueConverter = valueConverter;
         }
-        
+
         /// <summary>Конструктор принимающий результат запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         internal OneSDataReader(IQueryResult queryResult)
@@ -475,9 +498,8 @@ namespace VanessaSharp.Data
                     throw new InvalidOperationException(
                         "Недопустимо получить значение свойства FieldCount в закрытом состоянии.");
                 }
-                
-                using (var columns = _queryResult.Columns)
-                    return columns.Count;
+
+                return _fieldInfoCollection.Count;
             }
         }
 
@@ -612,10 +634,8 @@ namespace VanessaSharp.Data
                 throw new InvalidOperationException(
                     "Недопустимо вызывать метод GetName в закрытом состоянии.");
             }
-            
-            using (var columns = _queryResult.Columns)
-            using (var column = columns.Get(ordinal))
-                return column.Name;
+
+            return _fieldInfoCollection[ordinal].Name;
         }
 
         /// <summary>
@@ -632,21 +652,16 @@ namespace VanessaSharp.Data
                 throw new InvalidOperationException(
                     "Недопустимо вызывать метод GetOrdinal в закрытом состоянии.");
             }
-            
-            using (var columns = _queryResult.Columns)
-            {
-                var column = columns.Find(name);
-                if (column == null)
-                {
-                    throw new IndexOutOfRangeException(string.Format(
-                        "Колонки с именем \"{0}\" не существует.", name));
-                }
-                
-                using (column)
-                    return columns.IndexOf(column);
-            }
-        }
 
+            var result = _fieldInfoCollection.IndexOf(name);
+            if (result == -1)
+            {
+                throw new IndexOutOfRangeException(string.Format(
+                        "Колонки с именем \"{0}\" не существует.", name));
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Получает имя типа данных указанного столбца.
@@ -680,12 +695,7 @@ namespace VanessaSharp.Data
                     "Недопустимо вызывать метод GetFieldType в закрытом состоянии.");
             }
 
-            using (var columns = _queryResult.Columns)
-            using (var column = columns.Get(ordinal))
-            using (var valueType = column.ValueType)
-            {
-                return _typeDescriptionConverter.ConvertFrom(valueType);
-            }
+            return _fieldInfoCollection[ordinal].Type;
         }
 
         /// <summary>
