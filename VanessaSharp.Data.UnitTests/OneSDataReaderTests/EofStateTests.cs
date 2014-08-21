@@ -1,7 +1,7 @@
 ﻿using System;
 using Moq;
 using NUnit.Framework;
-using VanessaSharp.Proxy.Common;
+using VanessaSharp.Data.DataReading;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 {
@@ -10,8 +10,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     [TestFixture(true, Description = "Когда была хотя бы одна строка")]
     public sealed class EofStateTests : OpenStateTestBase
     {
-        /// <summary>Мок для <see cref="IQueryResultSelection"/>.</summary>
-        private Mock<IQueryResultSelection> _queryResultSelectionMock;
+        /// <summary>Мок курсора данных.</summary>
+        private DisposableMock<IDataCursor> _dataCursorMock; 
 
         /// <summary>Были ли строки.</summary>
         private readonly bool _hasRows;
@@ -29,21 +29,19 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             _hasRows = hasRows;
         }
 
-        /// <summary>
-        /// Выполнение действий после инициализации <see cref="OpenStateTestBase.QueryResultMock"/>.
-        /// </summary>
-        protected override void OnAfterInitQueryResultMock()
+        /// <summary>Инициализация данных.</summary>
+        protected override void SetUpData()
         {
             if (_hasRows)
             {
-                _queryResultSelectionMock = CreateQueryResultSelectionMock(new RowsManager { RowsCount = RowsCount });
+                _dataCursorMock = CreateDataCursorMock(RowsCount);
             }
             else
             {
                 QueryResultMock
                     .Setup(r => r.IsEmpty())
                     .Returns(true);
-            }
+            }   
         }
 
         /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
@@ -59,16 +57,12 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [Test]
         public override void TestClose()
         {
-            // Arrange
-            if (_hasRows)
-                SetupDispose(_queryResultSelectionMock);
-            
             // Arrange - Act - Assert
             base.TestClose();
             
             // Assert
-            if (_hasRows) 
-                VerifyDispose(_queryResultSelectionMock);
+            if (_hasRows)
+                _dataCursorMock.VerifyDispose();
         }
 
         /// <summary>

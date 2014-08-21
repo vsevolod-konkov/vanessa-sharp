@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
-using VanessaSharp.Proxy.Common;
+using VanessaSharp.Data.DataReading;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 {
@@ -13,25 +13,24 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     [TestFixture]
     public sealed class RowStateTests : OpenStateTestBase
     {
-        /// <summary>Мок для <see cref="IQueryResultSelection"/>.</summary>
-        private Mock<IQueryResultSelection> _queryResultSelectionMock;
+        /// <summary>Мок курсора данных.</summary>
+        private DisposableMock<IDataCursor> _dataCursorMock;
 
         /// <summary>Мэнеджер строк.</summary>
         private readonly RowsManager _rowsManager = new RowsManager();
 
-        /// <summary>
-        /// Выполнение действий после инициализации <see cref="OpenStateTestBase.QueryResultMock"/>.
-        /// </summary>
-        protected override void OnAfterInitQueryResultMock()
+        /// <summary>Инициализация данных.</summary>
+        protected override void SetUpData()
         {
-            _queryResultSelectionMock = CreateQueryResultSelectionMock(_rowsManager);
+            _rowsManager.RowsCount = 1;
+            _rowsManager.Reset();
+            
+            _dataCursorMock = CreateDataCursorMock(_rowsManager);
         }
 
         /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
         protected override void ScenarioAfterInitTestedInstance()
         {
-            _rowsManager.RowsCount = 1;
-            _rowsManager.Reset();
             Assert.IsTrue(TestedInstance.Read());
         }
 
@@ -39,14 +38,11 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [Test]
         public override void TestClose()
         {
-            // Arrange
-            SetupDispose(_queryResultSelectionMock);
-            
             // Arrange - Act - Assert
             base.TestClose();
             
             // Assert
-            VerifyDispose(_queryResultSelectionMock);
+            _dataCursorMock.VerifyDispose();
         }
 
         /// <summary>
@@ -68,7 +64,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             Assert.IsFalse(TestedInstance.Read());
 
             // Assert
-            _queryResultSelectionMock.Verify(qrs => qrs.Next(), Times.Exactly(TEST_ROWS_COUNT + 1));
+            _dataCursorMock.Verify(qrs => qrs.Next(), Times.Exactly(TEST_ROWS_COUNT + 1));
         }
 
         /// <summary>
@@ -83,10 +79,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             var rowData = new object[] { "TEST", 12, 23.54 };
             SetupColumnsGetCount(rowData.Length);
 
-            _queryResultSelectionMock
-                .Setup(qrs => qrs.Get(It.IsAny<int>()))
-                .Returns<int>(i => rowData[i])
-                .Verifiable();
+            _dataCursorMock
+                .Setup(c => c.GetValue(It.IsAny<int>()))
+                .Returns<int>(i => rowData[i]);
 
             var bufferLength = rowData.Length + deltaLengthOfArray;
             var expectedValues = new object[bufferLength];
@@ -102,8 +97,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             Assert.AreEqual(expectedResult, actualResult);
             CollectionAssert.AreEqual(expectedValues, actualValues);
 
-            _queryResultSelectionMock
-                .Verify(qrs => qrs.Get(It.IsAny<int>()), Times.Exactly(expectedResult));
+            _dataCursorMock
+                .Verify(c => c.GetValue(It.IsAny<int>()), Times.Exactly(expectedResult));
         }
 
         /// <summary>
@@ -128,10 +123,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>Настройка для получения значения.</summary>
         protected override void ArrangeGetValue(string columnName, object returnValue)
         {
-            _queryResultSelectionMock
-                .Setup(qrs => qrs.Get(columnName))
-                .Returns(returnValue)
-                .Verifiable();
+            _dataCursorMock
+                .Setup(c => c.GetValue(columnName))
+                .Returns(returnValue);
         }
 
         /// <summary>
@@ -139,8 +133,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// </summary>
         protected override void AssertGetValue(string columnName)
         {
-            _queryResultSelectionMock
-                .Verify(qrs => qrs.Get(columnName), Times.Once());
+            _dataCursorMock
+                .Verify(c => c.GetValue(columnName), Times.Once());
         }
 
         /// <summary>Настройка для получения значения.</summary>
@@ -148,10 +142,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             base.ArrangeGetValue(ordinal, returnValue);
 
-            _queryResultSelectionMock
-                .Setup(qrs => qrs.Get(ordinal))
-                .Returns(returnValue)
-                .Verifiable();
+            _dataCursorMock
+                .Setup(c => c.GetValue(ordinal))
+                .Returns(returnValue);
         }
 
         /// <summary>
@@ -159,7 +152,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// </summary>
         protected override void AssertGetValue(int ordinal)
         {
-            _queryResultSelectionMock.Verify(qrs => qrs.Get(ordinal), Times.Once());
+            _dataCursorMock.Verify(c => c.GetValue(ordinal), Times.Once());
         }
 
         private void ArrangeGetTypedValue<T>(Expression<Func<IValueConverter, T>> setupAction, T expectedResult)

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.DataReading;
@@ -14,45 +13,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     /// </summary>
     public abstract class OneSDataReaderComponentTestBase
     {
-        #region Вспомогательные статические методы
-
-        // TODO: CopyPaste Необходимо выделить во вспомогательный класс
-        /// <summary>
-        /// Установка реализации <see cref="IDisposable.Dispose"/>
-        /// для мока.
-        /// </summary>
-        protected static void SetupDispose<T>(Mock<T> mock)
-            where T : class, IDisposable
-        {
-            mock
-                .Setup(o => o.Dispose())
-                .Verifiable();
-        }
-
-        // TODO: CopyPaste Необходимо выделить во вспомогательный класс
-        /// <summary>Создание мока реализующего <see cref="IDisposable"/>.</summary>
-        protected static Mock<T> CreateDisposableMock<T>()
-            where T : class, IDisposable
-        {
-            var mock = new Mock<T>(MockBehavior.Strict);
-            SetupDispose(mock);
-
-            return mock;
-        }
-
-        // TODO: CopyPaste Необходимо выделить во вспомогательный класс
-        /// <summary>
-        /// Проверка вызова <see cref="IDisposable.Dispose"/> 
-        /// у мока.
-        /// </summary>
-        protected static void VerifyDispose<T>(Mock<T> mock)
-            where T : class, IDisposable
-        {
-            mock.Verify(o => o.Dispose(), Times.AtLeastOnce());
-        }
+        #region Вспомогательные методы и типы
 
         /// <summary>Менеджер строк тестового экземпляра.</summary>
-        protected sealed class RowsManager
+        internal sealed class RowsManager
         {
             /// <summary>Индекс строки.</summary>
             private int _rowIndex;
@@ -86,41 +50,77 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         }
 
         /// <summary>
-        /// Создание мока <see cref="IQueryResultSelection"/>
-        /// для реализации <see cref="IQueryResult.Choose"/>.
+        /// Создание мока курсора <see cref="IDataCursor"/>.
         /// </summary>
-        protected static Mock<IQueryResultSelection> CreateQueryResultSelectionMock(Mock<IQueryResult> queryResultMock, RowsManager rowsManager)
+        /// <param name="queryResultMock">Мок результата запроса.</param>
+        /// <param name="fieldInfoCollection">Коллекция полей</param>
+        /// <param name="dataCursorFactoryMock">Мок фабрики курсора.</param>
+        /// <param name="rowsManager">Менеджер строк данных.</param>
+        private static DisposableMock<IDataCursor> CreateDataCursorMock(
+            Mock<IQueryResult> queryResultMock, 
+            IDataReaderFieldInfoCollection fieldInfoCollection, 
+            Mock<IDataCursorFactory> dataCursorFactoryMock, 
+            RowsManager rowsManager)
         {
-            var queryResultSelectionMock = new Mock<IQueryResultSelection>(MockBehavior.Strict);
-            queryResultSelectionMock
+            var queryResultSelection = new Mock<IQueryResultSelection>(MockBehavior.Strict).Object;
+
+            var dataCursorMock = new DisposableMock<IDataCursor>();
+            dataCursorMock
                 .Setup(s => s.Next())
                 .Returns(() =>
                 {
                     rowsManager.Next();
                     return !rowsManager.IsEof;
-                })
-                .Verifiable();
+                });
 
             queryResultMock
                 .Setup(r => r.IsEmpty())
                 .Returns(false);
             queryResultMock
                 .Setup(r => r.Choose())
-                .Returns(queryResultSelectionMock.Object);
+                .Returns(queryResultSelection);
 
-            return queryResultSelectionMock;
+            dataCursorFactoryMock
+                .Setup(f => f.Create(fieldInfoCollection, queryResultSelection))
+                .Returns(dataCursorMock.Object);
+
+            return dataCursorMock;
         }
 
         /// <summary>
-        /// Создание мока <see cref="IQueryResultSelection"/>
-        /// для реализации <see cref="IQueryResult.Choose"/>.
+        /// Создание мока курсора <see cref="IDataCursor"/>.
         /// </summary>
-        protected static Mock<IQueryResultSelection> CreateQueryResultSelectionMock(Mock<IQueryResult> queryResultMock)
+        /// <param name="rowsManager">Менеджер строк данных.</param>
+        internal DisposableMock<IDataCursor> CreateDataCursorMock(
+            RowsManager rowsManager)
         {
-            return CreateQueryResultSelectionMock(queryResultMock, new RowsManager());
+            return CreateDataCursorMock(QueryResultMock, _fieldInfoCollection, _dataCursorFactoryMock, rowsManager);
+        }
+
+        /// <summary>
+        /// Создание мока курсора <see cref="IDataCursor"/>.
+        /// </summary>
+        /// <param name="rowsCount">Количество строк.</param>
+        internal DisposableMock<IDataCursor> CreateDataCursorMock(
+            int rowsCount = 1)
+        {
+            return CreateDataCursorMock(new RowsManager { RowsCount = rowsCount });
         }
 
         #endregion
+
+        /// <summary>Мок для <see cref="IQueryResult"/>.</summary>
+        internal DisposableMock<IQueryResult> QueryResultMock { get; private set; }
+
+        /// <summary>
+        /// Тестовая коллекция информации о полях данных.
+        /// </summary>
+        private IDataReaderFieldInfoCollection _fieldInfoCollection;
+
+        /// <summary>
+        /// Мок фабрики курсора данных.
+        /// </summary>
+        private Mock<IDataCursorFactory> _dataCursorFactoryMock;
 
         /// <summary>Тестируемый экземпляр.</summary>
         protected OneSDataReader TestedInstance { get; private set; }
@@ -129,21 +129,33 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [SetUp]
         public void SetUp()
         {
+            // Создание тестовых экземпляров и моков
+            _fieldInfoCollection = CreateDataReaderFieldInfoCollectionMock().Object;
+            _dataCursorFactoryMock = new Mock<IDataCursorFactory>(MockBehavior.Strict);
+            QueryResultMock = new DisposableMock<IQueryResult>();
+
+            //
+            SetUpData();
+
             TestedInstance = new OneSDataReader(
-                CreateQueryResult(),  
-                CreateDataReaderFieldInfoCollection(),
+                QueryResultMock.Object,  
+                _fieldInfoCollection,
+                _dataCursorFactoryMock.Object,
                 CreateValueConverter());
 
             ScenarioAfterInitTestedInstance();
         }
 
-        /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
-        protected abstract IQueryResult CreateQueryResult();
+        /// <summary>Инициализация данных.</summary>
+        protected virtual void SetUpData() {}
 
         /// <summary>
-        /// Создание тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
+        /// Создание мока тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
         /// </summary>
-        internal abstract IDataReaderFieldInfoCollection CreateDataReaderFieldInfoCollection();
+        internal virtual Mock<IDataReaderFieldInfoCollection> CreateDataReaderFieldInfoCollectionMock()
+        {
+            return new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict);
+        }
 
         /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>
         internal abstract IValueConverter CreateValueConverter();

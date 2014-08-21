@@ -29,11 +29,14 @@ namespace VanessaSharp.Data
         /// <summary>Текущее состояние.</summary>
         private States _currentState = States.BofOpen;
 
-        /// <summary>Выборка из результата запроса.</summary>
-        private IQueryResultSelection _queryResultSelection;
-
         /// <summary>Коллекция с информацией по полям.</summary>
         private readonly IDataReaderFieldInfoCollection _fieldInfoCollection;
+
+        /// <summary>Фабрика создания курсора.</summary>
+        private readonly IDataCursorFactory _dataCursorFactory;
+
+        /// <summary>Курсор.</summary>
+        private IDataCursor _dataCursor;
 
         /// <summary>Инварианты класса.</summary>
         [ContractInvariantMethod]
@@ -41,6 +44,7 @@ namespace VanessaSharp.Data
         {
             Contract.Invariant(_queryResult != null);
             Contract.Invariant(_fieldInfoCollection != null);
+            Contract.Invariant(_dataCursorFactory != null);
             Contract.Invariant(_valueConverter != null);
         }
 
@@ -50,18 +54,22 @@ namespace VanessaSharp.Data
         /// </summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         /// <param name="fieldInfoCollection">Коллекция с информацией по полям.</param>
+        /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
         internal OneSDataReader(
             IQueryResult queryResult,
             IDataReaderFieldInfoCollection fieldInfoCollection,
+            IDataCursorFactory dataCursorFactory,
             IValueConverter valueConverter)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(fieldInfoCollection != null);
+            Contract.Requires<ArgumentNullException>(dataCursorFactory != null);
             Contract.Requires<ArgumentNullException>(valueConverter != null);
 
             _queryResult = queryResult;
             _fieldInfoCollection = fieldInfoCollection;
+            _dataCursorFactory = dataCursorFactory;
             _valueConverter = valueConverter;
         }
 
@@ -72,19 +80,29 @@ namespace VanessaSharp.Data
         /// и сервис перевода значений.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         /// <param name="typeDescriptionConverter">Сервис перевода типов.</param>
+        /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
-        private OneSDataReader(IQueryResult queryResult, ITypeDescriptionConverter typeDescriptionConverter, IValueConverter valueConverter)
-            : this(queryResult, DataReaderFieldInfoCollectionLoader.Create(queryResult, typeDescriptionConverter), valueConverter)
+        private OneSDataReader(
+            IQueryResult queryResult, 
+            ITypeDescriptionConverter typeDescriptionConverter,
+            IDataCursorFactory dataCursorFactory,
+            IValueConverter valueConverter)
+            : this(
+                queryResult, 
+                DataReaderFieldInfoCollectionLoader.Create(queryResult, typeDescriptionConverter), 
+                dataCursorFactory,
+                valueConverter)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(typeDescriptionConverter != null);
+            Contract.Requires<ArgumentNullException>(dataCursorFactory != null);
             Contract.Requires<ArgumentNullException>(valueConverter != null);
         }
 
         /// <summary>Конструктор принимающий результат запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         internal OneSDataReader(IQueryResult queryResult)
-            : this(queryResult, TypeDescriptionConverter.Default, Data.ValueConverter.Default)
+            : this(queryResult, TypeDescriptionConverter.Default, DataCursorFactory.Default, Data.ValueConverter.Default)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
         }
@@ -109,8 +127,8 @@ namespace VanessaSharp.Data
         {
             if (_currentState != States.Closed)
             {
-                if (_queryResultSelection != null)
-                    _queryResultSelection.Dispose();
+                if (_dataCursor != null)
+                    _dataCursor.Dispose();
 
                 _queryResult.Dispose();
                 _currentState = States.Closed;
@@ -170,7 +188,8 @@ namespace VanessaSharp.Data
                         _currentState = States.EofOpen;
                         return false;
                     }
-                    _queryResultSelection = _queryResult.Choose();
+
+                    _dataCursor = _dataCursorFactory.Create(_fieldInfoCollection, _queryResult.Choose());
                     _currentState = States.RecordOpen;
                     break;
 
@@ -182,7 +201,7 @@ namespace VanessaSharp.Data
                         "Недопустимо вызывать метод GetFieldType в закрытом состоянии.");
             }
 
-            var result = _queryResultSelection.Next();
+            var result = _dataCursor.Next();
             if (!result)
                 _currentState = States.EofOpen;
 
@@ -441,7 +460,7 @@ namespace VanessaSharp.Data
                     "Невозможно получить значение поля так как экземпляр не находится на позиции строки данных.");
             }
 
-            return _queryResultSelection.Get(ordinal);
+            return _dataCursor.GetValue(ordinal);
         }
 
         /// <summary>
@@ -465,7 +484,7 @@ namespace VanessaSharp.Data
             var count = Math.Min(values.Length, FieldCount);
 
             for (var index = 0; index < count; index++)
-                values[index] = _queryResultSelection.Get(index);
+                values[index] = _dataCursor.GetValue(index);
 
             return count;
         }
@@ -524,7 +543,7 @@ namespace VanessaSharp.Data
                         "Невозможно получить значение свойства Item так как экземпляр не находится на позиции строки данных.");
                 }
 
-                return _queryResultSelection.Get(ordinal);
+                return _dataCursor.GetValue(ordinal);
             }
         }
 
@@ -551,7 +570,7 @@ namespace VanessaSharp.Data
                         "Невозможно получить значение свойства Item так как экземпляр не находится на позиции строки данных.");
                 }
 
-                return _queryResultSelection.Get(name);
+                return _dataCursor.GetValue(name);
             }
         }
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using Moq;
 using NUnit.Framework;
-using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
@@ -25,17 +24,14 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>Сценарий закрытия.</summary>
         private readonly Case _case;
 
+        /// <summary>
+        /// Количество строк в курсоре.
+        /// </summary>
+        private const int ROWS_COUNT = 2;
+
         public ClosedStateTests(Case @case)
         {
             _case = @case;
-        }
-
-        /// <summary>
-        /// Создание тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
-        /// </summary>
-        internal override IDataReaderFieldInfoCollection CreateDataReaderFieldInfoCollection()
-        {
-            return new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict).Object;
         }
 
         /// <summary>Создание тестового экземпляра <see cref="IValueConverter"/>.</summary>
@@ -45,18 +41,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         }
 
         /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
-        protected override IQueryResult CreateQueryResult()
+        protected override void SetUpData()
         {
-            var queryResultMock = new Mock<IQueryResult>(MockBehavior.Strict);
-            SetupDispose(queryResultMock);
-
             if (_case != Case.AfterBof)
-            {
-                var queryResultSelectionMock = CreateQueryResultSelectionMock(queryResultMock);
-                SetupDispose(queryResultSelectionMock);
-            }
-
-            return queryResultMock.Object;
+                CreateDataCursorMock(ROWS_COUNT);
         }
 
         /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
@@ -69,6 +57,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             if (_case == Case.AfterEof)
             {
+                Assert.IsTrue(TestedInstance.Read());
                 Assert.IsFalse(TestedInstance.Read());
             }
 

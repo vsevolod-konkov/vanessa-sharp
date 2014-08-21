@@ -2,7 +2,6 @@
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.DataReading;
-using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 {
@@ -16,16 +15,16 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Мок для <see cref="IDataReaderFieldInfoCollection"/>.
         /// </summary>
-        internal Mock<IDataReaderFieldInfoCollection> DataReaderFieldInfoCollectionMock { get; private set; }
+        private Mock<IDataReaderFieldInfoCollection> _dataReaderFieldInfoCollectionMock;
 
         /// <summary>
-        /// Создание тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
+        /// Создание мока тестового экземпляра <see cref="IDataReaderFieldInfoCollection"/>.
         /// </summary>
-        internal sealed override IDataReaderFieldInfoCollection CreateDataReaderFieldInfoCollection()
+        internal sealed override Mock<IDataReaderFieldInfoCollection> CreateDataReaderFieldInfoCollectionMock()
         {
-            DataReaderFieldInfoCollectionMock = new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict);
+            _dataReaderFieldInfoCollectionMock = base.CreateDataReaderFieldInfoCollectionMock();
 
-            return DataReaderFieldInfoCollectionMock.Object;
+            return _dataReaderFieldInfoCollectionMock;
         }
 
         /// <summary>Мок для <see cref="IValueConverter"/>.</summary>
@@ -39,52 +38,16 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             return ValueConverterMock.Object;
         }
 
-        /// <summary>Мок для <see cref="IQueryResult"/>.</summary>
-        protected Mock<IQueryResult> QueryResultMock { get; private set; }
-
         /// <summary>
-        /// Установка рeализации <see cref="IQueryResultColumnsCollection.Count"/>.
+        /// Установка рeализации <see cref="IDataReaderFieldInfoCollection.Count"/>.
         /// </summary>
         /// <param name="columnsCount">Количество колонок.</param>
         protected void SetupColumnsGetCount(int columnsCount)
         {
-            DataReaderFieldInfoCollectionMock
+            _dataReaderFieldInfoCollectionMock
                 .SetupGet(c => c.Count)
                 .Returns(columnsCount);
         }
-
-        /// <summary>
-        /// Создание мока <see cref="IQueryResultSelection"/>
-        /// для реализации <see cref="IQueryResult.Choose"/>.
-        /// </summary>
-        protected Mock<IQueryResultSelection> CreateQueryResultSelectionMock(RowsManager rowsManager)
-        {
-            return CreateQueryResultSelectionMock(QueryResultMock, rowsManager);
-        }
-
-        /// <summary>
-        /// Создание мока <see cref="IQueryResultSelection"/>
-        /// для реализации <see cref="IQueryResult.Choose"/>.
-        /// </summary>
-        protected Mock<IQueryResultSelection> CreateQueryResultSelectionMock()
-        {
-            return CreateQueryResultSelectionMock(QueryResultMock);
-        }
-
-        /// <summary>Создание тестового экземпляра <see cref="IQueryResult"/>.</summary>
-        protected sealed override IQueryResult CreateQueryResult()
-        {
-            QueryResultMock = new Mock<IQueryResult>(MockBehavior.Strict);
-            OnAfterInitQueryResultMock();
-
-            return QueryResultMock.Object;
-        }
-
-        /// <summary>
-        /// Выполнение действий после инициализации <see cref="QueryResultMock"/>.
-        /// </summary>
-        protected virtual void OnAfterInitQueryResultMock() {}
-
 
         /// <summary>
         /// Тестирование <see cref="OneSDataReader.IsClosed"/>.
@@ -99,15 +62,12 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [Test]
         public virtual void TestClose()
         {
-            // Arrange
-            SetupDispose(QueryResultMock);
-
             // Act
             TestedInstance.Close();
 
             // Assert
             Assert.IsTrue(TestedInstance.IsClosed);
-            VerifyDispose(QueryResultMock);
+            QueryResultMock.VerifyDispose();
         }
 
         /// <summary>Тестирование метода <see cref="OneSDataReader.FieldCount"/>.</summary>
@@ -122,7 +82,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Act & Assert
             Assert.AreEqual(TEST_FIELD_COUNT, TestedInstance.FieldCount);
 
-            DataReaderFieldInfoCollectionMock.VerifyGet(cs => cs.Count);
+            _dataReaderFieldInfoCollectionMock.VerifyGet(cs => cs.Count);
         }
 
         /// <summary>Тестирование метода <see cref="OneSDataReader.GetDataTypeName"/>.</summary>
@@ -146,7 +106,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             SetupColumnsGetCount(index + 1);
 
-            DataReaderFieldInfoCollectionMock
+            _dataReaderFieldInfoCollectionMock
                 .Setup(c => c[index])
                 .Returns(fieldInfo);
         }
@@ -155,7 +115,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <param name="index">Индекс колонки.</param>
         private void VerifyGetColumn(int index)
         {
-            DataReaderFieldInfoCollectionMock.Verify(c => c[index]);
+            _dataReaderFieldInfoCollectionMock.Verify(c => c[index]);
         }
 
         /// <summary>Тестирование <see cref="OneSDataReader.GetName"/>.</summary>
@@ -215,7 +175,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             SetupColumnsGetCount(TEST_EXPECTED_ORDINAL + 1);
 
-            DataReaderFieldInfoCollectionMock
+            _dataReaderFieldInfoCollectionMock
                 .Setup(c => c.IndexOf(TEST_COLUMN_NAME))
                 .Returns(TEST_EXPECTED_ORDINAL)
                 .Verifiable();
@@ -223,7 +183,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Act & Assert
             Assert.AreEqual(TEST_EXPECTED_ORDINAL, TestedInstance.GetOrdinal(TEST_COLUMN_NAME));
 
-            DataReaderFieldInfoCollectionMock
+            _dataReaderFieldInfoCollectionMock
                 .Verify(c => c.IndexOf(TEST_COLUMN_NAME));
         }
 
@@ -237,7 +197,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Arrange
             const string TEST_COLUMN_NAME = "Test";
 
-            DataReaderFieldInfoCollectionMock
+            _dataReaderFieldInfoCollectionMock
                 .Setup(c => c.IndexOf(TEST_COLUMN_NAME))
                 .Returns(-1);
 
@@ -247,7 +207,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                     var ordinal = TestedInstance.GetOrdinal(TEST_COLUMN_NAME);
                 });
 
-            DataReaderFieldInfoCollectionMock
+            _dataReaderFieldInfoCollectionMock
                 .Verify(c => c.IndexOf(TEST_COLUMN_NAME));
         }
 

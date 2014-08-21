@@ -30,8 +30,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Arrange
             QueryResultMock
                 .Setup(qr => qr.IsEmpty())
-                .Returns(true)
-                .Verifiable();
+                .Returns(true);
 
             // Act & Assert
             Assert.IsFalse(TestedInstance.Read());
@@ -48,7 +47,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void TestReadWhenOneRow()
         {
             // Arrange
-            var queryResultSelectionMock = CreateQueryResultSelectionMock();
+            var dataCursorMock = CreateDataCursorMock();
 
             // Act & Assert
             // 1
@@ -59,7 +58,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // Assert
             QueryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
             QueryResultMock.Verify(qr => qr.Choose(), Times.Once());
-            queryResultSelectionMock.Verify(qrs => qrs.Next(), Times.Exactly(2));
+            dataCursorMock.Verify(qrs => qrs.Next(), Times.Exactly(2));
         }
 
         /// <summary>
