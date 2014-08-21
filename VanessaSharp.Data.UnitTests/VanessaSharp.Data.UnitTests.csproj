@@ -50,6 +50,8 @@
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
     <Compile Include="ConnectionStringHelperTests.cs" />
+    <Compile Include="DataReading\DataCursorFactoryTests.cs" />
+    <Compile Include="DataReading\DataCursorTests.cs" />
     <Compile Include="DataReading\DataReaderFieldInfoCollectionLoaderTests.cs" />
     <Compile Include="DataReading\DataReaderFieldInfoFixedCollectionTests.cs" />
     <Compile Include="DataReading\LazyDataReaderFieldInfoCollectionTests.cs" />
