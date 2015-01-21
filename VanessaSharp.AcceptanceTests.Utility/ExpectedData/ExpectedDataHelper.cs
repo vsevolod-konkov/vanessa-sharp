@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -103,16 +104,15 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
                     typeof(TExpectedData), EXPECTED_DATA_PROPERTY));
             }
 
-            if (!typeof(IList<TExpectedData>).IsAssignableFrom(expectedDataProperty.PropertyType))
+            if (!typeof(IEnumerable<TExpectedData>).IsAssignableFrom(expectedDataProperty.PropertyType))
             {
                 throw new InvalidOperationException(string.Format(
                     "Тип \"{0}\" свойства \"{1}\" ожидаемых данных описываемых типом \"{2}\" не приводим к типу \"{3}\".",
                     expectedDataProperty.PropertyType, EXPECTED_DATA_PROPERTY,
-                    typeof(TExpectedData), typeof(IList<TExpectedData>)));
+                    typeof(TExpectedData), typeof(IEnumerable<TExpectedData>)));
             }
 
-            var result = (IList<TExpectedData>)expectedDataProperty.GetValue(null, null);
-
+            var result = (IEnumerable<TExpectedData>)expectedDataProperty.GetValue(null, null);
             if (result == null)
             {
                 throw new InvalidOperationException(string.Format(
@@ -120,7 +120,8 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
                     EXPECTED_DATA_PROPERTY, typeof(TExpectedData)));
             }
 
-            return result;
+            return (result as IList<TExpectedData>)
+                   ?? result.ToArray();
         }
 
         /// <summary>Информация по полю типа ожидаемых данных.</summary>

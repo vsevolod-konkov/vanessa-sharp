@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
@@ -224,6 +225,15 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 return _expectedData.Fields[fieldIndex].Type;
             }
 
+            /// <summary>
+            /// Является ли поле табличной частью.
+            /// </summary>
+            /// <param name="fieldIndex">Индекс поля.</param>
+            public bool IsFieldTablePart(int fieldIndex)
+            {
+                return _expectedData.Fields[fieldIndex].IsTablePart;
+            }
+
             /// <summary>Ожидаемое количество строк.</summary>
             public int ExpectedRowsCount
             {
@@ -238,6 +248,16 @@ namespace VanessaSharp.AcceptanceTests.Utility
             public object ExpectedValue(int rowIndex, int fieldIndex)
             {
                 return _expectedData.Rows[rowIndex][fieldIndex];
+            }
+
+            /// <summary>
+            /// Ожидаемые данные табличной части.
+            /// </summary>
+            /// <param name="rowIndex">Индекс строки.</param>
+            /// <param name="fieldIndex">Индекс поля.</param>
+            public TableData ExpectedTablePart(int rowIndex, int fieldIndex)
+            {
+                return (TableData)ExpectedValue(rowIndex, fieldIndex);
             }
 
             /// <summary>Индексы строк из ожидаемых данных.</summary>
@@ -375,9 +395,30 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
                 var info = ExpectedDataHelper.ExtractFieldInfo(fieldAccessor);
 
-                AddFieldDefinition(info.Name, info.Type, info.Accessor);
+                AddScalarFieldDefinition(info.Name, info.Type, info.Accessor);
 
                 return this;
+            }
+
+            /// <summary>
+            /// Описание поля табличной части ожидаемых данных.
+            /// </summary>
+            /// <typeparam name="TTablePart">Тип ожидаемых данных табличной части.</typeparam>
+            /// <param name="fieldAccessor">Выражение доступа.</param>
+            public DefiningExpectedDataTablePartBuilderState<TExpectedData, TTablePart> 
+                BeginTablePartField<TTablePart>(Expression<Func<TExpectedData, IEnumerable<TTablePart>>> fieldAccessor)
+            {
+                Contract.Requires<ArgumentNullException>(fieldAccessor != null);
+                Contract.Ensures(Contract.Result<DefiningExpectedDataTablePartBuilderState<TExpectedData, TTablePart>>() != null);
+
+                var info = ExpectedDataHelper.ExtractFieldInfo(fieldAccessor);
+                var tablePartName = info.Name;
+                var tablePartAccessor = fieldAccessor.Compile();
+
+                return new DefiningExpectedDataTablePartBuilderState<TExpectedData, TTablePart>(
+                    this,
+                    (fields, accessors) => AddTablePartFieldDefinition(tablePartName, fields, tablePartAccessor, accessors)
+                    );
             }
 
             /// <summary>
@@ -389,19 +430,53 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
                 Contract.Ensures(Contract.Result<DefiningExpectedDataBuilderState<TExpectedData>>() != null);
 
-                AddFieldDefinition(fieldName, typeof(AnyType), d => AnyType.Instance);
+                AddScalarFieldDefinition(fieldName, typeof(AnyType), d => AnyType.Instance);
 
                 return this;
             }
 
-            private void AddFieldDefinition(string fieldName, Type fieldType, Func<TExpectedData, object> fieldAccessor)
+            private void AddScalarFieldDefinition(string fieldName, Type fieldType, Func<TExpectedData, object> fieldAccessor)
             {
                 Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
                 Contract.Requires<ArgumentNullException>(fieldType != null);
                 Contract.Requires<ArgumentNullException>(fieldAccessor != null);
 
-                _tableDataBuilder.AddField(fieldName, fieldType);
+                _tableDataBuilder.AddScalarField(fieldName, fieldType);
                 _fieldAccessors.Add(fieldAccessor);
+            }
+
+            private void AddTablePartFieldDefinition<TTablePart>(
+                string tablePartName, 
+                IList<FieldDescription> fields,
+                Func<TExpectedData, IEnumerable<TTablePart>> tablePartAccessor, 
+                IList<Func<TTablePart, object>> tablePartFieldAccessors)
+            {
+                Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(tablePartName));
+                Contract.Requires<ArgumentNullException>(fields != null && fields.Count > 0);
+                Contract.Requires<ArgumentNullException>(tablePartAccessor != null);
+                Contract.Requires<ArgumentNullException>(tablePartFieldAccessors != null && tablePartFieldAccessors.Count > 0);
+                Contract.Requires<ArgumentException>(fields.Count == tablePartFieldAccessors.Count);
+
+                _tableDataBuilder.AddTablePartField(tablePartName, new ReadOnlyCollection<FieldDescription>(fields));
+                _fieldAccessors.Add(
+                    d => GetTablePart(d, tablePartAccessor, tablePartFieldAccessors)
+                    );
+            }
+
+            private static object GetTablePart<TTablePart>(
+                TExpectedData data,
+                Func<TExpectedData, IEnumerable<TTablePart>> tablePartAccessor,
+                IList<Func<TTablePart, object>> tablePartFieldAccessors
+                )
+            {
+                var tablePart = tablePartAccessor(data);
+                var rows = tablePart
+                    .Select(
+                        tablePartRow => tablePartFieldAccessors.Select(a => a(tablePartRow)).ToArray())
+                    .Select(row => new ReadOnlyCollection<object>(row))
+                    .ToArray();
+
+                return new ReadOnlyCollection<ReadOnlyCollection<object>>(rows);
             }
 
             private DefinedExpectedDataBuilderState GetNextState(
@@ -455,6 +530,76 @@ namespace VanessaSharp.AcceptanceTests.Utility
                         );
 
                     return GetNextState(expectedData, expectedRowIndexes);
+                }
+            }
+        }
+
+        /// <summary>Состояние описания ожидаемых данных.</summary>
+        /// <typeparam name="TExpectedData">
+        /// Тип ожидаемых данных.
+        /// </typeparam>
+        /// <typeparam name="TExpectedTablePart">
+        /// Тип ожидаемых данных табличной части.
+        /// </typeparam>
+        protected sealed class DefiningExpectedDataTablePartBuilderState<TExpectedData, TExpectedTablePart>
+        {
+            /// <summary>Предыдущее состояние.</summary>
+            private readonly DefiningExpectedDataBuilderState<TExpectedData> _prevState;
+
+            /// <summary>Действие добавления определения табличной части.</summary>
+            private readonly Action<IList<FieldDescription>, IList<Func<TExpectedTablePart, object>>>
+                _addTablePartDefinitionAction;
+
+            /// <summary>Поля табличной части.</summary>
+            private readonly List<FieldDescription> _fields = new List<FieldDescription>();
+            
+            /// <summary>
+            /// Функции доступа к полям табличной части.
+            /// </summary>
+            private readonly List<Func<TExpectedTablePart, object>> _fieldAccessors = new List<Func<TExpectedTablePart, object>>();
+
+            public DefiningExpectedDataTablePartBuilderState(
+                DefiningExpectedDataBuilderState<TExpectedData> prevState,
+                Action<IList<FieldDescription>, IList<Func<TExpectedTablePart, object>>> addTablePartDefinitionAction)
+            {
+                Contract.Requires<ArgumentNullException>(prevState != null);
+                Contract.Requires<ArgumentNullException>(addTablePartDefinitionAction != null);
+
+                _prevState = prevState;
+                _addTablePartDefinitionAction = addTablePartDefinitionAction;
+            }
+
+            /// <summary>
+            /// Описание поля ожидаемых данных.
+            /// </summary>
+            /// <typeparam name="TValue">Тип поля.</typeparam>
+            /// <param name="fieldAccessor">Выражение доступа.</param>
+            public DefiningExpectedDataTablePartBuilderState<TExpectedData, TExpectedTablePart> Field<TValue>(Expression<Func<TExpectedTablePart, TValue>> fieldAccessor)
+            {
+                Contract.Requires<ArgumentNullException>(fieldAccessor != null);
+                Contract.Ensures(Contract.Result<DefiningExpectedDataTablePartBuilderState<TExpectedData, TExpectedTablePart>>() != null);
+
+                // TODO: Copy Paste
+                var info = ExpectedDataHelper.ExtractFieldInfo(fieldAccessor);
+
+                _fields.Add(new FieldDescription(info.Name, info.Type));
+                _fieldAccessors.Add(info.Accessor);
+
+                return this;
+            }
+
+            /// <summary>
+            /// Завершения описания полей табличной части.
+            /// </summary>
+            public DefiningExpectedDataBuilderState<TExpectedData> EndTablePartField
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<DefiningExpectedDataBuilderState<TExpectedData>>() != null);
+
+                    _addTablePartDefinitionAction(_fields, _fieldAccessors);
+
+                    return _prevState;
                 }
             }
         }

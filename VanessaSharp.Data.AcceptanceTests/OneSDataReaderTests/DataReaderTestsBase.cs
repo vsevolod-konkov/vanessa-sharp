@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using VanessaSharp.AcceptanceTests.Utility;
+using VanessaSharp.AcceptanceTests.Utility.Mocks;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 {
@@ -85,6 +86,13 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 return _innerContext.ExpectedFieldType(fieldIndex);
             }
 
+            /// <summary>Является ли поле табличной частью.</summary>
+            /// <param name="fieldIndex">Индекс поля.</param>
+            public bool IsFieldTablePart(int fieldIndex)
+            {
+                return _innerContext.IsFieldTablePart(fieldIndex);
+            }
+
             /// <summary>Ожидаемое количество строк.</summary>
             public int ExpectedRowsCount
             {
@@ -99,6 +107,16 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             public object ExpectedValue(int rowIndex, int fieldIndex)
             {
                 return _innerContext.ExpectedValue(rowIndex, fieldIndex);
+            }
+
+            /// <summary>
+            /// Ожидаемые данные табличной части.
+            /// </summary>
+            /// <param name="rowIndex">Индекс строки.</param>
+            /// <param name="fieldIndex">Индекс поля.</param>
+            public TableData ExpectedTablePart(int rowIndex, int fieldIndex)
+            {
+                return _innerContext.ExpectedTablePart(rowIndex, fieldIndex);
             }
 
             /// <summary>

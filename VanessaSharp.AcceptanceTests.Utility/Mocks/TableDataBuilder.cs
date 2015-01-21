@@ -11,16 +11,22 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 
         private readonly List<ReadOnlyCollection<object>> _rows = new List<ReadOnlyCollection<object>>(); 
 
-        /// <summary>Добавление поля.</summary>
-        public void AddField(string name, Type type)
+        /// <summary>Добавление скалярного поля.</summary>
+        public void AddScalarField(string name, Type type)
         {
             _fields.Add(new FieldDescription(name, type));
         }
 
-        /// <summary>Добавление поля.</summary>
-        public void AddField<T>(string name)
+        /// <summary>Добавление скалярного поля.</summary>
+        public void AddScalarField<T>(string name)
         {
-            AddField(name, typeof(T));
+            AddScalarField(name, typeof(T));
+        }
+
+        /// <summary>Добавление поля табличной части.</summary>
+        public void AddTablePartField(string name, ReadOnlyCollection<FieldDescription> fields)
+        {
+            _fields.Add(new FieldDescription(name, fields));
         }
 
         /// <summary>Добавление строки.</summary>

@@ -42,6 +42,8 @@ namespace VanessaSharp.Data
                     return typeof(DateTime);
                 case "Null":
                     return typeof(DBNull);
+                case "Результат запроса":
+                    return typeof(OneSDataReader);
             }
 
             return null;

@@ -21,6 +21,7 @@ namespace VanessaSharp.Data.UnitTests
         [TestCase("Булево", typeof(bool))]
         [TestCase("Дата", typeof(DateTime))]
         [TestCase("Null", typeof(DBNull))]
+        [TestCase("Результат запроса", typeof(OneSDataReader))]
         public void TestTryConvertFrom(string oneSTypeString, Type expectedType)
         {
             // Arrange

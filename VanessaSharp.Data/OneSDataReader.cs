@@ -632,11 +632,37 @@ namespace VanessaSharp.Data
         /// The value of the specified column.
         /// </returns>
         /// <param name="ordinal">The zero-based column ordinal.</param>
-        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception><filterpriority>2</filterpriority>
+        /// <exception cref="T:System.InvalidCastException">The specified cast is not valid. </exception>
+        /// <filterpriority>2</filterpriority>
         public override float GetFloat(int ordinal)
         {
             return _valueConverter.ToFloat(
                 GetValue(ordinal));
+        }
+
+        /// <summary>
+        /// Получение читателя табличной части, которое находится в поле
+        /// <paramref name="ordinal"/>.
+        /// </summary>
+        /// <param name="ordinal">Порядковый номер поля с табличной частью.</param>
+        /// <exception cref="T:System.InvalidCastException">Если поле не является табличной частью.</exception>
+        public OneSDataReader GetDataReader(int ordinal)
+        {
+            Contract.Ensures(Contract.Result<OneSDataReader>() != null);
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Возвращает объект <see cref="T:System.Data.Common.DbDataReader"/> для запрошенного порядкового номера столбца, который может быть переопределен с помощью зависящей от поставщика реализации.
+        /// </summary>
+        /// <returns>
+        /// Объект <see cref="T:System.Data.Common.DbDataReader"/>.
+        /// </returns>
+        /// <param name="ordinal">Порядковый номер (с нуля) столбца.</param>
+        protected override DbDataReader GetDbDataReader(int ordinal)
+        {
+            return GetDataReader(ordinal);
         }
 
         /// <summary>

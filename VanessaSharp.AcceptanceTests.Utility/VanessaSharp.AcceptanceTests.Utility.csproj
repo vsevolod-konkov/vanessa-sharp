@@ -125,6 +125,7 @@
     <Compile Include="ExpectedData\ExpectedDataHelper.cs" />
     <Compile Include="ExpectedData\ExpectedTestDictionary.cs" />
     <Compile Include="ExpectedData\ExpectedUidTestDictionary.cs" />
+    <Compile Include="ExpectedData\ExpectedWithTablePartDictionary.cs" />
     <Compile Include="ExpectedData\FieldAttribute.cs" />
     <Compile Include="Mocks\FieldDescription.cs" />
     <Compile Include="Mocks\MockHelper.cs" />
