@@ -17,18 +17,45 @@ namespace VanessaSharp.Data.UnitTests.DataReading
 
         private Mock<IQueryResultSelection> _queryResultSelectionMock;
 
+        private Mock<IOneSObjectSpecialConverter> _oneSObjectSpecialConverterMock;
+
         private DataCursor _testedInstance;
 
-        private void InitTestedInstance(int fieldsCount = 1, Mock<IQueryResultSelection> queryResultSelectionMock = null)
+        private void InitTestedInstance(
+            int fieldsCount = 1,
+            Action<Mock<IDataReaderFieldInfoCollection>> dataReaderFieldInfoSetup = null,
+            Mock<IQueryResultSelection> queryResultSelectionMock = null,
+            Action<Mock<IOneSObjectSpecialConverter>> oneSObjectSpecialConverterSetup = null)
         {
             _fieldInfoCollectionMock = new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict);
             _fieldInfoCollectionMock
                 .SetupGet(c => c.Count)
                 .Returns(fieldsCount);
 
+            for (var index = 0; index < fieldsCount; index++)
+            {
+                var ordinal = index;
+                _fieldInfoCollectionMock
+                    .Setup(c => c[ordinal])
+                    .Returns(
+                        new DataReaderFieldInfo("Field_" + ordinal, typeof(object))
+                    );
+            }
+
+            if (dataReaderFieldInfoSetup != null)
+                dataReaderFieldInfoSetup(_fieldInfoCollectionMock);
+
             _queryResultSelectionMock = queryResultSelectionMock ?? new Mock<IQueryResultSelection>(MockBehavior.Strict);
 
-            _testedInstance = new DataCursor(_fieldInfoCollectionMock.Object, _queryResultSelectionMock.Object);
+            _oneSObjectSpecialConverterMock = new Mock<IOneSObjectSpecialConverter>(MockBehavior.Strict);
+
+            if (oneSObjectSpecialConverterSetup != null)
+                oneSObjectSpecialConverterSetup(_oneSObjectSpecialConverterMock);
+
+            _testedInstance = new DataCursor(
+                _fieldInfoCollectionMock.Object,
+                _queryResultSelectionMock.Object,
+                _oneSObjectSpecialConverterMock.Object);
         }
         
         /// <summary>Тестирование метода <see cref="DataCursor.Next"/>.</summary>
@@ -199,6 +226,48 @@ namespace VanessaSharp.Data.UnitTests.DataReading
 
             // Act
             _testedInstance.GetValue(FIELD_NAME);
+        }
+
+        /// <summary>
+        /// Тестирование получения экземпляра <see cref="OneSDataReader"/>,
+        /// в случае если тип поля является читатель.
+        /// </summary>
+        [Test]
+        public void TestGetOneSDataReaderWhenFieldTypeIsOneSDataReader()
+        {
+            const int FIELD_INDEX = 0;
+
+            var value = new object();
+
+            var dataReader = new OneSDataReader(
+                new Mock<IQueryResult>(MockBehavior.Strict).Object,
+                new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict).Object,
+                new Mock<IDataCursorFactory>(MockBehavior.Strict).Object,
+                new Mock<IValueConverter>(MockBehavior.Strict).Object
+                );
+
+            InitTestedInstance(
+                dataReaderFieldInfoSetup: 
+                    m => m.Setup(c => c[FIELD_INDEX])
+                          .Returns(new DataReaderFieldInfo("TablePart", typeof(OneSDataReader))),
+                oneSObjectSpecialConverterSetup:
+                    m => m.Setup(c => c.ToDataReader(value))
+                          .Returns(dataReader)
+                );
+
+            _queryResultSelectionMock
+                .Setup(qrs => qrs.Next())
+                .Returns(true);
+
+            _queryResultSelectionMock
+                .Setup(qrs => qrs.Get(FIELD_INDEX))
+                .Returns(value);
+
+            _testedInstance.Next();
+
+            var result = _testedInstance.GetValue(FIELD_INDEX);
+
+            Assert.AreSame(dataReader, result);
         }
     }
 }

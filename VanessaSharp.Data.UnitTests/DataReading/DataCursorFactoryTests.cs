@@ -17,11 +17,17 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         [Test]
         public void TestCreate()
         {
+            const int FIELD_COUNT = 5;
+            
             // Arrange
             var fieldInfoCollectionMock = new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict);
             fieldInfoCollectionMock
                 .Setup(c => c.Count)
-                .Returns(5);
+                .Returns(FIELD_COUNT);
+
+            fieldInfoCollectionMock
+                .Setup(c => c[It.IsInRange(0, FIELD_COUNT - 1, Range.Inclusive)])
+                .Returns(new DataReaderFieldInfo("Field", typeof(object)));
 
             var queryResultSelection = new Mock<IQueryResultSelection>(MockBehavior.Strict).Object;
             var testedInstance = new DataCursorFactory();

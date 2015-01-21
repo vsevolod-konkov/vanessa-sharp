@@ -457,16 +457,19 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 Contract.Requires<ArgumentNullException>(tablePartFieldAccessors != null && tablePartFieldAccessors.Count > 0);
                 Contract.Requires<ArgumentException>(fields.Count == tablePartFieldAccessors.Count);
 
-                _tableDataBuilder.AddTablePartField(tablePartName, new ReadOnlyCollection<FieldDescription>(fields));
+                var readOnlyFields = new ReadOnlyCollection<FieldDescription>(fields);
+                
+                _tableDataBuilder.AddTablePartField(tablePartName, readOnlyFields);
                 _fieldAccessors.Add(
-                    d => GetTablePart(d, tablePartAccessor, tablePartFieldAccessors)
+                    d => GetTablePart(readOnlyFields, d, tablePartAccessor, tablePartFieldAccessors)
                     );
             }
 
             private static object GetTablePart<TTablePart>(
+                ReadOnlyCollection<FieldDescription> fields,
                 TExpectedData data,
                 Func<TExpectedData, IEnumerable<TTablePart>> tablePartAccessor,
-                IList<Func<TTablePart, object>> tablePartFieldAccessors
+                IEnumerable<Func<TTablePart, object>> tablePartFieldAccessors
                 )
             {
                 var tablePart = tablePartAccessor(data);
@@ -476,7 +479,9 @@ namespace VanessaSharp.AcceptanceTests.Utility
                     .Select(row => new ReadOnlyCollection<object>(row))
                     .ToArray();
 
-                return new ReadOnlyCollection<ReadOnlyCollection<object>>(rows);
+                return new TableData(
+                    fields,
+                    new ReadOnlyCollection<ReadOnlyCollection<object>>(rows));
             }
 
             private DefinedExpectedDataBuilderState GetNextState(

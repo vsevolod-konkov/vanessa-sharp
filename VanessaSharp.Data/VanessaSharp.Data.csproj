@@ -137,10 +137,12 @@
     <Compile Include="DataReading\DataReaderFieldInfo.cs" />
     <Compile Include="DataReading\IDataCursor.cs" />
     <Compile Include="DataReading\IDataCursorFactory.cs" />
+    <Compile Include="DataReading\IOneSObjectSpecialConverter.cs" />
     <Compile Include="DataReading\LazyDataReaderFieldInfoCollection.cs" />
     <Compile Include="DataReading\DataReaderFieldInfoFixedCollection.cs" />
     <Compile Include="DataReading\DataReaderFieldInfoCollectionLoader.cs" />
     <Compile Include="DataReading\IDataReaderFieldInfoCollection.cs" />
+    <Compile Include="DataReading\OneSObjectSpecialConverter.cs" />
     <Compile Include="IGlobalContextProvider.cs" />
     <Compile Include="IOneSTypeConverter.cs" />
     <Compile Include="ITransactionManager.cs" />

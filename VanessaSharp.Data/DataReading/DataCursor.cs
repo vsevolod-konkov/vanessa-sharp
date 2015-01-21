@@ -17,7 +17,11 @@ namespace VanessaSharp.Data.DataReading
         /// <summary>Конструктор.</summary>
         /// <param name="dataReaderFieldInfoCollection">Коллекция информации о полях читателя данных.</param>
         /// <param name="queryResultSelection">Выборка из результата запроса.</param>
-        public DataCursor(IDataReaderFieldInfoCollection dataReaderFieldInfoCollection, IQueryResultSelection queryResultSelection)
+        /// <param name="oneSObjectSpecialConverter">Специальный конвертер для объектов 1С.</param>
+        public DataCursor(
+            IDataReaderFieldInfoCollection dataReaderFieldInfoCollection, 
+            IQueryResultSelection queryResultSelection,
+            IOneSObjectSpecialConverter oneSObjectSpecialConverter)
         {
             Contract.Requires<ArgumentNullException>(dataReaderFieldInfoCollection != null);
             Contract.Requires<ArgumentNullException>(queryResultSelection != null);
@@ -25,25 +29,38 @@ namespace VanessaSharp.Data.DataReading
             _dataReaderFieldInfoCollection = dataReaderFieldInfoCollection;
             _queryResultSelection = queryResultSelection;
 
-            _buffer = new LazyBuffer(
-                GetValueFunctions(_dataReaderFieldInfoCollection.Count, _queryResultSelection));
+            _buffer = new LazyBuffer(GetValueFunctions(oneSObjectSpecialConverter));
         }
 
         /// <summary>
         /// Получение массива функций получения значения полей.
         /// </summary>
-        /// <param name="fieldsCount">Количество полей.</param>
-        /// <param name="queryResultSelection">Выборка из результата запроса.</param>
-        private static Func<object>[] GetValueFunctions(int fieldsCount, IQueryResultSelection queryResultSelection)
+        private Func<object>[] GetValueFunctions(IOneSObjectSpecialConverter oneSObjectSpecialConverter)
         {
+            var fieldsCount = _dataReaderFieldInfoCollection.Count;
+
             var result = new Func<object>[fieldsCount];
             for (var index = 0; index < fieldsCount; index++)
             {
                 var ordinal = index;
-                result[ordinal] = () => queryResultSelection.Get(ordinal);
+
+                Func<object> valueReader = () => _queryResultSelection.Get(ordinal);
+                var valueConverter = GetValueConverter(oneSObjectSpecialConverter, _dataReaderFieldInfoCollection[index].Type);
+
+                result[ordinal] = (valueConverter == null)
+                                      ? valueReader
+                                      : () => valueConverter(valueReader());
             }
 
             return result;
+        }
+
+        private static Func<object, object> GetValueConverter(IOneSObjectSpecialConverter oneSObjectSpecialConverter, Type desiredType)
+        {
+            if (desiredType == typeof(OneSDataReader))
+                return oneSObjectSpecialConverter.ToDataReader;
+
+            return null;
         }
 
         /// <summary>
@@ -139,8 +156,8 @@ namespace VanessaSharp.Data.DataReading
 
                 _valueFunctions = valueFunctions;
                 _buffer = new Lazy<object>[valueFunctions.Length];
-                
-                Reset();
+
+                InitBuffer();
             }
 
             /// <summary>Индексатор.</summary>
@@ -153,6 +170,22 @@ namespace VanessaSharp.Data.DataReading
             /// Сброс значений в буфере.
             /// </summary>
             public void Reset()
+            {
+                for (var index = 0; index < _valueFunctions.Length; index++)
+                {
+                    var lazyObject = _buffer[index];
+                    if (lazyObject.IsValueCreated)
+                    {
+                        var disposableValue = lazyObject.Value as IDisposable;
+                        if (disposableValue != null)
+                            disposableValue.Dispose();
+                    }
+                }
+                
+                InitBuffer();
+            }
+
+            private void InitBuffer()
             {
                 for (var index = 0; index < _valueFunctions.Length; index++)
                 {
