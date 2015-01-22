@@ -111,6 +111,15 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 .Returns(fieldInfo);
         }
 
+        /// <summary>Установка получения колонки.</summary>
+        /// <param name="index">Индекс колонки.</param>
+        /// <param name="name">Имя колонки.</param>
+        /// <param name="type">Тип колонки.</param>
+        protected void SetupGetColumn(int index, string name, Type type)
+        {
+            SetupGetColumn(index, new DataReaderFieldInfo(name, type));
+        }
+
         /// <summary>Проверка получения полонки.</summary>
         /// <param name="index">Индекс колонки.</param>
         private void VerifyGetColumn(int index)
@@ -225,6 +234,16 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         protected override void ArrangeGetValue(int ordinal, object returnValue)
         {
             SetupColumnsGetCount(ordinal + 1);
+        }
+
+        protected override void ArrangeGetDataReader(int ordinal, object returnValue, OneSDataReader expectedResult)
+        {
+            SetupGetColumn(ordinal, "TablePartField", typeof(OneSDataReader));
+        }
+
+        protected override void AssertGetDataReader(int ordinal, object returnValue)
+        {
+            VerifyGetColumn(ordinal);
         }
     }
 }

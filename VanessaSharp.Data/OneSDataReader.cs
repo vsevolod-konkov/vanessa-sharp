@@ -650,7 +650,15 @@ namespace VanessaSharp.Data
         {
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
 
-            throw new NotImplementedException();
+            if (GetFieldType(ordinal) != typeof(OneSDataReader))
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                    "Поле с индексом \"{0}\" не является табличной частью.",
+                    ordinal));
+            }
+
+            return (OneSDataReader)GetValue(ordinal);
         }
 
         /// <summary>

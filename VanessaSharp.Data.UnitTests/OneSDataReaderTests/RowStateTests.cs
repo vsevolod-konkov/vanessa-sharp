@@ -172,7 +172,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetString"/>.
         /// </summary>
-        protected override void ArrangeGetString(object returnValue, string expectedResult)
+        protected override void ArrangeGetString(int ordinal, object returnValue, string expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToString(returnValue), expectedResult);
         }
@@ -180,7 +180,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetString"/>.
         /// </summary>
-        protected override void AssertGetString(object returnValue)
+        protected override void AssertGetString(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToString(returnValue));
         }
@@ -188,7 +188,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetChar"/>.
         /// </summary>
-        protected override void ArrangeGetChar(object returnValue, char expectedResult)
+        protected override void ArrangeGetChar(int ordinal, object returnValue, char expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToChar(returnValue), expectedResult);
         }
@@ -196,7 +196,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetChar"/>.
         /// </summary>
-        protected override void AssertGetChar(object returnValue)
+        protected override void AssertGetChar(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToChar(returnValue));
         }
@@ -204,7 +204,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetByte"/>.
         /// </summary>
-        protected override void ArrangeGetByte(object returnValue, byte expectedResult)
+        protected override void ArrangeGetByte(int ordinal, object returnValue, byte expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToByte(returnValue), expectedResult);
         }
@@ -212,7 +212,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetByte"/>.
         /// </summary>
-        protected override void AssertGetByte(object returnValue)
+        protected override void AssertGetByte(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToByte(returnValue));
         }
@@ -220,7 +220,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetInt16"/>.
         /// </summary>
-        protected override void ArrangeGetInt16(object returnValue, short expectedResult)
+        protected override void ArrangeGetInt16(int ordinal, object returnValue, short expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToInt16(returnValue), expectedResult);
         }
@@ -228,7 +228,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetInt16"/>.
         /// </summary>
-        protected override void AssertGetInt16(object returnValue)
+        protected override void AssertGetInt16(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToInt16(returnValue));
         }
@@ -236,7 +236,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetInt32"/>.
         /// </summary>
-        protected override void ArrangeGetInt32(object returnValue, int expectedResult)
+        protected override void ArrangeGetInt32(int ordinal, object returnValue, int expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToInt32(returnValue), expectedResult);
         }
@@ -244,7 +244,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetInt32"/>.
         /// </summary>
-        protected override void AssertGetInt32(object returnValue)
+        protected override void AssertGetInt32(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToInt32(returnValue));
         }
@@ -252,7 +252,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetInt64"/>.
         /// </summary>
-        protected override void ArrangeGetInt64(object returnValue, long expectedResult)
+        protected override void ArrangeGetInt64(int ordinal, object returnValue, long expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToInt64(returnValue), expectedResult);
         }
@@ -260,7 +260,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetInt64"/>.
         /// </summary>
-        protected override void AssertGetInt64(object returnValue)
+        protected override void AssertGetInt64(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToInt64(returnValue));
         }
@@ -268,7 +268,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetFloat"/>.
         /// </summary>
-        protected override void ArrangeGetFloat(object returnValue, float expectedResult)
+        protected override void ArrangeGetFloat(int ordinal, object returnValue, float expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToFloat(returnValue), expectedResult);
         }
@@ -276,7 +276,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetFloat"/>.
         /// </summary>
-        protected override void AssertGetFloat(object returnValue)
+        protected override void AssertGetFloat(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToFloat(returnValue));
         }
@@ -284,7 +284,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetDouble"/>.
         /// </summary>
-        protected override void ArrangeGetDouble(object returnValue, double expectedResult)
+        protected override void ArrangeGetDouble(int ordinal, object returnValue, double expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToDouble(returnValue), expectedResult);
         }
@@ -292,7 +292,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetDouble"/>.
         /// </summary>
-        protected override void AssertGetDouble(object returnValue)
+        protected override void AssertGetDouble(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToDouble(returnValue));
         }
@@ -300,7 +300,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetDecimal"/>.
         /// </summary>
-        protected override void ArrangeGetDecimal(object returnValue, decimal expectedResult)
+        protected override void ArrangeGetDecimal(int ordinal, object returnValue, decimal expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToDecimal(returnValue), expectedResult);
         }
@@ -308,7 +308,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetDecimal"/>.
         /// </summary>
-        protected override void AssertGetDecimal(object returnValue)
+        protected override void AssertGetDecimal(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToDecimal(returnValue));
         }
@@ -316,7 +316,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetBoolean"/>.
         /// </summary>
-        protected override void ArrangeGetBoolean(object returnValue, bool expectedResult)
+        protected override void ArrangeGetBoolean(int ordinal, object returnValue, bool expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToBoolean(returnValue), expectedResult);
         }
@@ -324,7 +324,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetBoolean"/>.
         /// </summary>
-        protected override void AssertGetBoolean(object returnValue)
+        protected override void AssertGetBoolean(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToBoolean(returnValue));
         }
@@ -332,7 +332,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetDateTime"/>.
         /// </summary>
-        protected override void ArrangeGetDateTime(object returnValue, DateTime expectedResult)
+        protected override void ArrangeGetDateTime(int ordinal, object returnValue, DateTime expectedResult)
         {
             ArrangeGetTypedValue(c => c.ToDateTime(returnValue), expectedResult);
         }
@@ -340,9 +340,24 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetDateTime"/>.
         /// </summary>
-        protected override void AssertGetDateTime(object returnValue)
+        protected override void AssertGetDateTime(int ordinal, object returnValue)
         {
             AssertGetTypedValue(c => c.ToDateTime(returnValue));
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetDataReader"/>
+        /// в случае, когда поле не является табличной частью.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestGetDataReaderWhenFieldIsNotTablePart()
+        {
+            const int TEST_ORDINAL = 4;
+
+            SetupGetColumn(TEST_ORDINAL, "TablePartName", typeof(int));
+
+            var result = TestedInstance.GetDataReader(TEST_ORDINAL);
         }
     }
 }

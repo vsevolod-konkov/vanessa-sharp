@@ -268,10 +268,10 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             return testedAction(TestedInstance, ordinal);
         }
 
-        private void TestGetValue<T>(Func<OneSDataReader, int, T> testedAction, T expectedResult)
+        private void TestGetValue<T>(int ordinal, Func<OneSDataReader, int, T> testedAction, T expectedResult)
         {
-            const int TEST_ORDINAL = 5;
-            Func<T> testedFunc = () => ArrangeAndGetValue(testedAction, TEST_ORDINAL, expectedResult);
+            
+            Func<T> testedFunc = () => ArrangeAndGetValue(testedAction, ordinal, expectedResult);
 
             if (ShouldBeThrowInvalidOperationExceptionWhenGetValue)
             {
@@ -279,14 +279,18 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             }
             else
             {
-                Assert.AreEqual(expectedResult, testedFunc());
-                AssertGetValue(TEST_ORDINAL);
+                var actualResult = testedFunc();
+                if (!ReferenceEquals(expectedResult, actualResult))
+                    Assert.AreEqual(expectedResult, actualResult);
+
+                AssertGetValue(ordinal);
             }
         }
 
         private void TestGetValue(Func<OneSDataReader, int, object> testedAction)
         {
-            TestGetValue(testedAction, "Test");
+            const int TEST_ORDINAL = 5;
+            TestGetValue(TEST_ORDINAL, testedAction, "Test");
         }
 
         /// <summary>
@@ -315,29 +319,31 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <param name="assert">Проверка вызовов.</param>
         private void TestGetTypedValue<T>(
             T expectedResult,
-            Action<object, T> arrange,
+            Action<int, object, T> arrange,
             Func<OneSDataReader, int, T> testedAction,
-            Action<object> assert)
+            Action<int, object> assert)
         {
+            const int TEST_ORDINAL = 5;
+            
             object returnValue = expectedResult;
-            arrange(returnValue, expectedResult);
+            arrange(TEST_ORDINAL, returnValue, expectedResult);
 
-            TestGetValue(testedAction, expectedResult);
+            TestGetValue(TEST_ORDINAL, testedAction, expectedResult);
 
             if (!ShouldBeThrowInvalidOperationExceptionWhenGetValue)
-                assert(returnValue);
+                assert(TEST_ORDINAL, returnValue);
         }
 
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetString"/>.
         /// </summary>
-        protected virtual void ArrangeGetString(object returnValue, string expectedResult)
+        protected virtual void ArrangeGetString(int ordinal, object returnValue, string expectedResult)
         {}
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetString"/>.
         /// </summary>
-        protected virtual void AssertGetString(object returnValue)
+        protected virtual void AssertGetString(int ordinal, object returnValue)
         {}
 
         /// <summary>
@@ -356,13 +362,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetChar"/>.
         /// </summary>
-        protected virtual void ArrangeGetChar(object returnValue, char expectedResult)
+        protected virtual void ArrangeGetChar(int ordinal, object returnValue, char expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetChar"/>.
         /// </summary>
-        protected virtual void AssertGetChar(object returnValue)
+        protected virtual void AssertGetChar(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -381,13 +387,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetByte"/>.
         /// </summary>
-        protected virtual void ArrangeGetByte(object returnValue, byte expectedResult)
+        protected virtual void ArrangeGetByte(int ordinal, object returnValue, byte expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetByte"/>.
         /// </summary>
-        protected virtual void AssertGetByte(object returnValue)
+        protected virtual void AssertGetByte(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -406,13 +412,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetInt16"/>.
         /// </summary>
-        protected virtual void ArrangeGetInt16(object returnValue, short expectedResult)
+        protected virtual void ArrangeGetInt16(int ordinal, object returnValue, short expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetInt16"/>.
         /// </summary>
-        protected virtual void AssertGetInt16(object returnValue)
+        protected virtual void AssertGetInt16(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -431,13 +437,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetInt32"/>.
         /// </summary>
-        protected virtual void ArrangeGetInt32(object returnValue, int expectedResult)
+        protected virtual void ArrangeGetInt32(int ordinal, object returnValue, int expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetInt32"/>.
         /// </summary>
-        protected virtual void AssertGetInt32(object returnValue)
+        protected virtual void AssertGetInt32(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -456,13 +462,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetInt64"/>.
         /// </summary>
-        protected virtual void ArrangeGetInt64(object returnValue, long expectedResult)
+        protected virtual void ArrangeGetInt64(int ordinal, object returnValue, long expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetInt64"/>.
         /// </summary>
-        protected virtual void AssertGetInt64(object returnValue)
+        protected virtual void AssertGetInt64(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -481,13 +487,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetFloat"/>.
         /// </summary>
-        protected virtual void ArrangeGetFloat(object returnValue, float expectedResult)
+        protected virtual void ArrangeGetFloat(int ordinal, object returnValue, float expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetFloat"/>.
         /// </summary>
-        protected virtual void AssertGetFloat(object returnValue)
+        protected virtual void AssertGetFloat(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -506,13 +512,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetDouble"/>.
         /// </summary>
-        protected virtual void ArrangeGetDouble(object returnValue, double expectedResult)
+        protected virtual void ArrangeGetDouble(int ordinal, object returnValue, double expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetDouble"/>.
         /// </summary>
-        protected virtual void AssertGetDouble(object returnValue)
+        protected virtual void AssertGetDouble(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -531,13 +537,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetDecimal"/>.
         /// </summary>
-        protected virtual void ArrangeGetDecimal(object returnValue, decimal expectedResult)
+        protected virtual void ArrangeGetDecimal(int ordinal, object returnValue, decimal expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetDecimal"/>.
         /// </summary>
-        protected virtual void AssertGetDecimal(object returnValue)
+        protected virtual void AssertGetDecimal(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -556,13 +562,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetBoolean"/>.
         /// </summary>
-        protected virtual void ArrangeGetBoolean(object returnValue, bool expectedResult)
+        protected virtual void ArrangeGetBoolean(int ordinal, object returnValue, bool expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetBoolean"/>.
         /// </summary>
-        protected virtual void AssertGetBoolean(object returnValue)
+        protected virtual void AssertGetBoolean(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -581,13 +587,13 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Подготовка для тестирования <see cref="OneSDataReader.GetDateTime"/>.
         /// </summary>
-        protected virtual void ArrangeGetDateTime(object returnValue, DateTime expectedResult)
+        protected virtual void ArrangeGetDateTime(int ordinal, object returnValue, DateTime expectedResult)
         { }
 
         /// <summary>
         /// Проверка вызовов в <see cref="OneSDataReader.GetDateTime"/>.
         /// </summary>
-        protected virtual void AssertGetDateTime(object returnValue)
+        protected virtual void AssertGetDateTime(int ordinal, object returnValue)
         { }
 
         /// <summary>
@@ -697,6 +703,35 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             TestNotImplementedGetTypedValue(Guid.NewGuid(), 
                 (reader, ordinal) => { var value = reader.GetGuid(ordinal); });
+        }
+
+        /// <summary>
+        /// Подготовка для тестирования <see cref="OneSDataReader.GetDataReader"/>.
+        /// </summary>
+        protected virtual void ArrangeGetDataReader(int ordinal, object returnValue, OneSDataReader expectedResult)
+        { }
+
+        /// <summary>
+        /// Проверка вызовов в <see cref="OneSDataReader.GetDataReader"/>.
+        /// </summary>
+        protected virtual void AssertGetDataReader(int ordinal, object returnValue)
+        { }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetDataReader"/>.
+        /// </summary>
+        [Test]
+        public virtual void TestGetDataReader()
+        {
+            var tablePartQueryResult = new Mock<IQueryResult>(MockBehavior.Strict).Object;
+            var expectedResult = new OneSDataReader(tablePartQueryResult);
+
+            TestGetTypedValue(
+                expectedResult,
+                ArrangeGetDataReader,
+                (reader, ordinal) => reader.GetDataReader(ordinal),
+                AssertGetDataReader
+                );
         }
     }
 }
