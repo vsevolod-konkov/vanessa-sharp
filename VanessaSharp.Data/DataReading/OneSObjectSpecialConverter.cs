@@ -28,7 +28,7 @@ namespace VanessaSharp.Data.DataReading
         {
             var queryResult = DynamicCastQueryResult(oneSObject);
 
-            return new OneSDataReader(queryResult);
+            return new OneSDataReader(queryResult, true);
         }
 
         private static IQueryResult DynamicCastQueryResult(dynamic obj)

@@ -82,7 +82,8 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 
             columnMock
                 .SetupGet(c => c.ValueType)
-                .Returns(TypeDescriptionMockFactory.Create(field.Type));
+                // TODO Refactoring
+                .Returns(TypeDescriptionMockFactory.Create(field.IsTablePart ? typeof(IQueryResult) : field.Type));
 
             return columnMock.Object;
         }
@@ -90,21 +91,39 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         private static IQueryResultSelection CreateQueryResultSelection(
                 IEnumerator<IList<object>> rowsEnumerator, IDictionary<string, int> mapNames)
         {
-                var resultSelectionMock = MockHelper.CreateDisposableMock<IQueryResultSelection>();
+            var resultSelectionMock = MockHelper.CreateDisposableMock<IQueryResultSelection>();
 
-                resultSelectionMock
-                    .Setup(s => s.Next())
-                    .Returns(rowsEnumerator.MoveNext);
+            resultSelectionMock
+                .Setup(s => s.Next())
+                .Returns(rowsEnumerator.MoveNext);
 
-                resultSelectionMock
-                    .Setup(s => s.Get(It.IsAny<int>()))
-                    .Returns<int>(i => rowsEnumerator.Current[i]);
+            resultSelectionMock
+                .Setup(s => s.Get(It.IsAny<int>()))
+                .Returns<int>(i => GetValue(rowsEnumerator, i));
 
-                resultSelectionMock
-                    .Setup(s => s.Get(It.IsAny<string>()))
-                    .Returns<string>(name => rowsEnumerator.Current[mapNames[name]]);
+            resultSelectionMock
+                .Setup(s => s.Get(It.IsAny<string>()))
+                .Returns<string>(name => GetValue(rowsEnumerator, mapNames[name]));
+
+            resultSelectionMock
+                .Setup(s => s.Level)
+                .Returns(0);
 
             return resultSelectionMock.Object;
+        }
+
+        private static object GetValue(IEnumerator<IList<object>> rowsEnumerator, int index)
+        {
+            return GetValue(rowsEnumerator.Current[index]);
+        }
+
+        private static object GetValue(object value)
+        {
+            var tableData = value as TableData;
+
+            return (tableData == null)
+                       ? value
+                       : Create(tableData);
         }
 
         /// <summary>

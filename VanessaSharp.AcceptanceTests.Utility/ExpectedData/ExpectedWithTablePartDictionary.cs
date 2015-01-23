@@ -22,7 +22,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
             [Field("Цена", FieldType = typeof(double))]
             public decimal Price;
 
-            [Field("Количество")]
+            [Field("Количество", FieldType = typeof(double))]
             public int Quantity;
         }
 
@@ -44,6 +44,13 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
                                         Name = "Кросовки",
                                         Price = 200m,
                                         Quantity = 4
+                                    },
+
+                                new CompositionTablePart
+                                    {
+                                        Name = "Майка",
+                                        Price = 100m,
+                                        Quantity = 2
                                     }
                             }
                     };

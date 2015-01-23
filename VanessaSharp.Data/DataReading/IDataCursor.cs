@@ -30,5 +30,10 @@ namespace VanessaSharp.Data.DataReading
         /// Имя поля.
         /// </param>
         object GetValue(string name);
+
+        /// <summary>
+        /// Уровень текущей записи.
+        /// </summary>
+        int Level { get; }
     }
 }

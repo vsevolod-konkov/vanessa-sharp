@@ -129,6 +129,14 @@ namespace VanessaSharp.Data.DataReading
             return _buffer[ordinal];
         }
 
+        /// <summary>
+        /// Уровень текущей записи.
+        /// </summary>
+        public int Level 
+        { 
+            get { return _queryResultSelection.Level; } 
+        }
+
         #region Вспомогательные типы
 
         /// <summary>

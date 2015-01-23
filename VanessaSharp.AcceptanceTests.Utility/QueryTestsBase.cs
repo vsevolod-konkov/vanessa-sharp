@@ -593,6 +593,17 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 return this;
             }
 
+            public DefiningExpectedDataTablePartBuilderState<TExpectedData, TExpectedTablePart> AnyField(string fieldName)
+            {
+                Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
+
+                // TODO: Copy Paste
+                _fields.Add(new FieldDescription(fieldName, typeof(AnyType)));
+                _fieldAccessors.Add(d => AnyType.Instance);
+
+                return this;
+            }
+
             /// <summary>
             /// Завершения описания полей табличной части.
             /// </summary>

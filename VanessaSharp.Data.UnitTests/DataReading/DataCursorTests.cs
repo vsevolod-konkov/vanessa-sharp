@@ -243,8 +243,8 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 new Mock<IQueryResult>(MockBehavior.Strict).Object,
                 new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict).Object,
                 new Mock<IDataCursorFactory>(MockBehavior.Strict).Object,
-                new Mock<IValueConverter>(MockBehavior.Strict).Object
-                );
+                new Mock<IValueConverter>(MockBehavior.Strict).Object,
+                true);
 
             InitTestedInstance(
                 dataReaderFieldInfoSetup: 
@@ -268,6 +268,31 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             var result = _testedInstance.GetValue(FIELD_INDEX);
 
             Assert.AreSame(dataReader, result);
+        }
+
+        /// <summary>
+        /// Тестирование получения значения <see cref="DataCursor.Level"/>.
+        /// </summary>
+        [Test]
+        public void TestLevel()
+        {
+            const int EXPECTED_LEVEL = 3;
+
+            // Arrange
+            InitTestedInstance();
+
+            _queryResultSelectionMock
+                .Setup(qrs => qrs.Level)
+                .Returns(EXPECTED_LEVEL);
+
+            // Act
+            var actualLevel = _testedInstance.Level;
+
+            // Assert
+            Assert.AreEqual(EXPECTED_LEVEL, actualLevel);
+
+            _queryResultSelectionMock
+                .Verify(qrs => qrs.Level, Times.Once());
         }
     }
 }

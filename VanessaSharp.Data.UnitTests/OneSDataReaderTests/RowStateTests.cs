@@ -111,6 +111,50 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         }
 
         /// <summary>
+        /// Тестирование свойства <see cref="OneSDataReader.Level"/>.
+        /// </summary>
+        [Test]
+        public override void TestLevel()
+        {
+            const int EXPECTED_LEVEL = 4;
+
+            // Arrange
+            _dataCursorMock
+                .Setup(c => c.Level)
+                .Returns(EXPECTED_LEVEL);
+
+            // Act
+            var actualLevel = TestedInstance.Level;
+
+            // Assert
+            Assert.AreEqual(EXPECTED_LEVEL, actualLevel);
+
+            _dataCursorMock
+                .Verify(c => c.Level);
+        }
+
+
+        /// <summary>Тестирование свойства <see cref="OneSDataReader.Depth"/>.</summary>
+        [Test]
+        public override void TestDepth()
+        {
+            const int EXPECTED_LEVEL = 4;
+
+            // Arrange
+            _dataCursorMock
+                .Setup(c => c.Level)
+                .Returns(EXPECTED_LEVEL);
+
+            Assert.IsFalse(TestedInstance.IsTablePart);
+
+            // Act
+            var actualDepth = TestedInstance.Depth;
+
+            // Assert
+            Assert.AreEqual(EXPECTED_LEVEL, actualDepth);
+        }
+
+        /// <summary>
         /// Следует ли вбрасывать исключение
         /// <see cref="InvalidOperationException"/>
         /// в случае попытки получения значения.

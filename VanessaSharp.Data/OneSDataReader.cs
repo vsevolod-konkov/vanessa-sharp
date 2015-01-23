@@ -56,11 +56,13 @@ namespace VanessaSharp.Data
         /// <param name="fieldInfoCollection">Коллекция с информацией по полям.</param>
         /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
+        /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
         internal OneSDataReader(
             IQueryResult queryResult,
             IDataReaderFieldInfoCollection fieldInfoCollection,
             IDataCursorFactory dataCursorFactory,
-            IValueConverter valueConverter)
+            IValueConverter valueConverter,
+            bool isTablePart)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(fieldInfoCollection != null);
@@ -71,6 +73,7 @@ namespace VanessaSharp.Data
             _fieldInfoCollection = fieldInfoCollection;
             _dataCursorFactory = dataCursorFactory;
             _valueConverter = valueConverter;
+            _isTablePart = isTablePart;
         }
 
         /// <summary>
@@ -82,16 +85,19 @@ namespace VanessaSharp.Data
         /// <param name="typeDescriptionConverter">Сервис перевода типов.</param>
         /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
+        /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
         private OneSDataReader(
             IQueryResult queryResult, 
             ITypeDescriptionConverter typeDescriptionConverter,
             IDataCursorFactory dataCursorFactory,
-            IValueConverter valueConverter)
+            IValueConverter valueConverter,
+            bool isTablePart)
             : this(
                 queryResult, 
                 DataReaderFieldInfoCollectionLoader.Create(queryResult, typeDescriptionConverter), 
                 dataCursorFactory,
-                valueConverter)
+                valueConverter,
+                isTablePart)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(typeDescriptionConverter != null);
@@ -101,8 +107,9 @@ namespace VanessaSharp.Data
 
         /// <summary>Конструктор принимающий результат запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
-        internal OneSDataReader(IQueryResult queryResult)
-            : this(queryResult, TypeDescriptionConverter.Default, DataCursorFactory.Default, Data.ValueConverter.Default)
+        /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
+        internal OneSDataReader(IQueryResult queryResult, bool isTablePart = false)
+            : this(queryResult, TypeDescriptionConverter.Default, DataCursorFactory.Default, Data.ValueConverter.Default, isTablePart)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
         }
@@ -207,6 +214,31 @@ namespace VanessaSharp.Data
 
             return result;
         }
+        
+        /// <summary>
+        /// Уровень записи.
+        /// </summary>
+        public int Level
+        {
+            get
+            {
+                if (_currentState == States.RecordOpen)
+                    return _dataCursor.Level;
+
+                throw new InvalidOperationException(
+                    string.Format("Недопустимо получение свойства Level в состоянии \"{0}\".",
+                    _currentState));
+            }
+        }
+
+        /// <summary>
+        /// Является ли читателем табличной части.
+        /// </summary>
+        public bool IsTablePart
+        {
+            get { return _isTablePart; }
+        }
+        private readonly bool _isTablePart;
 
         /// <summary>
         /// Gets a value indicating the depth of nesting for the current row.
@@ -217,7 +249,11 @@ namespace VanessaSharp.Data
         /// <filterpriority>1</filterpriority>
         public override int Depth
         {
-            get { return 0; }
+            get
+            {
+                return IsTablePart
+                    ? Level + 1 : Level;
+            }
         }
 
         /// <summary>

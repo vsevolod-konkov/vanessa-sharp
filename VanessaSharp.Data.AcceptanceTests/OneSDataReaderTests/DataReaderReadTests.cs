@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Contracts;
@@ -96,7 +95,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         /// Тестирование выполнения запроса с табличной частью.
         /// </summary>
         [Test]
-        [Ignore("Пока не полной реализации VNS_SHRP-33")]
+        //[Ignore("Пока не полной реализации VNS_SHRP-33")]
         public void TestQueryWithTablePart()
         {
             Test
@@ -110,9 +109,13 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                     [(r, i) => r.GetDecimal(i)]
                     
                     .BeginTablePart
+                        
+                        .Any
+                        .Any
                         [(r, i) => r.GetString(i)]
                         [(r, i) => r.GetDecimal(i)]
                         [(r, i) => r.GetInt32(i)]
+
                     .EndTablePart
 
                 .EndDefineTypedFieldReaders
@@ -121,11 +124,16 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                     
                     .Field(d => d.Name) 
                     .Field(d => d.Summa)
-                    
+
                     .BeginTablePartField(d => d.Composition)
+                        
+                        .AnyField("Ссылка")
+                        .AnyField("НомерСтроки")
+
                         .Field(d => d.Name)
                         .Field(d => d.Price)
                         .Field(d => d.Quantity)
+
                     .EndTablePartField
 
                     .AllRows
@@ -334,10 +342,10 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 var reader = ctx.TestedReader;
 
                 // Тестирование атрибутов читателя
-                Assert.AreEqual(0, reader.Depth);
                 Assert.IsTrue(reader.HasRows);
                 Assert.IsFalse(reader.IsClosed);
                 Assert.AreEqual(-1, reader.RecordsAffected);
+                Assert.IsFalse(reader.IsTablePart);
 
                 // Тестирование описания полей читателя
                 Assert.AreEqual(ctx.ExpectedFieldsCount, reader.FieldCount);
@@ -362,6 +370,8 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 while (reader.Read())
                 {
                     Assert.Less(recordCounter, ctx.ExpectedRowsCount);
+                    Assert.AreEqual(0, reader.Level);
+                    Assert.AreEqual(0, reader.Depth);
 
                     Assert.AreEqual(ctx.ExpectedFieldsCount, reader.GetValues(values));
 
@@ -383,10 +393,9 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                             using (var tablePartReader = reader.GetDataReader(fieldIndex))
                             {
                                 // Тестирование читателя табличного поля
+                                Assert.IsTrue(tablePartReader.IsTablePart);
 
                                 // Тестирование атрибутов читателя
-                                Assert.AreEqual(1, tablePartReader.Depth);
-
                                 Assert.AreEqual(tablePartExpectedData.Rows.Count > 0, tablePartReader.HasRows);
                                 Assert.IsFalse(tablePartReader.IsClosed);
                                 Assert.AreEqual(-1, tablePartReader.RecordsAffected);
@@ -398,12 +407,15 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                                 for (var tablePartFieldIndex = 0; tablePartFieldIndex < tablePartExpectedData.Fields.Count; tablePartFieldIndex++)
                                 {
                                     Assert.AreEqual(tablePartExpectedData.Fields[tablePartFieldIndex].Name, tablePartReader.GetName(tablePartFieldIndex));
-                                    Assert.AreEqual(tablePartFieldIndex, tablePartReader.GetOrdinal(ctx.ExpectedFieldName(tablePartFieldIndex)));
+                                    Assert.AreEqual(tablePartFieldIndex, tablePartReader.GetOrdinal(tablePartExpectedData.Fields[tablePartFieldIndex].Name));
 
                                     // TODO: Refactor
-                                    Assert.AreEqual(
-                                       tablePartExpectedData.Fields[tablePartFieldIndex].Type,
-                                       tablePartReader.GetFieldType(tablePartFieldIndex));
+                                    if (tablePartExpectedData.Fields[tablePartFieldIndex].Type != typeof(AnyType))
+                                    {
+                                        Assert.AreEqual(
+                                            tablePartExpectedData.Fields[tablePartFieldIndex].Type,
+                                            tablePartReader.GetFieldType(tablePartFieldIndex));
+                                    }
                                 }
 
                                 var tablePartRecordCounter = 0;
@@ -412,21 +424,31 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                                 while (tablePartReader.Read())
                                 {
                                     Assert.Less(tablePartRecordCounter, tablePartExpectedData.Rows.Count);
+                                    
+                                    Assert.AreEqual(0, reader.Level);
+                                    Assert.AreEqual(1, tablePartReader.Depth);
+
                                     Assert.AreEqual(tablePartExpectedData.Fields.Count, tablePartReader.GetValues(tablePartValues));
 
                                     for (var tablePartFieldIndex = 0; tablePartFieldIndex < tablePartExpectedData.Fields.Count; tablePartFieldIndex++)
                                     {
-                                        var expectedFieldValue = tablePartExpectedData.Rows[recordCounter][tablePartFieldIndex];
-                                        var rawExpectedFieldValue = QueryResultMockFactory.GetOneSRawValue(expectedFieldValue);
+                                        var expectedFieldValue = tablePartExpectedData.Rows[tablePartRecordCounter][tablePartFieldIndex];
+                                        if (!(expectedFieldValue is AnyType))
+                                        {
+                                            var rawExpectedFieldValue =
+                                                QueryResultMockFactory.GetOneSRawValue(expectedFieldValue);
 
-                                        // Тестирование сырых значений
-                                        Assert.AreEqual(rawExpectedFieldValue, tablePartValues[tablePartFieldIndex]);
-                                        Assert.AreEqual(rawExpectedFieldValue, tablePartReader[tablePartFieldIndex]);
-                                        Assert.AreEqual(rawExpectedFieldValue, tablePartReader.GetValue(tablePartFieldIndex));
-                                        Assert.AreEqual(rawExpectedFieldValue, tablePartReader[tablePartExpectedData.Fields[tablePartFieldIndex].Name]);
+                                            // Тестирование сырых значений
+                                            Assert.AreEqual(rawExpectedFieldValue, tablePartValues[tablePartFieldIndex]);
+                                            Assert.AreEqual(rawExpectedFieldValue, tablePartReader[tablePartFieldIndex]);
+                                            Assert.AreEqual(rawExpectedFieldValue, tablePartReader.GetValue(tablePartFieldIndex));
+                                            Assert.AreEqual(rawExpectedFieldValue, tablePartReader[tablePartExpectedData.Fields[tablePartFieldIndex].Name]);
 
-                                        // Тестирование типизированного значения
-                                        Assert.AreEqual(expectedFieldValue, tablePartTypedReaders[tablePartFieldIndex](tablePartReader, tablePartFieldIndex));    
+                                            // Тестирование типизированного значения
+                                            Assert.AreEqual(
+                                                expectedFieldValue,
+                                                tablePartTypedReaders[tablePartFieldIndex](tablePartReader, tablePartFieldIndex));
+                                        }
                                     }
 
                                     tablePartRecordCounter++;
@@ -473,7 +495,17 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 _prevState = prevState;
                 _typedReaders = typedReaders;
             }
-            
+
+            public DefiningTablePartFieldTypedReadersBuilderState Any
+            {
+                get
+                {
+                    _typedReaders.Add(null);
+
+                    return this;
+                }
+            }
+
             /// <summary>
             /// Добавление типизированного читателя поля.
             /// </summary>

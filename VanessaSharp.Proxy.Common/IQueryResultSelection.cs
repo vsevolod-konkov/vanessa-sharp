@@ -18,5 +18,10 @@
         /// </summary>
         /// <param name="fieldName">Имя поля.</param>
         object Get(string fieldName);
+
+        /// <summary>
+        /// Уровень текущей записи.
+        /// </summary>
+        int Level { get; }
     }
 }

@@ -36,6 +36,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             var result = OneSObjectSpecialConverter.Default.ToDataReader(queryResultMock.Object);
 
             Assert.AreSame(queryResultMock.Object, result.QueryResult);
+            Assert.IsTrue(result.IsTablePart);
         }
     }
 }

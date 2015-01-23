@@ -38,5 +38,13 @@
         {
             return this[fieldName];
         }
+
+        /// <summary>
+        /// Уровень текущей записи.
+        /// </summary>
+        public int Level
+        {
+            get { return DynamicProxy.Level(); }
+        }
     }
 }

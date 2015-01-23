@@ -13,6 +13,11 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
     /// </summary>
     public abstract class OneSDataReaderComponentTestBase
     {
+        /// <summary>
+        /// Является ли тестируемый экземпляр - читателем табличной части.
+        /// </summary>
+        private const bool IS_TABLE_PART = false;
+        
         #region Вспомогательные методы и типы
 
         /// <summary>Менеджер строк тестового экземпляра.</summary>
@@ -141,7 +146,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 QueryResultMock.Object,  
                 _fieldInfoCollection,
                 _dataCursorFactoryMock.Object,
-                CreateValueConverter());
+                CreateValueConverter(),
+                IS_TABLE_PART);
 
             ScenarioAfterInitTestedInstance();
         }
@@ -163,11 +169,31 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
         protected virtual void ScenarioAfterInitTestedInstance() {}
 
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.IsTablePart"/>.
+        /// </summary>
+        [Test]
+        public void TestIsTablePart()
+        {
+            Assert.AreEqual(IS_TABLE_PART, TestedInstance.IsTablePart);   
+        }
+        
+        /// <summary>
+        /// Тестирование свойства <see cref="OneSDataReader.Level"/>.
+        /// </summary>
+        [Test]
+        public virtual void TestLevel()
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => { var level = TestedInstance.Level; });
+        }
+
         /// <summary>Тестирование свойства <see cref="OneSDataReader.Depth"/>.</summary>
         [Test]
-        public void TestDepth()
+        public virtual void TestDepth()
         {
-            Assert.AreEqual(0, TestedInstance.Depth);
+            Assert.Throws<InvalidOperationException>(
+                () => { var depth = TestedInstance.Depth; });
         }
 
         /// <summary>Тестирование <see cref="OneSDataReader.RecordsAffected"/>.</summary>
@@ -270,7 +296,6 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
         private void TestGetValue<T>(int ordinal, Func<OneSDataReader, int, T> testedAction, T expectedResult)
         {
-            
             Func<T> testedFunc = () => ArrangeAndGetValue(testedAction, ordinal, expectedResult);
 
             if (ShouldBeThrowInvalidOperationExceptionWhenGetValue)
