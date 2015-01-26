@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics.Contracts;
 using NUnit.Framework;
@@ -95,7 +96,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         /// Тестирование выполнения запроса с табличной частью.
         /// </summary>
         [Test]
-        //[Ignore("Пока не полной реализации VNS_SHRP-33")]
         public void TestQueryWithTablePart()
         {
             Test
@@ -142,7 +142,507 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             .Run();
         }
 
+        #region Методы тестирования
+
+        /// <summary>Тестирующее действие.</summary>
+        /// <param name="ctx">Контекст тестирования.</param>
+        private static void TestingAction(TestingContext ctx)
+        {
+            TestingAction(ctx, ctx.TestedReader);
+        }
+
+        private static void TestingAction(ITestingContext ctx, OneSDataReader reader)
+        {
+            // Тестирование атрибутов читателя
+            TestReaderAttributes(reader, ctx.HasData, ctx.IsTablePart);
+
+            // Тестирование описания полей читателя
+            TestFields(ctx, reader);
+
+            // буфер для чтения данных строк
+            var values = new object[ctx.ExpectedFieldsCount];
+
+            var recordCounter = 0;
+
+            while (reader.Read())
+            {
+                Assert.Less(recordCounter, ctx.ExpectedRecordsCount);
+                Assert.AreEqual(0, reader.Level);
+                Assert.AreEqual(ctx.IsTablePart ? 1 : 0, reader.Depth);
+
+                Assert.AreEqual(ctx.ExpectedFieldsCount, reader.GetValues(values));
+
+                var recordCtx = ctx.GetRecordContext(recordCounter);
+
+                for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
+                {
+                    if (!recordCtx.IsAnyField(fieldIndex))
+                    {
+                        var valueCtx = recordCtx.GetValueContext(fieldIndex);
+
+                        if (valueCtx.ExpectedFieldKind == FieldKind.TablePart)
+                        {
+                            Assert.IsInstanceOf<OneSDataReader>(values[fieldIndex]);
+                            Assert.IsInstanceOf<OneSDataReader>(reader[fieldIndex]);
+                            Assert.IsInstanceOf<OneSDataReader>(reader.GetValue(fieldIndex));
+                            Assert.IsInstanceOf<OneSDataReader>(reader[valueCtx.ExpectedFieldName]);
+
+                            using (var tablePartReader = reader.GetDataReader(fieldIndex))
+                            {
+                                TestingAction((ITestingTablePartContext)valueCtx, tablePartReader);
+                            }
+                        }
+                        else
+                        {
+                            TestFieldValue((ITestingScalarValueContext)valueCtx, values, reader);
+                        }    
+                    }
+                }
+
+                ++recordCounter;
+            }
+
+            Assert.AreEqual(ctx.ExpectedRecordsCount, recordCounter);
+        }
+
+        /// <summary>Тестирование атрибутов читателя.</summary>
+        private static void TestReaderAttributes(OneSDataReader testedReader, bool hasData, bool isTablePart)
+        {
+            Assert.AreEqual(hasData, testedReader.HasRows);
+            Assert.IsFalse(testedReader.IsClosed);
+            Assert.AreEqual(-1, testedReader.RecordsAffected);
+            Assert.AreEqual(isTablePart, testedReader.IsTablePart);
+        }
+
+        /// <summary>Тестирование полей читателя.</summary>
+        private static void TestFields(ITestingContext ctx, OneSDataReader testedReader)
+        {
+            Assert.AreEqual(ctx.ExpectedFieldsCount, testedReader.FieldCount);
+            Assert.AreEqual(ctx.ExpectedFieldsCount, testedReader.VisibleFieldCount);
+
+            for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
+            {
+                TestField(ctx.GetFieldContext(fieldIndex), testedReader);
+            }
+        }
+
+        /// <summary>Тестирование поля читателя.</summary>
+        private static void TestField(ITestingFieldContext ctx, OneSDataReader testedReader)
+        {
+            Assert.AreEqual(ctx.ExpectedFieldName, testedReader.GetName(ctx.FieldIndex));
+            Assert.AreEqual(ctx.FieldIndex, testedReader.GetOrdinal(ctx.ExpectedFieldName));
+
+            if (ctx.ExpectedFieldKind != FieldKind.Any)
+            {
+                var expectedFieldType = (ctx.ExpectedFieldKind == FieldKind.TablePart)
+                                            ? typeof(OneSDataReader)
+                                            : ((ITestingScalarFieldContext)ctx).ExpectedFieldType;
+
+                Assert.AreEqual(
+                    expectedFieldType,
+                    testedReader.GetFieldType(ctx.FieldIndex));
+            }
+        }
+
+        /// <summary>Тестирование значения поля записи.</summary>
+        private static void TestFieldValue(ITestingScalarValueContext ctx, object[] values, OneSDataReader testedReader)
+        {
+            if (ctx.ExpectedValue is AnyType)
+                return;
+            
+            var rawExpectedFieldValue = QueryResultMockFactory.GetOneSRawValue(ctx.ExpectedValue);
+
+            // Тестирование сырых значений
+            Assert.AreEqual(rawExpectedFieldValue, values[ctx.FieldIndex]);
+            Assert.AreEqual(rawExpectedFieldValue, testedReader[ctx.FieldIndex]);
+            Assert.AreEqual(rawExpectedFieldValue, testedReader.GetValue(ctx.FieldIndex));
+            Assert.AreEqual(rawExpectedFieldValue, testedReader[ctx.ExpectedFieldName]);
+
+            // Тестирование типизированного значения
+            Assert.AreEqual(ctx.ExpectedValue, ctx.TypedReader(testedReader));    
+        }
+        
+        private interface ITestingContext
+        {
+            int ExpectedFieldsCount { get; }
+
+            int ExpectedRecordsCount { get; }
+
+            ITestingFieldContext GetFieldContext(int fieldIndex);
+
+            ITestingRecordContext GetRecordContext(int recordIndex);
+
+            bool IsTablePart { get; }
+
+            bool HasData { get; }
+        }
+
+        private interface ITestingFieldContext
+        {
+            int FieldIndex { get; }
+
+            string ExpectedFieldName { get; }
+            FieldKind ExpectedFieldKind { get; }
+        }
+
+        private interface ITestingScalarFieldContext : ITestingFieldContext
+        {
+            Type ExpectedFieldType { get; }
+        }
+
+        private interface ITestingRecordContext
+        {
+            bool IsAnyField(int fieldIndex);
+            
+            ITestingValueContext GetValueContext(int fieldIndex);
+        }
+
+        private interface ITestingValueContext
+        {
+            int FieldIndex { get; }
+            string ExpectedFieldName { get; }
+            FieldKind ExpectedFieldKind { get; }
+        }
+
+        private interface ITestingScalarValueContext : ITestingValueContext
+        {
+            object ExpectedValue { get; }
+            Func<OneSDataReader, object> TypedReader { get; }
+        }
+
+        private interface ITestingTablePartContext 
+            : ITestingValueContext, ITestingContext
+        {}
+
+        #endregion
+
         #region Объекты для внутреннего DSL
+
+        private abstract class TypedFieldValueReader
+        {
+            public abstract FieldKind Kind { get; }
+
+            public static TypedFieldValueReader Any
+            {
+                get { return _any; }
+            }
+            private static readonly TypedFieldValueReader _any = new AnyFieldValueReader();
+        }
+
+        private sealed class AnyFieldValueReader : TypedFieldValueReader
+        {
+            public override FieldKind Kind
+            {
+                get { return FieldKind.Any; }
+            }
+        }
+
+        private sealed class TypedScalarFieldValueReader : TypedFieldValueReader
+        {
+            public TypedScalarFieldValueReader(Func<OneSDataReader, int, object> scalarReader)
+            {
+                Contract.Requires<ArgumentNullException>(scalarReader != null);
+                
+                _scalarReader = scalarReader;
+            }
+            
+            public override FieldKind Kind
+            {
+                get { return FieldKind.Scalar; }
+            }
+
+            public Func<OneSDataReader, int, object> ScalarReader
+            {
+                get { return _scalarReader; }
+            }
+            private readonly Func<OneSDataReader, int, object> _scalarReader;
+        }
+
+        private sealed class TypedTablePartFieldReader : TypedFieldValueReader
+        {
+            public TypedTablePartFieldReader(IList<TypedFieldValueReader> readers)
+            {
+                Contract.Requires<ArgumentNullException>(readers != null);
+
+                _readers = readers;
+            }
+
+            public override FieldKind Kind
+            {
+                get { return FieldKind.TablePart; }
+            }
+
+            public IList<TypedFieldValueReader> Readers
+            {
+                get { return _readers; }
+            }
+            private readonly IList<TypedFieldValueReader> _readers;
+        }
+
+        private new sealed class TestingContext : DataReaderTestsBase.TestingContext, ITestingContext
+        {
+            private readonly IList<TypedFieldValueReader> _typedReaders;
+            
+            public TestingContext(DataReaderTestsBase.TestingContext innerContext,
+                IList<TypedFieldValueReader> typedReaders)
+                : base(innerContext)
+            {
+                Contract.Requires<ArgumentNullException>(innerContext != null);
+                Contract.Requires<ArgumentNullException>(typedReaders != null);
+
+                _typedReaders = typedReaders;
+            }
+
+            public int ExpectedRecordsCount 
+            { 
+                get { return ExpectedData.Rows.Count; } 
+            }
+
+            public ITestingFieldContext GetFieldContext(int fieldIndex)
+            {
+                return TestingFieldContext.Create(
+                    fieldIndex,
+                    ExpectedData.Fields[fieldIndex]);
+            }
+
+            public ITestingRecordContext GetRecordContext(int recordIndex)
+            {
+                var rowIndex = ExpectedRowIndexes[recordIndex];
+
+                return new TestingRecordContext(
+                    ExpectedData.Fields,
+                    _typedReaders,
+                    ExpectedData.Rows[rowIndex]
+                    );
+            }
+
+            public bool IsTablePart { get { return false; } }
+
+            public bool HasData { get { return ExpectedRowsCount > 0; } }
+        }
+
+        private class TestingFieldContext : ITestingFieldContext
+        {
+            private readonly FieldDescription _fieldDescription;
+
+            public static TestingFieldContext Create(int fieldIndex, FieldDescription fieldDescription)
+            {
+                return (fieldDescription.Kind == FieldKind.Scalar)
+                           ? new TestingScalarFieldContext(fieldIndex, (ScalarFieldDescription)fieldDescription)
+                           : new TestingFieldContext(fieldIndex, fieldDescription);
+            }
+
+            protected TestingFieldContext(int fieldIndex, FieldDescription fieldDescription)
+            {
+                Contract.Requires<ArgumentNullException>(fieldDescription != null);
+                
+                _fieldIndex = fieldIndex;
+                _fieldDescription = fieldDescription;
+            }
+
+            public int FieldIndex
+            {
+                get { return _fieldIndex; }
+            }
+            private readonly int _fieldIndex;
+
+            public FieldKind ExpectedFieldKind
+            {
+                get { return _fieldDescription.Kind; }
+            }
+
+            public string ExpectedFieldName
+            {
+                get { return _fieldDescription.Name; }
+            }
+        }
+
+        private sealed class TestingScalarFieldContext : TestingFieldContext, ITestingScalarFieldContext
+        {
+            private readonly ScalarFieldDescription _fieldDescription;
+            
+            public TestingScalarFieldContext(int fieldIndex, ScalarFieldDescription fieldDescription) 
+                : base(fieldIndex, fieldDescription)
+            {
+                Contract.Requires<ArgumentNullException>(fieldDescription != null);
+
+                _fieldDescription = fieldDescription;
+            }
+
+            public Type ExpectedFieldType
+            {
+                get { return _fieldDescription.Type; }
+            }
+        }
+
+        private sealed class TestingRecordContext : ITestingRecordContext
+        {
+            private readonly ReadOnlyCollection<object> _expectedRow;
+            private readonly ReadOnlyCollection<FieldDescription> _expectedFields;
+            private readonly IList<TypedFieldValueReader> _typedReaders;
+
+            public TestingRecordContext(
+                ReadOnlyCollection<FieldDescription> expectedFields,
+                IList<TypedFieldValueReader> typedReaders,
+                ReadOnlyCollection<object> expectedRow)
+            {
+                Contract.Requires<ArgumentNullException>(expectedFields != null);
+                Contract.Requires<ArgumentNullException>(typedReaders != null);
+                Contract.Requires<ArgumentNullException>(expectedRow != null);
+                
+                _expectedFields = expectedFields;
+                _typedReaders = typedReaders;
+                _expectedRow = expectedRow;
+            }
+
+            public bool IsAnyField(int fieldIndex)
+            {
+                return _expectedFields[fieldIndex].Kind == FieldKind.Any;
+            }
+
+            public ITestingValueContext GetValueContext(int fieldIndex)
+            {
+                var expectedField = _expectedFields[fieldIndex];
+                var expectedFieldName = expectedField.Name;
+                var expectedValue = _expectedRow[fieldIndex];
+
+                var fieldKind = _expectedFields[fieldIndex].Kind;
+                var reader = _typedReaders[fieldIndex];
+                Contract.Assert(reader.Kind == fieldKind);
+
+                switch (fieldKind)
+                {
+                    case FieldKind.Scalar:
+                        return new TestingScalarValueContext(
+                                fieldIndex,
+                                expectedFieldName,
+                                expectedValue,
+                                ((TypedScalarFieldValueReader)reader).ScalarReader
+                            );
+
+                    case FieldKind.TablePart:
+                        return new TestingTablePartContext(
+                                fieldIndex,
+                                expectedFieldName,
+                                (TableData)expectedValue,
+                                ((TypedTablePartFieldReader)reader).Readers
+                            );
+
+                    default:
+                        throw new NotSupportedException(string.Format(
+                            "Field Kind \"{0}\" is not supported.",
+                            fieldKind));
+                }
+            }
+        }
+
+        private abstract class TestingValueContextBase : ITestingValueContext
+        {
+            protected TestingValueContextBase(int fieldIndex, string expectedFieldName)
+            {
+                _fieldIndex = fieldIndex;
+                _expectedFieldName = expectedFieldName;
+            }
+
+            public int FieldIndex { get { return _fieldIndex; } }
+            private readonly int _fieldIndex;
+
+            public string ExpectedFieldName { get { return _expectedFieldName; } }
+            private readonly string _expectedFieldName;
+
+            public abstract FieldKind ExpectedFieldKind { get; }
+        }
+
+        private sealed class TestingScalarValueContext : TestingValueContextBase, ITestingScalarValueContext
+        {
+            public TestingScalarValueContext(int fieldIndex, string expectedFieldName, 
+                object expectedValue, Func<OneSDataReader, int, object> typedReader)
+                : base(fieldIndex, expectedFieldName)
+            {
+                Contract.Requires<ArgumentNullException>(typedReader != null);
+                
+                _expectedValue = expectedValue;
+                _typedReader = typedReader;
+            }
+            
+            public object ExpectedValue { get { return _expectedValue; } }
+            private readonly object _expectedValue;
+
+            public override FieldKind ExpectedFieldKind
+            {
+                get { return FieldKind.Scalar; }
+            }
+
+            public Func<OneSDataReader, object> TypedReader
+            {
+                get
+                {
+                    return r => _typedReader(r, FieldIndex);
+                }
+            }
+            private readonly Func<OneSDataReader, int, object> _typedReader;
+        }
+
+        private sealed class TestingTablePartContext : TestingValueContextBase, ITestingTablePartContext
+        {
+            private readonly TableData _expectedData;
+            private readonly IList<TypedFieldValueReader> _typedReaders; 
+            
+            public TestingTablePartContext(
+                int fieldIndex,
+                string expectedFieldName,
+                TableData expectedData,
+                IList<TypedFieldValueReader> typedReaders)
+                : base(fieldIndex, expectedFieldName)
+            {
+                Contract.Requires<ArgumentNullException>(expectedData != null);
+                Contract.Requires<ArgumentNullException>(typedReaders != null);
+
+                _expectedData = expectedData;
+                _typedReaders = typedReaders;
+            }
+
+            public override FieldKind ExpectedFieldKind
+            {
+                get { return FieldKind.TablePart; }
+            }
+
+            public bool HasData
+            {
+                get
+                {
+                    return _expectedData.Rows.Count > 0;
+                }
+            }
+
+            public int ExpectedFieldsCount
+            {
+                get { return _expectedData.Fields.Count; }
+            }
+
+            public int ExpectedRecordsCount
+            {
+                get { return _expectedData.Rows.Count; }
+            }
+
+            public ITestingFieldContext GetFieldContext(int fieldIndex)
+            {
+                return TestingFieldContext.Create(fieldIndex, _expectedData.Fields[fieldIndex]);
+            }
+
+            public ITestingRecordContext GetRecordContext(int recordIndex)
+            {
+                return new TestingRecordContext(
+                    _expectedData.Fields, _typedReaders, 
+                    _expectedData.Rows[recordIndex]
+                    );
+            }
+
+            bool ITestingContext.IsTablePart
+            {
+                get { return true; }
+            }
+        }
 
         /// <summary>
         /// Начальное состояние для описания теста.
@@ -277,8 +777,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         private sealed class DefiningFieldTypedReadersBuilderState
         {
             private readonly ActionDefiningBuilderState _innerState;
-            private readonly List<Func<OneSDataReader, int, object>> _typedReaders = new List<Func<OneSDataReader, int, object>>();
-            private readonly List<IList<Func<OneSDataReader, int, object>>> _tablePartTypedReaders = new List<IList<Func<OneSDataReader, int, object>>>();
+            private readonly List<TypedFieldValueReader> _typedReaders = new List<TypedFieldValueReader>();
 
             public DefiningFieldTypedReadersBuilderState(ActionDefiningBuilderState innerState)
             {
@@ -299,9 +798,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                     Contract.Requires<ArgumentNullException>(typedReader != null);
                     Contract.Ensures(Contract.Result<DefiningFieldTypedReadersBuilderState>() != null);
 
-                    // TODO: Refactor
-                    _typedReaders.Add(typedReader);
-                    _tablePartTypedReaders.Add(null);
+                    _typedReaders.Add(new TypedScalarFieldValueReader(typedReader));
 
                     return this;
                 }
@@ -315,11 +812,11 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 get
                 {
                     Contract.Ensures(Contract.Result<DefiningTablePartFieldTypedReadersBuilderState>() != null);
-                    
-                    _typedReaders.Add(null);
-                    var tablePartTypedReaders = new List<Func<OneSDataReader, int, object>>();
-                    _tablePartTypedReaders.Add(tablePartTypedReaders);
 
+                    var tablePartTypedReaders = new List<TypedFieldValueReader>();
+
+                    _typedReaders.Add(new TypedTablePartFieldReader(tablePartTypedReaders));
+                    
                     return new DefiningTablePartFieldTypedReadersBuilderState(this, tablePartTypedReaders);
                 }
             }
@@ -337,146 +834,11 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
             /// <summary>Тестирующие действие.</summary>
             /// <param name="ctx">Контекст тестирования.</param>
-            private void TestingAction(TestingContext ctx)
+            private void TestingAction(DataReaderTestsBase.TestingContext ctx)
             {
-                var reader = ctx.TestedReader;
+                var newCtx = new TestingContext(ctx, _typedReaders);
 
-                // Тестирование атрибутов читателя
-                Assert.IsTrue(reader.HasRows);
-                Assert.IsFalse(reader.IsClosed);
-                Assert.AreEqual(-1, reader.RecordsAffected);
-                Assert.IsFalse(reader.IsTablePart);
-
-                // Тестирование описания полей читателя
-                Assert.AreEqual(ctx.ExpectedFieldsCount, reader.FieldCount);
-                Assert.AreEqual(ctx.ExpectedFieldsCount, reader.VisibleFieldCount);
-
-                for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
-                {
-                    Assert.AreEqual(ctx.ExpectedFieldName(fieldIndex), reader.GetName(fieldIndex));
-                    Assert.AreEqual(fieldIndex, reader.GetOrdinal(ctx.ExpectedFieldName(fieldIndex)));
-
-                    // TODO: Refactor
-                    Assert.AreEqual(
-                        ctx.IsFieldTablePart(fieldIndex) ? typeof(OneSDataReader) : ctx.ExpectedFieldType(fieldIndex),
-                        reader.GetFieldType(fieldIndex));
-                }
-
-                // буфер для чтения данных строк
-                var values = new object[ctx.ExpectedFieldsCount];
-
-                var recordCounter = 0;
-
-                while (reader.Read())
-                {
-                    Assert.Less(recordCounter, ctx.ExpectedRowsCount);
-                    Assert.AreEqual(0, reader.Level);
-                    Assert.AreEqual(0, reader.Depth);
-
-                    Assert.AreEqual(ctx.ExpectedFieldsCount, reader.GetValues(values));
-
-                    for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
-                    {
-                        // TODO Refactor
-                        if (ctx.IsFieldTablePart(fieldIndex))
-                        {
-                            // Тестирование сырых значений
-                            Assert.IsInstanceOf<OneSDataReader>(values[fieldIndex]);
-                            Assert.IsInstanceOf<OneSDataReader>(reader[fieldIndex]);
-                            Assert.IsInstanceOf<OneSDataReader>(reader.GetValue(fieldIndex));
-                            Assert.IsInstanceOf<OneSDataReader>(reader[ctx.ExpectedFieldName(fieldIndex)]);
-
-                            var tablePartExpectedData = ctx.ExpectedTablePart(recordCounter, fieldIndex);
-                            var tablePartValues = new object[tablePartExpectedData.Fields.Count];
-                            var tablePartTypedReaders = _tablePartTypedReaders[fieldIndex];
-
-                            using (var tablePartReader = reader.GetDataReader(fieldIndex))
-                            {
-                                // Тестирование читателя табличного поля
-                                Assert.IsTrue(tablePartReader.IsTablePart);
-
-                                // Тестирование атрибутов читателя
-                                Assert.AreEqual(tablePartExpectedData.Rows.Count > 0, tablePartReader.HasRows);
-                                Assert.IsFalse(tablePartReader.IsClosed);
-                                Assert.AreEqual(-1, tablePartReader.RecordsAffected);
-
-                                // Тестирование описания полей читателя
-                                Assert.AreEqual(tablePartExpectedData.Fields.Count, tablePartReader.FieldCount);
-                                Assert.AreEqual(tablePartExpectedData.Fields.Count, tablePartReader.VisibleFieldCount);
-
-                                for (var tablePartFieldIndex = 0; tablePartFieldIndex < tablePartExpectedData.Fields.Count; tablePartFieldIndex++)
-                                {
-                                    Assert.AreEqual(tablePartExpectedData.Fields[tablePartFieldIndex].Name, tablePartReader.GetName(tablePartFieldIndex));
-                                    Assert.AreEqual(tablePartFieldIndex, tablePartReader.GetOrdinal(tablePartExpectedData.Fields[tablePartFieldIndex].Name));
-
-                                    // TODO: Refactor
-                                    if (tablePartExpectedData.Fields[tablePartFieldIndex].Type != typeof(AnyType))
-                                    {
-                                        Assert.AreEqual(
-                                            tablePartExpectedData.Fields[tablePartFieldIndex].Type,
-                                            tablePartReader.GetFieldType(tablePartFieldIndex));
-                                    }
-                                }
-
-                                var tablePartRecordCounter = 0;
-
-                                // TODO: Refactor
-                                while (tablePartReader.Read())
-                                {
-                                    Assert.Less(tablePartRecordCounter, tablePartExpectedData.Rows.Count);
-                                    
-                                    Assert.AreEqual(0, reader.Level);
-                                    Assert.AreEqual(1, tablePartReader.Depth);
-
-                                    Assert.AreEqual(tablePartExpectedData.Fields.Count, tablePartReader.GetValues(tablePartValues));
-
-                                    for (var tablePartFieldIndex = 0; tablePartFieldIndex < tablePartExpectedData.Fields.Count; tablePartFieldIndex++)
-                                    {
-                                        var expectedFieldValue = tablePartExpectedData.Rows[tablePartRecordCounter][tablePartFieldIndex];
-                                        if (!(expectedFieldValue is AnyType))
-                                        {
-                                            var rawExpectedFieldValue =
-                                                QueryResultMockFactory.GetOneSRawValue(expectedFieldValue);
-
-                                            // Тестирование сырых значений
-                                            Assert.AreEqual(rawExpectedFieldValue, tablePartValues[tablePartFieldIndex]);
-                                            Assert.AreEqual(rawExpectedFieldValue, tablePartReader[tablePartFieldIndex]);
-                                            Assert.AreEqual(rawExpectedFieldValue, tablePartReader.GetValue(tablePartFieldIndex));
-                                            Assert.AreEqual(rawExpectedFieldValue, tablePartReader[tablePartExpectedData.Fields[tablePartFieldIndex].Name]);
-
-                                            // Тестирование типизированного значения
-                                            Assert.AreEqual(
-                                                expectedFieldValue,
-                                                tablePartTypedReaders[tablePartFieldIndex](tablePartReader, tablePartFieldIndex));
-                                        }
-                                    }
-
-                                    tablePartRecordCounter++;
-                                }
-
-                                Assert.AreEqual(tablePartExpectedData.Rows.Count, tablePartRecordCounter);
-                            }
-                        }
-                        else
-                        {
-                            var expectedFieldValue = ctx.ExpectedValue(recordCounter, fieldIndex);
-                            var rawExpectedFieldValue = QueryResultMockFactory.GetOneSRawValue(expectedFieldValue);
-
-                            // Тестирование сырых значений
-                            Assert.AreEqual(rawExpectedFieldValue, values[fieldIndex]);
-                            Assert.AreEqual(rawExpectedFieldValue, reader[fieldIndex]);
-                            Assert.AreEqual(rawExpectedFieldValue, reader.GetValue(fieldIndex));
-                            Assert.AreEqual(rawExpectedFieldValue, reader[ctx.ExpectedFieldName(fieldIndex)]);
-
-                            // Тестирование типизированного значения
-                            Assert.AreEqual(expectedFieldValue, _typedReaders[fieldIndex](reader, fieldIndex));    
-                        }
-                    }
-
-                    ++recordCounter;
-                }
-
-                Assert.AreEqual(ctx.ExpectedRowsCount, recordCounter);
+                DataReaderReadTests.TestingAction(newCtx);
             }
         }
 
@@ -486,9 +848,9 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         private sealed class DefiningTablePartFieldTypedReadersBuilderState
         {
             private readonly DefiningFieldTypedReadersBuilderState _prevState;
-            private readonly IList<Func<OneSDataReader, int, object>> _typedReaders;
+            private readonly IList<TypedFieldValueReader> _typedReaders;
 
-            public DefiningTablePartFieldTypedReadersBuilderState(DefiningFieldTypedReadersBuilderState prevState, IList<Func<OneSDataReader, int, object>> typedReaders)
+            public DefiningTablePartFieldTypedReadersBuilderState(DefiningFieldTypedReadersBuilderState prevState, IList<TypedFieldValueReader> typedReaders)
             {
                 Contract.Requires<ArgumentNullException>(prevState != null);
 
@@ -500,7 +862,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             {
                 get
                 {
-                    _typedReaders.Add(null);
+                    _typedReaders.Add(TypedFieldValueReader.Any);
 
                     return this;
                 }
@@ -517,7 +879,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                     Contract.Requires<ArgumentNullException>(typedReader != null);
                     Contract.Ensures(Contract.Result<DefiningTablePartFieldTypedReadersBuilderState>() != null);
 
-                    _typedReaders.Add(typedReader);
+                    _typedReaders.Add(new TypedScalarFieldValueReader(typedReader));
 
                     return this;
                 }

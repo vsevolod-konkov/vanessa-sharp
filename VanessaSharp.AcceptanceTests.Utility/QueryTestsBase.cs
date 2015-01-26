@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
@@ -163,7 +162,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
         /// <summary>
         /// Контекст тестирования.
         /// </summary>
-        protected sealed class TestingContext
+        protected class TestingContext
         {
             /// <summary>Ожидаемые данные.</summary>
             private readonly TableData _expectedData;
@@ -193,6 +192,13 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 _testModeStrategy = testModeStrategy;
             }
 
+            protected TestingContext(TestingContext other)
+                : this(other._connection, other._expectedData, 
+                            other._expectedRowIndexes, other._testModeStrategy)
+            {
+                Contract.Requires<ArgumentNullException>(other != null);
+            }
+
             /// <summary>Соединение.</summary>
             public OneSConnection Connection
             {
@@ -204,6 +210,11 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 }
             }
             private readonly OneSConnection _connection;
+
+            protected TableData ExpectedData
+            {
+                get { return _expectedData; }
+            }
 
             /// <summary>Ожидаемое количество полей.</summary>
             public int ExpectedFieldsCount
@@ -220,18 +231,9 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
             /// <summary>Ожидаемый тип поля.</summary>
             /// <param name="fieldIndex">Тип поля.</param>
-            public Type ExpectedFieldType(int fieldIndex)
+            public FieldKind ExpectedFieldKind(int fieldIndex)
             {
-                return _expectedData.Fields[fieldIndex].Type;
-            }
-
-            /// <summary>
-            /// Является ли поле табличной частью.
-            /// </summary>
-            /// <param name="fieldIndex">Индекс поля.</param>
-            public bool IsFieldTablePart(int fieldIndex)
-            {
-                return _expectedData.Fields[fieldIndex].IsTablePart;
+                return _expectedData.Fields[fieldIndex].Kind;
             }
 
             /// <summary>Ожидаемое количество строк.</summary>
@@ -430,7 +432,8 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
                 Contract.Ensures(Contract.Result<DefiningExpectedDataBuilderState<TExpectedData>>() != null);
 
-                AddScalarFieldDefinition(fieldName, typeof(AnyType), d => AnyType.Instance);
+                _tableDataBuilder.AddAnyField(fieldName);
+                _fieldAccessors.Add(d => AnyType.Instance);
 
                 return this;
             }
@@ -587,7 +590,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 // TODO: Copy Paste
                 var info = ExpectedDataHelper.ExtractFieldInfo(fieldAccessor);
 
-                _fields.Add(new FieldDescription(info.Name, info.Type));
+                _fields.Add(new ScalarFieldDescription(info.Name, info.Type));
                 _fieldAccessors.Add(info.Accessor);
 
                 return this;
@@ -598,7 +601,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
 
                 // TODO: Copy Paste
-                _fields.Add(new FieldDescription(fieldName, typeof(AnyType)));
+                _fields.Add(new AnyFieldDescription(fieldName));
                 _fieldAccessors.Add(d => AnyType.Instance);
 
                 return this;

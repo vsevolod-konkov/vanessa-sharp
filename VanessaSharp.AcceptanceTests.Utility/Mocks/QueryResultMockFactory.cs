@@ -83,9 +83,24 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
             columnMock
                 .SetupGet(c => c.ValueType)
                 // TODO Refactoring
-                .Returns(TypeDescriptionMockFactory.Create(field.IsTablePart ? typeof(IQueryResult) : field.Type));
+                .Returns(TypeDescriptionMockFactory.Create(GetFieldType(field)));
 
             return columnMock.Object;
+        }
+
+        private static Type GetFieldType(FieldDescription field)
+        {
+            switch (field.Kind)
+            {
+                case FieldKind.Any:
+                    return typeof(AnyType);
+                case FieldKind.Scalar:
+                    return ((ScalarFieldDescription)field).Type;
+                case FieldKind.TablePart:
+                    return typeof(IQueryResult);
+                default:
+                    throw new ArgumentOutOfRangeException("field.Kind");
+            }
         }
 
         private static IQueryResultSelection CreateQueryResultSelection(
@@ -97,33 +112,21 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                 .Setup(s => s.Next())
                 .Returns(rowsEnumerator.MoveNext);
 
+            Func<int, object> getValue = i => rowsEnumerator.Current[i];
+
             resultSelectionMock
                 .Setup(s => s.Get(It.IsAny<int>()))
-                .Returns<int>(i => GetValue(rowsEnumerator, i));
+                .Returns(getValue);
 
             resultSelectionMock
                 .Setup(s => s.Get(It.IsAny<string>()))
-                .Returns<string>(name => GetValue(rowsEnumerator, mapNames[name]));
+                .Returns<string>(name => getValue(mapNames[name]));
 
             resultSelectionMock
                 .Setup(s => s.Level)
                 .Returns(0);
 
             return resultSelectionMock.Object;
-        }
-
-        private static object GetValue(IEnumerator<IList<object>> rowsEnumerator, int index)
-        {
-            return GetValue(rowsEnumerator.Current[index]);
-        }
-
-        private static object GetValue(object value)
-        {
-            var tableData = value as TableData;
-
-            return (tableData == null)
-                       ? value
-                       : Create(tableData);
         }
 
         /// <summary>
@@ -152,6 +155,12 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 
             if (value is decimal)
                 return (double)(decimal)value;
+
+            {
+                var tableData = value as TableData;
+                if (tableData != null)
+                    return Create(tableData);
+            }
 
             return value;
         }

@@ -169,7 +169,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
                     for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
                     {
-                        if (ctx.ExpectedFieldType(fieldIndex) == typeof(AnyType))
+                        if (ctx.ExpectedFieldKind(fieldIndex) == FieldKind.Any)
                             continue;
 
                         var expectedFieldValue = ctx.ExpectedValue(recordCounter, fieldIndex);

@@ -35,21 +35,25 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         /// <summary>
         /// Контекст тестирования.
         /// </summary>
-        protected new sealed class TestingContext
+        protected new class TestingContext : QueryTestsBase.TestingContext
         {
-            /// <summary>Внутренний контекст.</summary>
-            private readonly QueryTestsBase.TestingContext _innerContext;
-
             /// <summary>Конструктор.</summary>
             /// <param name="innerContext">Внутренний контекст.</param>
             /// <param name="testedReader">Тестируемый читатель данных.</param>
             public TestingContext(QueryTestsBase.TestingContext innerContext, OneSDataReader testedReader)
+             : base(innerContext)
             {
                 Contract.Requires<ArgumentNullException>(innerContext != null);
                 Contract.Requires<ArgumentNullException>(testedReader != null);
 
-                _innerContext = innerContext;
                 _testedReader = testedReader;
+            }
+
+            /// <summary>Конструктор для наследования.</summary>
+            protected TestingContext(TestingContext other)
+                : this(other, other._testedReader)
+            {
+                Contract.Requires<ArgumentNullException>(other != null);
             }
 
             /// <summary>
@@ -65,72 +69,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 }
             }
             private readonly OneSDataReader _testedReader;
-
-            /// <summary>Ожидаемое количество полей.</summary>
-            public int ExpectedFieldsCount
-            {
-                get { return _innerContext.ExpectedFieldsCount; }
-            }
-
-            /// <summary>Ожидаемое имя поля.</summary>
-            /// <param name="fieldIndex">Индекс поля.</param>
-            public string ExpectedFieldName(int fieldIndex)
-            {
-                return _innerContext.ExpectedFieldName(fieldIndex);
-            }
-
-            /// <summary>Ожидаемый тип поля.</summary>
-            /// <param name="fieldIndex">Тип поля.</param>
-            public Type ExpectedFieldType(int fieldIndex)
-            {
-                return _innerContext.ExpectedFieldType(fieldIndex);
-            }
-
-            /// <summary>Является ли поле табличной частью.</summary>
-            /// <param name="fieldIndex">Индекс поля.</param>
-            public bool IsFieldTablePart(int fieldIndex)
-            {
-                return _innerContext.IsFieldTablePart(fieldIndex);
-            }
-
-            /// <summary>Ожидаемое количество строк.</summary>
-            public int ExpectedRowsCount
-            {
-                get { return _innerContext.ExpectedRowsCount; }
-            }
-
-            /// <summary>
-            /// Ожидаемое значение.
-            /// </summary>
-            /// <param name="rowIndex">Индекс строки.</param>
-            /// <param name="fieldIndex">Индекс поля.</param>
-            public object ExpectedValue(int rowIndex, int fieldIndex)
-            {
-                return _innerContext.ExpectedValue(rowIndex, fieldIndex);
-            }
-
-            /// <summary>
-            /// Ожидаемые данные табличной части.
-            /// </summary>
-            /// <param name="rowIndex">Индекс строки.</param>
-            /// <param name="fieldIndex">Индекс поля.</param>
-            public TableData ExpectedTablePart(int rowIndex, int fieldIndex)
-            {
-                return _innerContext.ExpectedTablePart(rowIndex, fieldIndex);
-            }
-
-            /// <summary>
-            /// Проверка вызовов выполнения методов объекта запроса 1С.
-            /// </summary>
-            /// <param name="command">
-            /// Команда, через которую производился вызов 1С.
-            /// </param>
-            public void VerifyQueryExecute(OneSCommand command)
-            {
-                Contract.Requires<ArgumentNullException>(command != null);
-                
-                _innerContext.VerifyQueryExecute(command);
-            }
         }
 
         /// <summary>
