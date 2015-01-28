@@ -7,6 +7,7 @@ using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility;
 using VanessaSharp.AcceptanceTests.Utility.ExpectedData;
 using VanessaSharp.AcceptanceTests.Utility.Mocks;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 {
@@ -167,12 +168,14 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             while (reader.Read())
             {
                 Assert.Less(recordCounter, ctx.ExpectedRecordsCount);
-                Assert.AreEqual(0, reader.Level);
+                
                 Assert.AreEqual(ctx.IsTablePart ? 1 : 0, reader.Depth);
-
                 Assert.AreEqual(ctx.ExpectedFieldsCount, reader.GetValues(values));
 
                 var recordCtx = ctx.GetRecordContext(recordCounter);
+                Assert.AreEqual(recordCtx.ExpectedLevel, reader.Level);
+                Assert.AreEqual(recordCtx.ExpectedGroupName, reader.GroupName);
+                Assert.AreEqual(recordCtx.ExpectedRecordType, reader.RecordType);
 
                 for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
                 {
@@ -292,6 +295,10 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
         private interface ITestingRecordContext
         {
+            int ExpectedLevel { get; }
+            string ExpectedGroupName { get; }
+            SelectRecordType ExpectedRecordType { get; }
+            
             bool IsAnyField(int fieldIndex);
             
             ITestingValueContext GetValueContext(int fieldIndex);
@@ -494,6 +501,12 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 _typedReaders = typedReaders;
                 _expectedRow = expectedRow;
             }
+
+            public int ExpectedLevel { get { return 0; } }
+
+            public string ExpectedGroupName { get { return string.Empty; } }
+
+            public SelectRecordType ExpectedRecordType { get { return SelectRecordType.DetailRecord;} }
 
             public bool IsAnyField(int fieldIndex)
             {

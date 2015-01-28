@@ -121,6 +121,7 @@
     <Compile Include="OneSDataReaderTests\DataReaderReadTests.cs" />
     <Compile Include="OneSDataReaderTests\DataReaderTestsBase.cs" />
     <Compile Include="OneSDataReaderTests\DataReaderTests.cs" />
+    <Compile Include="OneSDataReaderTests\HierarchyDataReaderTests.cs" />
     <Compile Include="OneSParameterCollectionTests.cs" />
     <Compile Include="OneSParameterTests\InitTests.cs" />
     <Compile Include="OneSParameterTests\ChangePropertiesTests.cs" />

@@ -127,6 +127,7 @@
     <Compile Include="ExpectedData\ExpectedUidTestDictionary.cs" />
     <Compile Include="ExpectedData\ExpectedWithTablePartDictionary.cs" />
     <Compile Include="ExpectedData\FieldAttribute.cs" />
+    <Compile Include="ExpectedData\ExpectedHierarchicalTestDictionary.cs" />
     <Compile Include="Mocks\AnyFieldDescription.cs" />
     <Compile Include="Mocks\FieldDescription.cs" />
     <Compile Include="Mocks\FieldKind.cs" />

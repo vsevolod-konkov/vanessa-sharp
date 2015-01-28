@@ -12,23 +12,27 @@ namespace VanessaSharp.Proxy.Common.Tests
         : OneSProxyWrapperTests
     {
         /// <summary>
+        /// Глобальный контекст 1С.
+        /// </summary>
+        private OneSGlobalContext _globalContext;
+        
+        /// <summary>
         /// Мок для реализации <see cref="IOneSWrapFactory"/>.
         /// </summary>
         private Mock<IOneSWrapFactory> _wrapFactoryMock;
 
-        /// <summary>
-        /// Глобальный контекст 1С.
-        /// </summary>
-        private OneSGlobalContext _globalContext;
+        private Mock<IOneSEnumMapper> _enumMapper; 
 
         /// <summary>Инициализация тестируемого экземпляра.</summary>
         internal override OneSProxyWrapper InitTestedInstance()
         {
-            _wrapFactoryMock = new Mock<IOneSWrapFactory>(MockBehavior.Strict);
             _globalContext = new OneSGlobalContext(new object());
+            _wrapFactoryMock = new Mock<IOneSWrapFactory>(MockBehavior.Strict);
+            _enumMapper = new Mock<IOneSEnumMapper>(MockBehavior.Strict);
 
             return new OneSProxyWrapperWithGlobalContext(
-                _globalContext, _wrapFactoryMock.Object, ObjectDefinerMock.Object);
+                _globalContext, _wrapFactoryMock.Object, 
+                _enumMapper.Object, ObjectDefinerMock.Object);
         }
 
         /// <summary>Создание объекта 1С.</summary>

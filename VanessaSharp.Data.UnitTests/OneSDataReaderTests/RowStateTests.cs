@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.DataReading;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 {
@@ -110,29 +111,33 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             Assert.IsTrue(TestedInstance.HasRows);
         }
 
-        /// <summary>
-        /// Тестирование свойства <see cref="OneSDataReader.Level"/>.
-        /// </summary>
-        [Test]
-        public override void TestLevel()
+        /// <summary>Тестирование свойства записи.</summary>
+        /// <typeparam name="T">Тип свойства.</typeparam>
+        /// <param name="testedProperty">Тестируемое свойство.</param>
+        /// <param name="dataCursorProperty">
+        /// Свойство <see cref="IDataCursor"/>
+        /// соответствующее тестируемому свойству.
+        /// </param>
+        /// <param name="expectedValue">Ожидаемое значение.</param>
+        internal override void TestRecordProperty<T>(
+            Func<OneSDataReader, T> testedProperty,
+            Expression<Func<IDataCursor, T>> dataCursorProperty,
+            T expectedValue)
         {
-            const int EXPECTED_LEVEL = 4;
-
             // Arrange
             _dataCursorMock
-                .Setup(c => c.Level)
-                .Returns(EXPECTED_LEVEL);
+                .Setup(dataCursorProperty)
+                .Returns(expectedValue);
 
             // Act
-            var actualLevel = TestedInstance.Level;
+            var actualValue = testedProperty(TestedInstance);
 
             // Assert
-            Assert.AreEqual(EXPECTED_LEVEL, actualLevel);
+            Assert.AreEqual(expectedValue, actualValue);
 
             _dataCursorMock
-                .Verify(c => c.Level);
+                .Verify(dataCursorProperty);
         }
-
 
         /// <summary>Тестирование свойства <see cref="OneSDataReader.Depth"/>.</summary>
         [Test]

@@ -23,5 +23,15 @@
         /// Уровень текущей записи.
         /// </summary>
         int Level { get; }
+
+        /// <summary>
+        /// Имя группы текущей записи.
+        /// </summary>
+        string Group { get; }
+
+        /// <summary>
+        /// Тип текущей записи.
+        /// </summary>
+        SelectRecordType RecordType { get; }
     }
 }

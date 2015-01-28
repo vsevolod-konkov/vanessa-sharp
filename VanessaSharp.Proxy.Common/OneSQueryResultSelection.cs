@@ -1,4 +1,6 @@
-﻿namespace VanessaSharp.Proxy.Common
+﻿using System.Diagnostics.Contracts;
+
+namespace VanessaSharp.Proxy.Common
 {
     /// <summary>
     /// Типизированная обертка для реализации
@@ -45,6 +47,25 @@
         public int Level
         {
             get { return DynamicProxy.Level(); }
+        }
+
+        /// <summary>
+        /// Имя группы текущей записи.
+        /// </summary>
+        public string Group
+        {
+            get { return DynamicProxy.Group(); }
+        }
+        
+        /// <summary>
+        /// Тип текущей записи.
+        /// </summary>
+        public SelectRecordType RecordType
+        {
+            get
+            {
+                return DynamicProxy.RecordType();
+            }
         }
     }
 }

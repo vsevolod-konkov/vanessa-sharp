@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.DataReading;
@@ -177,15 +178,64 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             Assert.AreEqual(IS_TABLE_PART, TestedInstance.IsTablePart);   
         }
-        
+
+        /// <summary>Тестирование свойства записи.</summary>
+        /// <typeparam name="T">Тип свойства.</typeparam>
+        /// <param name="testedProperty">Тестируемое свойство.</param>
+        /// <param name="dataCursorProperty">
+        /// Свойство <see cref="IDataCursor"/>
+        /// соответствующее тестируемому свойству.
+        /// </param>
+        /// <param name="expectedValue">Ожидаемое значение.</param>
+        internal virtual void TestRecordProperty<T>(
+            Func<OneSDataReader, T> testedProperty,
+            Expression<Func<IDataCursor, T>> dataCursorProperty, 
+            T expectedValue)
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => { var result = testedProperty(TestedInstance); });
+        }
+
         /// <summary>
         /// Тестирование свойства <see cref="OneSDataReader.Level"/>.
         /// </summary>
         [Test]
         public virtual void TestLevel()
         {
-            Assert.Throws<InvalidOperationException>(
-                () => { var level = TestedInstance.Level; });
+            const int EXPECTED_LEVEL = 4;
+            
+            TestRecordProperty(
+                r => r.Level, 
+                c => c.Level, 
+                EXPECTED_LEVEL);
+        }
+
+        /// <summary>
+        /// Тестирование свойства <see cref="OneSDataReader.GroupName"/>.
+        /// </summary>
+        [Test]
+        public virtual void TestGroupName()
+        {
+            const string EXPECTED_GROUP_NAME = "TestGroup";
+            
+            TestRecordProperty(
+                r => r.GroupName,
+                c => c.GroupName,
+                EXPECTED_GROUP_NAME);
+        }
+
+        /// <summary>
+        /// Тестирование свойства <see cref="OneSDataReader.RecordType"/>.
+        /// </summary>
+        [Test]
+        public virtual void TestRecordType()
+        {
+            const SelectRecordType EXPECTED_RECORD_TYPE = SelectRecordType.TotalByHierarchy;
+            
+            TestRecordProperty(
+                r => r.RecordType,
+                c => c.RecordType,
+                EXPECTED_RECORD_TYPE);
         }
 
         /// <summary>Тестирование свойства <see cref="OneSDataReader.Depth"/>.</summary>
@@ -643,7 +693,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             // В случае если возвращается null из 1С,
             // то метод должен вернуть true, в ином случае false
             var returnValue = expectedResult
-                                  ? null
+                                  ? DBNull.Value
                                   : new object();
 
             Func<bool> testedFunc = () =>

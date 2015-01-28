@@ -148,5 +148,19 @@ namespace VanessaSharp.Proxy.Common
 
             _disposableTable.Dispose();
         }
+
+        /// <summary>
+        /// Маппер используемый для конвертации перечислений 1С.
+        /// </summary>
+        internal IOneSEnumMapper EnumMapper
+        {
+            get
+            {
+                Contract.Ensures(Contract.Result<IOneSEnumMapper>() != null);
+
+                return _enumMapper;
+            }
+        }
+        private readonly IOneSEnumMapper _enumMapper = new OneSEnumMapper();
     }
 }

@@ -134,7 +134,35 @@ namespace VanessaSharp.Data.DataReading
         /// </summary>
         public int Level 
         { 
-            get { return _queryResultSelection.Level; } 
+            get
+            {
+                // TODO: Буферизация
+                return _queryResultSelection.Level;
+            } 
+        }
+
+        /// <summary>
+        /// Имя группировки текущей записи.
+        /// </summary>
+        public string GroupName
+        {
+            get
+            {
+                // TODO: Буферизация
+                return _queryResultSelection.Group;
+            }
+        }
+
+        /// <summary>
+        /// Тип текущей записи.
+        /// </summary>
+        public SelectRecordType RecordType
+        {
+            get
+            {
+                // TODO: Буферизация
+                return _queryResultSelection.RecordType;
+            }
         }
 
         #region Вспомогательные типы
@@ -179,17 +207,6 @@ namespace VanessaSharp.Data.DataReading
             /// </summary>
             public void Reset()
             {
-                for (var index = 0; index < _valueFunctions.Length; index++)
-                {
-                    var lazyObject = _buffer[index];
-                    if (lazyObject.IsValueCreated)
-                    {
-                        var disposableValue = lazyObject.Value as IDisposable;
-                        if (disposableValue != null)
-                            disposableValue.Dispose();
-                    }
-                }
-                
                 InitBuffer();
             }
 

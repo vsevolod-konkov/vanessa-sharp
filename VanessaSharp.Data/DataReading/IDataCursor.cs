@@ -1,4 +1,5 @@
 ﻿using System;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.DataReading
 {
@@ -35,5 +36,15 @@ namespace VanessaSharp.Data.DataReading
         /// Уровень текущей записи.
         /// </summary>
         int Level { get; }
+
+        /// <summary>
+        /// Имя группировки текущей записи.
+        /// </summary>
+        string GroupName { get; }
+
+        /// <summary>
+        /// Тип текущей записи.
+        /// </summary>
+        SelectRecordType RecordType { get; }
     }
 }

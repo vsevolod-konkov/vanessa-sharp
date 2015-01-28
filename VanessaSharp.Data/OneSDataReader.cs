@@ -214,6 +214,24 @@ namespace VanessaSharp.Data
 
             return result;
         }
+
+        /// <summary>
+        /// Получение значения свойства открытого курсора.
+        /// </summary>
+        /// <typeparam name="T">Тип свойства.</typeparam>
+        /// <param name="propertyAccessor">Получатель значения.</param>
+        /// <param name="propertyName">Имя свойства.</param>
+        private T GetCursorProperty<T>(Func<IDataCursor, T> propertyAccessor, string propertyName)
+        {
+            Contract.Assert(propertyAccessor != null);
+
+            if (_currentState == States.RecordOpen)
+                return propertyAccessor(_dataCursor);
+
+            throw new InvalidOperationException(
+                string.Format("Недопустимо получение свойства \"{1}\" в состоянии \"{0}\".",
+                _currentState, propertyName));
+        }
         
         /// <summary>
         /// Уровень записи.
@@ -222,12 +240,29 @@ namespace VanessaSharp.Data
         {
             get
             {
-                if (_currentState == States.RecordOpen)
-                    return _dataCursor.Level;
+                return GetCursorProperty(c => c.Level, "Level");
+            }
+        }
 
-                throw new InvalidOperationException(
-                    string.Format("Недопустимо получение свойства Level в состоянии \"{0}\".",
-                    _currentState));
+        /// <summary>
+        /// Имя группы текущей записи.
+        /// </summary>
+        public string GroupName
+        {
+            get
+            {
+                return GetCursorProperty(c => c.GroupName, "GroupName");
+            }
+        }
+
+        /// <summary>
+        /// Тип текущей записи.
+        /// </summary>
+        public SelectRecordType RecordType
+        {
+            get
+            {
+                return GetCursorProperty(c => c.RecordType, "RecordType");
             }
         }
 
@@ -534,7 +569,7 @@ namespace VanessaSharp.Data
         /// <param name="ordinal">The zero-based column ordinal.</param><filterpriority>1</filterpriority>
         public override bool IsDBNull(int ordinal)
         {
-            return GetValue(ordinal) == null;
+            return GetValue(ordinal) is DBNull;
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.DataReading;
@@ -271,6 +273,31 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         }
 
         /// <summary>
+        /// Тестирование получения значения свойства,
+        /// которое имеет прямое соответствие свойству <see cref="IQueryResultSelection"/>.
+        /// </summary>
+        private void TestDirectProperty<T>(Func<DataCursor, T> testedProperty,
+                                           Expression<Func<IQueryResultSelection, T>> propertyAccessor,
+                                           T expectedValue)
+        {
+            // Arrange
+            InitTestedInstance();
+
+            _queryResultSelectionMock
+                .Setup(propertyAccessor)
+                .Returns(expectedValue);
+
+            // Act
+            var actualValue = testedProperty(_testedInstance);
+
+            // Assert
+            Assert.AreEqual(expectedValue, actualValue);
+
+            _queryResultSelectionMock
+                .Verify(propertyAccessor, Times.Once());
+        }
+
+        /// <summary>
         /// Тестирование получения значения <see cref="DataCursor.Level"/>.
         /// </summary>
         [Test]
@@ -278,21 +305,36 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         {
             const int EXPECTED_LEVEL = 3;
 
-            // Arrange
-            InitTestedInstance();
+            TestDirectProperty(
+                i => i.Level,
+                s => s.Level,
+                EXPECTED_LEVEL);
+        }
 
-            _queryResultSelectionMock
-                .Setup(qrs => qrs.Level)
-                .Returns(EXPECTED_LEVEL);
+        /// <summary>
+        /// Тестирование получения значения <see cref="DataCursor.GroupName"/>.
+        /// </summary>
+        [Test]
+        public void TestGroupName()
+        {
+            const string EXPECTED_GROUP_NAME = "TestGroup";
 
-            // Act
-            var actualLevel = _testedInstance.Level;
+            TestDirectProperty(
+                i => i.GroupName,
+                s => s.Group,
+                EXPECTED_GROUP_NAME);
+        }
 
-            // Assert
-            Assert.AreEqual(EXPECTED_LEVEL, actualLevel);
-
-            _queryResultSelectionMock
-                .Verify(qrs => qrs.Level, Times.Once());
+        /// <summary>
+        /// Тестирование получения значения <see cref="DataCursor.RecordType"/>.
+        /// </summary>
+        [Test]
+        public void TestRecordType()
+        {
+            TestDirectProperty(
+                i => i.RecordType,
+                s => s.RecordType,
+                SelectRecordType.GroupTotal);
         }
     }
 }

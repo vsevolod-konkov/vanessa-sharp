@@ -43,20 +43,43 @@ namespace VanessaSharp.Proxy.Common
             if (obj == null)
                 return null;
 
-            return (_oneSObjectDefiner.IsOneSObject(obj))
-                  ? WrapOneSObject(obj, type)
-                  : obj;  
+            if (_oneSObjectDefiner.IsOneSObject(obj))
+            {
+                return type.IsEnum
+                           ? ConvertToEnum(obj, type)
+                           : WrapOneSObject(obj, type);
+            }
+                  
+            return obj;  
         }
         
         /// <summary>Обертывание 1С-объекта.</summary>
-        /// <param name="obj">Обертываемый объект.</param>
+        /// <param name="comObj">Обертываемый объект.</param>
         /// <param name="type">Тип к которому можно привести возвращаемую обертку.</param>
-        protected virtual OneSObject WrapOneSObject(object obj, Type type)
+        protected virtual OneSObject WrapOneSObject(object comObj, Type type)
         {
-            Contract.Requires<ArgumentNullException>(obj != null);
+            Contract.Requires<ArgumentNullException>(comObj != null);
             Contract.Requires<ArgumentNullException>(type != null);
 
-            return new OneSObject(obj, this);
+            return new OneSObject(comObj, this);
+        }
+
+        /// <summary>
+        /// Конвертация 1С-объекта в перечисление.
+        /// </summary>
+        /// <param name="comObj">Конвертируемый COM-объект.</param>
+        /// <param name="enumType">Перечислимый тип.</param>
+        protected virtual object ConvertToEnum(object comObj, Type enumType)
+        {
+            Contract.Requires<ArgumentNullException>(comObj != null);
+            Contract.Requires<ArgumentNullException>(enumType != null);
+            Contract.Requires<ArgumentException>(enumType.IsEnum);
+
+            Contract.Ensures(Contract.Result<object>() != null);
+
+            throw new NotSupportedException(string.Format(
+                "Невозможно сконвертировать 1С-объект в тип \"{0}\". Конвертация объектов перечислений не поддерживается.",
+                enumType));
         }
     }
 }

@@ -126,6 +126,10 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                 .Setup(s => s.Level)
                 .Returns(0);
 
+            resultSelectionMock
+                .Setup(s => s.Group)
+                .Returns(string.Empty);
+
             return resultSelectionMock.Object;
         }
 
