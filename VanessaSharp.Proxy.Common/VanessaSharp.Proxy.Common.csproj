@@ -105,6 +105,16 @@
     <Compile Include="ConnectorCreationParams.cs" />
     <Compile Include="CreateWrapParameters.cs" />
     <Compile Include="DisposableWrapper.cs" />
+    <Compile Include="EnumMapping\IOneSEnumMapInfo.cs" />
+    <Compile Include="EnumMapping\IOneSEnumMapInfoProvider.cs" />
+    <Compile Include="EnumMapping\IOneSEnumMapping.cs" />
+    <Compile Include="EnumMapping\IOneSEnumMappingFactory.cs" />
+    <Compile Include="EnumMapping\IOneSEnumValueMapInfo.cs" />
+    <Compile Include="EnumMapping\OneSEnumMapInfo.cs" />
+    <Compile Include="EnumMapping\OneSEnumMapInfoProvider.cs" />
+    <Compile Include="EnumMapping\OneSEnumMapping.cs" />
+    <Compile Include="EnumMapping\OneSEnumMappingFactory.cs" />
+    <Compile Include="EnumMapping\OneSEnumValueMapInfo.cs" />
     <Compile Include="IGlobalContext.cs" />
     <Compile Include="IGlobalContextBound.cs" />
     <Compile Include="IGlobalContextBoundContract.cs" />
@@ -135,6 +145,7 @@
     <Compile Include="OneSConnectorBase.cs" />
     <Compile Include="OneSConnectorFactory.cs" />
     <Compile Include="OneSContextBoundObject.cs" />
+    <Compile Include="OneSEnumAttribute.cs" />
     <Compile Include="OneSEnumMapper.cs" />
     <Compile Include="OneSGlobalContext.cs" />
     <Compile Include="OneSObject.cs" />
@@ -159,6 +170,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SelectRecordType.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -21,6 +21,9 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// </summary>
         private Mock<IOneSWrapFactory> _wrapFactoryMock;
 
+        /// <summary>
+        /// Мок для реализации <see cref="IOneSEnumMapper"/>.
+        /// </summary>
         private Mock<IOneSEnumMapper> _enumMapper; 
 
         /// <summary>Инициализация тестируемого экземпляра.</summary>
@@ -31,8 +34,9 @@ namespace VanessaSharp.Proxy.Common.Tests
             _enumMapper = new Mock<IOneSEnumMapper>(MockBehavior.Strict);
 
             return new OneSProxyWrapperWithGlobalContext(
+                ObjectDefinerMock.Object,
                 _globalContext, _wrapFactoryMock.Object, 
-                _enumMapper.Object, ObjectDefinerMock.Object);
+                _enumMapper.Object);
         }
 
         /// <summary>Создание объекта 1С.</summary>
@@ -157,6 +161,41 @@ namespace VanessaSharp.Proxy.Common.Tests
                 (o, pms) => { throw new NotSupportedException(); },
                 expectedException: typeof(InvalidOperationException)
                 );
+        }
+
+        /// <summary>
+        /// Тестирование использования <see cref="IOneSEnumMapper"/>
+        /// для конвертации 1С-объекта в перечисление.
+        /// </summary>
+        [Test]
+        public void TestUsingEnumMapper()
+        {
+            const TestEnum EXPECTED_VALUE = TestEnum.Enum2;
+            
+            // Arrange
+            var obj = CreateOneSObject();
+
+            _enumMapper
+                .Setup(m => m.ConvertComObjectToEnum(obj, typeof(TestEnum)))
+                .Returns(EXPECTED_VALUE);
+
+            // Act
+            var actualValue = TestedInstance.Wrap(obj, typeof(TestEnum));
+
+            // Assert
+            Assert.AreEqual(EXPECTED_VALUE, actualValue);
+
+            _enumMapper
+                .Verify(m => m.ConvertComObjectToEnum(obj, typeof(TestEnum)), Times.Once());
+        }
+
+        /// <summary>
+        /// Тестовое перечисление.
+        /// </summary>
+        public enum TestEnum
+        {
+            Enum1,
+            Enum2
         }
     }
 }

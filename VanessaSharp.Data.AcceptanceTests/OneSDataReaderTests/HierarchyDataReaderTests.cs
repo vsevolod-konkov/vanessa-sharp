@@ -17,7 +17,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         {}
 
         /// <summary>Тестирование поведения по умолчанию.</summary>
-        [Ignore("Пока не реализована конвертация перечислений 1С")]
+        //[Ignore("Пока не реализована конвертация перечислений 1С")]
         [Test]
         public void TestDefault()
         {
@@ -26,6 +26,10 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                     @"
                       ВЫБРАТЬ Наименование, Количество, Цена
                       ИЗ Справочник.ИерархическийСправочник
+                      ИТОГИ
+                      СУММА(Количество),
+                      СРЕДНЕЕ(Цена)
+                      ПО ОБЩИЕ, Ссылка ТОЛЬКО ИЕРАРХИЯ
                     "
                 )
                 .Execute()

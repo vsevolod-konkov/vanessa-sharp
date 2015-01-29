@@ -32,9 +32,6 @@ namespace VanessaSharp.Proxy.Common
             _oneSObjectDefiner = oneSObjectDefiner;
         }
 
-        public OneSProxyWrapper() : this(OneSObjectDefiner.Default)
-        {}
-
         /// <summary>Создание обертки над объектом.</summary>
         /// <param name="obj">Обертываемый объект.</param>
         /// <param name="type">Тип интерфейса, который должен поддерживаться оберткой.</param>

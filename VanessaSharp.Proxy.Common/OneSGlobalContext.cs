@@ -17,14 +17,18 @@ namespace VanessaSharp.Proxy.Common
         /// <summary>Конструктор принимающий RCW-обертку COM-объекта 1C.</summary>
         /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
         public OneSGlobalContext(object comObject)
-            : this(comObject, OneSWrapFactory.Default)
+            : this(comObject, OneSObjectDefiner.Default, OneSWrapFactory.Default)
         {}
 
         /// <summary>Конструктор принимающий RCW-обертку COM-объекта 1C.</summary>
         /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
+        /// <param name="oneSObjectDefiner">
+        /// Определитель того является ли объект
+        /// RCW-оберткой над объектом 1С.
+        /// </param>
         /// <param name="oneSTypeResolver">Определитель типов 1С.</param>
-        public OneSGlobalContext(object comObject, IOneSTypeResolver oneSTypeResolver)
-            : base(o => CreateOneSProxy(comObject, (OneSGlobalContext) o))
+        internal OneSGlobalContext(object comObject, IOneSObjectDefiner oneSObjectDefiner, IOneSTypeResolver oneSTypeResolver)
+            : base(o => CreateOneSProxy(comObject, (OneSGlobalContext)o, oneSObjectDefiner))
         {
             Contract.Requires<ArgumentNullException>(oneSTypeResolver != null);
 
@@ -34,11 +38,15 @@ namespace VanessaSharp.Proxy.Common
         /// <summary>Создание прокси для глобального контекста.</summary>
         /// <param name="comObject">RCW-обертка COM-объекта 1C.</param>
         /// <param name="globalContext">Ссылка на глобальный контекст.</param>
-        private static OneSProxy CreateOneSProxy(object comObject, OneSGlobalContext globalContext)
+        /// <param name="oneSObjectDefiner">
+        /// Определитель того является ли объект
+        /// RCW-оберткой над объектом 1С.
+        /// </param>
+        private static OneSProxy CreateOneSProxy(object comObject, OneSGlobalContext globalContext, IOneSObjectDefiner oneSObjectDefiner)
         {
             return new OneSProxy(
                 comObject,
-                new OneSProxyWrapperWithGlobalContext(globalContext));
+                new OneSProxyWrapperWithGlobalContext(oneSObjectDefiner, globalContext));
         }
 
         /// <summary>Регистрация объекта 1С связанного с текущим контекстом.</summary>
@@ -148,19 +156,5 @@ namespace VanessaSharp.Proxy.Common
 
             _disposableTable.Dispose();
         }
-
-        /// <summary>
-        /// Маппер используемый для конвертации перечислений 1С.
-        /// </summary>
-        internal IOneSEnumMapper EnumMapper
-        {
-            get
-            {
-                Contract.Ensures(Contract.Result<IOneSEnumMapper>() != null);
-
-                return _enumMapper;
-            }
-        }
-        private readonly IOneSEnumMapper _enumMapper = new OneSEnumMapper();
     }
 }

@@ -3,6 +3,7 @@
     /// <summary>
     /// Тип записи запроса.
     /// </summary>
+    [OneSEnum]
     public enum SelectRecordType
     {
         /// <summary>

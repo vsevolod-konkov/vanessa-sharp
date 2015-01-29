@@ -33,15 +33,15 @@ namespace VanessaSharp.Proxy.Common
         }
 
         /// <summary>Конструктор для тестирования.</summary>
-        /// <param name="globalContext">Ссылка на глобальный контекст 1С.</param>
-        /// <param name="wrapFactory">Фабрика оберток</param>
-        /// <param name="enumMapper">Конвертер перечислений.</param>
         /// <param name="oneSObjectDefiner">
         /// Определитель того является ли объект
         /// RCW-оберткой над объектом 1С.
         /// </param>
+        /// <param name="globalContext">Ссылка на глобальный контекст 1С.</param>
+        /// <param name="wrapFactory">Фабрика оберток</param>
+        /// <param name="enumMapper">Конвертер перечислений.</param>
         internal OneSProxyWrapperWithGlobalContext(
-            OneSGlobalContext globalContext, IOneSWrapFactory wrapFactory, IOneSEnumMapper enumMapper, IOneSObjectDefiner oneSObjectDefiner)
+            IOneSObjectDefiner oneSObjectDefiner, OneSGlobalContext globalContext, IOneSWrapFactory wrapFactory, IOneSEnumMapper enumMapper)
             : base(oneSObjectDefiner)
         {
             Contract.Requires<ArgumentNullException>(globalContext != null);
@@ -53,25 +53,14 @@ namespace VanessaSharp.Proxy.Common
             _enumMapper = enumMapper;
         }
 
-        /// <summary>Конструктор для использования.</summary>
-        /// <param name="globalContext">Ссылка на глобальный контекст 1С.</param>
-        /// <param name="wrapFactory">Фабрика оберток</param>
-        /// <param name="enumMapper">Конвертер перечислений.</param>
-        internal OneSProxyWrapperWithGlobalContext(OneSGlobalContext globalContext, IOneSWrapFactory wrapFactory, IOneSEnumMapper enumMapper)
-        {
-            Contract.Requires<ArgumentNullException>(globalContext != null);
-            Contract.Requires<ArgumentNullException>(wrapFactory != null);
-            Contract.Requires<ArgumentNullException>(enumMapper != null);
-
-            _globalContext = globalContext;
-            _wrapFactory = wrapFactory;
-            _enumMapper = enumMapper;
-        }
-
         /// <summary>Конструктор.</summary>
+        /// <param name="oneSObjectDefiner">
+        /// Определитель того является ли объект
+        /// RCW-оберткой над объектом 1С.
+        /// </param>
         /// <param name="globalContext">Ссылка на глобальный контекст 1С.</param>
-        public OneSProxyWrapperWithGlobalContext(OneSGlobalContext globalContext)
-            : this(globalContext, OneSWrapFactory.Default, globalContext.EnumMapper)
+        public OneSProxyWrapperWithGlobalContext(IOneSObjectDefiner oneSObjectDefiner, OneSGlobalContext globalContext)
+            : this(oneSObjectDefiner, globalContext, OneSWrapFactory.Default, new OneSEnumMapper(globalContext))
         {}
 
         /// <summary>Обертывание 1С-объекта.</summary>
