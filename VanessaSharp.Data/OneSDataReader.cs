@@ -56,12 +56,14 @@ namespace VanessaSharp.Data
         /// <param name="fieldInfoCollection">Коллекция с информацией по полям.</param>
         /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
+        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
         /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
         internal OneSDataReader(
             IQueryResult queryResult,
             IDataReaderFieldInfoCollection fieldInfoCollection,
             IDataCursorFactory dataCursorFactory,
             IValueConverter valueConverter,
+            QueryResultIteration queryResultIteration,
             bool isTablePart)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
@@ -73,6 +75,7 @@ namespace VanessaSharp.Data
             _fieldInfoCollection = fieldInfoCollection;
             _dataCursorFactory = dataCursorFactory;
             _valueConverter = valueConverter;
+            _queryResultIteration = queryResultIteration;
             _isTablePart = isTablePart;
         }
 
@@ -85,18 +88,21 @@ namespace VanessaSharp.Data
         /// <param name="typeDescriptionConverter">Сервис перевода типов.</param>
         /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
+        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
         /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
         private OneSDataReader(
             IQueryResult queryResult, 
             ITypeDescriptionConverter typeDescriptionConverter,
             IDataCursorFactory dataCursorFactory,
             IValueConverter valueConverter,
+            QueryResultIteration queryResultIteration,
             bool isTablePart)
             : this(
                 queryResult, 
                 DataReaderFieldInfoCollectionLoader.Create(queryResult, typeDescriptionConverter), 
                 dataCursorFactory,
                 valueConverter,
+                queryResultIteration,
                 isTablePart)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
@@ -107,11 +113,34 @@ namespace VanessaSharp.Data
 
         /// <summary>Конструктор принимающий результат запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
+        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
         /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
-        internal OneSDataReader(IQueryResult queryResult, bool isTablePart = false)
-            : this(queryResult, TypeDescriptionConverter.Default, DataCursorFactory.Default, Data.ValueConverter.Default, isTablePart)
+        private OneSDataReader(IQueryResult queryResult, QueryResultIteration queryResultIteration, bool isTablePart)
+            : this(
+                    queryResult,
+                    TypeDescriptionConverter.Default,
+                    DataCursorFactory.Default,
+                    Data.ValueConverter.Default,
+                    queryResultIteration,
+                    isTablePart)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
+        }
+
+        /// <summary>Создание читателя верхнего уровня, по результату запроса.</summary>
+        /// <param name="queryResult">Результат запроса данных у 1С.</param>
+        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
+        internal static OneSDataReader CreateRootDataReader(
+            IQueryResult queryResult, QueryResultIteration queryResultIteration)
+        {
+            return new OneSDataReader(queryResult, queryResultIteration, false);
+        }
+
+        /// <summary>Создание читателя табличной части, по результату запроса.</summary>
+        /// <param name="queryResult">Результат запроса данных у 1С.</param>
+        internal static OneSDataReader CreateTablePartDataReader(IQueryResult queryResult)
+        {
+            return new OneSDataReader(queryResult, QueryResultIteration.Default, true);
         }
 
         /// <summary>Результат запроса данных у 1С.</summary>
@@ -196,7 +225,7 @@ namespace VanessaSharp.Data
                         return false;
                     }
 
-                    _dataCursor = _dataCursorFactory.Create(_fieldInfoCollection, _queryResult.Choose());
+                    _dataCursor = _dataCursorFactory.Create(_fieldInfoCollection, _queryResult.Choose(_queryResultIteration));
                     _currentState = States.RecordOpen;
                     break;
 
@@ -214,6 +243,15 @@ namespace VanessaSharp.Data
 
             return result;
         }
+
+        /// <summary>
+        /// Стратегия перебора записей.
+        /// </summary>
+        internal QueryResultIteration QueryResultIteration
+        {
+            get { return _queryResultIteration; }
+        }
+        private readonly QueryResultIteration _queryResultIteration;
 
         /// <summary>
         /// Получение значения свойства открытого курсора.

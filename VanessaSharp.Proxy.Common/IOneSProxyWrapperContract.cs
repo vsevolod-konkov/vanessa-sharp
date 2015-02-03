@@ -16,5 +16,14 @@ namespace VanessaSharp.Proxy.Common
 
             return null;
         }
+
+        /// <summary>
+        /// Конвертация аргумента для 1С.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        object IOneSProxyWrapper.ConvertToOneS(object value)
+        {
+            return null;
+        }
     }
 }

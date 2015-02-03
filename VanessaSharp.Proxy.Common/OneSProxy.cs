@@ -71,12 +71,23 @@ namespace VanessaSharp.Proxy.Common
                 : oneSProxy.Unwrap();
         }
 
-        /// <summary>Снятие обертки с массива объектов.</summary>
-        /// <param name="objects">Массив с которого делается попытка снять обертку.</param>
-        private static object[] Unwrap(object[] objects)
+        /// <summary>
+        /// Конвертация значения аргумента для 1С.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        private object ConvertArgToOneS(object value)
+        {
+            var convertedValue = _proxyWrapper.ConvertToOneS(value);
+
+            return Unwrap(convertedValue);
+        }
+
+        /// <summary>Конвертация массива объектов для использование в 1С.</summary>
+        /// <param name="objects">Массив с которого делается попытка сконвертировать к нужному типу.</param>
+        private object[] ConvertArgsToOneS(object[] objects)
         {
             return objects
-                .Select(Unwrap)
+                .Select(ConvertArgToOneS)
                 .ToArray();
         }
 
@@ -93,7 +104,7 @@ namespace VanessaSharp.Proxy.Common
 
             return Wrap(
                      CreateFuncCaller(_disposableWrapper, binder, argumentsCount)
-                        .Invoke(Unwrap(args)),
+                        .Invoke(ConvertArgsToOneS(args)),
                      returnType);
         }
 
@@ -221,7 +232,7 @@ namespace VanessaSharp.Proxy.Common
             Contract.Requires<ArgumentNullException>(args != null);
 
             CreateActionCaller(_disposableWrapper, binder, argumentsCount)
-                .Invoke(Unwrap(args));
+                .Invoke(ConvertArgsToOneS(args));
         }
 
         /// <summary>Попытка установки элемента по индексу.</summary>

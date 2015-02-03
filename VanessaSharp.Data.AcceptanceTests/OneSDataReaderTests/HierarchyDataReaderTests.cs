@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility;
 using VanessaSharp.AcceptanceTests.Utility.ExpectedData;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 {
@@ -17,7 +18,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         {}
 
         /// <summary>Тестирование поведения по умолчанию.</summary>
-        //[Ignore("Пока не реализована конвертация перечислений 1С")]
         [Test]
         public void TestDefault()
         {
@@ -32,7 +32,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                       ПО ОБЩИЕ, Ссылка ТОЛЬКО ИЕРАРХИЯ
                     "
                 )
-                .Execute()
+                .Execute(queryResultIteration: QueryResultIteration.ByGroups)
                 .Action(ctx =>
                     {
                         while (ctx.TestedReader.Read())

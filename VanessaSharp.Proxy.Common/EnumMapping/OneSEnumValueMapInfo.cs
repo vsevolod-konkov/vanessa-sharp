@@ -8,12 +8,6 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
     /// </summary>
     internal sealed class OneSEnumValueMapInfo : IOneSEnumValueMapInfo
     {
-        /// <summary>
-        /// Свойство 1С объекта перечисления,
-        /// соответствующее значению перечисления.
-        /// </summary>
-        private readonly string _oneSPropertyName;
-
         /// <summary>Конструктор.</summary>
         /// <param name="enumValue">
         /// Перечислимое значение, для которого есть соответствие в 1С.
@@ -32,6 +26,16 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
             _enumValue = enumValue;
             _oneSPropertyName = oneSPropertyName;
         }
+
+        /// <summary>
+        /// Свойство 1С объекта перечисления,
+        /// соответствующее значению перечисления.
+        /// </summary>
+        internal string OneSPropertyName
+        {
+            get { return _oneSPropertyName; }
+        }
+        private readonly string _oneSPropertyName;
 
         /// <summary>
         /// Перечислимое значение, для которого есть соответствие в 1С.

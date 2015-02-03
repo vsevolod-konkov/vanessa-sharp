@@ -10,7 +10,7 @@ namespace VanessaSharp.Data
     /// <summary>Команда запроса к 1С.</summary>
     public sealed class OneSCommand : DbCommand
     {
-        // TODO: Нужен Рефакторинг. Убрать интерфейс после внедрения параметрических запросов. Нужна просто фабрика объектов.
+        // TODO: Нужен Рефакторинг. Нужна просто фабрика объектов.
         /// <summary>Поставщик глобального контекста 1С.</summary>
         private IGlobalContextProvider _globalContextProvider;
 
@@ -207,8 +207,9 @@ namespace VanessaSharp.Data
 
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
         /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
+        /// <param name="queryResultIteration">Стратегия обхода записей.</param>
         /// <returns>Читатель данных.</returns>
-        public new OneSDataReader ExecuteReader(CommandBehavior behavior)
+        public OneSDataReader ExecuteReader(CommandBehavior behavior, QueryResultIteration queryResultIteration)
         {
             const CommandBehavior NOT_SUPPORT_BEHAVIOR = ~(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
 
@@ -233,11 +234,19 @@ namespace VanessaSharp.Data
 
                 foreach (var parameter in Parameters.AsEnumerable())
                     query.SetParameter(parameter.ParameterName, parameter.Value);
-                
+
                 var queryResult = query.Execute();
 
-                return new OneSDataReader(queryResult);
+                return OneSDataReader.CreateRootDataReader(queryResult, queryResultIteration);
             }
+        }
+
+        /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
+        /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
+        /// <returns>Читатель данных.</returns>
+        public new OneSDataReader ExecuteReader(CommandBehavior behavior)
+        {
+            return ExecuteReader(behavior, QueryResultIteration.Default);
         }
 
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using VanessaSharp.AcceptanceTests.Utility;
 using VanessaSharp.AcceptanceTests.Utility.Mocks;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 {
@@ -142,11 +143,13 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             /// <summary>
             /// Описание выполнения запроса.
             /// </summary>
-            public ActionDefiningBuilderState Execute(CommandBehavior commandBehavior = CommandBehavior.Default)
+            public ActionDefiningBuilderState Execute(
+                CommandBehavior commandBehavior = CommandBehavior.Default,
+                QueryResultIteration queryResultIteration = QueryResultIteration.Default)
             {
                 Contract.Ensures(Contract.Result<ActionDefiningBuilderState>() != null);
 
-                return new ActionDefiningBuilderState(_innerState, ctx => _command, commandBehavior);
+                return new ActionDefiningBuilderState(_innerState, ctx => _command, commandBehavior, queryResultIteration);
             }
         }
 
@@ -170,11 +173,12 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             /// <summary>
             /// Описание выполнения запроса.
             /// </summary>
-            public ActionDefiningBuilderState Execute(CommandBehavior commandBehavior = CommandBehavior.Default)
+            public ActionDefiningBuilderState Execute(
+                CommandBehavior commandBehavior = CommandBehavior.Default)
             {
                 Contract.Ensures(Contract.Result<ActionDefiningBuilderState>() != null);
                 
-                return new ActionDefiningBuilderState(_innerState, GetCommand, commandBehavior);
+                return new ActionDefiningBuilderState(_innerState, GetCommand, commandBehavior, QueryResultIteration.Default);
             }
 
             private OneSCommand GetCommand(QueryTestsBase.TestingContext testingContext0)
@@ -212,11 +216,13 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             private readonly QueryTestsBase.InitBuilderState _innerState;
             private readonly Func<QueryTestsBase.TestingContext, OneSCommand> _commandCreator;
             private readonly CommandBehavior _commandBehavior;
+            private readonly QueryResultIteration _queryResultIteration;
 
             public ActionDefiningBuilderState(
                 QueryTestsBase.InitBuilderState innerState,
                 Func<QueryTestsBase.TestingContext, OneSCommand> commandCreator,
-                CommandBehavior commandBehavior)
+                CommandBehavior commandBehavior,
+                QueryResultIteration queryResultIteration)
             {
                 Contract.Requires<ArgumentNullException>(innerState != null);
                 Contract.Requires<ArgumentNullException>(commandCreator != null);
@@ -224,6 +230,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 _innerState = innerState;
                 _commandCreator = commandCreator;
                 _commandBehavior = commandBehavior;
+                _queryResultIteration = queryResultIteration;
             }
 
             /// <summary>Описание тестирующего действия.</summary>
@@ -256,7 +263,10 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
                 command.Prepare();
 
-                var reader = command.ExecuteReader(_commandBehavior);
+                var reader = (_queryResultIteration == QueryResultIteration.Default) 
+                    ? command.ExecuteReader(_commandBehavior)
+                    : command.ExecuteReader(_commandBehavior, _queryResultIteration);
+
                 try
                 {
                     innerContext.VerifyQueryExecute(command);

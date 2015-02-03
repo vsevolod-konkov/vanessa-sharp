@@ -28,8 +28,9 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                 .Returns(!tableData.Rows.Any());
 
             queryResultMock
-                .Setup(r => r.Choose())
-                .Returns(
+                // TODO: Проверять переданное значение QueryResultIteration
+                .Setup(r => r.Choose(It.IsAny<QueryResultIteration>()))
+                .Returns<QueryResultIteration>(i =>
                     CreateQueryResultSelection(
                         tableData.Rows.Select(r => r.Select(GetOneSRawValue).ToArray()).GetEnumerator(),
                         mapNames));

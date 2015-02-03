@@ -11,6 +11,11 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
     internal sealed class OneSEnumMapping : IOneSEnumMapping
     {
         /// <summary>
+        /// Список соответствий.
+        /// </summary>
+        private readonly IList<EnumValueMap> _mapValues;
+
+        /// <summary>
         /// Создание объекта по глобальному контексту и инфомации по соответствию.
         /// </summary>
         public static OneSEnumMapping Create(OneSObject globalContext, IOneSEnumMapInfo mapInfo)
@@ -25,24 +30,19 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
             Contract.Requires<ArgumentNullException>(enumObject != null);
             Contract.Requires<ArgumentNullException>(valueMappings != null);
 
-            var dictionary =
-                (
-                    from valueMapping in valueMappings
-                    let value = valueMapping.GetOneSEnumValue(enumObject)
-                    select new { valueMapping.EnumValue, ComObject = ((IOneSProxy)value).Unwrap() }
-                )
-                    .ToDictionary(t => t.ComObject, t => t.EnumValue);
+            var pairs =
+                from valueMapping in valueMappings
+                let valueObj = valueMapping.GetOneSEnumValue(enumObject)
+                select new EnumValueMap(valueMapping.EnumValue, (OneSObject)valueObj);
 
-            return new OneSEnumMapping(dictionary);
+            return new OneSEnumMapping(pairs.ToArray());
         }
 
-        private readonly Dictionary<object, Enum> _comObjectToEnumValueIndex;
-
-        private OneSEnumMapping(Dictionary<object, Enum> comObjectToEnumValueIndex)
+        private OneSEnumMapping(IList<EnumValueMap> mapValues)
         {
-            Contract.Requires<ArgumentNullException>(comObjectToEnumValueIndex != null);
+            Contract.Requires<ArgumentNullException>(mapValues != null);
 
-            _comObjectToEnumValueIndex = comObjectToEnumValueIndex;
+            _mapValues = mapValues;
         }
 
         /// <summary>
@@ -59,7 +59,74 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
         /// </returns>
         public bool TryGetEnumValue(object comObject, out Enum enumValue)
         {
-            return _comObjectToEnumValueIndex.TryGetValue(comObject, out enumValue);
+            foreach (var mapValue in _mapValues)
+            {
+                if (mapValue.OneSProxy.Unwrap().Equals(comObject))
+                {
+                    enumValue = mapValue.EnumValue;
+                    return true;
+                }
+            }
+
+            enumValue = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Попытка получения объекта 1С соответствующего
+        /// значению перечисления.
+        /// </summary>
+        /// <param name="value">Перечислимое значение.</param>
+        /// <param name="result">Соответствующий 1С-объект.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если соответствие найдено.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        public bool TryGetOneSValue(Enum value, out OneSObject result)
+        {
+            foreach (var mapValue in _mapValues)
+            {
+                if (mapValue.EnumValue.Equals(value))
+                {
+                    result = mapValue.OneSObject;
+                    return true;
+                }
+            }
+
+            result = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Пара соответствия перечислимого значения и объекта 1С.
+        /// </summary>
+        private struct EnumValueMap
+        {
+            public EnumValueMap(Enum enumValue, OneSObject oneSObject)
+            {
+                Contract.Requires<ArgumentNullException>(enumValue != null);
+                Contract.Requires<ArgumentNullException>(oneSObject != null);
+
+                _enumValue = enumValue;
+                _oneSObject = oneSObject;
+            }
+
+            public Enum EnumValue
+            {
+                get { return _enumValue; }
+            }
+            private readonly Enum _enumValue;
+
+            public OneSObject OneSObject
+            {
+                get { return _oneSObject; }
+            }
+            private readonly OneSObject _oneSObject;
+
+            public IOneSProxy OneSProxy
+            {
+                get { return OneSObject; }
+            }
         }
     }
 }

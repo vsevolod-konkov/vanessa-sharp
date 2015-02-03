@@ -10,11 +10,6 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
     internal sealed class OneSEnumMapInfo : IOneSEnumMapInfo
     {
         /// <summary>
-        /// Имя перечисления в 1С.
-        /// </summary>
-        private readonly string _oneSEnumName;
-
-        /// <summary>
         /// Конструктор.
         /// </summary>
         /// <param name="oneSEnumName">Имя объекта в 1С.</param>
@@ -31,6 +26,15 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
             _oneSEnumName = oneSEnumName;
             _valueMaps = valueMaps;
         }
+
+        /// <summary>
+        /// Имя перечисления в 1С.
+        /// </summary>
+        internal string OneSEnumName
+        {
+            get { return _oneSEnumName; }
+        }
+        private readonly string _oneSEnumName;
 
         /// <summary>
         /// Получение объекта 1С из глобального контекста,

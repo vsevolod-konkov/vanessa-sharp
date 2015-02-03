@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
-using System.Linq.Expressions;
 using NUnit.Framework;
 using Moq;
-using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Proxy.Common.Tests
 {
@@ -31,6 +28,9 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// <summary>Обернутый аргумент.</summary>
         private object _wrappedArgument;
 
+        /// <summary>Исходный аргумент.</summary>
+        private object _sourceArgument;
+
         /// <summary>Конструктор.</summary>
         /// <param name="shouldBeWrap">Следует ли обертывать аргумент.</param>
         public OneSObjectTests(bool shouldBeWrap)
@@ -55,10 +55,18 @@ namespace VanessaSharp.Proxy.Common.Tests
         {
             Assert.IsNotNull(_mockComObject);
 
-            var mockWrapper = new Mock<IOneSProxyWrapper>();
+            var mockWrapper = new Mock<IOneSProxyWrapper>(MockBehavior.Strict);
             mockWrapper.Setup(w => w.Wrap(It.IsAny<object>(), It.IsAny<Type>()))
                        .Returns<object, Type>((o, t) => 
                            (t == typeof(ISomeInterface)) ? new TestProxySupportInterface(o) : new TestProxy(o));
+
+            mockWrapper
+                .Setup(w => w.ConvertToOneS(It.IsAny<object>()))
+                .Returns<object>(o => o);
+
+            mockWrapper
+                .Setup(w => w.ConvertToOneS(_sourceArgument))
+                .Returns(_wrappedArgument);
 
             _testingObject = new OneSObject(_mockComObject.Object, mockWrapper.Object);
         }
@@ -68,6 +76,7 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// </summary>
         private void InitArgument()
         {
+            _sourceArgument = new object();
             _argument = new object();
             _wrappedArgument = WrapArgument(_shouldBeWrap, _argument);
         }
@@ -104,7 +113,7 @@ namespace VanessaSharp.Proxy.Common.Tests
             InitTestingObject();
 
             // Выполнение
-            object actualResult = _testingObject.SomeFunction(_wrappedArgument);
+            object actualResult = _testingObject.SomeFunction(_sourceArgument);
 
             // Проверка
 
@@ -133,7 +142,7 @@ namespace VanessaSharp.Proxy.Common.Tests
             InitTestingObject();
 
             // Выполнение
-            _testingObject.SomeAction(_wrappedArgument);
+            _testingObject.SomeAction(_sourceArgument);
 
             // Проверка
 
@@ -186,7 +195,7 @@ namespace VanessaSharp.Proxy.Common.Tests
             InitTestingObject();
 
             // Выполнение
-            _testingObject.SomeProperty = _wrappedArgument;
+            _testingObject.SomeProperty = _sourceArgument;
 
             // Проверка
 
@@ -215,7 +224,7 @@ namespace VanessaSharp.Proxy.Common.Tests
             InitTestingObject();
 
             // Выполнение
-            var actualResult = _testingObject[_wrappedArgument];
+            var actualResult = _testingObject[_sourceArgument];
 
             // Проверка
 
@@ -246,7 +255,7 @@ namespace VanessaSharp.Proxy.Common.Tests
             var wrappedNewValue = WrapArgument(shouldBeWrap, newValue);
 
             // Выполнение
-            _testingObject[_wrappedArgument] = wrappedNewValue;
+            _testingObject[_sourceArgument] = wrappedNewValue;
 
             // Проверка
             // Проверка, того что был вызван метод

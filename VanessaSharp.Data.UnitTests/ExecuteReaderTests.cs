@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using System.Data;
+using Moq;
 using NUnit.Framework;
 using VanessaSharp.Proxy.Common;
 
@@ -61,7 +62,7 @@ namespace VanessaSharp.Data.UnitTests
             _testedInstance = new OneSCommand(globalContextProviderMock.Object, oneSConnection);
         }
         
-        private void AssertAfterExecute(OneSDataReader reader)
+        private void AssertAfterExecute(OneSDataReader reader, QueryResultIteration expectedIteration = QueryResultIteration.Default)
         {
             _globalContextMock.Verify(ctx => ctx.NewObject<IQuery>(), Times.Once());
             _queryMock.VerifySet(q => q.Text = TEST_SQL, Times.Once());
@@ -69,6 +70,7 @@ namespace VanessaSharp.Data.UnitTests
             _queryMock.Verify(q => q.Dispose(), Times.Once());
 
             Assert.AreSame(_queryResult, reader.QueryResult);
+            Assert.AreEqual(expectedIteration, reader.QueryResultIteration);
         }
         
         /// <summary>Тестирование основного метода.</summary>
@@ -117,6 +119,23 @@ namespace VanessaSharp.Data.UnitTests
 
                 _queryMock.Verify(q => q.SetParameter(name, value), Times.Once());
             }
+        }
+
+        /// <summary>Тестирование основного метода.</summary>
+        [Test]
+        [TestCase(QueryResultIteration.Linear)]
+        [TestCase(QueryResultIteration.ByGroups)]
+        [TestCase(QueryResultIteration.ByGroupsWithHierarchy)]
+        public void TestWithDeterineQueryResultIteration(QueryResultIteration queryResultIteration)
+        {
+            // Arrange
+
+            // Act
+            _testedInstance.CommandText = TEST_SQL;
+            var reader = _testedInstance.ExecuteReader(CommandBehavior.Default, queryResultIteration);
+
+            // Assert
+            AssertAfterExecute(reader, queryResultIteration);
         }
     }
 }

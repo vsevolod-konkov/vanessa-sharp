@@ -17,6 +17,18 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
         /// <param name="globalContext">Глобалльный контекст 1С.</param>
         /// <returns></returns>
         IOneSEnumMapping CreateMapping(Type enumType, OneSObject globalContext);
+
+        /// <summary>
+        /// Есть ли соответствие
+        /// перечисления с объектом 1С.
+        /// </summary>
+        /// <param name="enumType">Перечислимый тип.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если перечислимый тип
+        /// имеет соответствие 1С.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        bool IsSupportEnum(Type enumType);
     }
 
     [ContractClassFor(typeof(IOneSEnumMappingFactory))]
@@ -31,6 +43,13 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
             Contract.Ensures(Contract.Result<IOneSEnumMapping>() != null);
 
             return null;
+        }
+
+        bool IOneSEnumMappingFactory.IsSupportEnum(Type enumType)
+        {
+            Contract.Requires<ArgumentNullException>(enumType != null);
+
+            return true;
         }
     }
 }

@@ -78,5 +78,14 @@ namespace VanessaSharp.Proxy.Common
                 "Невозможно сконвертировать 1С-объект в тип \"{0}\". Конвертация объектов перечислений не поддерживается.",
                 enumType));
         }
+
+        /// <summary>
+        /// Конвертация аргумента для 1С.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        public virtual object ConvertToOneS(object value)
+        {
+            return value;
+        }
     }
 }

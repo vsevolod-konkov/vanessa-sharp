@@ -246,6 +246,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict).Object,
                 new Mock<IDataCursorFactory>(MockBehavior.Strict).Object,
                 new Mock<IValueConverter>(MockBehavior.Strict).Object,
+                QueryResultIteration.Default,
                 true);
 
             InitTestedInstance(

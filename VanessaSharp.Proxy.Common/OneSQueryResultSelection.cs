@@ -64,6 +64,9 @@ namespace VanessaSharp.Proxy.Common
         {
             get
             {
+                //var recordType = DynamicProxy.RecordType();
+                //return SelectRecordType.DetailRecord;
+
                 return DynamicProxy.RecordType();
             }
         }

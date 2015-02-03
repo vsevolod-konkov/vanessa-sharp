@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace VanessaSharp.Proxy.Common
@@ -37,7 +38,7 @@ namespace VanessaSharp.Proxy.Common
         public void RegisterObject(IDisposable disposableObj)
         {
             Contract.Requires<ArgumentNullException>(disposableObj != null);
-            
+
             lock (_syncObject)
             {
                 if (_disposed)
@@ -45,7 +46,7 @@ namespace VanessaSharp.Proxy.Common
                     throw new InvalidOperationException(
                         "Ресурсы таблицы были освобождены. После освобождения ресурсов таблицы регистрация новых объектов недопустима.");
                 }
-                
+
                 _references.AddLast(new WeakReference(disposableObj));
             }
         }

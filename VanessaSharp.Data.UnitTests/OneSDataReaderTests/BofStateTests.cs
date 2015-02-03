@@ -1,6 +1,7 @@
 ﻿using System;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 {
@@ -57,7 +58,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             // Assert
             QueryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
-            QueryResultMock.Verify(qr => qr.Choose(), Times.Once());
+            QueryResultMock.Verify(qr => qr.Choose(QUERY_RESULT_ITERATION), Times.Once());
             dataCursorMock.Verify(qrs => qrs.Next(), Times.Exactly(2));
         }
 

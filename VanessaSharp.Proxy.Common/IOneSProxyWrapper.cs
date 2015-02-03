@@ -11,5 +11,11 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="obj">Обертываемый объект.</param>
         /// <param name="type">Тип интерфейса, который должен поддерживаться оберткой.</param>
         object Wrap(object obj, Type type);
+
+        /// <summary>
+        /// Конвертация аргумента для 1С.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        object ConvertToOneS(object value);
     }
 }

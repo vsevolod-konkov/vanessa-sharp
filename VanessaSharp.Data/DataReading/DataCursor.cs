@@ -207,6 +207,17 @@ namespace VanessaSharp.Data.DataReading
             /// </summary>
             public void Reset()
             {
+                // TODO: Подумать
+                //foreach (var lazyValue in _buffer)
+                //{
+                //    if (lazyValue.IsValueCreated)
+                //    {
+                //        var disposableValue = lazyValue.Value as IDisposable;
+                //        if (disposableValue != null)
+                //            disposableValue.Dispose();
+                //    }
+                //}
+                
                 InitBuffer();
             }
 

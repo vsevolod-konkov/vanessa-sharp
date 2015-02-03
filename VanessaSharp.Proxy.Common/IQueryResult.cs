@@ -11,6 +11,7 @@
         bool IsEmpty();
 
         /// <summary>Выбрать результат запроса в курсор.</summary>
-        IQueryResultSelection Choose();
+        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
+        IQueryResultSelection Choose(QueryResultIteration queryResultIteration);
     }
 }

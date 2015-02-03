@@ -7,6 +7,6 @@ namespace VanessaSharp.Proxy.Common
     /// соответствующих перечислениям 1С.
     /// </summary>
     [AttributeUsage(AttributeTargets.Enum)]
-    internal sealed class OneSEnumAttribute : Attribute
+    public sealed class OneSEnumAttribute : Attribute
     {}
 }

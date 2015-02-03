@@ -78,6 +78,29 @@ namespace VanessaSharp.Proxy.Common
             return result;
         }
 
+        /// <summary>
+        /// Попытка конвертации перечислимого значения
+        /// в объект 1С.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        /// <param name="result">Результат конвертации.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если значение удалось конвертировать.
+        /// </returns>
+        public bool TryConvertEnumToOneSObject(Enum value, out OneSObject result)
+        {
+            var enumType = value.GetType();
+            if (_enumMappingFactory.IsSupportEnum(enumType))
+            {
+                var mapping = GetEnumMapping(enumType);
+
+                return mapping.TryGetOneSValue(value, out result);
+            }
+
+            result = default(OneSObject);
+            return false;
+        }
+
         private IOneSEnumMapping GetEnumMapping(Type enumType)
         {
             IOneSEnumMapping mapping;

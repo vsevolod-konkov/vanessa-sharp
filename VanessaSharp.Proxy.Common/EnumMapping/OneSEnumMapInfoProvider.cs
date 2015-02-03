@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace VanessaSharp.Proxy.Common.EnumMapping
 {
@@ -31,11 +33,24 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
         {
             if (IsSupportEnumType(enumType))
             {
-                var enumValueMaps = from v in Enum.GetValues(enumType).Cast<Enum>()
-                                    let name = Enum.GetName(enumType, v)
-                                    select new OneSEnumValueMapInfo(v, name);
+                var enumValueMaps = (
+                                        from enumValueField in GetEnumValues(enumType)
+                                        where IsSupportEnumValue(enumValueField)
+                                        let value = (Enum)enumValueField.GetValue(null)
+                                        let name = enumValueField.Name
+                                        select 
+                                            new OneSEnumValueMapInfo(value, name)
+                                    )
+                                    .ToArray();
 
-                return new OneSEnumMapInfo(enumType.Name, enumValueMaps.ToArray());
+                if (!enumValueMaps.Any())
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Нет ни одного значения соответствующего объекту 1С в перечислении \"{0}\".",
+                        enumType));
+                }
+                
+                return new OneSEnumMapInfo(enumType.Name, enumValueMaps);
             }
 
             throw new InvalidOperationException(string.Format(
@@ -43,9 +58,35 @@ namespace VanessaSharp.Proxy.Common.EnumMapping
                 enumType));
         }
 
+        /// <summary>
+        /// Есть ли соответствие
+        /// перечисления с объектом 1С.
+        /// </summary>
+        /// <param name="enumType">Перечислимый тип.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если перечислимый тип
+        /// имеет соответствие 1С.
+        /// В ином случае возвращается <c>false</c>.
+        /// </returns>
+        bool IOneSEnumMapInfoProvider.IsSupportEnum(Type enumType)
+        {
+            return IsSupportEnumType(enumType);
+        }
+
+        private static IEnumerable<FieldInfo> GetEnumValues(Type enumType)
+        {
+            return enumType
+                .GetFields(BindingFlags.Public | BindingFlags.Static);
+        }
+
         private static bool IsSupportEnumType(Type enumType)
         {
             return enumType.IsDefined(typeof(OneSEnumAttribute), false);
+        }
+
+        private static bool IsSupportEnumValue(FieldInfo field)
+        {
+            return field.IsDefined(typeof(OneSEnumValueAttribute), false);
         }
     }
 }

@@ -18,6 +18,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// Является ли тестируемый экземпляр - читателем табличной части.
         /// </summary>
         private const bool IS_TABLE_PART = false;
+
+        protected const QueryResultIteration QUERY_RESULT_ITERATION = QueryResultIteration.ByGroupsWithHierarchy;
         
         #region Вспомогательные методы и типы
 
@@ -83,7 +85,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 .Setup(r => r.IsEmpty())
                 .Returns(false);
             queryResultMock
-                .Setup(r => r.Choose())
+                .Setup(r => r.Choose(QUERY_RESULT_ITERATION))
                 .Returns(queryResultSelection);
 
             dataCursorFactoryMock
@@ -148,6 +150,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 _fieldInfoCollection,
                 _dataCursorFactoryMock.Object,
                 CreateValueConverter(),
+                QUERY_RESULT_ITERATION,
                 IS_TABLE_PART);
 
             ScenarioAfterInitTestedInstance();
@@ -799,7 +802,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public virtual void TestGetDataReader()
         {
             var tablePartQueryResult = new Mock<IQueryResult>(MockBehavior.Strict).Object;
-            var expectedResult = new OneSDataReader(tablePartQueryResult);
+            var expectedResult = OneSDataReader.CreateTablePartDataReader(tablePartQueryResult);
+
+            Assert.IsTrue(expectedResult.IsTablePart);
 
             TestGetTypedValue(
                 expectedResult,

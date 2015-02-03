@@ -93,5 +93,21 @@ namespace VanessaSharp.Proxy.Common
         {
             return _enumMapper.ConvertComObjectToEnum(comObj, enumType);
         }
+
+        /// <summary>
+        /// Конвертация аргумента для 1С.
+        /// </summary>
+        /// <param name="value">Конвертируемое значение.</param>
+        public override object ConvertToOneS(object value)
+        {
+            if (value != null && value.GetType().IsEnum)
+            {
+                OneSObject result;
+                if (_enumMapper.TryConvertEnumToOneSObject((Enum)value, out result))
+                    return result;
+            }
+
+            return base.ConvertToOneS(value);
+        }
     }
 }

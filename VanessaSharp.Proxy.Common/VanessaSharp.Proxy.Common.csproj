@@ -147,6 +147,7 @@
     <Compile Include="OneSContextBoundObject.cs" />
     <Compile Include="OneSEnumAttribute.cs" />
     <Compile Include="OneSEnumMapper.cs" />
+    <Compile Include="OneSEnumValueAttribute.cs" />
     <Compile Include="OneSGlobalContext.cs" />
     <Compile Include="OneSObject.cs" />
     <Compile Include="OneSObjectDefiner.cs" />
@@ -168,6 +169,7 @@
     <Compile Include="OneSWrapFactory.cs" />
     <Compile Include="OneSWrapMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QueryResultIteration.cs" />
     <Compile Include="SelectRecordType.cs" />
   </ItemGroup>
   <ItemGroup />

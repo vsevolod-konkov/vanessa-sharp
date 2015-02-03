@@ -26,9 +26,12 @@
         }
 
         /// <summary>Выбрать результат запроса в курсор.</summary>
-        public IQueryResultSelection Choose()
+        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
+        public IQueryResultSelection Choose(QueryResultIteration queryResultIteration)
         {
-            return DynamicProxy.Choose();
+            return (queryResultIteration == QueryResultIteration.Default)
+                ? DynamicProxy.Choose()
+                : DynamicProxy.Choose(queryResultIteration);
         }
     }
 }
