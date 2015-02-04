@@ -791,7 +791,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// Тестирование <see cref="OneSDataReader.GetDataReader"/>.
         /// </summary>
         [Test]
-        public virtual void TestGetDataReader()
+        public void TestGetDataReader()
         {
             var tablePartQueryResult = new Mock<IQueryResult>(MockBehavior.Strict).Object;
             var expectedResult = OneSDataReader.CreateTablePartDataReader(tablePartQueryResult);
@@ -804,6 +804,21 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                 (reader, ordinal) => reader.GetDataReader(ordinal),
                 AssertGetDataReader
                 );
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetDescendantsReader(VanessaSharp.Proxy.Common.QueryResultIteration)"/>.
+        /// </summary>
+        [Test]
+        public virtual void TestGetDescendantsReader()
+        {
+            const QueryResultIteration QUERY_RESULT_ITERATION = QueryResultIteration.ByGroupsWithHierarchy;
+            
+            // Act
+            Assert.Throws<InvalidOperationException>(() =>
+                {
+                    var result = TestedInstance.GetDescendantsReader(QUERY_RESULT_ITERATION);
+                });
         }
     }
 }

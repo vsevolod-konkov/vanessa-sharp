@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Reflection;
 using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
@@ -91,14 +94,35 @@ namespace VanessaSharp.Data
         internal static OneSDataReader CreateRootDataReader(
             IQueryResult queryResult, QueryResultIteration queryResultIteration)
         {
+            Contract.Requires<ArgumentNullException>(queryResult != null);
+            Contract.Ensures(Contract.Result<OneSDataReader>() != null);
+
             return new OneSDataReader(
                 queryResult, queryResultIteration, false);
+        }
+
+        /// <summary>
+        /// Создание читателя записей-потомков.
+        /// </summary>
+        /// <param name="dataRecordsProvider">
+        /// Поставщик записей-потомков.
+        /// </param>
+        private static OneSDataReader CreateDescendantsDataReader(
+            IDataRecordsProvider dataRecordsProvider)
+        {
+            Contract.Requires<ArgumentNullException>(dataRecordsProvider != null);
+            Contract.Ensures(Contract.Result<OneSDataReader>() != null);
+            
+            return new OneSDataReader(dataRecordsProvider, false);
         }
 
         /// <summary>Создание читателя табличной части, по результату запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         internal static OneSDataReader CreateTablePartDataReader(IQueryResult queryResult)
         {
+            Contract.Requires<ArgumentNullException>(queryResult != null);
+            Contract.Ensures(Contract.Result<OneSDataReader>() != null);
+            
             return new OneSDataReader(queryResult, QueryResultIteration.Default, true);
         }
 
@@ -214,7 +238,7 @@ namespace VanessaSharp.Data
         {
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
 
-            throw new NotImplementedException();
+            return InternalGetDescendantsReader(queryResultIteration, null, null);
         }
 
         /// <summary>
@@ -232,7 +256,7 @@ namespace VanessaSharp.Data
         {
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
 
-            throw new NotImplementedException();
+            return InternalGetDescendantsReader(queryResultIteration, groupNames, null);
         }
 
         /// <summary>
@@ -250,7 +274,43 @@ namespace VanessaSharp.Data
         {
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
 
-            throw new NotImplementedException();
+            return InternalGetDescendantsReader(
+                queryResultIteration,
+                groupNamesAndValues.Select(p => p.Item1),
+                groupNamesAndValues.Select(p => p.Item2)
+                );
+        }
+
+        /// <summary>
+        /// Внутренняя реализация
+        /// получения читателя
+        /// записей-потомков для текущей записи.
+        /// </summary>
+        /// <param name="queryResultIteration">
+        /// Стратегия обхода записей.
+        /// </param>
+        /// <param name="groupNames">
+        /// Имена группировок.
+        /// </param>
+        /// <param name="groupValues">
+        /// Имена значений.
+        /// </param>
+        /// <returns></returns>
+        private OneSDataReader InternalGetDescendantsReader(
+            QueryResultIteration queryResultIteration,
+            IEnumerable<string> groupNames,
+            IEnumerable<string> groupValues)
+        {
+            if (_currentState == States.RecordOpen)
+            {
+                return CreateDescendantsDataReader(
+                    _dataCursor.GetDescendantRecordsProvider(queryResultIteration, groupNames, groupValues)
+                    );
+            }
+
+            throw new InvalidOperationException(
+                string.Format("Недопустим вызов метода \"{1}\" в состоянии \"{0}\".",
+                _currentState, MethodBase.GetCurrentMethod().Name));
         }
 
         /// <summary>

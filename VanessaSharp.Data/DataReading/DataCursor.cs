@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using VanessaSharp.Proxy.Common;
 
@@ -14,22 +15,35 @@ namespace VanessaSharp.Data.DataReading
         /// </summary>
         private readonly LazyBuffer _buffer;
 
-        /// <summary>Конструктор.</summary>
+        /// <summary>Конструктор для модульного тестирования.</summary>
         /// <param name="dataReaderFieldInfoCollection">Коллекция информации о полях читателя данных.</param>
         /// <param name="queryResultSelection">Выборка из результата запроса.</param>
         /// <param name="oneSObjectSpecialConverter">Специальный конвертер для объектов 1С.</param>
-        public DataCursor(
+        internal DataCursor(
             IDataReaderFieldInfoCollection dataReaderFieldInfoCollection, 
             IQueryResultSelection queryResultSelection,
             IOneSObjectSpecialConverter oneSObjectSpecialConverter)
         {
             Contract.Requires<ArgumentNullException>(dataReaderFieldInfoCollection != null);
             Contract.Requires<ArgumentNullException>(queryResultSelection != null);
+            Contract.Requires<ArgumentNullException>(oneSObjectSpecialConverter != null);
 
             _dataReaderFieldInfoCollection = dataReaderFieldInfoCollection;
             _queryResultSelection = queryResultSelection;
 
             _buffer = new LazyBuffer(GetValueFunctions(oneSObjectSpecialConverter));
+        }
+
+        /// <summary>Конструктор для использования.</summary>
+        /// <param name="dataReaderFieldInfoCollection">Коллекция информации о полях читателя данных.</param>
+        /// <param name="queryResultSelection">Выборка из результата запроса.</param>
+        public DataCursor(
+            IDataReaderFieldInfoCollection dataReaderFieldInfoCollection,
+            IQueryResultSelection queryResultSelection)
+            : this(dataReaderFieldInfoCollection, queryResultSelection, OneSObjectSpecialConverter.Default)
+        {
+            Contract.Requires<ArgumentNullException>(dataReaderFieldInfoCollection != null);
+            Contract.Requires<ArgumentNullException>(queryResultSelection != null);
         }
 
         /// <summary>
@@ -163,6 +177,39 @@ namespace VanessaSharp.Data.DataReading
                 // TODO: Буферизация
                 return _queryResultSelection.RecordType;
             }
+        }
+
+        /// <summary>
+        /// Получение поствщика записей-потомков
+        /// текущей записи.
+        /// </summary>
+        /// <param name="queryResultIteration">Стратегия обхода записей.</param>
+        /// <param name="groupNames">Имена группировок.</param>
+        /// <param name="groupValues">Значения группировок.</param>
+        public IDataRecordsProvider GetDescendantRecordsProvider(
+            QueryResultIteration queryResultIteration, 
+            IEnumerable<string> groupNames, 
+            IEnumerable<string> groupValues)
+        {
+            var groupNamesString = GetGroupString(groupNames);
+            var groupValuesString = GetGroupString(groupValues);
+
+            var descendantResultSelection = _queryResultSelection
+                .Choose(queryResultIteration, groupNamesString, groupValuesString);
+
+            var descendantDataCursor = new DataCursor(
+                _dataReaderFieldInfoCollection,
+                descendantResultSelection);
+
+            return new DescendantsDataRecordsProvider(
+                _dataReaderFieldInfoCollection, descendantDataCursor);
+        }
+
+        private static string GetGroupString(IEnumerable<string> groups)
+        {
+            return (groups == null)
+                       ? null
+                       : string.Join(", ", groups);
         }
 
         #region Вспомогательные типы

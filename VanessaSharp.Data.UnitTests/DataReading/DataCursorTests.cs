@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -333,6 +334,84 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 i => i.RecordType,
                 s => s.RecordType,
                 SelectRecordType.GroupTotal);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="DataCursor.GetDescendantRecordsProvider"/>.
+        /// </summary>
+        private void TestGetDescendantRecordsProvider(
+            IEnumerable<string> groupNames, string groupNamesString,
+            IEnumerable<string> groupValues, string groupValuesString 
+            )
+        {
+            const QueryResultIteration QUERY_RESULT_ITERATION = QueryResultIteration.ByGroupsWithHierarchy;
+
+            // Arrange
+            InitTestedInstance();
+
+            var descendantsResultSelection = new Mock<IQueryResultSelection>(MockBehavior.Strict).Object;
+
+            _queryResultSelectionMock
+                .Setup(qrs => qrs.Choose(QUERY_RESULT_ITERATION, groupNamesString, groupValuesString))
+                .Returns(descendantsResultSelection);
+
+            // Act
+            var result = _testedInstance.GetDescendantRecordsProvider(QUERY_RESULT_ITERATION, groupNames, groupValues);
+
+            // Assert
+            Assert.IsInstanceOf<DescendantsDataRecordsProvider>(result);
+            Assert.AreSame(_fieldInfoCollectionMock.Object, result.Fields);
+
+            IDataCursor dataCursor;
+            Assert.IsTrue(result.TryCreateCursor(out dataCursor));
+
+            Assert.IsInstanceOf<DataCursor>(dataCursor);
+            var dataCursorImpl = (DataCursor)dataCursor;
+
+            Assert.AreSame(descendantsResultSelection, dataCursorImpl.QueryResultSelection);
+
+            _queryResultSelectionMock
+                .Verify(qrs => qrs.Choose(QUERY_RESULT_ITERATION, groupNamesString, groupValuesString), Times.Once());
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="DataCursor.GetDescendantRecordsProvider"/>.
+        /// </summary>
+        [Test]
+        public void TestGetDescendantRecordsProvider()
+        {
+            TestGetDescendantRecordsProvider(null, null, null, null);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="DataCursor.GetDescendantRecordsProvider"/>
+        /// когда заданы имена группировок.
+        /// </summary>
+        [Test]
+        public void TestGetDescendantRecordsProviderWhenDefiningGroupNames()
+        {
+            var groupNames = new[] { "group1", "group2" };
+            const string EXPECTED_GROUP_NAMES_STRING = "group1, group2";
+
+            TestGetDescendantRecordsProvider(groupNames, EXPECTED_GROUP_NAMES_STRING, null, null);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="DataCursor.GetDescendantRecordsProvider"/>
+        /// когда заданы имена и значения группировок.
+        /// </summary>
+        [Test]
+        public void TestGetDescendantRecordsProviderWhenDefiningGroupNamesAndValues()
+        {
+            var groupNames = new[] { "group1", "group2" };
+            const string EXPECTED_GROUP_NAMES_STRING = "group1, group2";
+
+            var groupValues = new[] {"value1", "value2"};
+            const string EXPECTED_GROUP_VALUES_STRING = "value1, value2";
+
+            TestGetDescendantRecordsProvider(
+                groupNames, EXPECTED_GROUP_NAMES_STRING,
+                groupValues, EXPECTED_GROUP_VALUES_STRING);
         }
     }
 }

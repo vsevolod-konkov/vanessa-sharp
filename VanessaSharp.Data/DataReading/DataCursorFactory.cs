@@ -29,7 +29,7 @@ namespace VanessaSharp.Data.DataReading
         /// <param name="queryResultSelection">Курсор 1С.</param>
         public IDataCursor Create(IDataReaderFieldInfoCollection fieldInfoCollection, IQueryResultSelection queryResultSelection)
         {
-            return new DataCursor(fieldInfoCollection, queryResultSelection, OneSObjectSpecialConverter.Default);
+            return new DataCursor(fieldInfoCollection, queryResultSelection);
         }
     }
 }

@@ -408,5 +408,27 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             var result = TestedInstance.GetDataReader(TEST_ORDINAL);
         }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetDescendantsReader(VanessaSharp.Proxy.Common.QueryResultIteration)"/>.
+        /// </summary>
+        [Test]
+        public override void TestGetDescendantsReader()
+        {
+            const QueryResultIteration QUERY_RESULT_ITERATION = QueryResultIteration.ByGroupsWithHierarchy;
+
+            // Arrange
+            var dataRecordsProvider = new Mock<IDataRecordsProvider>(MockBehavior.Strict).Object;
+
+            _dataCursorMock
+                .Setup(c => c.GetDescendantRecordsProvider(QUERY_RESULT_ITERATION, null, null))
+                .Returns(dataRecordsProvider);
+
+            // Act
+            var actualResult = TestedInstance.GetDescendantsReader(QUERY_RESULT_ITERATION);
+
+            // Assert
+            Assert.AreSame(dataRecordsProvider, actualResult.DataRecordsProvider);
+        }
     }
 }

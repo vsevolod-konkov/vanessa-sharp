@@ -135,6 +135,7 @@
     <Compile Include="DataReading\DataCursor.cs" />
     <Compile Include="DataReading\DataCursorFactory.cs" />
     <Compile Include="DataReading\DataReaderFieldInfo.cs" />
+    <Compile Include="DataReading\DescendantsDataRecordsProvider.cs" />
     <Compile Include="DataReading\IDataCursor.cs" />
     <Compile Include="DataReading\IDataCursorFactory.cs" />
     <Compile Include="DataReading\IDataRecordsProvider.cs" />

@@ -19,7 +19,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
         /// <summary>Тестирование поведения по умолчанию.</summary>
         [Test]
-        [Ignore("Пока не реализовано GetDescendantsReader")]
         public void TestDefault()
         {
             Test
