@@ -31,12 +31,20 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         [Test]
         public void TestToDataReaderWhenObjectIsIQueryResult()
         {
-            var queryResultMock = new DisposableMock<IQueryResult>();
+            // Arrange
+            var queryResult = new DisposableMock<IQueryResult>().Object;
 
-            var result = OneSObjectSpecialConverter.Default.ToDataReader(queryResultMock.Object);
+            // Act
+            var result = OneSObjectSpecialConverter.Default.ToDataReader(queryResult);
 
-            Assert.AreSame(queryResultMock.Object, result.QueryResult);
+            // Assert
             Assert.IsTrue(result.IsTablePart);
+
+            Assert.IsInstanceOf<QueryResultDataRecordsProvider>(result.DataRecordsProvider);
+            var dataRecordsProvider = (QueryResultDataRecordsProvider)result.DataRecordsProvider;
+
+            Assert.AreSame(queryResult, dataRecordsProvider.QueryResult);
+            Assert.AreEqual(QueryResultIteration.Default, dataRecordsProvider.QueryResultIteration);
         }
     }
 }

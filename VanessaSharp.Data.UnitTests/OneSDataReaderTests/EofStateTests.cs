@@ -32,16 +32,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>Инициализация данных.</summary>
         protected override void SetUpData()
         {
-            if (_hasRows)
-            {
-                _dataCursorMock = CreateDataCursorMock(RowsCount);
-            }
-            else
-            {
-                QueryResultMock
-                    .Setup(r => r.IsEmpty())
-                    .Returns(true);
-            }   
+            _dataCursorMock = CreateDataCursorMock(RowsCount);
         }
 
         /// <summary>Сценарий для приведения тестового экземпляра в нужное состояние.</summary>
@@ -92,7 +83,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void TestHasRows()
         {
             Assert.AreEqual(_hasRows, TestedInstance.HasRows);
-            QueryResultMock.Verify(qr => qr.IsEmpty(), Times.AtLeastOnce());
+            DataRecordsProviderMock.Verify(d => d.HasRecords, Times.AtLeastOnce());
         }
     }
 }

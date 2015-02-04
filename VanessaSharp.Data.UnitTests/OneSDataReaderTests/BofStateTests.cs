@@ -1,6 +1,7 @@
 ﻿using System;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
@@ -18,7 +19,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         [Test]
         public void TestInit()
         {
-            Assert.AreSame(QueryResultMock.Object, TestedInstance.QueryResult);
+            Assert.AreSame(DataRecordsProviderMock.Object, TestedInstance.DataRecordsProvider);
         }
 
         /// <summary>
@@ -29,15 +30,17 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void TestReadWhenEmptyData()
         {
             // Arrange
-            QueryResultMock
-                .Setup(qr => qr.IsEmpty())
-                .Returns(true);
+            IDataCursor dataCursor;
+            DataRecordsProviderMock
+                .Setup(d => d.TryCreateCursor(out dataCursor))
+                .Returns(false);
 
-            // Act & Assert
-            Assert.IsFalse(TestedInstance.Read());
+            // Act
+            var result = TestedInstance.Read();
 
             // Assert
-            QueryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
+            Assert.IsFalse(result);
+            DataRecordsProviderMock.Verify(d => d.TryCreateCursor(out dataCursor), Times.Once());
         }
 
         /// <summary>
@@ -57,8 +60,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             Assert.IsFalse(TestedInstance.Read());
 
             // Assert
-            QueryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
-            QueryResultMock.Verify(qr => qr.Choose(QUERY_RESULT_ITERATION), Times.Once());
+            IDataCursor dataCursor;
+            DataRecordsProviderMock.Verify(d => d.TryCreateCursor(out dataCursor), Times.Once());
             dataCursorMock.Verify(qrs => qrs.Next(), Times.Exactly(2));
         }
 
@@ -80,15 +83,15 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void TestHasRows([Values(false, true)] bool expectedHasRows)
         {
             // Arrange
-            QueryResultMock
-                .Setup(qr => qr.IsEmpty())
-                .Returns(!expectedHasRows)
+            DataRecordsProviderMock
+                .Setup(d => d.HasRecords)
+                .Returns(expectedHasRows)
                 .Verifiable();
 
             // Act & Assert
             Assert.AreEqual(expectedHasRows, TestedInstance.HasRows);
 
-            QueryResultMock.Verify(qr => qr.IsEmpty(), Times.Once());
+            DataRecordsProviderMock.Verify(d => d.HasRecords, Times.Once());
         }
     }
 }

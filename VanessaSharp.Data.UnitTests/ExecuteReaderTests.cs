@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests
@@ -69,8 +70,11 @@ namespace VanessaSharp.Data.UnitTests
             _queryMock.Verify(q => q.Execute(), Times.Once());
             _queryMock.Verify(q => q.Dispose(), Times.Once());
 
-            Assert.AreSame(_queryResult, reader.QueryResult);
-            Assert.AreEqual(expectedIteration, reader.QueryResultIteration);
+            Assert.IsInstanceOf<QueryResultDataRecordsProvider>(reader.DataRecordsProvider);
+            var dataRecordsProvider = (QueryResultDataRecordsProvider)reader.DataRecordsProvider;
+
+            Assert.AreSame(_queryResult, dataRecordsProvider.QueryResult);
+            Assert.AreEqual(expectedIteration, dataRecordsProvider.QueryResultIteration);
         }
         
         /// <summary>Тестирование основного метода.</summary>

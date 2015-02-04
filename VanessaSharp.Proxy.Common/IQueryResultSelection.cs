@@ -33,5 +33,22 @@
         /// Тип текущей записи.
         /// </summary>
         SelectRecordType RecordType { get; }
+
+        /// <summary>
+        /// Выборка вложенных записей для текущей записи результата.
+        /// </summary>
+        /// <param name="queryResultIteration">
+        /// Стратегия обхода записей.
+        /// </param>
+        /// <param name="groupNames">
+        /// Имена группировок, через запятую по которым будет производиться обход.
+        /// </param>
+        /// <param name="groupValues">
+        /// Значения группировок, через запятую по которым будет производиться обход.
+        /// </param>
+        IQueryResultSelection Choose(
+            QueryResultIteration queryResultIteration,
+            string groupNames,
+            string groupValues);
     }
 }

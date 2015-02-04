@@ -67,7 +67,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             // Assert
             Assert.IsTrue(TestedInstance.IsClosed);
-            QueryResultMock.VerifyDispose();
+            DataRecordsProviderMock.VerifyDispose();
         }
 
         /// <summary>Тестирование метода <see cref="OneSDataReader.FieldCount"/>.</summary>

@@ -70,5 +70,47 @@ namespace VanessaSharp.Proxy.Common
                 return DynamicProxy.RecordType();
             }
         }
+
+        /// <summary>
+        /// Выборка вложенных записей для текущей записи результата.
+        /// </summary>
+        /// <param name="queryResultIteration">
+        /// Стратегия обхода записей.
+        /// </param>
+        /// <param name="groupNames">
+        /// Имена группировок, через запятую по которым будет производиться обход.
+        /// </param>
+        /// <param name="groupValues">
+        /// Значения группировок, через запятую по которым будет производиться обход.
+        /// </param>
+        public IQueryResultSelection Choose(
+            QueryResultIteration queryResultIteration,
+            string groupNames,
+            string groupValues)
+        {
+            if (groupValues == null)
+            {
+                if (groupNames == null)
+                {
+                    if (queryResultIteration == QueryResultIteration.Default)
+                        return DynamicProxy.Choose();
+
+                    return DynamicProxy.Choose(queryResultIteration);
+                }
+
+                return DynamicProxy.Choose(
+                    queryResultIteration == QueryResultIteration.Default
+                        ? QueryResultIteration.Linear
+                        : queryResultIteration,
+                    groupNames);
+            }
+
+            return DynamicProxy.Choose(
+                    queryResultIteration == QueryResultIteration.Default
+                        ? QueryResultIteration.Linear
+                        : queryResultIteration,
+                    groupNames,
+                    groupValues);
+        }
     }
 }

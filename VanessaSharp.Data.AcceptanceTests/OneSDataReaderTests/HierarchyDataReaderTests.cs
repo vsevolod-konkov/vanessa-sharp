@@ -19,6 +19,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
         /// <summary>Тестирование поведения по умолчанию.</summary>
         [Test]
+        [Ignore("Пока не реализовано GetDescendantsReader")]
         public void TestDefault()
         {
             Test
@@ -33,23 +34,28 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                     "
                 )
                 .Execute(queryResultIteration: QueryResultIteration.ByGroups)
-                .Action(ctx =>
-                    {
-                        while (ctx.TestedReader.Read())
-                        {
-                            Console.WriteLine("Наименование = {0}, Количество = {1}, Цена = {2}, Уровень = {3}, Группировка = {4}, Тип записи = {5}",
-                                ctx.TestedReader.GetString(0),
-                                ctx.TestedReader.IsDBNull(1) ? "" : (object)ctx.TestedReader.GetInt32(1),
-                                ctx.TestedReader.IsDBNull(2) ? "" : (object)ctx.TestedReader.GetDecimal(2),
-                                ctx.TestedReader.Level,
-                                ctx.TestedReader.GroupName,
-                                ctx.TestedReader.RecordType);
-                        }
-                    })
+                .Action(ctx => PrintRecords(ctx.TestedReader))
                 .BeginDefineExpectedDataFor<ExpectedHierarchicalTestDictionary>()
                 .AllRows
                 .EndDefineExpectedData
            .Run();
+        }
+
+        private static void PrintRecords(OneSDataReader testedReader)
+        {
+            while (testedReader.Read())
+            {
+                Console.WriteLine("Наименование = {0}, Количество = {1}, Цена = {2}, Уровень = {3}, Группировка = {4}, Тип записи = {5}",
+                    testedReader.GetString(0),
+                    testedReader.IsDBNull(1) ? "" : (object)testedReader.GetInt32(1),
+                    testedReader.IsDBNull(2) ? "" : (object)testedReader.GetDecimal(2),
+                    testedReader.Level,
+                    testedReader.GroupName,
+                    testedReader.RecordType);
+
+                using (var descendantsReader = testedReader.GetDescendantsReader())
+                    PrintRecords(descendantsReader);
+            }
         }
     }
 }

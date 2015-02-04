@@ -19,8 +19,6 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// </summary>
         private const bool IS_TABLE_PART = false;
 
-        protected const QueryResultIteration QUERY_RESULT_ITERATION = QueryResultIteration.ByGroupsWithHierarchy;
-        
         #region Вспомогательные методы и типы
 
         /// <summary>Менеджер строк тестового экземпляра.</summary>
@@ -60,18 +58,12 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <summary>
         /// Создание мока курсора <see cref="IDataCursor"/>.
         /// </summary>
-        /// <param name="queryResultMock">Мок результата запроса.</param>
-        /// <param name="fieldInfoCollection">Коллекция полей</param>
-        /// <param name="dataCursorFactoryMock">Мок фабрики курсора.</param>
+        /// <param name="dataRecordsProviderMock"><see cref="IDataRecordsProvider"/></param>
         /// <param name="rowsManager">Менеджер строк данных.</param>
         private static DisposableMock<IDataCursor> CreateDataCursorMock(
-            Mock<IQueryResult> queryResultMock, 
-            IDataReaderFieldInfoCollection fieldInfoCollection, 
-            Mock<IDataCursorFactory> dataCursorFactoryMock, 
+            Mock<IDataRecordsProvider> dataRecordsProviderMock, 
             RowsManager rowsManager)
         {
-            var queryResultSelection = new Mock<IQueryResultSelection>(MockBehavior.Strict).Object;
-
             var dataCursorMock = new DisposableMock<IDataCursor>();
             dataCursorMock
                 .Setup(s => s.Next())
@@ -81,16 +73,27 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
                     return !rowsManager.IsEof;
                 });
 
-            queryResultMock
-                .Setup(r => r.IsEmpty())
-                .Returns(false);
-            queryResultMock
-                .Setup(r => r.Choose(QUERY_RESULT_ITERATION))
-                .Returns(queryResultSelection);
 
-            dataCursorFactoryMock
-                .Setup(f => f.Create(fieldInfoCollection, queryResultSelection))
-                .Returns(dataCursorMock.Object);
+            var hasRecords = rowsManager.RowsCount > 0;
+
+            dataRecordsProviderMock
+                .Setup(d => d.HasRecords)
+                .Returns(hasRecords);
+
+            if (hasRecords)
+            {
+                IDataCursor dataCursor = dataCursorMock.Object;
+                dataRecordsProviderMock
+                    .Setup(d => d.TryCreateCursor(out dataCursor))
+                    .Returns(true);
+            }
+            else
+            {
+                IDataCursor nullDataCursor = null;
+                dataRecordsProviderMock
+                    .Setup(d => d.TryCreateCursor(out nullDataCursor))
+                    .Returns(false);
+            }
 
             return dataCursorMock;
         }
@@ -102,7 +105,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         internal DisposableMock<IDataCursor> CreateDataCursorMock(
             RowsManager rowsManager)
         {
-            return CreateDataCursorMock(QueryResultMock, _fieldInfoCollection, _dataCursorFactoryMock, rowsManager);
+            return CreateDataCursorMock(DataRecordsProviderMock, rowsManager);
         }
 
         /// <summary>
@@ -117,18 +120,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
         #endregion
 
-        /// <summary>Мок для <see cref="IQueryResult"/>.</summary>
-        internal DisposableMock<IQueryResult> QueryResultMock { get; private set; }
-
-        /// <summary>
-        /// Тестовая коллекция информации о полях данных.
-        /// </summary>
-        private IDataReaderFieldInfoCollection _fieldInfoCollection;
-
-        /// <summary>
-        /// Мок фабрики курсора данных.
-        /// </summary>
-        private Mock<IDataCursorFactory> _dataCursorFactoryMock;
+        /// <summary>Мок для <see cref="IDataRecordsProvider"/>.</summary>
+        internal DisposableMock<IDataRecordsProvider> DataRecordsProviderMock { get; private set; }
 
         /// <summary>Тестируемый экземпляр.</summary>
         protected OneSDataReader TestedInstance { get; private set; }
@@ -138,19 +131,18 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         public void SetUp()
         {
             // Создание тестовых экземпляров и моков
-            _fieldInfoCollection = CreateDataReaderFieldInfoCollectionMock().Object;
-            _dataCursorFactoryMock = new Mock<IDataCursorFactory>(MockBehavior.Strict);
-            QueryResultMock = new DisposableMock<IQueryResult>();
+            var fieldInfoCollection = CreateDataReaderFieldInfoCollectionMock().Object;
+            DataRecordsProviderMock = new DisposableMock<IDataRecordsProvider>();
+            DataRecordsProviderMock
+                .Setup(d => d.Fields)
+                .Returns(fieldInfoCollection);
 
             //
             SetUpData();
 
             TestedInstance = new OneSDataReader(
-                QueryResultMock.Object,  
-                _fieldInfoCollection,
-                _dataCursorFactoryMock.Object,
+                DataRecordsProviderMock.Object,
                 CreateValueConverter(),
-                QUERY_RESULT_ITERATION,
                 IS_TABLE_PART);
 
             ScenarioAfterInitTestedInstance();

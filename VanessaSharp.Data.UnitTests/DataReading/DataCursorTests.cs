@@ -232,7 +232,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
 
         /// <summary>
         /// Тестирование получения экземпляра <see cref="OneSDataReader"/>,
-        /// в случае если тип поля является читатель.
+        /// в случае если типом поля является читатель.
         /// </summary>
         [Test]
         public void TestGetOneSDataReaderWhenFieldTypeIsOneSDataReader()
@@ -242,11 +242,8 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             var value = new object();
 
             var dataReader = new OneSDataReader(
-                new Mock<IQueryResult>(MockBehavior.Strict).Object,
-                new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict).Object,
-                new Mock<IDataCursorFactory>(MockBehavior.Strict).Object,
+                new Mock<IDataRecordsProvider>(MockBehavior.Strict).Object,
                 new Mock<IValueConverter>(MockBehavior.Strict).Object,
-                QueryResultIteration.Default,
                 true);
 
             InitTestedInstance(

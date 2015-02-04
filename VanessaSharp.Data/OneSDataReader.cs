@@ -19,21 +19,17 @@ namespace VanessaSharp.Data
             EofOpen,
             Closed
         }
-        
-        /// <summary>Результат запроса.</summary>
-        private readonly IQueryResult _queryResult;
+
+        /// <summary>
+        /// Поставщик данных записей результата запроса.
+        /// </summary>
+        private readonly IDataRecordsProvider _dataRecordsProvider;
 
         /// <summary>Сервис перевода значений.</summary>
         private readonly IValueConverter _valueConverter;
 
         /// <summary>Текущее состояние.</summary>
         private States _currentState = States.BofOpen;
-
-        /// <summary>Коллекция с информацией по полям.</summary>
-        private readonly IDataReaderFieldInfoCollection _fieldInfoCollection;
-
-        /// <summary>Фабрика создания курсора.</summary>
-        private readonly IDataCursorFactory _dataCursorFactory;
 
         /// <summary>Курсор.</summary>
         private IDataCursor _dataCursor;
@@ -42,86 +38,48 @@ namespace VanessaSharp.Data
         [ContractInvariantMethod]
         private void Invariant()
         {
-            Contract.Invariant(_queryResult != null);
-            Contract.Invariant(_fieldInfoCollection != null);
-            Contract.Invariant(_dataCursorFactory != null);
+            Contract.Invariant(_dataRecordsProvider != null);
             Contract.Invariant(_valueConverter != null);
         }
 
         /// <summary>
-        /// Конструктор принимающий 
-        /// результат запроса и коллекцию описания полей и сервис перевода значений.
+        /// Конструктор для модульного тестирования.
         /// </summary>
-        /// <param name="queryResult">Результат запроса данных у 1С.</param>
-        /// <param name="fieldInfoCollection">Коллекция с информацией по полям.</param>
-        /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
+        /// <param name="dataRecordsProvider">Поставщик данных записей результата запроса.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
-        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
         /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
         internal OneSDataReader(
-            IQueryResult queryResult,
-            IDataReaderFieldInfoCollection fieldInfoCollection,
-            IDataCursorFactory dataCursorFactory,
+            IDataRecordsProvider dataRecordsProvider,
             IValueConverter valueConverter,
-            QueryResultIteration queryResultIteration,
             bool isTablePart)
         {
-            Contract.Requires<ArgumentNullException>(queryResult != null);
-            Contract.Requires<ArgumentNullException>(fieldInfoCollection != null);
-            Contract.Requires<ArgumentNullException>(dataCursorFactory != null);
+            Contract.Requires<ArgumentNullException>(dataRecordsProvider != null);
             Contract.Requires<ArgumentNullException>(valueConverter != null);
 
-            _queryResult = queryResult;
-            _fieldInfoCollection = fieldInfoCollection;
-            _dataCursorFactory = dataCursorFactory;
+            _dataRecordsProvider = dataRecordsProvider;
             _valueConverter = valueConverter;
-            _queryResultIteration = queryResultIteration;
             _isTablePart = isTablePart;
         }
 
-        /// <summary>
-        /// Конструктор принимающий
-        /// результат запроса 
-        /// сервис перевода типов
-        /// и сервис перевода значений.</summary>
-        /// <param name="queryResult">Результат запроса данных у 1С.</param>
-        /// <param name="typeDescriptionConverter">Сервис перевода типов.</param>
-        /// <param name="dataCursorFactory">Фабрика создания курсора.</param>
-        /// <param name="valueConverter">Сервис перевода значений.</param>
-        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
+        /// <summary>Конструктор принимающий провайдер записей.</summary>
+        /// <param name="dataRecordsProvider">Поставщик данных записей результата запроса.</param>
         /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
-        private OneSDataReader(
-            IQueryResult queryResult, 
-            ITypeDescriptionConverter typeDescriptionConverter,
-            IDataCursorFactory dataCursorFactory,
-            IValueConverter valueConverter,
-            QueryResultIteration queryResultIteration,
-            bool isTablePart)
+        private OneSDataReader(IDataRecordsProvider dataRecordsProvider, bool isTablePart)
             : this(
-                queryResult, 
-                DataReaderFieldInfoCollectionLoader.Create(queryResult, typeDescriptionConverter), 
-                dataCursorFactory,
-                valueConverter,
-                queryResultIteration,
-                isTablePart)
+                    dataRecordsProvider,
+                    Data.ValueConverter.Default,
+                    isTablePart)
         {
-            Contract.Requires<ArgumentNullException>(queryResult != null);
-            Contract.Requires<ArgumentNullException>(typeDescriptionConverter != null);
-            Contract.Requires<ArgumentNullException>(dataCursorFactory != null);
-            Contract.Requires<ArgumentNullException>(valueConverter != null);
+            Contract.Requires<ArgumentNullException>(dataRecordsProvider != null);
         }
 
         /// <summary>Конструктор принимающий результат запроса.</summary>
-        /// <param name="queryResult">Результат запроса данных у 1С.</param>
-        /// <param name="queryResultIteration">Стратегия перебора записей.</param>
-        /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
+        /// <param name="queryResult">Результат запроса.</param>
+        /// <param name="queryResultIteration">Стратегия обхода записей.</param>
+        /// <param name="isTablePart">Является ли читатель - читателем табличной части.</param>
         private OneSDataReader(IQueryResult queryResult, QueryResultIteration queryResultIteration, bool isTablePart)
             : this(
-                    queryResult,
-                    TypeDescriptionConverter.Default,
-                    DataCursorFactory.Default,
-                    Data.ValueConverter.Default,
-                    queryResultIteration,
+                    new QueryResultDataRecordsProvider(queryResult, queryResultIteration), 
                     isTablePart)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
@@ -133,7 +91,8 @@ namespace VanessaSharp.Data
         internal static OneSDataReader CreateRootDataReader(
             IQueryResult queryResult, QueryResultIteration queryResultIteration)
         {
-            return new OneSDataReader(queryResult, queryResultIteration, false);
+            return new OneSDataReader(
+                queryResult, queryResultIteration, false);
         }
 
         /// <summary>Создание читателя табличной части, по результату запроса.</summary>
@@ -143,10 +102,10 @@ namespace VanessaSharp.Data
             return new OneSDataReader(queryResult, QueryResultIteration.Default, true);
         }
 
-        /// <summary>Результат запроса данных у 1С.</summary>
-        internal IQueryResult QueryResult
+        /// <summary>Поставщик данных записей результата запроса.</summary>
+        internal IDataRecordsProvider DataRecordsProvider 
         {
-            get { return _queryResult;}
+            get { return _dataRecordsProvider;}
         }
 
         /// <summary>Конвертер значений.</summary>
@@ -166,7 +125,7 @@ namespace VanessaSharp.Data
                 if (_dataCursor != null)
                     _dataCursor.Dispose();
 
-                _queryResult.Dispose();
+                _dataRecordsProvider.Dispose();
                 _currentState = States.Closed;
             }
         }
@@ -219,13 +178,12 @@ namespace VanessaSharp.Data
             switch (_currentState)
             {
                 case States.BofOpen:
-                    if (_queryResult.IsEmpty())
+                    if (!_dataRecordsProvider.TryCreateCursor(out _dataCursor))
                     {
                         _currentState = States.EofOpen;
                         return false;
                     }
-
-                    _dataCursor = _dataCursorFactory.Create(_fieldInfoCollection, _queryResult.Choose(_queryResultIteration));
+                    
                     _currentState = States.RecordOpen;
                     break;
 
@@ -245,13 +203,55 @@ namespace VanessaSharp.Data
         }
 
         /// <summary>
-        /// Стратегия перебора записей.
+        /// Получение читателя
+        /// записей-потомков для текущей записи.
         /// </summary>
-        internal QueryResultIteration QueryResultIteration
+        /// <param name="queryResultIteration">
+        /// Стратегия обхода записей.
+        /// </param>
+        public OneSDataReader GetDescendantsReader(
+            QueryResultIteration queryResultIteration = QueryResultIteration.Default)
         {
-            get { return _queryResultIteration; }
+            Contract.Ensures(Contract.Result<OneSDataReader>() != null);
+
+            throw new NotImplementedException();
         }
-        private readonly QueryResultIteration _queryResultIteration;
+
+        /// <summary>
+        /// Получение читателя
+        /// записей-потомков для текущей записи.
+        /// </summary>
+        /// <param name="queryResultIteration">
+        /// Стратегия обхода записей.
+        /// </param>
+        /// <param name="groupNames">
+        /// Имена группировок по которым будет производиться обход.
+        /// </param>
+        public OneSDataReader GetDescendantsReader(
+            QueryResultIteration queryResultIteration, params string[] groupNames)
+        {
+            Contract.Ensures(Contract.Result<OneSDataReader>() != null);
+
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Получение читателя
+        /// записей-потомков для текущей записи.
+        /// </summary>
+        /// <param name="queryResultIteration">
+        /// Стратегия обхода записей.
+        /// </param>
+        /// <param name="groupNamesAndValues">
+        /// Имена и значения группировок по которым будет производиться обход.
+        /// </param>
+        public OneSDataReader GetDescendantsReader(
+            QueryResultIteration queryResultIteration, params Tuple<string, string>[] groupNamesAndValues)
+        {
+            Contract.Ensures(Contract.Result<OneSDataReader>() != null);
+
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// Получение значения свойства открытого курсора.
@@ -627,7 +627,7 @@ namespace VanessaSharp.Data
                         "Недопустимо получить значение свойства FieldCount в закрытом состоянии.");
                 }
 
-                return _fieldInfoCollection.Count;
+                return _dataRecordsProvider.Fields.Count;
             }
         }
 
@@ -700,7 +700,7 @@ namespace VanessaSharp.Data
                         "Невозможно получить значение свойства HasRows поскольку экземпляр находится в закрытом состоянии.");
                 }
                 
-                return !_queryResult.IsEmpty();
+                return _dataRecordsProvider.HasRecords;
             }
         }
 
@@ -797,7 +797,7 @@ namespace VanessaSharp.Data
                     "Недопустимо вызывать метод GetName в закрытом состоянии.");
             }
 
-            return _fieldInfoCollection[ordinal].Name;
+            return _dataRecordsProvider.Fields[ordinal].Name;
         }
 
         /// <summary>
@@ -815,7 +815,7 @@ namespace VanessaSharp.Data
                     "Недопустимо вызывать метод GetOrdinal в закрытом состоянии.");
             }
 
-            var result = _fieldInfoCollection.IndexOf(name);
+            var result = _dataRecordsProvider.Fields.IndexOf(name);
             if (result == -1)
             {
                 throw new IndexOutOfRangeException(string.Format(
@@ -857,7 +857,7 @@ namespace VanessaSharp.Data
                     "Недопустимо вызывать метод GetFieldType в закрытом состоянии.");
             }
 
-            return _fieldInfoCollection[ordinal].Type;
+            return _dataRecordsProvider.Fields[ordinal].Type;
         }
 
         /// <summary>
