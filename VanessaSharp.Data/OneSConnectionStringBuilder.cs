@@ -12,12 +12,19 @@ namespace VanessaSharp.Data
     public sealed class OneSConnectionStringBuilder : DbConnectionStringBuilder
     {
         private const string CATALOG_KEY = "File";
+
+        private const string SERVER_NAME_KEY = "Srvr";
+        private const string SERVER_DATABASE_NAME_KEY = "Ref";
+
         private const string USER_KEY = "Usr";
         private const string PASSWORD_KEY = "Pwd";
-        
+
         /// <summary>Ключи подключения.</summary>
         private static readonly KnownKeywordsCollection _knownKeywords
-            = new KnownKeywordsCollection(CATALOG_KEY, USER_KEY, PASSWORD_KEY);
+            = new KnownKeywordsCollection(
+                CATALOG_KEY,
+                SERVER_NAME_KEY, SERVER_DATABASE_NAME_KEY,
+                USER_KEY, PASSWORD_KEY);
 
         /// <summary>
         /// Gets or sets the value associated with the specified key.
@@ -51,43 +58,45 @@ namespace VanessaSharp.Data
         /// <summary>Полный путь к каталогу 1С базы.</summary>
         public string Catalog
         {
-            get
-            {
-                return GetKnownFieldValue(CATALOG_KEY);
-            }
+            get { return GetKnownFieldValue(CATALOG_KEY); }
 
-            set
-            {
-                this[CATALOG_KEY] = value;
-            }
+            set { this[CATALOG_KEY] = value; }
+        }
+
+        /// <summary>
+        /// Имя сервера 1С:Предприятия.
+        /// </summary>
+        public string ServerName
+        {
+            get { return GetKnownFieldValue(SERVER_NAME_KEY); }
+
+            set { this[SERVER_NAME_KEY] = value; }
+        }
+
+        /// <summary>
+        /// Имя информационной базы на сервере 1С.
+        /// </summary>
+        public string ServerDatabaseName
+        {
+            get { return GetKnownFieldValue(SERVER_DATABASE_NAME_KEY); }
+
+            set { this[SERVER_DATABASE_NAME_KEY] = value; }
         }
 
         /// <summary>Имя пользователя, под которым производится соединение.</summary>
         public string User
         {
-            get
-            {
-                return GetKnownFieldValue(USER_KEY);
-            }
+            get { return GetKnownFieldValue(USER_KEY); }
 
-            set
-            {
-                this[USER_KEY] = value;
-            }
+            set { this[USER_KEY] = value; }
         }
 
         /// <summary>Пароль пользователя, под которым производится соединение.</summary>
         public string Password
         {
-            get
-            {
-                return GetKnownFieldValue(PASSWORD_KEY);
-            }
+            get { return GetKnownFieldValue(PASSWORD_KEY); }
 
-            set
-            {
-                this[PASSWORD_KEY] = value;
-            }
+            set { this[PASSWORD_KEY] = value; }
         }
 
         private string GetKnownFieldValue(string key)
@@ -103,8 +112,8 @@ namespace VanessaSharp.Data
         private ReadOnlyCollection<string> GetKeys()
         {
             return (base.Keys == null)
-                           ? _knownKeywords.Collection
-                           : base.Keys.Cast<string>().Union(_knownKeywords.Collection).ToReadOnly();
+                ? _knownKeywords.Collection
+                : base.Keys.Cast<string>().Union(_knownKeywords.Collection).ToReadOnly();
         }
 
         /// <summary>
@@ -138,8 +147,8 @@ namespace VanessaSharp.Data
             private readonly string[] _sortedKeywords;
 
             /// <summary>Коллекция ключей.</summary>
-            private readonly ReadOnlyCollection<string> _keywordsCollection; 
-            
+            private readonly ReadOnlyCollection<string> _keywordsCollection;
+
             /// <summary>Конструктор принимающий массив ключей.</summary>
             /// <param name="normalizeKeywords">
             /// Массив ключей, которые будут в коллекции.

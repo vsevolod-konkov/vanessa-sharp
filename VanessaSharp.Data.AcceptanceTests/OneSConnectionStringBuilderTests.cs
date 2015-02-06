@@ -15,12 +15,14 @@ namespace VanessaSharp.Data.AcceptanceTests
     public sealed class OneSConnectionStringBuilderTests
     {
         private const string FILE_KEY = "File";
+        private const string SERVER_KEY = "Srvr";
+        private const string REFERENCE_KEY = "Ref";
         private const string USER_KEY = "Usr";
         private const string PASSWORD_KEY = "Pwd";
 
-        /// <summary>Ожидаемые ключи в строке подключения.</summary>
+        /// <summary>Ожидаемые ключи в строке подключения, не зависимые от варианта поключения.</summary>
         private static readonly ReadOnlyCollection<string> _knownKeys
-            = new ReadOnlyCollection<string>(new[] { FILE_KEY, USER_KEY, PASSWORD_KEY });
+            = new ReadOnlyCollection<string>(new[] { FILE_KEY, SERVER_KEY, REFERENCE_KEY, USER_KEY, PASSWORD_KEY });
 
         #region Вспомогательные методы
 
@@ -108,7 +110,7 @@ namespace VanessaSharp.Data.AcceptanceTests
         /// </summary>
         /// <param name="fieldKey">Ключ поля.</param>
         [Test]
-        public void TestKnownFieldAfterInit([Values(FILE_KEY, USER_KEY, PASSWORD_KEY)] string fieldKey)
+        public void TestKnownFieldAfterInit([Values(FILE_KEY, SERVER_KEY, REFERENCE_KEY, USER_KEY, PASSWORD_KEY)] string fieldKey)
         {
             Assert.AreEqual(string.Empty, _testedInstance[fieldKey]);
         }
