@@ -31,6 +31,17 @@ namespace VanessaSharp.Data.DataReading
             return OneSDataReader.CreateTablePartDataReader(queryResult);
         }
 
+        /// <summary>
+        /// Преобразование объекта 1С к <see cref="Guid"/>.
+        /// </summary>
+        /// <param name="oneSObject">Объект 1С.</param>
+        public Guid ToGuid(object oneSObject)
+        {
+            dynamic dynObj = oneSObject;
+
+            return dynObj;
+        }
+
         private static IQueryResult DynamicCastQueryResult(dynamic obj)
         {
             try

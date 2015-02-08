@@ -6,7 +6,7 @@ namespace VanessaSharp.Proxy.Common
     /// <summary>
     /// Прокси к глобальному контексту 1С.
     /// </summary>
-    public sealed class OneSGlobalContext : OneSObject, IGlobalContext
+    public sealed class OneSGlobalContext : OneSObject, IGlobalContext, IGlobalContextService
     {
         // TODO: Нужен Рефакторинг. Убрать после внедрения параметрических запросов. Нужна просто фабрика объектов. Думаю нужен еще один класс использующий нетипизированный метод.
         /// <summary>Определитель типов 1С.</summary>
@@ -93,6 +93,16 @@ namespace VanessaSharp.Proxy.Common
                 "Тип \"{0}\" для создания через метод NewObject{{T}} не поддерживается.",
                 requestedType), e);
             }
+        }
+
+        // TODO: Нужен Рефакторинг. Временный метод. Нужно убрать после рефакторинга методов NewObject.
+        /// <summary>
+        /// Создание объекта 1С типа UUID по строке.
+        /// </summary>
+        /// <param name="guidString">Строквое представление идентификатора GUID.</param>
+        object IGlobalContextService.NewUuid(string guidString)
+        {
+            return DynamicProxy.NewObject("UUID", guidString);
         }
 
         /// <summary>

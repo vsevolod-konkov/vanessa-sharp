@@ -240,6 +240,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         {
             const int FIELD_INDEX = 0;
 
+            // Arrange
             var value = new object();
 
             var dataReader = new OneSDataReader(
@@ -266,9 +267,50 @@ namespace VanessaSharp.Data.UnitTests.DataReading
 
             _testedInstance.Next();
 
+            // Act
             var result = _testedInstance.GetValue(FIELD_INDEX);
 
+            // Assert
             Assert.AreSame(dataReader, result);
+        }
+
+        /// <summary>
+        /// Тестирование получения значения <see cref="DataCursor.GetValue(int)"/>,
+        /// в случае если типом поля является <see cref="Guid"/>.
+        /// </summary>
+        [Test]
+        public void TestGetGuidWhenFieldTypeIsGuid()
+        {
+            const int FIELD_INDEX = 0;
+
+            // Arrange
+            var value = new object();
+            var expectedResult = Guid.NewGuid();
+
+            InitTestedInstance(
+                dataReaderFieldInfoSetup:
+                    m => m.Setup(c => c[FIELD_INDEX])
+                          .Returns(new DataReaderFieldInfo("ID", typeof(Guid))),
+                oneSObjectSpecialConverterSetup:
+                    m => m.Setup(c => c.ToGuid(value))
+                          .Returns(expectedResult)
+                );
+
+            _queryResultSelectionMock
+                .Setup(qrs => qrs.Next())
+                .Returns(true);
+
+            _queryResultSelectionMock
+                .Setup(qrs => qrs.Get(FIELD_INDEX))
+                .Returns(value);
+
+            _testedInstance.Next();
+
+            // Act
+            var actualResult = _testedInstance.GetValue(FIELD_INDEX);
+
+            // Assert
+            Assert.AreEqual(expectedResult, actualResult);
         }
 
         /// <summary>

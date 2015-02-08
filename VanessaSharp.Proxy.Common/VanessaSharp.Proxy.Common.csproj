@@ -119,6 +119,7 @@
     <Compile Include="IGlobalContextBound.cs" />
     <Compile Include="IGlobalContextBoundContract.cs" />
     <Compile Include="IGlobalContextContract.cs" />
+    <Compile Include="IGlobalContextService.cs" />
     <Compile Include="IOneSArrayOfT.cs" />
     <Compile Include="IOneSArray.cs" />
     <Compile Include="IOneSConnector.cs" />

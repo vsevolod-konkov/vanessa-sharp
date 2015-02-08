@@ -63,7 +63,7 @@ namespace VanessaSharp.Proxy.Common
         /// </summary>
         /// <param name="comObj">Конвертируемая RCW-обертка 1С.</param>
         /// <param name="enumType">Тип перечисления.</param>
-        public object ConvertComObjectToEnum(object comObj, Type enumType)
+        public Enum ConvertComObjectToEnum(object comObj, Type enumType)
         {
             var mapping = GetEnumMapping(enumType);
             

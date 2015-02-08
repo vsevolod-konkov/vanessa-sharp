@@ -96,33 +96,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         }
 
         /// <summary>
-        /// Тестирование <see cref="OneSDataReader.GetGuid"/>.
-        /// </summary>
-        [Test]
-        [TestCheckNotImplemented]
-        public void TestGetGuid()
-        {
-            Test
-                .Source("Справочник.СправочникUID")
-                .Execute()
-                .Action(ctx =>
-                    {
-                        Assert.IsTrue(ctx.TestedReader.Read());
-
-                        Assert.Throws<NotImplementedException>(() => { var value = ctx.TestedReader.GetGuid(0); });
-                    })
-
-                .BeginDefineExpectedDataFor<ExpectedUidTestDictionary>()
-
-                    .Field(d => d.GuidField)
-                    .Rows(0)
-
-                .EndDefineExpectedData
-
-            .Run();
-        }
-
-        /// <summary>
         /// Тестирование <see cref="OneSDataReader.GetEnumerator"/>.
         /// </summary>
         [Test]

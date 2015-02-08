@@ -143,6 +143,33 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             .Run();
         }
 
+        /// <summary>
+        /// Тестирование чтения поля типа <see cref="Guid"/>.
+        /// </summary>
+        [Test]
+        public void TestReadUuidField()
+        {
+            Test
+                .Source("Справочник.СправочникUID")
+
+                .Execute(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult)
+
+                .BeginDefineTypedFieldReaders
+                    [(r, i) => r.GetGuid(0)]
+                .EndDefineTypedFieldReaders
+
+
+                .BeginDefineExpectedDataFor<ExpectedUidTestDictionary>()
+
+                    .Field(d => d.GuidField)
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
         #region Методы тестирования
 
         /// <summary>Тестирующее действие.</summary>

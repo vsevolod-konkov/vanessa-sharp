@@ -29,5 +29,28 @@ namespace VanessaSharp.Proxy.V82.Tests
                 }
             }
         }
+
+        [Test]
+        public void TestGuid()
+        {
+            var id = Guid.NewGuid();
+            Console.WriteLine("CLR GUID: " + id.ToString());
+
+            using (var testingInstance = new OneSConnector())
+            {
+                const string USER_NAME = "Абдулов (директор)";
+                var connectString = string.Format(
+                    "File=\"{0}\";Usr=\"{1}\";", Path.Combine(Environment.CurrentDirectory, "DbExample"), USER_NAME);
+
+                using (dynamic context = testingInstance.Connect(connectString))
+                {
+                    using (var oneSUUID = context.NewObject("UUID", id.ToString()))
+                    {
+                        var str = context.String(oneSUUID);
+                        Console.WriteLine("1C GUID: " + str);
+                    }
+                }
+            }
+        }
     }
 }

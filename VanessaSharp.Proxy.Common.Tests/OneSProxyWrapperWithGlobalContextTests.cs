@@ -15,7 +15,12 @@ namespace VanessaSharp.Proxy.Common.Tests
         /// Глобальный контекст 1С.
         /// </summary>
         private OneSGlobalContext _globalContext;
-        
+
+        /// <summary>
+        /// Мок глобального контекста.
+        /// </summary>
+        private Mock<IGlobalContextService> _globalContextServiceMock; 
+
         /// <summary>
         /// Мок для реализации <see cref="IOneSWrapFactory"/>.
         /// </summary>
@@ -30,12 +35,15 @@ namespace VanessaSharp.Proxy.Common.Tests
         internal override OneSProxyWrapper InitTestedInstance()
         {
             _globalContext = new OneSGlobalContext(new object());
+            _globalContextServiceMock = new Mock<IGlobalContextService>(MockBehavior.Strict);
             _wrapFactoryMock = new Mock<IOneSWrapFactory>(MockBehavior.Strict);
             _enumMapper = new Mock<IOneSEnumMapper>(MockBehavior.Strict);
 
             return new OneSProxyWrapperWithGlobalContext(
                 ObjectDefinerMock.Object,
-                _globalContext, _wrapFactoryMock.Object, 
+                _globalContext,
+                _globalContextServiceMock.Object,
+                _wrapFactoryMock.Object, 
                 _enumMapper.Object);
         }
 
@@ -190,12 +198,101 @@ namespace VanessaSharp.Proxy.Common.Tests
         }
 
         /// <summary>
+        /// Тестирование <see cref="OneSProxyWrapperWithGlobalContext.ConvertToOneS"/>
+        /// в случае объекта типа <see cref="Guid"/>.
+        /// </summary>
+        [Test]
+        public void TestConvertToOneSWhenEnum()
+        {
+            // Arrange
+            const TestEnum TEST_ENUM_VALUE = TestEnum.Enum1;
+
+            var expectedResult = new OneSObject(
+                new object(), new Mock<IOneSProxyWrapper>(MockBehavior.Strict).Object);
+
+            _enumMapper
+                .Setup(m => m.TryConvertEnumToOneSObject(TEST_ENUM_VALUE, out expectedResult))
+                .Returns(true);
+
+            // Act
+            var actualResult = TestedInstance.ConvertToOneS(TEST_ENUM_VALUE);
+
+            // Assert
+            Assert.AreSame(expectedResult, actualResult);
+        }
+
+        /// <summary>
         /// Тестовое перечисление.
         /// </summary>
         public enum TestEnum
         {
             Enum1,
             Enum2
+        }
+
+        /// <summary>
+        /// Тестирование успешного конвертирования объекта 1С в GUID.
+        /// </summary>
+        [Test]
+        public void TestSuccessConvertOneSObjectToGuid()
+        {
+            // Arrange
+            var expectedGuid = Guid.NewGuid();
+
+            var obj = CreateOneSObject();
+
+            _globalContextServiceMock
+                .Setup(ctx => ctx.String(obj))
+                .Returns(expectedGuid.ToString());
+
+            // Act
+            var actualGuid = TestedInstance.Wrap(obj, typeof(Guid));
+
+            // Assert
+            Assert.IsInstanceOf<Guid>(actualGuid);
+            Assert.AreEqual(expectedGuid, actualGuid);
+        }
+
+        /// <summary>
+        /// Тестирование ошибочного конвертирования объекта 1С в GUID.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(InvalidCastException))]
+        public void TestInvalidConvertOneSObjectToGuid()
+        {
+            // Arrange
+            var obj = CreateOneSObject();
+
+            _globalContextServiceMock
+                .Setup(ctx => ctx.String(obj))
+                .Returns("gfdjglkjgtlkd");
+
+            // Act
+            var actualGuid = TestedInstance.Wrap(obj, typeof(Guid));
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSProxyWrapperWithGlobalContext.ConvertToOneS"/>
+        /// в случае объекта типа <see cref="Guid"/>.
+        /// </summary>
+        [Test]
+        public void TestConvertToOneSWhenGuid()
+        {
+            // Arrange
+            var guid = Guid.NewGuid();
+            var guidString = guid.ToString();
+
+            var expectedResult = new object();
+
+            _globalContextServiceMock
+                .Setup(ctx => ctx.NewUuid(guidString))
+                .Returns(expectedResult);
+
+            // Act
+            var actualResult = TestedInstance.ConvertToOneS(guid);
+
+            // Assert
+            Assert.AreSame(expectedResult, actualResult);
         }
     }
 }

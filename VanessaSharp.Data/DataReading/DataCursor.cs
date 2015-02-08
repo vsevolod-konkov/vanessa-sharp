@@ -69,10 +69,14 @@ namespace VanessaSharp.Data.DataReading
             return result;
         }
 
-        private static Func<object, object> GetValueConverter(IOneSObjectSpecialConverter oneSObjectSpecialConverter, Type desiredType)
+        private static Func<object, object> 
+            GetValueConverter(IOneSObjectSpecialConverter oneSObjectSpecialConverter, Type desiredType)
         {
             if (desiredType == typeof(OneSDataReader))
                 return oneSObjectSpecialConverter.ToDataReader;
+
+            if (desiredType == typeof(Guid))
+                return o => oneSObjectSpecialConverter.ToGuid(o);
 
             return null;
         }

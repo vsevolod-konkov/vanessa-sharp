@@ -42,9 +42,13 @@ namespace VanessaSharp.Proxy.Common
 
             if (_oneSObjectDefiner.IsOneSObject(obj))
             {
-                return type.IsEnum
-                           ? ConvertToEnum(obj, type)
-                           : WrapOneSObject(obj, type);
+                if (type.IsEnum)
+                    return ConvertToEnum(obj, type);
+
+                if (type == typeof(Guid))
+                    return ConvertToGuid(obj);
+
+                return WrapOneSObject(obj, type);
             }
                   
             return obj;  
@@ -66,7 +70,7 @@ namespace VanessaSharp.Proxy.Common
         /// </summary>
         /// <param name="comObj">Конвертируемый COM-объект.</param>
         /// <param name="enumType">Перечислимый тип.</param>
-        protected virtual object ConvertToEnum(object comObj, Type enumType)
+        protected virtual Enum ConvertToEnum(object comObj, Type enumType)
         {
             Contract.Requires<ArgumentNullException>(comObj != null);
             Contract.Requires<ArgumentNullException>(enumType != null);
@@ -77,6 +81,19 @@ namespace VanessaSharp.Proxy.Common
             throw new NotSupportedException(string.Format(
                 "Невозможно сконвертировать 1С-объект в тип \"{0}\". Конвертация объектов перечислений не поддерживается.",
                 enumType));
+        }
+
+        /// <summary>
+        /// Конвертация 1С-объекта в <see cref="Guid"/>.
+        /// </summary>
+        /// <param name="comObj">Конвертируемый COM-объект.</param>
+        protected virtual Guid ConvertToGuid(object comObj)
+        {
+            Contract.Requires<ArgumentNullException>(comObj != null);
+
+            throw new NotSupportedException(string.Format(
+                "Невозможно сконвертировать 1С-объект в тип \"{0}\". Конвертация в \"{0}\" не поддерживается.",
+                typeof(Guid)));
         }
 
         /// <summary>

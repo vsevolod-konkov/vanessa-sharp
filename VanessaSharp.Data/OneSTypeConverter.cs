@@ -40,6 +40,8 @@ namespace VanessaSharp.Data
                     return typeof(bool);
                 case "Дата":
                     return typeof(DateTime);
+                case "Уникальный идентификатор":
+                    return typeof(Guid);
                 case "Null":
                     return typeof(DBNull);
                 case "Результат запроса":

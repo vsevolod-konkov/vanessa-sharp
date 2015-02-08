@@ -523,18 +523,9 @@ namespace VanessaSharp.Data
         /// <param name="ordinal">Порядковый номер столбца, начиная с нуля.</param>
         /// <exception cref="T:System.InvalidCastException">Указанное приведение недопустимо. </exception>
         /// <filterpriority>1</filterpriority>
-        /// <exception cref="NotImplementedException"/>
-        [CurrentVersionNotImplemented]
         public override Guid GetGuid(int ordinal)
         {
-            // TODO: Копипаст
-            if (_currentState != States.RecordOpen)
-            {
-                throw new InvalidOperationException(
-                    "Невозможно получить значение поля так как экземпляр не находится на позиции строки данных.");
-            }
-            
-            throw new NotImplementedException();
+            return (Guid)GetValue(ordinal);
         }
 
         /// <summary>
@@ -840,6 +831,17 @@ namespace VanessaSharp.Data
         protected override DbDataReader GetDbDataReader(int ordinal)
         {
             return GetDataReader(ordinal);
+        }
+
+        /// <summary>
+        /// Получение читателя табличной части, которое находится в поле
+        /// <paramref name="ordinal"/>.
+        /// </summary>
+        /// <param name="ordinal">Порядковый номер поля с табличной частью.</param>
+        /// <exception cref="T:System.InvalidCastException">Если поле не является табличной частью.</exception>
+        public new OneSDataReader GetData(int ordinal)
+        {
+            return (OneSDataReader)base.GetData(ordinal);
         }
 
         /// <summary>

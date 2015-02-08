@@ -19,7 +19,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                     { typeof(double), "Число" },
                     { typeof(bool), "Булево"},
                     { typeof(DateTime), "Дата" },
-                    { typeof(Guid), "XXX"},
+                    { typeof(Guid), "Уникальный идентификатор"},
                     { typeof(AnyType), "?"},
                     { typeof(IQueryResult), "Результат запроса"}
                 };

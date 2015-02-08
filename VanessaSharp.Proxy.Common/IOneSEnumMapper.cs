@@ -12,7 +12,7 @@ namespace VanessaSharp.Proxy.Common
         /// </summary>
         /// <param name="comObj">Конвертируемая RCW-обертка 1С.</param>
         /// <param name="enumType">Тип перечисления.</param>
-        object ConvertComObjectToEnum(object comObj, Type enumType);
+        Enum ConvertComObjectToEnum(object comObj, Type enumType);
 
         /// <summary>
         /// Попытка конвертации перечислимого значения
@@ -34,7 +34,7 @@ namespace VanessaSharp.Proxy.Common
         /// </summary>
         /// <param name="comObj">Конвертируемая RCW-обертка 1С.</param>
         /// <param name="enumType">Тип перечисления.</param>
-        object IOneSEnumMapper.ConvertComObjectToEnum(object comObj, Type enumType)
+        Enum IOneSEnumMapper.ConvertComObjectToEnum(object comObj, Type enumType)
         {
             Contract.Requires<ArgumentNullException>(comObj != null);
             Contract.Requires<ArgumentNullException>(enumType != null);

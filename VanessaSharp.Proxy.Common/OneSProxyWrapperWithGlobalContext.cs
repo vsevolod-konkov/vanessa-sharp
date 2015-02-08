@@ -18,6 +18,9 @@ namespace VanessaSharp.Proxy.Common
         /// <summary>Глобальный контекст.</summary>
         private readonly OneSGlobalContext _globalContext;
 
+        /// <summary>Сервисные функции глобального контекста.</summary>
+        private readonly IGlobalContextService _globalContextService;
+
         /// <summary>Фабрика оберток.</summary>
         private readonly IOneSWrapFactory _wrapFactory;
 
@@ -28,6 +31,7 @@ namespace VanessaSharp.Proxy.Common
         private void Invariant()
         {
             Contract.Invariant(_globalContext != null);
+            Contract.Invariant(_globalContextService != null);
             Contract.Invariant(_wrapFactory != null);
             Contract.Invariant(_enumMapper != null);
         }
@@ -38,17 +42,24 @@ namespace VanessaSharp.Proxy.Common
         /// RCW-оберткой над объектом 1С.
         /// </param>
         /// <param name="globalContext">Ссылка на глобальный контекст 1С.</param>
+        /// <param name="globalContextService">Сервисные функции глобального контекста.</param>
         /// <param name="wrapFactory">Фабрика оберток</param>
         /// <param name="enumMapper">Конвертер перечислений.</param>
         internal OneSProxyWrapperWithGlobalContext(
-            IOneSObjectDefiner oneSObjectDefiner, OneSGlobalContext globalContext, IOneSWrapFactory wrapFactory, IOneSEnumMapper enumMapper)
+            IOneSObjectDefiner oneSObjectDefiner,
+            OneSGlobalContext globalContext,
+            IGlobalContextService globalContextService,
+            IOneSWrapFactory wrapFactory,
+            IOneSEnumMapper enumMapper)
             : base(oneSObjectDefiner)
         {
             Contract.Requires<ArgumentNullException>(globalContext != null);
+            Contract.Requires<ArgumentNullException>(globalContextService != null);
             Contract.Requires<ArgumentNullException>(wrapFactory != null);
             Contract.Requires<ArgumentNullException>(enumMapper != null);
 
             _globalContext = globalContext;
+            _globalContextService = globalContextService;
             _wrapFactory = wrapFactory;
             _enumMapper = enumMapper;
         }
@@ -60,7 +71,7 @@ namespace VanessaSharp.Proxy.Common
         /// </param>
         /// <param name="globalContext">Ссылка на глобальный контекст 1С.</param>
         public OneSProxyWrapperWithGlobalContext(IOneSObjectDefiner oneSObjectDefiner, OneSGlobalContext globalContext)
-            : this(oneSObjectDefiner, globalContext, OneSWrapFactory.Default, new OneSEnumMapper(globalContext))
+            : this(oneSObjectDefiner, globalContext, globalContext, OneSWrapFactory.Default, new OneSEnumMapper(globalContext))
         {}
 
         /// <summary>Обертывание 1С-объекта.</summary>
@@ -89,9 +100,25 @@ namespace VanessaSharp.Proxy.Common
         /// </summary>
         /// <param name="comObj">Конвертируемый COM-объект.</param>
         /// <param name="enumType">Перечислимый тип.</param>
-        protected override object ConvertToEnum(object comObj, Type enumType)
+        protected override Enum ConvertToEnum(object comObj, Type enumType)
         {
             return _enumMapper.ConvertComObjectToEnum(comObj, enumType);
+        }
+
+        /// <summary>
+        /// Конвертация 1С-объекта в <see cref="Guid"/>.
+        /// </summary>
+        /// <param name="comObj">Конвертируемый COM-объект.</param>
+        protected override Guid ConvertToGuid(object comObj)
+        {
+            var objectString = _globalContextService.String(comObj);
+            Guid result;
+            if (Guid.TryParse(objectString, out result))
+                return result;
+
+            throw new InvalidCastException(string.Format(
+                "1С объект имеющий строковое представление \"{0}\" не может быть приведен к типу \"{1}\".",
+                objectString, typeof(Guid)));
         }
 
         /// <summary>
@@ -100,11 +127,21 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="value">Конвертируемое значение.</param>
         public override object ConvertToOneS(object value)
         {
-            if (value != null && value.GetType().IsEnum)
+            if (value != null)
             {
-                OneSObject result;
-                if (_enumMapper.TryConvertEnumToOneSObject((Enum)value, out result))
-                    return result;
+                var valueType = value.GetType();
+
+                if (valueType == typeof(Guid))
+                {
+                    return _globalContextService.NewUuid(value.ToString());
+                }
+
+                if (valueType.IsEnum)
+                {
+                    OneSObject result;
+                    if (_enumMapper.TryConvertEnumToOneSObject((Enum)value, out result))
+                        return result;
+                }    
             }
 
             return base.ConvertToOneS(value);

@@ -16,6 +16,12 @@ namespace VanessaSharp.Data.DataReading
         /// </summary>
         /// <param name="oneSObject">Объект 1С.</param>
         OneSDataReader ToDataReader(object oneSObject);
+
+        /// <summary>
+        /// Преобразование объекта 1С к <see cref="Guid"/>.
+        /// </summary>
+        /// <param name="oneSObject">Объект 1С.</param>
+        Guid ToGuid(object oneSObject);
     }
 
     [ContractClassFor(typeof(IOneSObjectSpecialConverter))]
@@ -26,6 +32,14 @@ namespace VanessaSharp.Data.DataReading
             Contract.Requires<ArgumentNullException>(oneSObject != null);
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
 
+            throw new NotImplementedException();
+        }
+
+
+        Guid IOneSObjectSpecialConverter.ToGuid(object oneSObject)
+        {
+            Contract.Requires<ArgumentNullException>(oneSObject != null);
+            
             throw new NotImplementedException();
         }
     }
