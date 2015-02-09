@@ -143,7 +143,8 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             TestedInstance = new OneSDataReader(
                 DataRecordsProviderMock.Object,
                 CreateValueConverter(),
-                IS_TABLE_PART);
+                IS_TABLE_PART,
+                null);
 
             ScenarioAfterInitTestedInstance();
         }

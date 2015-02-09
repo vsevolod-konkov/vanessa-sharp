@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.DataReading;
@@ -63,7 +64,10 @@ namespace VanessaSharp.Data.UnitTests
             _testedInstance = new OneSCommand(globalContextProviderMock.Object, oneSConnection);
         }
         
-        private void AssertAfterExecute(OneSDataReader reader, QueryResultIteration expectedIteration = QueryResultIteration.Default)
+        private void AssertAfterExecute(
+            OneSDataReader reader,
+            QueryResultIteration expectedIteration = QueryResultIteration.Default,
+            bool onCloseActionExists = false)
         {
             _globalContextMock.Verify(ctx => ctx.NewObject<IQuery>(), Times.Once());
             _queryMock.VerifySet(q => q.Text = TEST_SQL, Times.Once());
@@ -75,11 +79,12 @@ namespace VanessaSharp.Data.UnitTests
 
             Assert.AreSame(_queryResult, dataRecordsProvider.QueryResult);
             Assert.AreEqual(expectedIteration, dataRecordsProvider.QueryResultIteration);
+            Assert.AreEqual(onCloseActionExists, reader.HasOnCloseAction);
         }
         
         /// <summary>Тестирование основного метода.</summary>
         [Test]
-        public void Test()
+        public void TestDefault()
         {
             // Arrange
 
@@ -89,6 +94,23 @@ namespace VanessaSharp.Data.UnitTests
 
             // Assert
             AssertAfterExecute(reader);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="OneSCommand.ExecuteReader(System.Data.CommandBehavior)"/>
+        /// с параметром <see cref="CommandBehavior.CloseConnection"/>.
+        /// </summary>
+        [Test]
+        public void TestCommandBehaviorCloseConnection()
+        {
+            // Arrange
+
+            // Act
+            _testedInstance.CommandText = TEST_SQL;
+            var reader = _testedInstance.ExecuteReader(CommandBehavior.CloseConnection);
+
+            // Assert
+            AssertAfterExecute(reader, onCloseActionExists: true);
         }
 
         /// <summary>Тестирование основного метода c параметрами.</summary>
@@ -130,7 +152,7 @@ namespace VanessaSharp.Data.UnitTests
         [TestCase(QueryResultIteration.Linear)]
         [TestCase(QueryResultIteration.ByGroups)]
         [TestCase(QueryResultIteration.ByGroupsWithHierarchy)]
-        public void TestWithDeterineQueryResultIteration(QueryResultIteration queryResultIteration)
+        public void TestWithDetermineQueryResultIteration(QueryResultIteration queryResultIteration)
         {
             // Arrange
 

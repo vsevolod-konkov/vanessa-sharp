@@ -211,7 +211,7 @@ namespace VanessaSharp.Data
         /// <returns>Читатель данных.</returns>
         public OneSDataReader ExecuteReader(CommandBehavior behavior, QueryResultIteration queryResultIteration)
         {
-            const CommandBehavior NOT_SUPPORT_BEHAVIOR = ~(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult);
+            const CommandBehavior NOT_SUPPORT_BEHAVIOR = ~(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.CloseConnection);
 
             if ((behavior & NOT_SUPPORT_BEHAVIOR) != default(CommandBehavior))
             {
@@ -226,6 +226,17 @@ namespace VanessaSharp.Data
                     "Выполнение команды запроса невозможно так как не задано подключение к информационной базе.");
             }
 
+            Action onCloseAction;
+            if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)
+            {
+                var connection = Connection;
+                onCloseAction = connection.Close;
+            }
+            else
+            {
+                onCloseAction = null;
+            }
+
             // Получение контекста
             var globalContext = _globalContextProvider.GlobalContext;
             using (var query = globalContext.NewObject<IQuery>())
@@ -237,7 +248,7 @@ namespace VanessaSharp.Data
 
                 var queryResult = query.Execute();
 
-                return OneSDataReader.CreateRootDataReader(queryResult, queryResultIteration);
+                return OneSDataReader.CreateRootDataReader(queryResult, queryResultIteration, onCloseAction);
             }
         }
 

@@ -38,6 +38,21 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
         }
 
         /// <summary>
+        /// Тестирование выполнения запроса с флагом <see cref="CommandBehavior.CloseConnection"/>.
+        /// </summary>
+        [Test(Description = "Тестирование выполнения запроса c закрытием соединения после закрытия читателя")]
+        public void TestCommandExecuteWithCommandBehaviorCloseConnection()
+        {
+            using (var reader = TestedCommand.ExecuteReader(CommandBehavior.CloseConnection))
+            {
+                Assert.IsNotNull(reader);
+            }
+            AssertIsExecuteReaderIsSuccess();
+
+            Assert.AreEqual(ConnectionState.Closed, TestedCommand.Connection.State);
+        }
+
+        /// <summary>
         /// Проверка того что поведение команды не по умолчанию не поддерживается.
         /// </summary>
         /// <param name="behavior"></param>
@@ -46,8 +61,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
             [Values(
                     CommandBehavior.SingleRow, 
                     CommandBehavior.SchemaOnly, 
-                    CommandBehavior.KeyInfo, 
-                    CommandBehavior.CloseConnection
+                    CommandBehavior.KeyInfo
                     )]
             CommandBehavior behavior)
         {

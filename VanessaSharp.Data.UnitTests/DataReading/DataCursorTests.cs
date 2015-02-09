@@ -246,7 +246,8 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             var dataReader = new OneSDataReader(
                 new Mock<IDataRecordsProvider>(MockBehavior.Strict).Object,
                 new Mock<IValueConverter>(MockBehavior.Strict).Object,
-                true);
+                true,
+                null);
 
             InitTestedInstance(
                 dataReaderFieldInfoSetup: 

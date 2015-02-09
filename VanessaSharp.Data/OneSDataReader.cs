@@ -31,6 +31,11 @@ namespace VanessaSharp.Data
         /// <summary>Сервис перевода значений.</summary>
         private readonly IValueConverter _valueConverter;
 
+        /// <summary>
+        /// Действие, выполняемое после закрытия читателя.
+        /// </summary>
+        private readonly Action _onCloseAction;
+        
         /// <summary>Текущее состояние.</summary>
         private States _currentState = States.BofOpen;
 
@@ -50,11 +55,14 @@ namespace VanessaSharp.Data
         /// </summary>
         /// <param name="dataRecordsProvider">Поставщик данных записей результата запроса.</param>
         /// <param name="valueConverter">Сервис перевода значений.</param>
-        /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
+        /// <param name="isTablePart">Является ли читатель - читателем табличной части.</param>
+        /// <param name="onCloseAction">Действие, выполняемое после закрытия читателя.</param>
         internal OneSDataReader(
             IDataRecordsProvider dataRecordsProvider,
             IValueConverter valueConverter,
-            bool isTablePart)
+            bool isTablePart,
+            Action onCloseAction
+            )
         {
             Contract.Requires<ArgumentNullException>(dataRecordsProvider != null);
             Contract.Requires<ArgumentNullException>(valueConverter != null);
@@ -62,16 +70,22 @@ namespace VanessaSharp.Data
             _dataRecordsProvider = dataRecordsProvider;
             _valueConverter = valueConverter;
             _isTablePart = isTablePart;
+            _onCloseAction = onCloseAction;
         }
 
         /// <summary>Конструктор принимающий провайдер записей.</summary>
         /// <param name="dataRecordsProvider">Поставщик данных записей результата запроса.</param>
         /// <param name="isTablePart">Является ли читатель - читателем табличной части</param>
-        private OneSDataReader(IDataRecordsProvider dataRecordsProvider, bool isTablePart)
+        /// <param name="onCloseAction">Действие, выполняемое после закрытия читателя.</param>
+        private OneSDataReader(
+            IDataRecordsProvider dataRecordsProvider,
+            bool isTablePart,
+            Action onCloseAction)
             : this(
                     dataRecordsProvider,
                     Data.ValueConverter.Default,
-                    isTablePart)
+                    isTablePart,
+                    onCloseAction)
         {
             Contract.Requires<ArgumentNullException>(dataRecordsProvider != null);
         }
@@ -80,10 +94,15 @@ namespace VanessaSharp.Data
         /// <param name="queryResult">Результат запроса.</param>
         /// <param name="queryResultIteration">Стратегия обхода записей.</param>
         /// <param name="isTablePart">Является ли читатель - читателем табличной части.</param>
-        private OneSDataReader(IQueryResult queryResult, QueryResultIteration queryResultIteration, bool isTablePart)
+        /// <param name="onCloseAction">Действие, выполняемое после закрытия читателя.</param>
+        private OneSDataReader(
+            IQueryResult queryResult,
+            QueryResultIteration queryResultIteration,
+            bool isTablePart,
+            Action onCloseAction)
             : this(
                     new QueryResultDataRecordsProvider(queryResult, queryResultIteration), 
-                    isTablePart)
+                    isTablePart, onCloseAction)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
         }
@@ -91,14 +110,17 @@ namespace VanessaSharp.Data
         /// <summary>Создание читателя верхнего уровня, по результату запроса.</summary>
         /// <param name="queryResult">Результат запроса данных у 1С.</param>
         /// <param name="queryResultIteration">Стратегия перебора записей.</param>
+        /// <param name="onCloseAction">Действие, выполняемое после закрытия читателя.</param>
         internal static OneSDataReader CreateRootDataReader(
-            IQueryResult queryResult, QueryResultIteration queryResultIteration)
+            IQueryResult queryResult,
+            QueryResultIteration queryResultIteration,
+            Action onCloseAction)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
 
             return new OneSDataReader(
-                queryResult, queryResultIteration, false);
+                queryResult, queryResultIteration, false, onCloseAction);
         }
 
         /// <summary>
@@ -113,7 +135,7 @@ namespace VanessaSharp.Data
             Contract.Requires<ArgumentNullException>(dataRecordsProvider != null);
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
             
-            return new OneSDataReader(dataRecordsProvider, false);
+            return new OneSDataReader(dataRecordsProvider, false, null);
         }
 
         /// <summary>Создание читателя табличной части, по результату запроса.</summary>
@@ -123,13 +145,24 @@ namespace VanessaSharp.Data
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Ensures(Contract.Result<OneSDataReader>() != null);
             
-            return new OneSDataReader(queryResult, QueryResultIteration.Default, true);
+            return new OneSDataReader(queryResult, QueryResultIteration.Default, true, null);
         }
 
         /// <summary>Поставщик данных записей результата запроса.</summary>
         internal IDataRecordsProvider DataRecordsProvider 
         {
             get { return _dataRecordsProvider;}
+        }
+
+        /// <summary>
+        /// Имеется ли действие, выполняемое после закрытия читателя.
+        /// </summary>
+        /// <remarks>
+        /// Свойство для модульного тестирования.
+        /// </remarks>
+        internal bool HasOnCloseAction
+        {
+            get { return _onCloseAction != null; }
         }
 
         /// <summary>Конвертер значений.</summary>
@@ -151,6 +184,9 @@ namespace VanessaSharp.Data
 
                 _dataRecordsProvider.Dispose();
                 _currentState = States.Closed;
+
+                if (_onCloseAction != null)
+                    _onCloseAction();
             }
         }
 

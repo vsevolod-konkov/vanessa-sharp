@@ -18,7 +18,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             AfterBof,
             AfterRow,
-            AfterEof
+            AfterEof,
         }
 
         /// <summary>Сценарий закрытия.</summary>
