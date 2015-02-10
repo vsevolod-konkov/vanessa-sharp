@@ -118,6 +118,7 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="OneSCommandTests\ExecuteScalarTests.cs" />
     <Compile Include="OneSDataReaderTests\DataReaderReadTests.cs" />
     <Compile Include="OneSDataReaderTests\DataReaderTestsBase.cs" />
     <Compile Include="OneSDataReaderTests\DataReaderTests.cs" />

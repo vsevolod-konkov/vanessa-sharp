@@ -4,6 +4,8 @@ using System.Data.Common;
 using System.Data.OleDb;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.DataReading;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data.UnitTests
 {
@@ -227,15 +229,54 @@ namespace VanessaSharp.Data.UnitTests
         }
 
         /// <summary>
-        /// Тестирование метода <see cref="OneSCommand.ExecuteScalar"/>,
-        /// что при вызове будет выкинуто исключение
-        /// <see cref="NotImplementedException"/>.
+        /// Тестирование метода <see cref="OneSCommand.ExecuteScalar"/>.
         /// </summary>
         [Test]
-        [ExpectedException(typeof(NotImplementedException))]
         public void TestExecuteScalar()
         {
-            _testedInstance.ExecuteScalar();
+            // Arrange
+            const string TEST_SQL = "SQL";
+            const string EXPECTED_RESULT = "Test Result";
+
+            var queryResultMock = new DisposableMock<IQueryResult>();
+            var queryResult = queryResultMock.Object;
+
+            var scalarReaderMock = new Mock<IScalarReader>(MockBehavior.Strict);
+            scalarReaderMock
+                .Setup(r => r.ReadScalar(queryResult))
+                .Returns(EXPECTED_RESULT);
+
+            var queryMock = new DisposableMock<IQuery>();
+            queryMock
+                .SetupProperty(q => q.Text);
+            queryMock
+                .Setup(q => q.Execute())
+                .Returns(queryResult);
+
+            var globalContextMock = new Mock<IGlobalContext>(MockBehavior.Strict);
+            globalContextMock
+                .Setup(ctx => ctx.NewObject<IQuery>())
+                .Returns(queryMock.Object);
+
+            var globalContextProviderMock = new Mock<IGlobalContextProvider>(MockBehavior.Strict);
+            globalContextProviderMock
+                .Setup(p => p.GlobalContext)
+                .Returns(globalContextMock.Object);
+
+            var testedInstance = new OneSCommand(scalarReaderMock.Object, globalContextProviderMock.Object, new OneSConnection());
+
+            // Act
+            testedInstance.CommandText = TEST_SQL;
+            var actualResult = testedInstance.ExecuteScalar();
+
+            // Assert
+            Assert.AreEqual(EXPECTED_RESULT, actualResult);
+
+            Assert.AreEqual(TEST_SQL, queryMock.Object.Text);
+            queryMock.Verify(q => q.Execute(), Times.Once());
+
+            queryMock.VerifyDispose();
+            queryResultMock.VerifyDispose();
         }
 
         /// <summary>

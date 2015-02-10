@@ -18,38 +18,23 @@ namespace VanessaSharp.Data.DataReading
         /// <summary>Конструктор для модульного тестирования.</summary>
         /// <param name="dataReaderFieldInfoCollection">Коллекция информации о полях читателя данных.</param>
         /// <param name="queryResultSelection">Выборка из результата запроса.</param>
-        /// <param name="oneSObjectSpecialConverter">Специальный конвертер для объектов 1С.</param>
-        internal DataCursor(
+        public DataCursor(
             IDataReaderFieldInfoCollection dataReaderFieldInfoCollection, 
-            IQueryResultSelection queryResultSelection,
-            IOneSObjectSpecialConverter oneSObjectSpecialConverter)
+            IQueryResultSelection queryResultSelection)
         {
             Contract.Requires<ArgumentNullException>(dataReaderFieldInfoCollection != null);
             Contract.Requires<ArgumentNullException>(queryResultSelection != null);
-            Contract.Requires<ArgumentNullException>(oneSObjectSpecialConverter != null);
 
             _dataReaderFieldInfoCollection = dataReaderFieldInfoCollection;
             _queryResultSelection = queryResultSelection;
 
-            _buffer = new LazyBuffer(GetValueFunctions(oneSObjectSpecialConverter));
-        }
-
-        /// <summary>Конструктор для использования.</summary>
-        /// <param name="dataReaderFieldInfoCollection">Коллекция информации о полях читателя данных.</param>
-        /// <param name="queryResultSelection">Выборка из результата запроса.</param>
-        public DataCursor(
-            IDataReaderFieldInfoCollection dataReaderFieldInfoCollection,
-            IQueryResultSelection queryResultSelection)
-            : this(dataReaderFieldInfoCollection, queryResultSelection, OneSObjectSpecialConverter.Default)
-        {
-            Contract.Requires<ArgumentNullException>(dataReaderFieldInfoCollection != null);
-            Contract.Requires<ArgumentNullException>(queryResultSelection != null);
+            _buffer = new LazyBuffer(GetValueFunctions());
         }
 
         /// <summary>
         /// Получение массива функций получения значения полей.
         /// </summary>
-        private Func<object>[] GetValueFunctions(IOneSObjectSpecialConverter oneSObjectSpecialConverter)
+        private Func<object>[] GetValueFunctions()
         {
             var fieldsCount = _dataReaderFieldInfoCollection.Count;
 
@@ -59,7 +44,7 @@ namespace VanessaSharp.Data.DataReading
                 var ordinal = index;
 
                 Func<object> valueReader = () => _queryResultSelection.Get(ordinal);
-                var valueConverter = GetValueConverter(oneSObjectSpecialConverter, _dataReaderFieldInfoCollection[index].Type);
+                var valueConverter = _dataReaderFieldInfoCollection[index].RawValueConverter;
 
                 result[ordinal] = (valueConverter == null)
                                       ? valueReader
@@ -67,18 +52,6 @@ namespace VanessaSharp.Data.DataReading
             }
 
             return result;
-        }
-
-        private static Func<object, object> 
-            GetValueConverter(IOneSObjectSpecialConverter oneSObjectSpecialConverter, Type desiredType)
-        {
-            if (desiredType == typeof(OneSDataReader))
-                return oneSObjectSpecialConverter.ToDataReader;
-
-            if (desiredType == typeof(Guid))
-                return o => oneSObjectSpecialConverter.ToGuid(o);
-
-            return null;
         }
 
         /// <summary>

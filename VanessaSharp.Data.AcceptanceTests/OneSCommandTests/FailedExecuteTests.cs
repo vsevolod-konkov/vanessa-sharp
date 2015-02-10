@@ -28,17 +28,5 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSCommandTests
             TestedCommand.CommandText = "ВЫБРАТЬ * ИЗ Справочник.ТестовыйСправочник";
             TestedCommand.ExecuteNonQuery();
         }
-
-        /// <summary>
-        /// Тестирование <see cref="OneSCommand.ExecuteScalar"/>.
-        /// </summary>
-        [Test]
-        [TestCheckNotImplementedAttribute]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void TestExecuteScalar()
-        {
-            TestedCommand.CommandText = "ВЫБРАТЬ КОЛИЧЕСТВО(*) ИЗ Справочник.ТестовыйСправочник";
-            TestedCommand.ExecuteScalar();
-        }
     }
 }

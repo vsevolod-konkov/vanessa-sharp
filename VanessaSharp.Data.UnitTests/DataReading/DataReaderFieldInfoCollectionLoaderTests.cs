@@ -17,10 +17,22 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         private List<IDisposableMock> _disposableMocks;
         private IQueryResult _queryResult;
         private ITypeDescriptionConverter _typeDescriptionConverter;
+        private IRawValueConverterProvider _rawValueConverterProvider;
         
+        private static object ConvertRawValue(object obj)
+        {
+            return obj;
+        }
+
         private void InitTest(IList<DataReaderFieldInfo> expectedFields)
         {
             _disposableMocks = new List<IDisposableMock>();
+
+            var rawValueConverterProviderMock = new Mock<IRawValueConverterProvider>(MockBehavior.Strict);
+            rawValueConverterProviderMock
+                .Setup(c => c.GetRawValueConverter(It.IsAny<Type>()))
+                .Returns(ConvertRawValue);
+            _rawValueConverterProvider = rawValueConverterProviderMock.Object;
 
             var typeDescriptionMocks = Enumerable
                 .Range(0, expectedFields.Count)
@@ -85,14 +97,15 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             // Arrange
             var expectedFields = new[]
                 {
-                    new DataReaderFieldInfo("Id", typeof (int)),
-                    new DataReaderFieldInfo("Date", typeof (DateTime))
+                    new DataReaderFieldInfo("Id", typeof(int), ConvertRawValue),
+                    new DataReaderFieldInfo("Date", typeof(DateTime), ConvertRawValue)
                 };
 
             InitTest(expectedFields);
 
             // Act
-            var actualResult = DataReaderFieldInfoCollectionLoader.Load(_queryResult, _typeDescriptionConverter);
+            var actualResult = DataReaderFieldInfoCollectionLoader.Load(
+                _queryResult, _typeDescriptionConverter, _rawValueConverterProvider);
 
             // Assert
             Assert.AreEqual(expectedFields.Length, actualResult.Count);
@@ -102,6 +115,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 var field = actualResult[index];
                 Assert.AreEqual(expectedFields[index].Name, field.Name);
                 Assert.AreEqual(expectedFields[index].Type, field.Type);
+                Assert.AreEqual(expectedFields[index].RawValueConverter, (Func<object, object>)ConvertRawValue);
             }
 
             foreach (var mock in _disposableMocks)
@@ -117,14 +131,15 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             // Arrange
             var expectedFields = new[]
                 {
-                    new DataReaderFieldInfo("Id", typeof (int)),
-                    new DataReaderFieldInfo("Date", typeof (DateTime))
+                    new DataReaderFieldInfo("Id", typeof(int), ConvertRawValue),
+                    new DataReaderFieldInfo("Date", typeof(DateTime), ConvertRawValue)
                 };
 
             InitTest(expectedFields);
 
             // Act
-            var actualResult = DataReaderFieldInfoCollectionLoader.Create(_queryResult, _typeDescriptionConverter);
+            var actualResult = DataReaderFieldInfoCollectionLoader.Create(
+                _queryResult, _typeDescriptionConverter, _rawValueConverterProvider);
 
             // Assert
             Assert.IsInstanceOf<LazyDataReaderFieldInfoCollection>(actualResult);
@@ -136,6 +151,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 var field = actualResult[index];
                 Assert.AreEqual(expectedFields[index].Name, field.Name);
                 Assert.AreEqual(expectedFields[index].Type, field.Type);
+                Assert.AreEqual(expectedFields[index].RawValueConverter, (Func<object, object>)ConvertRawValue);
             }
         }
     }

@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Data;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using VanessaSharp.Data.DataReading;
 using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.Data
@@ -10,6 +11,11 @@ namespace VanessaSharp.Data
     /// <summary>Команда запроса к 1С.</summary>
     public sealed class OneSCommand : DbCommand
     {
+        /// <summary>
+        /// Читатель скалярного значения.
+        /// </summary>
+        private readonly IScalarReader _scalarReader;
+        
         // TODO: Нужен Рефакторинг. Нужна просто фабрика объектов.
         /// <summary>Поставщик глобального контекста 1С.</summary>
         private IGlobalContextProvider _globalContextProvider;
@@ -36,21 +42,38 @@ namespace VanessaSharp.Data
         [ContractInvariantMethod]
         private void Invariant()
         {
+            Contract.Invariant(_scalarReader != null);
+
             Contract.Invariant(
                 (_connection == null && _globalContextProvider == null)
                 ||
                 (_connection != null && _globalContextProvider != null)
                 );
         }
+        
+        /// <summary>
+        /// Базовый конструктор.
+        /// </summary>
+        /// <param name="scalarReader">Читатель скалярного значения.</param>
+        private OneSCommand(IScalarReader scalarReader)
+        {
+            Contract.Requires<ArgumentNullException>(scalarReader != null);
+
+            _scalarReader = scalarReader;
+        }
 
         /// <summary>Конструктор принимающий поставщика глобального контекста.</summary>
-        internal OneSCommand(IGlobalContextProvider globalContextProvider, OneSConnection connection)
+        internal OneSCommand(IScalarReader scalarReader, IGlobalContextProvider globalContextProvider, OneSConnection connection)
+            : this(scalarReader)
         {
+            Contract.Requires<ArgumentNullException>(scalarReader != null);
+
+            _scalarReader = scalarReader;
             SetConnection(connection, globalContextProvider);
         }
         
         /// <summary>Конструктор без аргументов.</summary>
-        public OneSCommand() : this(null)
+        public OneSCommand() : this((OneSConnection)null)
         {}
 
         /// <summary>Конструктор принимающий соединение.</summary>
@@ -62,6 +85,7 @@ namespace VanessaSharp.Data
         /// <param name="connection">Соединение.</param>
         /// <param name="commandText">Строка запроса.</param>
         public OneSCommand(OneSConnection connection, string commandText)
+            : this(ScalarReader.Default)
         {
             Connection = connection;
             CommandText = commandText;
@@ -205,6 +229,34 @@ namespace VanessaSharp.Data
         /// </summary>
         public override bool DesignTimeVisible { get; set; }
 
+        /// <summary>
+        /// Проверка перед выполнением команды.
+        /// </summary>
+        private void VerifyBeforeExecute()
+        {
+            if (Connection == null)
+            {
+                throw new InvalidOperationException(
+                    "Выполнение команды запроса невозможно так как не задано подключение к информационной базе.");
+            }
+        }
+
+        /// <summary>Выполнение команды.</summary>
+        private IQueryResult ExecuteQuery()
+        {
+            // Получение контекста
+            var globalContext = _globalContextProvider.GlobalContext;
+            using (var query = globalContext.NewObject<IQuery>())
+            {
+                query.Text = CommandText;
+
+                foreach (var parameter in Parameters.AsEnumerable())
+                    query.SetParameter(parameter.ParameterName, parameter.Value);
+
+                return query.Execute();
+            }
+        }
+
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
         /// <param name="behavior">Поведение выполнения команды, специфицируя описание результатов запроса и его воздействия на базу данных.</param>
         /// <param name="queryResultIteration">Стратегия обхода записей.</param>
@@ -220,11 +272,7 @@ namespace VanessaSharp.Data
                     behavior));
             }
 
-            if (Connection == null)
-            {
-                throw new InvalidOperationException(
-                    "Выполнение команды запроса невозможно так как не задано подключение к информационной базе.");
-            }
+            VerifyBeforeExecute();
 
             Action onCloseAction;
             if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)
@@ -237,19 +285,8 @@ namespace VanessaSharp.Data
                 onCloseAction = null;
             }
 
-            // Получение контекста
-            var globalContext = _globalContextProvider.GlobalContext;
-            using (var query = globalContext.NewObject<IQuery>())
-            {
-                query.Text = CommandText;
-
-                foreach (var parameter in Parameters.AsEnumerable())
-                    query.SetParameter(parameter.ParameterName, parameter.Value);
-
-                var queryResult = query.Execute();
-
-                return OneSDataReader.CreateRootDataReader(queryResult, queryResultIteration, onCloseAction);
-            }
+            return OneSDataReader.CreateRootDataReader(
+                ExecuteQuery(), queryResultIteration, onCloseAction);
         }
 
         /// <summary>Выполняет текст команды применительно к соединению к информационной базе 1С.</summary>
@@ -290,12 +327,12 @@ namespace VanessaSharp.Data
         /// Выполняет запрос и возвращает первый столбец первой строки результирующего набора, возвращаемого запросом. 
         /// Дополнительные столбцы и строки игнорируются.
         /// </summary>
-        /// <remarks>В текущей версии не поддерживается.</remarks>
-        /// <exception cref="NotImplementedException"/>
-        [CurrentVersionNotImplemented]
         public override object ExecuteScalar()
         {
-            throw new NotImplementedException();
+            VerifyBeforeExecute();
+
+            using (var queryResult = ExecuteQuery())
+                return _scalarReader.ReadScalar(queryResult);
         }
 
         /// <summary>Создает подготовленную версию команды в информационной базе 1С.</summary>

@@ -117,7 +117,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <param name="type">Тип колонки.</param>
         protected void SetupGetColumn(int index, string name, Type type)
         {
-            SetupGetColumn(index, new DataReaderFieldInfo(name, type));
+            SetupGetColumn(index, new DataReaderFieldInfo(name, type, null));
         }
 
         /// <summary>Проверка получения полонки.</summary>
@@ -135,7 +135,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             const int TEST_FIELD_ORDINAL = 3;
 
             // Arrange
-            var fieldInfo = new DataReaderFieldInfo(TEST_FIELD_NAME, typeof(object));
+            var fieldInfo = new DataReaderFieldInfo(TEST_FIELD_NAME, typeof(object), null);
 
             SetupGetColumn(TEST_FIELD_ORDINAL, fieldInfo);
 
@@ -158,7 +158,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             // Arrange
             var expectedType = typeof(decimal);
-            var fieldInfo = new DataReaderFieldInfo("[SomeName]", expectedType);
+            var fieldInfo = new DataReaderFieldInfo("[SomeName]", expectedType, null);
             
             SetupGetColumn(TEST_FIELD_ORDINAL, fieldInfo);
 

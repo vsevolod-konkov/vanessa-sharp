@@ -57,6 +57,7 @@
     <Compile Include="DataReading\LazyDataReaderFieldInfoCollectionTests.cs" />
     <Compile Include="DataReading\OneSObjectSpecialConverterTests.cs" />
     <Compile Include="DataReading\QueryResultDataRecordsProviderTests.cs" />
+    <Compile Include="DataReading\RawValueConverterProviderTests.cs" />
     <Compile Include="DisposableMock.cs" />
     <Compile Include="ExecuteReaderTests.cs" />
     <Compile Include="IDisposableMock.cs" />

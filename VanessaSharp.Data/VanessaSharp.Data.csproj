@@ -140,12 +140,16 @@
     <Compile Include="DataReading\IDataCursorFactory.cs" />
     <Compile Include="DataReading\IDataRecordsProvider.cs" />
     <Compile Include="DataReading\IOneSObjectSpecialConverter.cs" />
+    <Compile Include="DataReading\IRawValueConverterProvider.cs" />
+    <Compile Include="DataReading\IScalarReader.cs" />
     <Compile Include="DataReading\LazyDataReaderFieldInfoCollection.cs" />
     <Compile Include="DataReading\DataReaderFieldInfoFixedCollection.cs" />
     <Compile Include="DataReading\DataReaderFieldInfoCollectionLoader.cs" />
     <Compile Include="DataReading\IDataReaderFieldInfoCollection.cs" />
     <Compile Include="DataReading\OneSObjectSpecialConverter.cs" />
     <Compile Include="DataReading\QueryResultDataRecordsProvider.cs" />
+    <Compile Include="DataReading\RawValueConverterProvider.cs" />
+    <Compile Include="DataReading\ScalarReader.cs" />
     <Compile Include="IGlobalContextProvider.cs" />
     <Compile Include="IOneSTypeConverter.cs" />
     <Compile Include="ITransactionManager.cs" />

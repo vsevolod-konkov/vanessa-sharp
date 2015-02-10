@@ -11,12 +11,15 @@ namespace VanessaSharp.Data.DataReading
         /// <summary>Загрузка коллекции с информацией о полях.</summary>
         /// <param name="queryResult">Результат запроса.</param>
         /// <param name="typeDescriptionConverter">Конвертер описателей типов 1С в типы CLR.</param>
-        public static ReadOnlyCollection<DataReaderFieldInfo> Load(
+        /// <param name="rawValueConverterProvider">Поставщик конверторов значений из 1С.</param>
+        internal static ReadOnlyCollection<DataReaderFieldInfo> Load(
             IQueryResult queryResult,
-            ITypeDescriptionConverter typeDescriptionConverter)
+            ITypeDescriptionConverter typeDescriptionConverter,
+            IRawValueConverterProvider rawValueConverterProvider)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(typeDescriptionConverter != null);
+            Contract.Requires<ArgumentNullException>(rawValueConverterProvider != null);
             Contract.Ensures(Contract.Result<ReadOnlyCollection<DataReaderFieldInfo>>() != null);
 
             using (var columns = queryResult.Columns)
@@ -27,7 +30,7 @@ namespace VanessaSharp.Data.DataReading
                 for (var index = 0; index < columnsCount; index++)
                 {
                     using (var column = columns.Get(index))
-                        buffer[index] = Load(column, typeDescriptionConverter);
+                        buffer[index] = Load(column, typeDescriptionConverter, rawValueConverterProvider);
                 }
 
                 return new ReadOnlyCollection<DataReaderFieldInfo>(buffer);
@@ -39,31 +42,38 @@ namespace VanessaSharp.Data.DataReading
         /// </summary>
         /// <param name="column">Колонка результата 1С.</param>
         /// <param name="typeDescriptionConverter">Конвертер описателей типов 1С в типы CLR.</param>
-        private static DataReaderFieldInfo Load(IQueryResultColumn column,
-                                               ITypeDescriptionConverter typeDescriptionConverter)
+        /// <param name="rawValueConverterProvider">Поставщик конверторов значений из 1С.</param>
+        private static DataReaderFieldInfo Load(
+            IQueryResultColumn column,
+            ITypeDescriptionConverter typeDescriptionConverter,
+            IRawValueConverterProvider rawValueConverterProvider)
         {
             using (var valueType = column.ValueType)
             {
-                return new DataReaderFieldInfo(
-                    column.Name,
-                    typeDescriptionConverter.ConvertFrom(valueType));
+                var clrType = typeDescriptionConverter.ConvertFrom(valueType);
+                var converter = rawValueConverterProvider.GetRawValueConverter(clrType);
+                
+                return new DataReaderFieldInfo(column.Name, clrType, converter);
             }
         }
 
         /// <summary>Создание коллекции с информацией о полях.</summary>
         /// <param name="queryResult">Результат запроса.</param>
         /// <param name="typeDescriptionConverter">Конвертер описателей типов 1С в типы CLR.</param>
+        /// <param name="rawValueConverterProvider">Поставщик конверторов значений из 1С.</param>
         public static IDataReaderFieldInfoCollection Create(
             IQueryResult queryResult,
-            ITypeDescriptionConverter typeDescriptionConverter)
+            ITypeDescriptionConverter typeDescriptionConverter,
+            IRawValueConverterProvider rawValueConverterProvider)
         {
             Contract.Requires<ArgumentNullException>(queryResult != null);
             Contract.Requires<ArgumentNullException>(typeDescriptionConverter != null);
+            Contract.Requires<ArgumentNullException>(rawValueConverterProvider != null);
             Contract.Ensures(Contract.Result<IDataReaderFieldInfoCollection>() != null);
             
             return new LazyDataReaderFieldInfoCollection(() =>
                 new DataReaderFieldInfoFixedCollection(
-                    Load(queryResult, typeDescriptionConverter)));
+                    Load(queryResult, typeDescriptionConverter, rawValueConverterProvider)));
         }
     }
 }

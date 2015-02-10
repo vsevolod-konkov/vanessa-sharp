@@ -488,7 +488,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
             }
 
             private DefinedExpectedDataBuilderState GetNextState(
-                IEnumerable<TExpectedData> rows, ReadOnlyCollection<int> expectedRowIndexes)
+                IEnumerable<TExpectedData> rows, params int[] expectedRowIndexes)
             {
                 foreach (var row in rows)
                 {
@@ -496,9 +496,15 @@ namespace VanessaSharp.AcceptanceTests.Utility
                     _tableDataBuilder.AddRow(rowData);
                 }
 
-                var tableData = _tableDataBuilder.Build();
+                return GetNextState(_tableDataBuilder, expectedRowIndexes);
+            }
+
+            private DefinedExpectedDataBuilderState GetNextState(
+                TableDataBuilder tableDataBuilder, params int[] expectedRowIndexes)
+            {
+                var tableData = tableDataBuilder.Build();
                 _testModeStrategy.SetUp(tableData);
-                var testingContext = new TestingContext(_connection, tableData, expectedRowIndexes, _testModeStrategy);
+                var testingContext = new TestingContext(_connection, tableData, new ReadOnlyCollection<int>(expectedRowIndexes), _testModeStrategy);
 
                 return new DefinedExpectedDataBuilderState(testingContext, _testingAction);
             }
@@ -520,7 +526,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
                 return GetNextState(
                     rowIndexes.Select(i => expectedData[i]),
-                    new ReadOnlyCollection<int>(rowIndexes));
+                    rowIndexes);
             }
 
             /// <summary>
@@ -533,11 +539,26 @@ namespace VanessaSharp.AcceptanceTests.Utility
                     Contract.Ensures(Contract.Result<DefinedExpectedDataBuilderState>() != null);
 
                     var expectedData = GetExpectedData();
-                    var expectedRowIndexes = new ReadOnlyCollection<int>(
-                        Enumerable.Range(0, expectedData.Count).ToArray()
-                        );
+                    var expectedRowIndexes = 
+                        Enumerable.Range(0, expectedData.Count).ToArray();
 
                     return GetNextState(expectedData, expectedRowIndexes);
+                }
+            }
+
+            public DefinedExpectedDataBuilderState Count
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<DefinedExpectedDataBuilderState>() != null);
+
+                    var expectedData = GetExpectedData();
+                    var tableDataBuilder = new TableDataBuilder();
+                    tableDataBuilder.AddScalarField("COUNT", typeof(double));
+                    tableDataBuilder.AddRow(expectedData.Count);
+
+                    return GetNextState(
+                        tableDataBuilder, 0);
                 }
             }
         }

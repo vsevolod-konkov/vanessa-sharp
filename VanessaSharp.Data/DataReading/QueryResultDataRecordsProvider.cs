@@ -51,12 +51,14 @@ namespace VanessaSharp.Data.DataReading
             IQueryResult queryResult,
             QueryResultIteration queryResultIteration,
             ITypeDescriptionConverter typeDescriptionConverter,
+            IRawValueConverterProvider rawValueConverterProvider,
             IDataCursorFactory dataCursorFactory
             )
             : this(
                 queryResult,
                 queryResultIteration,
-                DataReaderFieldInfoCollectionLoader.Create(queryResult, typeDescriptionConverter),
+                DataReaderFieldInfoCollectionLoader.Create(
+                    queryResult, typeDescriptionConverter, rawValueConverterProvider),
                 dataCursorFactory
             )
         {}
@@ -72,6 +74,7 @@ namespace VanessaSharp.Data.DataReading
                 queryResult,
                 queryResultIteration,
                 TypeDescriptionConverter.Default,
+                RawValueConverterProvider.Default,
                 DataCursorFactory.Default
             )
         {

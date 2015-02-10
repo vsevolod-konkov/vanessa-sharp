@@ -61,7 +61,9 @@ namespace VanessaSharp.Data.UnitTests
                 .SetupGet(p => p.GlobalContext)
                 .Returns(_globalContextMock.Object);
 
-            _testedInstance = new OneSCommand(globalContextProviderMock.Object, oneSConnection);
+            _testedInstance = new OneSCommand(
+                new Mock<IScalarReader>(MockBehavior.Strict).Object,
+                globalContextProviderMock.Object, oneSConnection);
         }
         
         private void AssertAfterExecute(
