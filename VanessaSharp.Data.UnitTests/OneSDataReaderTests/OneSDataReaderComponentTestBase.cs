@@ -263,10 +263,9 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// Тестирование <see cref="OneSDataReader.GetEnumerator"/>.
         /// </summary>
         [Test]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void TestNotImplementedGetEnumerator()
+        public void TestGetEnumerator()
         {
-            var enumerator = TestedInstance.GetEnumerator();
+            Assert.IsNotNull(TestedInstance.GetEnumerator());
         }
 
         /// <summary>

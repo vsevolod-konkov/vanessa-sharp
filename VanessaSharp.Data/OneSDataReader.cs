@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
@@ -18,6 +19,7 @@ namespace VanessaSharp.Data
         private enum States
         {
             BofOpen,
+            BofAfterReset,
             RecordOpen,
             EofOpen,
             Closed
@@ -71,6 +73,8 @@ namespace VanessaSharp.Data
             _valueConverter = valueConverter;
             _isTablePart = isTablePart;
             _onCloseAction = onCloseAction;
+
+            _lazyEnumerator = new Lazy<Enumerator>(() => new Enumerator(this));
         }
 
         /// <summary>Конструктор принимающий провайдер записей.</summary>
@@ -244,6 +248,10 @@ namespace VanessaSharp.Data
                         return false;
                     }
                     
+                    _currentState = States.RecordOpen;
+                    break;
+
+                case States.BofAfterReset:
                     _currentState = States.RecordOpen;
                     break;
 
@@ -965,11 +973,97 @@ namespace VanessaSharp.Data
         /// Значение <see cref="T:System.Collections.IEnumerator"/>, которое может использоваться для итерации элементов строк в модуле чтения данных.
         /// </returns>
         /// <filterpriority>1</filterpriority>
-        /// <exception cref="NotImplementedException"/>
-        [CurrentVersionNotImplemented]
         public override IEnumerator GetEnumerator()
         {
-            throw new NotImplementedException();
+            return _lazyEnumerator.Value;
         }
+        private readonly Lazy<Enumerator> _lazyEnumerator; 
+
+        /// <summary>
+        /// Находится ли читатель сейчас в состоянии чтения записи.
+        /// </summary>
+        private bool IsRecordOpen
+        {
+            get { return _currentState == States.RecordOpen; }
+        }
+
+        /// <summary>
+        /// Возвращение читателя в начальное состояние.
+        /// </summary>
+        private void Reset()
+        {
+            _dataCursor.Reset();
+            _currentState = States.BofAfterReset;
+        }
+
+        #region Вспомогательные типы
+
+        /// <summary>
+        /// Адаптер читателя для интерфейса <see cref="IEnumerator"/>.
+        /// </summary>
+        private sealed class Enumerator : IEnumerator<IList<object>>
+        {
+            private readonly OneSDataReader _reader;
+            private ReadOnlyCollection<object> _currentBuffer; 
+
+            public Enumerator(OneSDataReader reader)
+            {
+                Contract.Requires<ArgumentNullException>(reader != null);
+
+                _reader = reader;
+            }
+
+            public IList<object> Current
+            {
+                get
+                {
+                    if (_reader.IsRecordOpen)
+                    {
+                        if (_currentBuffer == null)
+                        {
+                            var buffer = new object[_reader.FieldCount];
+                            _reader.GetValues(buffer);
+
+                            _currentBuffer = new ReadOnlyCollection<object>(buffer);
+                        }
+
+                        return _currentBuffer;
+                    }
+
+                    throw new InvalidOperationException(
+                        "Читатель не находится в состоянии записи.");
+                }
+            }
+
+            object IEnumerator.Current
+            {
+                get { return Current; }
+            }
+
+            private void ResetBuffer()
+            {
+                _currentBuffer = null;
+            }
+
+            public void Dispose()
+            {
+                ResetBuffer();
+                _reader.Dispose();
+            }
+
+            public bool MoveNext()
+            {
+                ResetBuffer();
+                return _reader.Read();
+            }
+
+            public void Reset()
+            {
+                ResetBuffer();
+                _reader.Reset();
+            }
+        }
+
+        #endregion
     }
 }

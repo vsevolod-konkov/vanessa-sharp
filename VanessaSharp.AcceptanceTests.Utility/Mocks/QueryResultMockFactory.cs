@@ -32,7 +32,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                 .Setup(r => r.Choose(It.IsAny<QueryResultIteration>()))
                 .Returns<QueryResultIteration>(i =>
                     CreateQueryResultSelection(
-                        tableData.Rows.Select(r => r.Select(GetOneSRawValue).ToArray()).GetEnumerator(),
+                        tableData.Rows.Select(r => r.Select(GetOneSRawValue).ToArray()).ToList().GetEnumerator(),
                         mapNames));
 
             return queryResultMock.Object;
@@ -112,6 +112,10 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
             resultSelectionMock
                 .Setup(s => s.Next())
                 .Returns(rowsEnumerator.MoveNext);
+
+            resultSelectionMock
+                .Setup(s => s.Reset())
+                .Callback(rowsEnumerator.Reset);
 
             Func<int, object> getValue = i => rowsEnumerator.Current[i];
 

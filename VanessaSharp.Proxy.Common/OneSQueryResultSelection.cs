@@ -112,5 +112,13 @@ namespace VanessaSharp.Proxy.Common
                     groupNames,
                     groupValues);
         }
+
+        /// <summary>
+        /// Сброс курсора на начальную позицию.
+        /// </summary>
+        public void Reset()
+        {
+            DynamicProxy.Reset();
+        }
     }
 }

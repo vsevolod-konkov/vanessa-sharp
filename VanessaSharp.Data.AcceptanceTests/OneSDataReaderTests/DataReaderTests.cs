@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using VanessaSharp.AcceptanceTests.Utility;
 using VanessaSharp.AcceptanceTests.Utility.ExpectedData;
+using VanessaSharp.AcceptanceTests.Utility.Mocks;
 
 namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 {
@@ -96,21 +99,122 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         }
 
         /// <summary>
+        /// Тестирование значений курсора.
+        /// </summary>
+        /// <param name="ctx">Контекст тестирования.</param>
+        /// <param name="rowIndex">Индекс текущей строки.</param>
+        /// <param name="values">Проверямые значения.</param>
+        private static void TestValues(TestingContext ctx, int rowIndex, IList<object> values)
+        {
+            Assert.AreEqual(ctx.ExpectedFieldsCount, values.Count);
+            for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
+            {
+                var rawExpectedFieldValue = QueryResultMockFactory.GetOneSRawValue(
+                    ctx.ExpectedValue(rowIndex, fieldIndex));
+
+                Assert.AreEqual(
+                    rawExpectedFieldValue,
+                    values[fieldIndex]
+                    );
+            }
+        }
+
+        /// <summary>
+        /// Тестирование реализации <see cref="System.Collections.IEnumerable"/>.
+        /// </summary>
+        [Test]
+        public void TestEnumerable()
+        {
+            Test
+                .Source("Справочник.ТестовыйСправочник")
+                .Execute()
+                .Action(ctx =>
+                    {
+                        var rowCounter = 0;
+                        foreach (IList<object> values in ctx.TestedReader)
+                        {
+                            Assert.Less(rowCounter, ctx.ExpectedRowsCount);
+                            TestValues(ctx, rowCounter, values);
+
+                            rowCounter++;
+                        }
+
+                        Assert.AreEqual(rowCounter, ctx.ExpectedRowsCount);
+                    })
+                .BeginDefineExpectedDataFor<ExpectedTestDictionary>()
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+                    .Field(d => d.UndoundStringField)
+                    .Field(d => d.CharField)
+                    
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
+        /// Тестирование значений перечислителя.
+        /// </summary>
+        /// <param name="ctx">Контекст тестирования.</param>
+        /// <param name="enumerator">Тестируемый перечислитель.</param>
+        private static void TestEnumerator(TestingContext ctx, IEnumerator enumerator)
+        {
+            var rowCounter = 0;
+
+            while (enumerator.MoveNext())
+            {
+                Assert.Less(rowCounter, ctx.ExpectedRowsCount);
+                TestValues(ctx, rowCounter, (IList<object>)enumerator.Current);
+
+                rowCounter++;
+            }
+
+            Assert.AreEqual(rowCounter, ctx.ExpectedRowsCount);
+        }
+
+        /// <summary>
         /// Тестирование <see cref="OneSDataReader.GetEnumerator"/>.
         /// </summary>
         [Test]
-        [TestCheckNotImplemented]
         public void TestGetEnumerator()
         {
             Test
-                .Sql("ВЫБРАТЬ * ИЗ Справочник.ТестовыйСправочник")
+                .Source("Справочник.ТестовыйСправочник")
                 .Execute()
                 .Action(ctx =>
-
-                     Assert.Throws<NotImplementedException>(() => { var enumerator = ctx.TestedReader.GetEnumerator(); }))
-
+                {
+                    var enumerator = ctx.TestedReader.GetEnumerator();
+                    
+                    var disposable = enumerator as IDisposable;
+                    using (disposable)
+                    {
+                        TestEnumerator(ctx, enumerator);
+                        enumerator.Reset();
+                        TestEnumerator(ctx, enumerator);
+                    }
+                })
                 .BeginDefineExpectedDataFor<ExpectedTestDictionary>()
-                .Rows()
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+                    .Field(d => d.NumberField)
+                    .Field(d => d.BooleanField)
+                    .Field(d => d.DateField)
+                    .Field(d => d.DateTimeField)
+                    .Field(d => d.TimeField)
+                    .Field(d => d.UndoundStringField)
+                    .Field(d => d.CharField)
+
+                    .AllRows
+
                 .EndDefineExpectedData
 
             .Run();

@@ -50,5 +50,10 @@
             QueryResultIteration queryResultIteration,
             string groupNames,
             string groupValues);
+
+        /// <summary>
+        /// Сброс курсора на начальную позицию.
+        /// </summary>
+        void Reset();
     }
 }

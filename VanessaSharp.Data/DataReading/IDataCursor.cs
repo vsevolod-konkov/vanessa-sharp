@@ -20,6 +20,11 @@ namespace VanessaSharp.Data.DataReading
         bool Next();
 
         /// <summary>
+        /// Сброс курсора к начальной позиции.
+        /// </summary>
+        void Reset();
+
+        /// <summary>
         /// Получение значения поля записи.
         /// </summary>
         /// <param name="ordinal">
@@ -119,5 +124,7 @@ namespace VanessaSharp.Data.DataReading
         }
 
         public abstract void Dispose();
+
+        public abstract void Reset();
     }
 }

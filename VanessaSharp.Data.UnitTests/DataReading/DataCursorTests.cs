@@ -72,6 +72,25 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             _queryResultSelectionMock
                 .Verify(qrs => qrs.Next(), Times.Once());
         }
+        /// <summary>
+        /// Тестирование метода <see cref="DataCursor.Reset"/>
+        /// </summary>
+        [Test]
+        public void TestReset()
+        {
+            // Arrange
+            var queryResultSelectionMock = new Mock<IQueryResultSelection>(MockBehavior.Strict);
+            queryResultSelectionMock
+                .Setup(r => r.Reset());
+            
+            InitTestedInstance(queryResultSelectionMock: queryResultSelectionMock);
+
+            // Act
+            _testedInstance.Reset();
+
+            // Assert
+            queryResultSelectionMock.Verify(r => r.Reset(), Times.Once());
+        }
 
         /// <summary>
         /// Тестирование метода <see cref="DataCursor.Dispose"/>

@@ -92,6 +92,15 @@ namespace VanessaSharp.Data.DataReading
         }
 
         /// <summary>
+        /// Сброс курсора к начальной позиции.
+        /// </summary>
+        public void Reset()
+        {
+            _buffer.Reset();
+            _queryResultSelection.Reset();
+        }
+
+        /// <summary>
         /// Получение значения поля записи.
         /// </summary>
         /// <param name="ordinal">
