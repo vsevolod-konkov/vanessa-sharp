@@ -27,8 +27,7 @@ namespace VanessaSharp.Data
         /// <param name="oneSType">Тип 1С.</param>
         public Type TryConvertFrom(IOneSType oneSType)
         {
-            var globalContext = oneSType.GlobalContext;
-            var typeString = globalContext.String(oneSType);
+            var typeString = GetTypeName(oneSType);
 
             switch (typeString)
             {
@@ -49,6 +48,17 @@ namespace VanessaSharp.Data
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Получение имени типа.
+        /// </summary>
+        /// <param name="oneSType">Тип 1С.</param>
+        public string GetTypeName(IOneSType oneSType)
+        {
+            var globalContext = oneSType.GlobalContext;
+
+            return globalContext.String(oneSType);
         }
     }
 }

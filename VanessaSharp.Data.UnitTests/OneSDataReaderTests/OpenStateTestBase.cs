@@ -85,20 +85,6 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             _dataReaderFieldInfoCollectionMock.VerifyGet(cs => cs.Count);
         }
 
-        /// <summary>Тестирование метода <see cref="OneSDataReader.GetDataTypeName"/>.</summary>
-        [Test]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void TestGetDataTypeName()
-        {
-            const int TEST_FIELD_INDEX = 4;
-
-            // Arrange
-            SetupColumnsGetCount(TEST_FIELD_INDEX + 1);
-
-            // Act & Assert
-            var result = TestedInstance.GetDataTypeName(TEST_FIELD_INDEX);
-        }
-
         /// <summary>Установка получения колонки.</summary>
         /// <param name="index">Индекс колонки.</param>
         /// <param name="fieldInfo">Поле читателя.</param>
@@ -117,7 +103,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         /// <param name="type">Тип колонки.</param>
         protected void SetupGetColumn(int index, string name, Type type)
         {
-            SetupGetColumn(index, new DataReaderFieldInfo(name, type, null));
+            SetupGetColumn(index, new DataReaderFieldInfo(name, type, null, null));
         }
 
         /// <summary>Проверка получения полонки.</summary>
@@ -125,6 +111,24 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         private void VerifyGetColumn(int index)
         {
             _dataReaderFieldInfoCollectionMock.Verify(c => c[index]);
+        }
+
+        /// <summary>Тестирование метода <see cref="OneSDataReader.GetDataTypeName"/>.</summary>
+        [Test]
+        public void TestGetDataTypeName()
+        {
+            const int TEST_FIELD_INDEX = 4;
+
+            // Arrange
+            const string EXPECTED_DATA_TYPE_NAME = "Тестовый тип";
+            var field = new DataReaderFieldInfo("TestName", typeof(object), EXPECTED_DATA_TYPE_NAME, null);
+            SetupGetColumn(TEST_FIELD_INDEX, field);
+
+            // Act
+            var result = TestedInstance.GetDataTypeName(TEST_FIELD_INDEX);
+
+            // Assert
+            Assert.AreEqual(EXPECTED_DATA_TYPE_NAME, result);
         }
 
         /// <summary>Тестирование <see cref="OneSDataReader.GetName"/>.</summary>
@@ -135,9 +139,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             const int TEST_FIELD_ORDINAL = 3;
 
             // Arrange
-            var fieldInfo = new DataReaderFieldInfo(TEST_FIELD_NAME, typeof(object), null);
-
-            SetupGetColumn(TEST_FIELD_ORDINAL, fieldInfo);
+            SetupGetColumn(TEST_FIELD_ORDINAL, TEST_FIELD_NAME, typeof(object));
 
             // Act
             var actualName = TestedInstance.GetName(TEST_FIELD_ORDINAL);
@@ -158,9 +160,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
 
             // Arrange
             var expectedType = typeof(decimal);
-            var fieldInfo = new DataReaderFieldInfo("[SomeName]", expectedType, null);
-            
-            SetupGetColumn(TEST_FIELD_ORDINAL, fieldInfo);
+            SetupGetColumn(TEST_FIELD_ORDINAL, "[SomeName]", expectedType);
 
             // Act
             var actualType = TestedInstance.GetFieldType(TEST_FIELD_ORDINAL);

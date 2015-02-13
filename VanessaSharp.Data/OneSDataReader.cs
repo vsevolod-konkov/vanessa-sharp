@@ -940,11 +940,16 @@ namespace VanessaSharp.Data
         /// <param name="ordinal">Порядковый номер столбца, начиная с нуля.</param>
         /// <exception cref="T:System.InvalidCastException">Указанное приведение недопустимо. </exception>
         /// <filterpriority>1</filterpriority>
-        /// <exception cref="NotImplementedException"/>
-        [CurrentVersionNotImplemented]
         public override string GetDataTypeName(int ordinal)
         {
-            throw new NotImplementedException();
+            if (_currentState == States.Closed)
+            {
+                throw new InvalidOperationException(
+                    "Недопустимо вызывать метод GetDataTypeName в закрытом состоянии.");
+            }
+
+            return _dataRecordsProvider
+                .Fields[ordinal].DataTypeName;
         }
 
         /// <summary>

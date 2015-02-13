@@ -37,7 +37,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 _fieldInfoCollectionMock
                     .Setup(c => c[ordinal])
                     .Returns(
-                        new DataReaderFieldInfo("Field_" + ordinal, typeof(object), null)
+                        new DataReaderFieldInfo("Field_" + ordinal, typeof(object), null, null)
                     );
             }
 
@@ -258,7 +258,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             InitTestedInstance(
                 dataReaderFieldInfoSetup:
                     m => m.Setup(c => c[FIELD_INDEX])
-                          .Returns(new DataReaderFieldInfo("ID", typeof(Guid), converter))
+                          .Returns(new DataReaderFieldInfo("ID", typeof(Guid), null, converter))
                 );
 
             _queryResultSelectionMock

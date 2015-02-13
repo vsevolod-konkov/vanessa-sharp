@@ -397,7 +397,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
                 var info = ExpectedDataHelper.ExtractFieldInfo(fieldAccessor);
 
-                AddScalarFieldDefinition(info.Name, info.Type, info.Accessor);
+                AddScalarFieldDefinition(info.Name, info.Type, info.DataTypeName, info.Accessor);
 
                 return this;
             }
@@ -438,13 +438,13 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 return this;
             }
 
-            private void AddScalarFieldDefinition(string fieldName, Type fieldType, Func<TExpectedData, object> fieldAccessor)
+            private void AddScalarFieldDefinition(string fieldName, Type fieldType, string dataTypeName, Func<TExpectedData, object> fieldAccessor)
             {
                 Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
                 Contract.Requires<ArgumentNullException>(fieldType != null);
                 Contract.Requires<ArgumentNullException>(fieldAccessor != null);
 
-                _tableDataBuilder.AddScalarField(fieldName, fieldType);
+                _tableDataBuilder.AddScalarField(fieldName, fieldType, dataTypeName);
                 _fieldAccessors.Add(fieldAccessor);
             }
 
@@ -554,7 +554,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
 
                     var expectedData = GetExpectedData();
                     var tableDataBuilder = new TableDataBuilder();
-                    tableDataBuilder.AddScalarField("COUNT", typeof(double));
+                    tableDataBuilder.AddScalarField("COUNT", typeof(double), "Число");
                     tableDataBuilder.AddRow(expectedData.Count);
 
                     return GetNextState(
@@ -611,7 +611,7 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 // TODO: Copy Paste
                 var info = ExpectedDataHelper.ExtractFieldInfo(fieldAccessor);
 
-                _fields.Add(new ScalarFieldDescription(info.Name, info.Type));
+                _fields.Add(new ScalarFieldDescription(info.Name, info.Type, info.DataTypeName));
                 _fieldAccessors.Add(info.Accessor);
 
                 return this;

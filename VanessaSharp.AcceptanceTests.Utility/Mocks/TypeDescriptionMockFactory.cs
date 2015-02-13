@@ -12,22 +12,35 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
     public static class TypeDescriptionMockFactory
     {
         /// <summary>Карта соответствия типов CLR наименованием типов в 1С.</summary>
-        private static readonly Dictionary<Type, string> _mapTypeNames =
-                new Dictionary<Type, string>
+        private static readonly Dictionary<Type, OneSTypeInfo> _mapTypeNames =
+                new Dictionary<Type, OneSTypeInfo>
                 {
-                    { typeof(string), "Строка" },
-                    { typeof(double), "Число" },
-                    { typeof(bool), "Булево"},
-                    { typeof(DateTime), "Дата" },
-                    { typeof(Guid), "Уникальный идентификатор"},
-                    { typeof(AnyType), "?"},
-                    { typeof(IQueryResult), "Результат запроса"}
+                    { typeof(string), NullableType("Строка") },
+                    { typeof(double), NullableType("Число") },
+                    { typeof(bool), NullableType("Булево") },
+                    { typeof(DateTime), NullableType("Дата") },
+                    { typeof(Guid), NullableType("Уникальный идентификатор") },
+                    { typeof(AnyType), Type("?") },
+                    { typeof(IQueryResult), Type("Результат запроса") }
                 };
 
+        /// <summary>Тип Null.</summary>
+        private static readonly IOneSType _nullType = CreateOneSType("Null");
+
+        private static OneSTypeInfo NullableType(string typeName)
+        {
+            return new OneSTypeInfo(typeName, true);
+        }
+
+        private static OneSTypeInfo Type(string typeName)
+        {
+            return new OneSTypeInfo(typeName, false);
+        }
+
         /// <summary>
-        /// Получение имени типа в 1С по типу CLR.
+        /// Получение описание типа в 1С по типу CLR.
         /// </summary>
-        private static string GetOneSTypeNameByClrType(Type type)
+        private static OneSTypeInfo GetOneSTypeInfoByClrType(Type type)
         {
             try
             {
@@ -40,26 +53,38 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         }
 
         /// <summary>
+        /// Получение имени типа в 1С по типу CLR.
+        /// </summary>
+        public static string GetOneSTypeNameByClrType(Type type)
+        {
+            return GetOneSTypeInfoByClrType(type).Name;
+        }
+
+        /// <summary>
         /// Создание мока <see cref="ITypeDescription"/>
         /// соответствующего типу CLR.
         /// </summary>
         public static ITypeDescription Create(Type type)
         {
             Contract.Requires<ArgumentNullException>(type != null);
-            
-            return Create(GetOneSTypeNameByClrType(type));
+
+            var typeInfo = GetOneSTypeInfoByClrType(type); 
+
+            return Create(typeInfo.Name, typeInfo.IsNullable);
         }
 
-        private static ITypeDescription Create(string oneSTypeName)
+        private static ITypeDescription Create(string oneSTypeName, bool isNullable)
         {
             var mock = MockHelper
                 .CreateDisposableMock<ITypeDescription>();
 
+            var oneSType = CreateOneSType(oneSTypeName);
+            var typeArray = (isNullable)
+                                ? CreateOneSArray(oneSType, _nullType)
+                                : CreateOneSArray(oneSType);
             mock
                 .SetupGet(d => d.Types)
-                .Returns(
-                    CreateOneSArray(
-                        CreateOneSType(oneSTypeName)));
+                .Returns(typeArray);
 
             return mock.Object;
         }
@@ -94,5 +119,30 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 
             return oneSType;
         }
+
+        #region Вспомогательные типы
+
+        private struct OneSTypeInfo
+        {
+            public OneSTypeInfo(string name, bool isNullable)
+            {
+                _name = name;
+                _isNullable = isNullable;
+            }
+
+            public string Name
+            {
+                get { return _name; }
+            }
+            private readonly string _name;
+
+            public bool IsNullable
+            {
+                get { return _isNullable; }
+            }
+            private readonly bool _isNullable;
+        }
+
+        #endregion
     }
 }

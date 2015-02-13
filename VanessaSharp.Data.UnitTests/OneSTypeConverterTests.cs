@@ -12,6 +12,34 @@ namespace VanessaSharp.Data.UnitTests
     public sealed class OneSTypeConverterTests
     {
         /// <summary>
+        /// Тестирование <see cref="OneSTypeConverter.GetTypeName"/>.
+        /// </summary>
+        [Test]
+        public void TestGetTypeName()
+        {
+            // Arrange
+            const string EXPECTED_TYPE_NAME = "Test";
+
+            var globalContextMock = new Mock<IGlobalContext>(MockBehavior.Strict);
+
+            var oneSTypeMock = new Mock<IOneSType>(MockBehavior.Strict);
+            oneSTypeMock
+                .SetupGet(t => t.GlobalContext)
+                .Returns(globalContextMock.Object);
+            var oneSType = oneSTypeMock.Object;
+
+            globalContextMock
+                .Setup(ctx => ctx.String(oneSType))
+                .Returns(EXPECTED_TYPE_NAME);
+
+            // Act
+            var result = OneSTypeConverter.Default.GetTypeName(oneSType);
+
+            // Assert
+            Assert.AreEqual(EXPECTED_TYPE_NAME, result);
+        }
+        
+        /// <summary>
         /// Тестирование метода <see cref="OneSTypeConverter.TryConvertFrom"/>.
         /// </summary>
         [Test]

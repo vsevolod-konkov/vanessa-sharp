@@ -262,15 +262,18 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             Assert.AreEqual(ctx.ExpectedFieldName, testedReader.GetName(ctx.FieldIndex));
             Assert.AreEqual(ctx.FieldIndex, testedReader.GetOrdinal(ctx.ExpectedFieldName));
 
-            if (ctx.ExpectedFieldKind != FieldKind.Any)
+            switch (ctx.ExpectedFieldKind)
             {
-                var expectedFieldType = (ctx.ExpectedFieldKind == FieldKind.TablePart)
-                                            ? typeof(OneSDataReader)
-                                            : ((ITestingScalarFieldContext)ctx).ExpectedFieldType;
+                case FieldKind.Scalar:
+                    var scalarCtx = (ITestingScalarFieldContext)ctx;
+                    Assert.AreEqual(scalarCtx.ExpectedFieldType, testedReader.GetFieldType(ctx.FieldIndex));
+                    Assert.AreEqual("Null," + scalarCtx.ExpectedDataTypeName, testedReader.GetDataTypeName(ctx.FieldIndex));
+                    break;
 
-                Assert.AreEqual(
-                    expectedFieldType,
-                    testedReader.GetFieldType(ctx.FieldIndex));
+                case FieldKind.TablePart:
+                    Assert.AreEqual(typeof(OneSDataReader), testedReader.GetFieldType(ctx.FieldIndex));
+                    Assert.AreEqual("Результат запроса", testedReader.GetDataTypeName(ctx.FieldIndex));
+                    break;
             }
         }
 
@@ -318,6 +321,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         private interface ITestingScalarFieldContext : ITestingFieldContext
         {
             Type ExpectedFieldType { get; }
+            string ExpectedDataTypeName { get; }
         }
 
         private interface ITestingRecordContext
@@ -506,6 +510,11 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             public Type ExpectedFieldType
             {
                 get { return _fieldDescription.Type; }
+            }
+
+            public string ExpectedDataTypeName
+            {
+                get { return _fieldDescription.DataTypeName; }
             }
         }
 

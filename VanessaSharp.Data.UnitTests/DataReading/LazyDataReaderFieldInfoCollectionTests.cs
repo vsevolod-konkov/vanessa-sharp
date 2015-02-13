@@ -68,7 +68,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         {
             // Arrange
             const int ARGUMENT_ORDINAL = 5;
-            var expectedFieldInfo = new DataReaderFieldInfo("Field", typeof(int), null);
+            var expectedFieldInfo = new DataReaderFieldInfo("Field", typeof(int), null, null);
 
             var collectionMock = new Mock<IDataReaderFieldInfoCollection>(MockBehavior.Strict);
 

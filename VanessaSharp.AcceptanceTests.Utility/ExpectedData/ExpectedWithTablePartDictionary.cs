@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using VanessaSharp.Proxy.Common;
 
 namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
 {
@@ -26,7 +26,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
             public int Quantity;
         }
 
-        [Field("Состав")]
+        [Field("Состав", FieldType = typeof(IQueryResult))]
         public CompositionTablePart[] Composition;
 
         public static IEnumerable<ExpectedWithTablePartDictionary> ExpectedData

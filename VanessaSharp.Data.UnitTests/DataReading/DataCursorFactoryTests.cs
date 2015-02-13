@@ -27,7 +27,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
 
             fieldInfoCollectionMock
                 .Setup(c => c[It.IsInRange(0, FIELD_COUNT - 1, Range.Inclusive)])
-                .Returns(new DataReaderFieldInfo("Field", typeof(object), null));
+                .Returns(new DataReaderFieldInfo("Field", typeof(object), null, null));
 
             var queryResultSelection = new Mock<IQueryResultSelection>(MockBehavior.Strict).Object;
             var testedInstance = new DataCursorFactory();

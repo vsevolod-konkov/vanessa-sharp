@@ -23,7 +23,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             return new ReadOnlyCollection<DataReaderFieldInfo>(
                 Enumerable
                     .Range(0, count)
-                    .Select(i => new DataReaderFieldInfo(nameGenerator(i), typeof(object), null))
+                    .Select(i => new DataReaderFieldInfo(nameGenerator(i), typeof(object), null, null))
                     .ToArray()
                 );
         }

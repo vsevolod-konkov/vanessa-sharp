@@ -21,9 +21,9 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         }
         
         /// <summary>Добавление скалярного поля.</summary>
-        public void AddScalarField(string name, Type type)
+        public void AddScalarField(string name, Type type, string dataTypeName)
         {
-            _fields.Add(new ScalarFieldDescription(name, type));
+            _fields.Add(new ScalarFieldDescription(name, type, dataTypeName));
         }
 
         /// <summary>Добавление поля табличной части.</summary>

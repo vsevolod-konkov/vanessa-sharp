@@ -11,14 +11,20 @@ namespace VanessaSharp.Data.DataReading
         /// <summary>Конструктор.</summary>
         /// <param name="name">Имя поля.</param>
         /// <param name="type">Тип поля.</param>
+        /// <param name="dataTypeName">Имя типа данных поля.</param>
         /// <param name="rawValueConverter">Конвертер сырого значения из 1С.</param>
-        public DataReaderFieldInfo(string name, Type type, Func<object, object> rawValueConverter)
+        public DataReaderFieldInfo(
+            string name,
+            Type type,
+            string dataTypeName,
+            Func<object, object> rawValueConverter)
         {
             Contract.Requires<ArgumentNullException>(type != null);
-            
-            _type = type;
-            _rawValueConverter = rawValueConverter;
+
             _name = name;
+            _type = type;
+            _dataTypeName = dataTypeName;
+            _rawValueConverter = rawValueConverter;
         }
 
         /// <summary>Имя поля.</summary>
@@ -39,6 +45,15 @@ namespace VanessaSharp.Data.DataReading
             }
         }
         private readonly Type _type;
+
+        /// <summary>
+        /// Имя типа данных поля.
+        /// </summary>
+        public string DataTypeName
+        {
+            get { return _dataTypeName; }
+        }
+        private readonly string _dataTypeName;
 
         /// <summary>Конвертер сырого значения из 1С.</summary>
         public Func<object, object> RawValueConverter

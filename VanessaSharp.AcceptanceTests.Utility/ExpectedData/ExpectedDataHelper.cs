@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using VanessaSharp.AcceptanceTests.Utility.Mocks;
 
 namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
 {
@@ -27,6 +28,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
             var fieldAttr = GetFieldAttribute(fieldInfo);
 
             var fieldType = fieldAttr.FieldType ?? fieldInfo.FieldType;
+            var fieldDataTypeName = fieldAttr.DataTypeName ?? GetFieldDataTypeName(fieldType);
 
             var fieldAccessorFunc = Expression.Lambda<Func<TExpectedData, object>>(
                 Expression.Convert(fieldAccessorExpression.Body, typeof(object)),
@@ -36,6 +38,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
             return new ExpectedFieldInfo<TExpectedData>(
                 fieldAttr.FieldName,
                 fieldType,
+                fieldDataTypeName,
                 fieldAccessorFunc
                 );
         }
@@ -79,6 +82,13 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
             }
 
             return (FieldAttribute)fieldInfo.GetCustomAttributes(attrType, false)[0];
+        }
+
+        private static string GetFieldDataTypeName(Type fieldType)
+        {
+            Contract.Requires<ArgumentNullException>(fieldType != null);
+
+            return TypeDescriptionMockFactory.GetOneSTypeNameByClrType(fieldType);
         }
 
         /// <summary>
@@ -131,8 +141,9 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
             /// <summary>Конструктор.</summary>
             /// <param name="name">Имя поля.</param>
             /// <param name="type">Тип поля.</param>
+            /// <param name="dataTypeName">Имя типа данных.</param>
             /// <param name="accessor">Делегат доступа к значению поля.</param>
-            public ExpectedFieldInfo(string name, Type type, Func<T, object> accessor)
+            public ExpectedFieldInfo(string name, Type type, string dataTypeName, Func<T, object> accessor)
             {
                 Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(name));
                 Contract.Requires<ArgumentNullException>(type != null);
@@ -140,6 +151,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
 
                 _name = name;
                 _type = type;
+                _dataTypeName = dataTypeName;
                 _accessor = accessor;
             }
 
@@ -166,6 +178,15 @@ namespace VanessaSharp.AcceptanceTests.Utility.ExpectedData
                 }
             }
             private readonly Type _type;
+
+            /// <summary>
+            /// Имя типа данных поля.
+            /// </summary>
+            public string DataTypeName
+            {
+                get { return _dataTypeName; }
+            }
+            private readonly string _dataTypeName;
 
             /// <summary>Делегат доступа к значению поля.</summary>
             public Func<T, object> Accessor

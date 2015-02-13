@@ -393,5 +393,70 @@ namespace VanessaSharp.Data.UnitTests
             // Arrange-Act-Assert
             TestConvertFrom(typeof(object));
         }
+
+        /// <summary>
+        /// Тестирование <see cref="TypeDescriptionConverter.GetDataTypeName"/>
+        /// в случае наличия одного типа.
+        /// </summary>
+        [Test]
+        public void TestGetDataTypeNameWhenSingleType()
+        {
+            // Arrange
+            const string EXPECTED_DATA_TYPE_NAME = "Test";
+
+            var valueType = CreateVerifyableDisposableMock<IOneSType>().Object;
+
+            _typesArrayMock
+                .Setup(a => a.Count())
+                .Returns(1);
+            _typesArrayMock
+                .Setup(a => a.Get(0))
+                .Returns(valueType);
+
+            _oneSTypeConverterMock
+                .Setup(c => c.GetTypeName(valueType))
+                .Returns(EXPECTED_DATA_TYPE_NAME);
+
+            // Act
+            var result = _testedInstance.GetDataTypeName(_typeDescriptionMock.Object);
+
+            // Assert
+            Assert.AreEqual(EXPECTED_DATA_TYPE_NAME, result);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="TypeDescriptionConverter.GetDataTypeName"/>
+        /// в случае наличия двух типов.
+        /// </summary>
+        [Test]
+        public void TestGetDataTypeNameWhenManyTypes()
+        {
+            // Arrange
+            var valueType1 = CreateVerifyableDisposableMock<IOneSType>().Object;
+            var valueType2 = CreateVerifyableDisposableMock<IOneSType>().Object;
+
+            _typesArrayMock
+                .Setup(a => a.Count())
+                .Returns(2);
+            _typesArrayMock
+                .Setup(a => a.Get(0))
+                .Returns(valueType1);
+            _typesArrayMock
+                .Setup(a => a.Get(1))
+                .Returns(valueType2);
+
+            _oneSTypeConverterMock
+                .Setup(c => c.GetTypeName(valueType1))
+                .Returns("Test1");
+            _oneSTypeConverterMock
+                .Setup(c => c.GetTypeName(valueType2))
+                .Returns("Test2");
+
+            // Act
+            var result = _testedInstance.GetDataTypeName(_typeDescriptionMock.Object);
+
+            // Assert
+            Assert.AreEqual("Test1,Test2", result);
+        }
     }
 }

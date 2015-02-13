@@ -49,6 +49,10 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 typeConverterMock
                     .Setup(c => c.ConvertFrom(typeDescription))
                     .Returns(expectedFields[index].Type);
+
+                typeConverterMock
+                    .Setup(c => c.GetDataTypeName(typeDescription))
+                    .Returns(expectedFields[index].DataTypeName);
             }
 
             var columnMocks = Enumerable
@@ -89,7 +93,8 @@ namespace VanessaSharp.Data.UnitTests.DataReading
         }
 
         /// <summary>
-        /// Тестирование <see cref="DataReaderFieldInfoCollectionLoader.Load"/>.
+        /// Тестирование
+        /// <see cref="DataReaderFieldInfoCollectionLoader.Load(VanessaSharp.Proxy.Common.IQueryResult,VanessaSharp.Data.ITypeDescriptionConverter,VanessaSharp.Data.DataReading.IRawValueConverterProvider)"/>.
         /// </summary>
         [Test]
         public void TestLoad()
@@ -97,8 +102,8 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             // Arrange
             var expectedFields = new[]
                 {
-                    new DataReaderFieldInfo("Id", typeof(int), ConvertRawValue),
-                    new DataReaderFieldInfo("Date", typeof(DateTime), ConvertRawValue)
+                    new DataReaderFieldInfo("Id", typeof(int), "Число", ConvertRawValue),
+                    new DataReaderFieldInfo("Date", typeof(DateTime), "Дата", ConvertRawValue)
                 };
 
             InitTest(expectedFields);
@@ -115,6 +120,7 @@ namespace VanessaSharp.Data.UnitTests.DataReading
                 var field = actualResult[index];
                 Assert.AreEqual(expectedFields[index].Name, field.Name);
                 Assert.AreEqual(expectedFields[index].Type, field.Type);
+                Assert.AreEqual(expectedFields[index].DataTypeName, field.DataTypeName);
                 Assert.AreEqual(expectedFields[index].RawValueConverter, (Func<object, object>)ConvertRawValue);
             }
 
@@ -131,8 +137,8 @@ namespace VanessaSharp.Data.UnitTests.DataReading
             // Arrange
             var expectedFields = new[]
                 {
-                    new DataReaderFieldInfo("Id", typeof(int), ConvertRawValue),
-                    new DataReaderFieldInfo("Date", typeof(DateTime), ConvertRawValue)
+                    new DataReaderFieldInfo("Id", typeof(int), "Число", ConvertRawValue),
+                    new DataReaderFieldInfo("Date", typeof(DateTime), "Дата", ConvertRawValue)
                 };
 
             InitTest(expectedFields);

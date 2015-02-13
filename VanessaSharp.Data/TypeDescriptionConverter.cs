@@ -61,6 +61,37 @@ namespace VanessaSharp.Data
         }
 
         /// <summary>
+        /// Получение имени типа 1С.
+        /// </summary>
+        /// <param name="typeDescription">Описание типа 1С.</param>
+        public string GetDataTypeName(ITypeDescription typeDescription)
+        {
+            using (var types = typeDescription.Types)
+            {
+                var typesCount = types.Count();
+
+                return string.Join(
+                    ",",
+                    Enumerable
+                        .Range(0, typesCount)
+                        .Select(index => GetTypeName(types, index))
+                        .OrderBy(s => s)
+                    );
+            }
+        }
+
+        /// <summary>
+        /// Получение имени типа.
+        /// </summary>
+        /// <param name="types">Массив типов.</param>
+        /// <param name="index">Индекс типа в массиве.</param>
+        private string GetTypeName(IOneSArray<IOneSType> types, int index)
+        {
+            using (var oneSType = types.Get(index))
+                return _oneSTypeConverter.GetTypeName(oneSType);
+        }
+
+        /// <summary>
         /// Получение списка CLR-типов соответствующих описанию типа 1С.
         /// </summary>
         /// <param name="typeDescription">

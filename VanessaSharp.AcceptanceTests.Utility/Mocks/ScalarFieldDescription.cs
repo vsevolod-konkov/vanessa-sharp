@@ -11,13 +11,15 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         /// <summary>Конструктор для скалярного поля.</summary>
         /// <param name="name">Имя поля.</param>
         /// <param name="type">Тип поля.</param>
-        public ScalarFieldDescription(string name, Type type)
+        /// <param name="dataTypeName">Имя типа данных.</param>
+        public ScalarFieldDescription(string name, Type type, string dataTypeName)
             : base(name)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrEmpty(name));
             Contract.Requires<ArgumentNullException>(type != null);
 
             _type = type;
+            _dataTypeName = dataTypeName;
         }
 
         /// <summary>Вид поля.</summary>
@@ -32,5 +34,14 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
             get { return _type; }
         }
         private readonly Type _type;
+
+        /// <summary>
+        /// Имя типа данных.
+        /// </summary>
+        public string DataTypeName
+        {
+            get { return _dataTypeName; }
+        }
+        private readonly string _dataTypeName;
     }
 }

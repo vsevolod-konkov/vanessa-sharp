@@ -51,9 +51,10 @@ namespace VanessaSharp.Data.DataReading
             using (var valueType = column.ValueType)
             {
                 var clrType = typeDescriptionConverter.ConvertFrom(valueType);
+                var dataTypeName = typeDescriptionConverter.GetDataTypeName(valueType);
                 var converter = rawValueConverterProvider.GetRawValueConverter(clrType);
                 
-                return new DataReaderFieldInfo(column.Name, clrType, converter);
+                return new DataReaderFieldInfo(column.Name, clrType, dataTypeName, converter);
             }
         }
 

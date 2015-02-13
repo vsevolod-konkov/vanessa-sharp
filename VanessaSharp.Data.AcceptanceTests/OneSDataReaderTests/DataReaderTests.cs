@@ -22,8 +22,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         {}
 
         /// <summary>
-        /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>
-        /// и <see cref="OneSDataReader.GetDataTypeName"/>.
+        /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>.
         /// </summary>
         [Test]
         [TestCheckNotImplemented]
@@ -32,21 +31,10 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
             Test
                 .Source("Справочник.ТестовыйСправочник")
                 .Execute()
-                .Action(ctx =>
+                .Action(ctx => Assert.Throws<NotImplementedException>(() =>
                     {
-                        Assert.Throws<NotImplementedException>(() =>
-                        {
-                            var schemaTable = ctx.TestedReader.GetSchemaTable();
-                        });
-
-                        for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
-                        {
-                            Assert.Throws<NotImplementedException>(() =>
-                            {
-                                var typeName = ctx.TestedReader.GetDataTypeName(fieldIndex);
-                            });
-                        }
-                    })
+                        var schemaTable = ctx.TestedReader.GetSchemaTable();
+                    }))
 
                 .BeginDefineExpectedDataFor<ExpectedTestDictionary>()
 
