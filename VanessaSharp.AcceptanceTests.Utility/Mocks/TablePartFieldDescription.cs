@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
+using VanessaSharp.Data;
 
 namespace VanessaSharp.AcceptanceTests.Utility.Mocks
 {
@@ -28,6 +29,18 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         public override FieldKind Kind
         {
             get { return FieldKind.TablePart; }
+        }
+
+        /// <summary>Тип поля.</summary>
+        public override Type Type
+        {
+            get { return typeof(OneSDataReader); }
+        }
+
+        /// <summary>Имя типа данных.</summary>
+        public override string DataTypeName
+        {
+            get { return "Результат запроса"; }
         }
 
         /// <summary>

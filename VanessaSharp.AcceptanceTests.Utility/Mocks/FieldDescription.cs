@@ -24,5 +24,11 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
             get { return _name; }
         }
         private readonly string _name;
+
+        /// <summary>Тип поля.</summary>
+        public abstract Type Type { get; }
+
+        /// <summary>Имя типа данных.</summary>
+        public abstract string DataTypeName { get; }
     }
 }

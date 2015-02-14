@@ -21,5 +21,17 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         {
             get { return FieldKind.Any; }
         }
+
+        /// <summary>Тип поля.</summary>
+        public override Type Type
+        {
+            get { return typeof(AnyType); }
+        }
+
+        /// <summary>Имя типа данных.</summary>
+        public override string DataTypeName
+        {
+            get { return null; }
+        }
     }
 }

@@ -245,5 +245,51 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             VerifyGetColumn(ordinal);
         }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>.
+        /// </summary>
+        [Test]
+        public void TestGetSchemaTable()
+        {
+            // Arrange
+            var fields = new[]
+                {
+                    new DataReaderFieldInfo("Test1", typeof (string), "Null,Строка", null),
+                    new DataReaderFieldInfo("Test2", typeof (int), "Число", null)
+                };
+
+            for (var fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
+                SetupGetColumn(fieldIndex, fields[fieldIndex]);    
+
+            // Act
+            var result = TestedInstance.GetSchemaTable();
+
+            // Assert
+            Assert.AreEqual(4, result.Columns.Count);
+
+            Assert.AreEqual("ColumnOrdinal", result.Columns[0].ColumnName);
+            Assert.AreEqual("ColumnName", result.Columns[1].ColumnName);
+            Assert.AreEqual("DataTypeName", result.Columns[2].ColumnName);
+            Assert.AreEqual("AllowDBNull", result.Columns[3].ColumnName);
+
+            Assert.AreEqual(typeof(int), result.Columns[0].DataType);
+            Assert.AreEqual(typeof(string), result.Columns[1].DataType);
+            Assert.AreEqual(typeof(string), result.Columns[2].DataType);
+            Assert.AreEqual(typeof(bool), result.Columns[3].DataType);
+
+            Assert.AreEqual(fields.Length, result.Rows.Count);
+
+            for (var fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
+            {
+                var field = fields[fieldIndex];
+                var row = result.Rows[fieldIndex];
+
+                Assert.AreEqual(fieldIndex, row["ColumnOrdinal"]);
+                Assert.AreEqual(field.Name, row["ColumnName"]);
+                Assert.AreEqual(field.DataTypeName, row["DataTypeName"]);
+                Assert.AreEqual(field.DataTypeName.Contains("Null"), row["AllowDBNull"]);
+            }
+        }
     }
 }

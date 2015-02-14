@@ -24,8 +24,10 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                     { typeof(IQueryResult), Type("Результат запроса") }
                 };
 
+        private const string NULL_TYPE_NAME = "Null";
+
         /// <summary>Тип Null.</summary>
-        private static readonly IOneSType _nullType = CreateOneSType("Null");
+        private static readonly IOneSType _nullType = CreateOneSType(NULL_TYPE_NAME);
 
         private static OneSTypeInfo NullableType(string typeName)
         {
@@ -57,7 +59,11 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         /// </summary>
         public static string GetOneSTypeNameByClrType(Type type)
         {
-            return GetOneSTypeInfoByClrType(type).Name;
+            var info = GetOneSTypeInfoByClrType(type);
+
+            return info.IsNullable
+                       ? NULL_TYPE_NAME + "," + info.Name
+                       : info.Name;
         }
 
         /// <summary>

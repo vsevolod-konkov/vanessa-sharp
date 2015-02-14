@@ -249,15 +249,7 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
             Assert.AreEqual(-1, TestedInstance.RecordsAffected);
         }
 
-        /// <summary>
-        /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>.
-        /// </summary>
-        [Test]
-        [ExpectedException(typeof(NotImplementedException))]
-        public void TestNotImplementedGetSchemaTable()
-        {
-            TestedInstance.GetSchemaTable();
-        }
+        
 
         /// <summary>
         /// Тестирование <see cref="OneSDataReader.GetEnumerator"/>.

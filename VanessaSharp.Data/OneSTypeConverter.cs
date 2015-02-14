@@ -9,6 +9,8 @@ namespace VanessaSharp.Data
     /// </summary>
     internal sealed class OneSTypeConverter : IOneSTypeConverter
     {
+        public const string NULL_TYPE_NAME = "Null";
+        
         /// <summary>
         /// Экземпляр реализации <see cref="IOneSTypeConverter"/> по умолчанию.
         /// </summary>
@@ -41,7 +43,7 @@ namespace VanessaSharp.Data
                     return typeof(DateTime);
                 case "Уникальный идентификатор":
                     return typeof(Guid);
-                case "Null":
+                case NULL_TYPE_NAME:
                     return typeof(DBNull);
                 case "Результат запроса":
                     return typeof(OneSDataReader);

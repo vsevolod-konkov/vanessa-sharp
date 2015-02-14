@@ -230,10 +230,17 @@ namespace VanessaSharp.AcceptanceTests.Utility
             }
 
             /// <summary>Ожидаемый тип поля.</summary>
-            /// <param name="fieldIndex">Тип поля.</param>
+            /// <param name="fieldIndex">Индекс поля.</param>
             public FieldKind ExpectedFieldKind(int fieldIndex)
             {
                 return _expectedData.Fields[fieldIndex].Kind;
+            }
+
+            /// <summary>Ожидаемое имя типа поля.</summary>
+            /// <param name="fieldIndex">Индекс поля.</param>
+            public string ExpectedFieldDataTypeName(int fieldIndex)
+            {
+                return _expectedData.Fields[fieldIndex].DataTypeName;
             }
 
             /// <summary>Ожидаемое количество строк.</summary>

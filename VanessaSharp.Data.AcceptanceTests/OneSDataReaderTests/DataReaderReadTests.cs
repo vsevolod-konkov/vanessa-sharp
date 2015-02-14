@@ -264,15 +264,11 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
             switch (ctx.ExpectedFieldKind)
             {
-                case FieldKind.Scalar:
-                    var scalarCtx = (ITestingScalarFieldContext)ctx;
-                    Assert.AreEqual(scalarCtx.ExpectedFieldType, testedReader.GetFieldType(ctx.FieldIndex));
-                    Assert.AreEqual("Null," + scalarCtx.ExpectedDataTypeName, testedReader.GetDataTypeName(ctx.FieldIndex));
+                case FieldKind.Any:
                     break;
-
-                case FieldKind.TablePart:
-                    Assert.AreEqual(typeof(OneSDataReader), testedReader.GetFieldType(ctx.FieldIndex));
-                    Assert.AreEqual("Результат запроса", testedReader.GetDataTypeName(ctx.FieldIndex));
+                default:
+                    Assert.AreEqual(ctx.ExpectedFieldType, testedReader.GetFieldType(ctx.FieldIndex));
+                    Assert.AreEqual(ctx.ExpectedDataTypeName, testedReader.GetDataTypeName(ctx.FieldIndex));
                     break;
             }
         }
@@ -316,10 +312,6 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
             string ExpectedFieldName { get; }
             FieldKind ExpectedFieldKind { get; }
-        }
-
-        private interface ITestingScalarFieldContext : ITestingFieldContext
-        {
             Type ExpectedFieldType { get; }
             string ExpectedDataTypeName { get; }
         }
@@ -438,7 +430,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
             public ITestingFieldContext GetFieldContext(int fieldIndex)
             {
-                return TestingFieldContext.Create(
+                return new TestingFieldContext(
                     fieldIndex,
                     ExpectedData.Fields[fieldIndex]);
             }
@@ -463,14 +455,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         {
             private readonly FieldDescription _fieldDescription;
 
-            public static TestingFieldContext Create(int fieldIndex, FieldDescription fieldDescription)
-            {
-                return (fieldDescription.Kind == FieldKind.Scalar)
-                           ? new TestingScalarFieldContext(fieldIndex, (ScalarFieldDescription)fieldDescription)
-                           : new TestingFieldContext(fieldIndex, fieldDescription);
-            }
-
-            protected TestingFieldContext(int fieldIndex, FieldDescription fieldDescription)
+            public TestingFieldContext(int fieldIndex, FieldDescription fieldDescription)
             {
                 Contract.Requires<ArgumentNullException>(fieldDescription != null);
                 
@@ -489,27 +474,14 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
                 get { return _fieldDescription.Kind; }
             }
 
-            public string ExpectedFieldName
-            {
-                get { return _fieldDescription.Name; }
-            }
-        }
-
-        private sealed class TestingScalarFieldContext : TestingFieldContext, ITestingScalarFieldContext
-        {
-            private readonly ScalarFieldDescription _fieldDescription;
-            
-            public TestingScalarFieldContext(int fieldIndex, ScalarFieldDescription fieldDescription) 
-                : base(fieldIndex, fieldDescription)
-            {
-                Contract.Requires<ArgumentNullException>(fieldDescription != null);
-
-                _fieldDescription = fieldDescription;
-            }
-
             public Type ExpectedFieldType
             {
                 get { return _fieldDescription.Type; }
+            }
+
+            public string ExpectedFieldName
+            {
+                get { return _fieldDescription.Name; }
             }
 
             public string ExpectedDataTypeName
@@ -676,7 +648,7 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
 
             public ITestingFieldContext GetFieldContext(int fieldIndex)
             {
-                return TestingFieldContext.Create(fieldIndex, _expectedData.Fields[fieldIndex]);
+                return new TestingFieldContext(fieldIndex, _expectedData.Fields[fieldIndex]);
             }
 
             public ITestingRecordContext GetRecordContext(int recordIndex)

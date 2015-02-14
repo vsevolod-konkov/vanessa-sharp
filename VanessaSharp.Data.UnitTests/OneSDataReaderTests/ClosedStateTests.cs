@@ -156,5 +156,15 @@ namespace VanessaSharp.Data.UnitTests.OneSDataReaderTests
         {
             TestedInstance.NextResult();
         }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>.
+        /// </summary>
+        [Test]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestGetSchemaTable()
+        {
+            TestedInstance.GetSchemaTable();
+        }
     }
 }

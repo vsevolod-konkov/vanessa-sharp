@@ -29,7 +29,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         }
 
         /// <summary>Тип поля.</summary>
-        public Type Type
+        public override Type Type
         {
             get { return _type; }
         }
@@ -38,7 +38,7 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
         /// <summary>
         /// Имя типа данных.
         /// </summary>
-        public string DataTypeName
+        public override string DataTypeName
         {
             get { return _dataTypeName; }
         }

@@ -25,16 +25,42 @@ namespace VanessaSharp.Data.AcceptanceTests.OneSDataReaderTests
         /// Тестирование <see cref="OneSDataReader.GetSchemaTable"/>.
         /// </summary>
         [Test]
-        [TestCheckNotImplemented]
         public void TestGetSchema()
         {
             Test
                 .Source("Справочник.ТестовыйСправочник")
                 .Execute()
-                .Action(ctx => Assert.Throws<NotImplementedException>(() =>
+                .Action(ctx => 
                     {
                         var schemaTable = ctx.TestedReader.GetSchemaTable();
-                    }))
+
+                        Assert.AreEqual(4, schemaTable.Columns.Count);
+
+                        Assert.AreEqual("ColumnOrdinal", schemaTable.Columns[0].ColumnName);
+                        Assert.AreEqual("ColumnName", schemaTable.Columns[1].ColumnName);
+                        Assert.AreEqual("DataTypeName", schemaTable.Columns[2].ColumnName);
+                        Assert.AreEqual("AllowDBNull", schemaTable.Columns[3].ColumnName);
+
+                        Assert.AreEqual(typeof(int), schemaTable.Columns[0].DataType);
+                        Assert.AreEqual(typeof(string), schemaTable.Columns[1].DataType);
+                        Assert.AreEqual(typeof(string), schemaTable.Columns[2].DataType);
+                        Assert.AreEqual(typeof(bool), schemaTable.Columns[3].DataType);
+
+                        Assert.AreEqual(ctx.ExpectedFieldsCount, schemaTable.Rows.Count);
+
+                        for (var fieldIndex = 0; fieldIndex < ctx.ExpectedFieldsCount; fieldIndex++)
+                        {
+                            var row = schemaTable.Rows[fieldIndex];
+
+                            Assert.AreEqual(fieldIndex, row["ColumnOrdinal"]);
+                            Assert.AreEqual(ctx.ExpectedFieldName(fieldIndex), row["ColumnName"]);
+                            Assert.AreEqual(ctx.ExpectedFieldDataTypeName(fieldIndex), row["DataTypeName"]);
+                            Assert.AreEqual(
+                                ctx.ExpectedFieldDataTypeName(fieldIndex).Contains("Null"),
+                                row["AllowDBNull"]
+                                );
+                        }
+                    })
 
                 .BeginDefineExpectedDataFor<ExpectedTestDictionary>()
 

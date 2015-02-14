@@ -204,10 +204,44 @@ namespace VanessaSharp.Data
         /// <exception cref="T:System.InvalidOperationException">Объект <see cref="T:System.Data.SqlClient.SqlDataReader"/> закрыт. </exception>
         /// <filterpriority>1</filterpriority>
         /// <exception cref="NotImplementedException"/>
-        [CurrentVersionNotImplemented]
         public override DataTable GetSchemaTable()
         {
-            throw new NotImplementedException();
+            if (_currentState == States.Closed)
+            {
+                throw new InvalidOperationException(
+                    "Недопустимо вызывать GetSchemaTable в закрытом состоянии.");
+            }
+
+            var result = new DataTable();
+
+            result.BeginInit();
+
+            result.Columns.Add("ColumnOrdinal", typeof(int));
+            result.Columns.Add("ColumnName", typeof(string));
+            result.Columns.Add("DataTypeName", typeof(string));
+            result.Columns.Add("AllowDBNull", typeof(bool));
+
+            result.EndInit();
+
+            result.BeginLoadData();
+
+            for (var ordinal = 0; ordinal < _dataRecordsProvider.Fields.Count; ordinal++)
+            {
+                var field = _dataRecordsProvider.Fields[ordinal];
+
+                result.LoadDataRow(new object[]
+                    {
+                        ordinal,
+                        field.Name,
+                        field.DataTypeName,
+                        field.DataTypeName.Contains(OneSTypeConverter.NULL_TYPE_NAME)
+                    },
+                    true);
+            }
+
+            result.EndLoadData();
+
+            return result;
         }
 
         /// <summary>
