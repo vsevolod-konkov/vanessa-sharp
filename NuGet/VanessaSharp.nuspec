@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>VanessaSharp</id>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
         <title>Vanessa Sharp - .Net Data Access to 1C</title>
         <authors>Vsevolod Konkov</authors>
         <owners>Vsevolod Konkov</owners>
@@ -12,7 +12,7 @@
         <developmentDependency>true</developmentDependency>
         <description>Vanessa Sharp - .Net library for data access to 1C. Supports standard software interfaces for data access. Vanessa Sharp contains 1C ADO.Net Provider and LinqTo1C (LINQ Provider).</description>
         <summary>Vanessa Sharp - .Net library for data access to 1C. Supports standard software interfaces for data access. Vanessa Sharp contains 1C ADO.Net Provider and LinqTo1C (LINQ Provider).</summary>
-        <copyright>&gt;Copyright 2014</copyright>
+        <copyright>Copyright 2015</copyright>
         <tags>1С ADO.Net LINQ</tags>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework="" />
