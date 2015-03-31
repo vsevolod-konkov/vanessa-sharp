@@ -137,11 +137,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             throw CreateExpressionNotSupportedException(node);
         }
 
-        /// <summary>Посещение бинарного зла выражения по умолчанию.</summary>
+        /// <summary>Посещение бинарного узла выражения по умолчанию.</summary>
         /// <param name="node">Посещаемый узел.</param>
         protected Expression DefaultVisitBinary(BinaryExpression node)
         {
             return base.VisitBinary(node);
+        }
+
+        /// <summary>Посещение узла выражения унарной операции по умолчанию.</summary>
+        /// <param name="node">Посещаемый узел.</param>
+        protected Expression DefaultVisitUnary(UnaryExpression node)
+        {
+            return base.VisitUnary(node);
         }
     }
 }

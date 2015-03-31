@@ -142,7 +142,10 @@
     <Compile Include="Internal\ExpressionParsePipeline\SortExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortKind.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SourceDescriptionByType.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryOperationCondition.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryOperationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNotCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlOrderByStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSortFieldExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\WhereExpressionTransformer.cs" />

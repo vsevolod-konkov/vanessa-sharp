@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
@@ -16,7 +17,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         private const string FILTER_FIELD = "filter_field";
         private const int FILTER_VALUE = 24;
 
-        private Mock<IOneSMappingProvider> _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
+        private Mock<IOneSMappingProvider> _mappingProviderMock;
+        private QueryParseContext _context;
 
         /// <summary>
         /// Инициализация теста.
@@ -25,22 +27,40 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void SetUp()
         {
             _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.Id, FILTER_FIELD)
+                .End();
+
+            _context = new QueryParseContext();
         }
 
-        /// <summary>Тестирование преобразования бинарного отношения.</summary>
-        /// <param name="testedFilter">Тестируемое выражение фильтрации.</param>
-        /// <param name="expectedRelationType">Ожидаемый тип бинарного отношения в результирующем SQL-условии.</param>
-        private void TestTransformWhenBinaryRelation<T>(Expression<Func<T, bool>> testedFilter, SqlBinaryRelationType expectedRelationType)
+        /// <summary>
+        /// Запуск тестируемого преобразования.
+        /// </summary>
+        /// <param name="testedFilter">Тестируемое выражение.</param>
+        private SqlCondition Transform<T>(Expression<Func<T, bool>> testedFilter)
         {
-            // Arrange
-            var context = new QueryParseContext();
+            return WhereExpressionTransformer.Transform(_mappingProviderMock.Object, _context, testedFilter);
+        }
 
-            // Act
-            var result = WhereExpressionTransformer.Transform(_mappingProviderMock.Object, context, testedFilter);
-            var parameters = context.Parameters.GetSqlParameters();
+        /// <summary>
+        /// Получение sql-параметров запроса.
+        /// </summary>
+        private ReadOnlyCollection<SqlParameter> GetSqlParameters()
+        {
+            return _context.Parameters.GetSqlParameters();
+        }
 
-            // Assert
-            var binaryCondition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(result);
+        /// <summary>
+        /// Проверка бинарного отношения.
+        /// </summary>
+        /// <param name="testedCondition">Тестируемое условие.</param>
+        /// <param name="expectedRelationType">Тип сравнения.</param>
+        private void AssertBinaryRelation(SqlCondition testedCondition, SqlBinaryRelationType expectedRelationType)
+        {
+            var binaryCondition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(testedCondition);
 
             Assert.AreEqual(expectedRelationType, binaryCondition.RelationType);
 
@@ -50,10 +70,23 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var parameterExpression = AssertEx.IsInstanceAndCastOf<SqlParameterExpression>(binaryCondition.SecondOperand);
             var parameterName = parameterExpression.ParameterName;
 
+            var parameters = GetSqlParameters();
             Assert.AreEqual(1, parameters.Count);
             var parameter = parameters[0];
             Assert.AreEqual(parameterName, parameter.Name);
             Assert.AreEqual(FILTER_VALUE, parameter.Value);
+        }
+
+        /// <summary>Тестирование преобразования бинарного отношения.</summary>
+        /// <param name="testedFilter">Тестируемое выражение фильтрации.</param>
+        /// <param name="expectedRelationType">Ожидаемый тип бинарного отношения в результирующем SQL-условии.</param>
+        private void TestTransformWhenBinaryRelation<T>(Expression<Func<T, bool>> testedFilter, SqlBinaryRelationType expectedRelationType)
+        {
+            // Act
+            var result = Transform(testedFilter);
+
+            // Assert
+            AssertBinaryRelation(result, expectedRelationType);
         }
 
         /// <summary>Тестирование преобразования бинарного отношения записей <see cref="OneSDataRecord"/>.</summary>
@@ -69,11 +102,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// <param name="expectedRelationType">Ожидаемый тип бинарного отношения в результирующем SQL-условии.</param>
         private void TestTransformWhenTypedRecordBinaryRelation(Expression<Func<SomeData, bool>> testedFilter, SqlBinaryRelationType expectedRelationType)
         {
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("?")
-                    .FieldMap(d => d.Id, FILTER_FIELD)
-                .End();
-            
             TestTransformWhenBinaryRelation(testedFilter, expectedRelationType);
         }
         
@@ -195,6 +223,57 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void TestTransformWhenTypedTupleLessOrEqual()
         {
             TestTransformWhenTypedRecordBinaryRelation(d => d.Id <= FILTER_VALUE, SqlBinaryRelationType.LessOrEqual);
+        }
+
+        /// <summary>
+        /// Тестирование унарной операции.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenNotOperation()
+        {
+            // Act
+            Expression<Func<SomeData, bool>> testedFilter = d => !(d.Id < FILTER_VALUE);
+            var result = Transform(testedFilter);
+
+            // Assert
+            var notCondition = AssertEx.IsInstanceAndCastOf<SqlNotCondition>(result);
+            AssertBinaryRelation(notCondition.Condition, SqlBinaryRelationType.Less);
+        }
+
+        /// <summary>
+        /// Тестирование бинарной операции.
+        /// </summary>
+        private void TestTransformWhenBinaryOperation(Expression<Func<SomeData, bool>> testedFilter, SqlBinaryOperationType expectedOperationType)
+        {
+            // Act
+            var result = Transform(testedFilter);
+
+            // Assert
+            var binaryOperationCondition = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationCondition>(result);
+            Assert.AreEqual(expectedOperationType, binaryOperationCondition.OperationType);
+
+            AssertBinaryRelation(binaryOperationCondition.FirstOperand, SqlBinaryRelationType.LessOrEqual);
+            AssertBinaryRelation(binaryOperationCondition.SecondOperand, SqlBinaryRelationType.GreaterOrEqual);
+        }
+
+        /// <summary>
+        /// Тестирование бинарной операции И.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenAndOperation()
+        {
+            Expression<Func<SomeData, bool>> testedFilter = d => (d.Id <= FILTER_VALUE) && (d.Id >= FILTER_VALUE);
+            TestTransformWhenBinaryOperation(testedFilter, SqlBinaryOperationType.And);
+        }
+
+        /// <summary>
+        /// Тестирование бинарной операции ИЛИ.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenOrOperation()
+        {
+            Expression<Func<SomeData, bool>> testedFilter = d => (d.Id <= FILTER_VALUE) || (d.Id >= FILTER_VALUE);
+            TestTransformWhenBinaryOperation(testedFilter, SqlBinaryOperationType.Or);
         }
 
         // TODO Надо подумать о желаемом поведении"

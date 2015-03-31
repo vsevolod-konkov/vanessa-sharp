@@ -98,7 +98,37 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _stackEngine.BinaryRelation(relationType.Value);
                 return result;
             }
-            
+
+            if (node.Type == typeof (bool))
+            {
+                var operationType = GetSqlBinaryOperationType(node.NodeType);
+                if (operationType.HasValue)
+                {
+                    _stackEngine.BinaryOperation(operationType.Value);
+                    return result;
+                }
+            }
+
+            throw CreateExpressionNotSupportedException(node);
+        }
+
+        /// <summary>
+        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.UnaryExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
+        protected override Expression VisitUnary(UnaryExpression node)
+        {
+            var result = DefaultVisitUnary(node);
+
+            if (node.NodeType == ExpressionType.Not)
+            {
+                _stackEngine.NotOperation();
+                return result;
+            }
+
             throw CreateExpressionNotSupportedException(node);
         }
 
@@ -119,6 +149,23 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     return SqlBinaryRelationType.Less;
                 case ExpressionType.LessThanOrEqual:
                     return SqlBinaryRelationType.LessOrEqual;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>Получение типа бинарной логической операции в зависимости от типа узла выражения.</summary>
+        private static SqlBinaryOperationType? GetSqlBinaryOperationType(ExpressionType expressionType)
+        {
+            switch (expressionType)
+            {
+                case ExpressionType.AndAlso:
+                case ExpressionType.And:
+                    return SqlBinaryOperationType.And;
+                
+                case ExpressionType.OrElse:
+                case ExpressionType.Or:
+                    return SqlBinaryOperationType.Or;
                 default:
                     return null;
             }
@@ -173,6 +220,30 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 var firstOperand = Pop<SqlExpression>();
 
                 var condition = new SqlBinaryRelationCondition(relationType, firstOperand, secondOperand);
+                _stack.Push(condition);
+            }
+
+            /// <summary>
+            /// Вытягивание двух условий из стека и положение в стек созданного условия бинарной логической операции.
+            /// </summary>
+            /// <param name="operationType">Тип бинарной логической операции.</param>
+            public void BinaryOperation(SqlBinaryOperationType operationType)
+            {
+                var secondOperand = Pop<SqlCondition>();
+                var firstOperand = Pop<SqlCondition>();
+
+                var condition = new SqlBinaryOperationCondition(operationType, firstOperand, secondOperand);
+                _stack.Push(condition);
+            }
+
+            /// <summary>
+            /// Вытягивание условия из стека и заталкивания в него созданного условия отрицания.
+            /// </summary>
+            public void NotOperation()
+            {
+                var operand = Pop<SqlCondition>();
+
+                var condition = new SqlNotCondition(operand);
                 _stack.Push(condition);
             }
 

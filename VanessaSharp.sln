@@ -34,6 +34,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Requirements", "Requirements", "{B0BF4273-9A8D-4E86-BEDF-169B5C80D9CC}"
 	ProjectSection(SolutionItems) = preProject
 		Requirements\Backlog.xlsx = Requirements\Backlog.xlsx
+		Requirements\Linq.docx = Requirements\Linq.docx
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VanessaSharp.Data.Linq", "VanessaSharp.Data.Linq\VanessaSharp.Data.Linq.csproj", "{1B1AB6C6-5603-470F-A05A-712682A87CEE}"
