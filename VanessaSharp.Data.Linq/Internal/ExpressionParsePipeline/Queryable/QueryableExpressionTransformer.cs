@@ -23,7 +23,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// <param name="expression">Выражение.</param>
         public IQuery Transform(Expression expression)
         {
-            var handler = new QueryBuilder();
+            var builder = new QueryBuilder();
+            IQueryableExpressionHandler handler = new QueryableExpressionPreEvaluator(builder);
             var visitor = new QueryableExpressionVisitor(handler);
 
             try
@@ -32,7 +33,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 visitor.Visit(expression);
                 handler.HandleEnd();
 
-                return handler.BuiltQuery;
+                return builder.BuiltQuery;
             }
             catch (InvalidOperationException e)
             {

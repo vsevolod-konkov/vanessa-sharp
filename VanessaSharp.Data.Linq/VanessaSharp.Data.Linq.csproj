@@ -133,7 +133,9 @@
     <Compile Include="Internal\ExpressionParsePipeline\IQueryOfT.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ISourceDescription.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ISourceResolver.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\PreEvaluator.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\IQueryableExpressionTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionPreEvaluator.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryFactory.cs" />
