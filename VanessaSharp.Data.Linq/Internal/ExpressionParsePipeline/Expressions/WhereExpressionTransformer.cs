@@ -90,6 +90,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitBinary(BinaryExpression node)
         {
+            if (node.Type == typeof(bool) 
+                && 
+                (node.NodeType == ExpressionType.Equal || node.NodeType == ExpressionType.NotEqual))
+            {
+                var leftIsNull = IsNullValue(node.Left);
+                var rightIsNull = IsNullValue(node.Right);
+
+                if (leftIsNull || rightIsNull)
+                {
+                    Contract.Assert(!(leftIsNull && rightIsNull), "Нарушение условия предвычислений. Оказалось null op null");
+
+                    Visit(leftIsNull ? node.Right : node.Left);
+                    _stackEngine.TestIsNull(node.NodeType == ExpressionType.Equal);
+
+                    return node;
+                }
+            }
+
             var result = DefaultVisitBinary(node);
 
             var relationType = GetSqlBinaryRelationType(node.NodeType);
@@ -99,7 +117,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return result;
             }
 
-            if (node.Type == typeof (bool))
+            if (node.Type == typeof(bool))
             {
                 var operationType = GetSqlBinaryOperationType(node.NodeType);
                 if (operationType.HasValue)
@@ -110,6 +128,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             throw CreateExpressionNotSupportedException(node);
+        }
+
+        /// <summary>
+        /// Проверка того, является ли выражение
+        /// значением <c>null</c>.
+        /// </summary>
+        private static bool IsNullValue(Expression node)
+        {
+            var constant = node as ConstantExpression;
+
+            return (constant != null)
+                   && (constant.Value == null);
         }
 
         /// <summary>
@@ -244,6 +274,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 var operand = Pop<SqlCondition>();
 
                 var condition = new SqlNotCondition(operand);
+                _stack.Push(condition);
+            }
+
+            /// <summary>
+            /// Вытягивание выражения из стека и запихивание в стек условия проверки на NULL или NOT NULL.
+            /// </summary>
+            /// <param name="isNull">Добавление условия проверки на NULL.</param>
+            public void TestIsNull(bool isNull)
+            {
+                var operand = Pop<SqlExpression>();
+
+                var condition = new SqlIsNullCondition(operand, isNull);
                 _stack.Push(condition);
             }
 

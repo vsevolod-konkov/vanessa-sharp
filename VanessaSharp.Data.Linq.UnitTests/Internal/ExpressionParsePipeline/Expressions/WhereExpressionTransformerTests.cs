@@ -15,6 +15,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
     public sealed class WhereExpressionTransformerTests
     {
         private const string FILTER_FIELD = "filter_field";
+        private const string NULLABLE_FIELD = "nullable_field";
         private const int FILTER_VALUE = 24;
 
         private Mock<IOneSMappingProvider> _mappingProviderMock;
@@ -31,6 +32,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             _mappingProviderMock
                 .BeginSetupGetTypeMappingFor<SomeData>("?")
                     .FieldMap(d => d.Id, FILTER_FIELD)
+                    .FieldMap(d => d.Name, NULLABLE_FIELD)
                 .End();
 
             _context = new QueryParseContext();
@@ -276,6 +278,40 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             TestTransformWhenBinaryOperation(testedFilter, SqlBinaryOperationType.Or);
         }
 
+        /// <summary>
+        /// Тестирование преобразования проверки на <c>null</c>.
+        /// </summary>
+        private void TestTransformWhenIsNull(Expression<Func<SomeData, bool>> testedFilter, bool expectedTestIsNull)
+        {
+            // Act
+            var result = Transform(testedFilter);
+
+            // Assert
+            var isNullCondition = AssertEx.IsInstanceAndCastOf<SqlIsNullCondition>(result);
+            Assert.AreEqual(expectedTestIsNull, isNullCondition.IsNull);
+
+            var fieldExpression = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(isNullCondition.Expression);
+            Assert.AreEqual(NULLABLE_FIELD, fieldExpression.FieldName);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования проверки на <c>null</c>.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenIsNull()
+        {
+            TestTransformWhenIsNull(d => d.Name == null, true);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования проверки на не <c>null</c>.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenIsNotNull()
+        {
+            TestTransformWhenIsNull(d => d.Name != null, false);
+        }
+
         // TODO Надо подумать о желаемом поведении"
         /// <summary>
         /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
@@ -326,6 +362,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public sealed class SomeData
         {
             public int Id;
+
+            public string Name;
         }
     }
 }
