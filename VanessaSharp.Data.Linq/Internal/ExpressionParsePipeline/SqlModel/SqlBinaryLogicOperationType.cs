@@ -3,7 +3,7 @@
     /// <summary>
     /// Тип бинарной логической операции.
     /// </summary>
-    internal enum SqlBinaryOperationType
+    internal enum SqlBinaryLogicOperationType
     {
         And,
         Or

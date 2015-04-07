@@ -30,7 +30,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
-        SqlFieldExpression TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression);
+        SqlExpression TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression);
 
         /// <summary>Преобразование получения типизированных записей.</summary>
         /// <typeparam name="T">Тип записей.</typeparam>
@@ -75,11 +75,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
-        SqlFieldExpression IExpressionTransformMethods.TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression)
+        SqlExpression IExpressionTransformMethods.TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression)
         {
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
-            Contract.Ensures(Contract.Result<SqlFieldExpression>() != null);
+            Contract.Ensures(Contract.Result<SqlExpression>() != null);
 
             return null;
         }

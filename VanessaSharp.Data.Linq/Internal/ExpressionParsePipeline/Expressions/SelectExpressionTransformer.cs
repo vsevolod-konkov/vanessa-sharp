@@ -10,12 +10,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal sealed class SelectExpressionTransformer : ExpressionVisitorBase
     {
         /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>
-        /// <param name="fieldAccessVisitorStrategy">Стратегия посещения доступа к полю.</param>
-        /// <param name="columnExpressionBuilder">Построитель выражений для колонок выборки.</param>
-        private SelectExpressionTransformer(FieldAccessVisitorStrategy fieldAccessVisitorStrategy, ColumnExpressionBuilder columnExpressionBuilder)
+        private SelectExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression, IOneSMappingProvider mappingProvider)
         {
-            _fieldAccessVisitorStrategy = fieldAccessVisitorStrategy;
-            _columnExpressionBuilder = columnExpressionBuilder;
+            _expressionBuilder = new SqlObjectBuilder(context, recordExpression, mappingProvider);
         }
 
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
@@ -31,13 +28,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(expression != null);
             Contract.Ensures(Contract.Result<SelectionPartParseProduct<TOutput>>() != null);
 
-            var columnBuilder = new ColumnExpressionBuilder();
-            var fieldAccessVisitorStrategy = FieldAccessVisitorStrategy.Create(columnBuilder, expression.Parameters[0], mappingProvider);
-
             return new SelectExpressionTransformer(
-                fieldAccessVisitorStrategy,
-                columnBuilder
-                )
+                context, expression.Parameters[0], mappingProvider)
+                
                 .TransformLambdaBody<TOutput>(expression.Body);
         }
 
@@ -56,11 +49,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 CreateItemReader<T>(resultExpression));
         }
 
-        /// <summary>Стратегия посещения доступа к полю.</summary>
-        private readonly FieldAccessVisitorStrategy _fieldAccessVisitorStrategy;
+        private readonly SqlObjectBuilder _expressionBuilder;
 
         /// <summary>Построитель выражений для колонок выборки.</summary>
-        private readonly ColumnExpressionBuilder _columnExpressionBuilder;
+        private readonly ColumnExpressionBuilder _columnExpressionBuilder = new ColumnExpressionBuilder();
 
         /// <summary>
         /// Создание делегата создателя элемента вычитываемого из записи.
@@ -87,8 +79,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            return _fieldAccessVisitorStrategy
-                .VisitMethodCall(node, n => base.VisitMethodCall(n));
+            if (_expressionBuilder.HandleMethodCall(node))
+            {
+                return _columnExpressionBuilder.GetColumnAccessExpression(
+                            _expressionBuilder.GetExpression(),
+                            node.Type);
+            }
+
+            return base.VisitMethodCall(node);
         }
 
         /// <summary>
@@ -100,8 +98,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMember(MemberExpression node)
         {
-            return _fieldAccessVisitorStrategy
-                .VisitMember(node, n => base.VisitMember(n));
+            if (_expressionBuilder.HandleMember(node))
+            {
+                return _columnExpressionBuilder.GetColumnAccessExpression(
+                            _expressionBuilder.GetExpression(),
+                            node.Type);
+            }
+
+            return base.VisitMember(node);
         }
 
         /// <summary>

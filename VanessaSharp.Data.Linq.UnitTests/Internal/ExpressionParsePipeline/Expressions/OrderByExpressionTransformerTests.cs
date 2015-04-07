@@ -4,6 +4,7 @@ using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
@@ -32,7 +33,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
-            Assert.AreEqual(FIELD_NAME, result.FieldName);
+            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result);
+            Assert.AreEqual(FIELD_NAME, field.FieldName);
         }
 
         /// <summary>
@@ -55,7 +57,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
-            Assert.AreEqual(FIELD_NAME, result.FieldName);
+            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result);
+            Assert.AreEqual(FIELD_NAME, field.FieldName);
         }
 
         /// <summary>

@@ -16,7 +16,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <param name="firstOperand">Первый операнд.</param>
         /// <param name="secondOperand">Второй операнд.</param>
         public SqlBinaryOperationCondition(
-            SqlBinaryOperationType operationType, SqlCondition firstOperand, SqlCondition secondOperand)
+            SqlBinaryLogicOperationType operationType, SqlCondition firstOperand, SqlCondition secondOperand)
         {
             Contract.Requires<ArgumentNullException>(firstOperand != null);
             Contract.Requires<ArgumentNullException>(secondOperand != null);
@@ -29,11 +29,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <summary>
         /// Тип бинарной логической операции.
         /// </summary>
-        public SqlBinaryOperationType OperationType
+        public SqlBinaryLogicOperationType OperationType
         {
             get { return _operationType; }
         }
-        private readonly SqlBinaryOperationType _operationType;
+        private readonly SqlBinaryLogicOperationType _operationType;
 
         /// <summary>
         /// Первый операнд.
@@ -83,13 +83,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
 
         /// <summary>Получение SQL-символа для бинарной операции.</summary>
         /// <param name="operationType">Тип бинарной операции.</param>
-        private static string GetSqlSymbolForOperation(SqlBinaryOperationType operationType)
+        private static string GetSqlSymbolForOperation(SqlBinaryLogicOperationType operationType)
         {
             switch (operationType)
             {
-                case SqlBinaryOperationType.And:
+                case SqlBinaryLogicOperationType.And:
                     return "AND";
-                case SqlBinaryOperationType.Or:
+                case SqlBinaryLogicOperationType.Or:
                     return "OR";
                 default:
                     throw new ArgumentOutOfRangeException("operationType");

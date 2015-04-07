@@ -8,24 +8,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
     internal sealed class SqlSortFieldExpression
     {
         /// <summary>Конструктор.</summary>
-        /// <param name="field">Поле по которому производится сортировка.</param>
+        /// <param name="expression">Выражение по которому производится сортировка.</param>
         /// <param name="sortKind">Направление сортировки.</param>
-        public SqlSortFieldExpression(SqlFieldExpression field, SortKind sortKind)
+        public SqlSortFieldExpression(SqlExpression expression, SortKind sortKind)
         {
-            Contract.Requires<ArgumentNullException>(field != null);
+            Contract.Requires<ArgumentNullException>(expression != null);
             
-            _field = field;
+            _expression = expression;
             _sortKind = sortKind;
         }
 
         /// <summary>
-        /// Поле по которому производится сортировка.
+        /// Выражение по которому производится сортировка.
         /// </summary>
-        public SqlFieldExpression Field
+        public SqlExpression Expression
         {
-            get { return _field; }
+            get { return _expression; }
         }
-        private readonly SqlFieldExpression _field;
+        private readonly SqlExpression _expression;
 
         /// <summary>
         /// Направление сортировки.
@@ -39,7 +39,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <summary>Генерация кода SQL-запроса.</summary>
         public void BuildSql(StringBuilder sqlBuilder)
         {
-            Field.BuildSql(sqlBuilder);
+            Expression.BuildSql(sqlBuilder);
             if (SortKind == SortKind.Descending)
                 sqlBuilder.Append(" DESC");
         }

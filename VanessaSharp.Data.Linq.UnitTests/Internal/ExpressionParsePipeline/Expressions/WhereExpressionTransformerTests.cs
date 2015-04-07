@@ -245,7 +245,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// <summary>
         /// Тестирование бинарной операции.
         /// </summary>
-        private void TestTransformWhenBinaryOperation(Expression<Func<SomeData, bool>> testedFilter, SqlBinaryOperationType expectedOperationType)
+        private void TestTransformWhenBinaryOperation(Expression<Func<SomeData, bool>> testedFilter, SqlBinaryLogicOperationType expectedOperationType)
         {
             // Act
             var result = Transform(testedFilter);
@@ -265,7 +265,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void TestTransformWhenAndOperation()
         {
             Expression<Func<SomeData, bool>> testedFilter = d => (d.Id <= FILTER_VALUE) && (d.Id >= FILTER_VALUE);
-            TestTransformWhenBinaryOperation(testedFilter, SqlBinaryOperationType.And);
+            TestTransformWhenBinaryOperation(testedFilter, SqlBinaryLogicOperationType.And);
         }
 
         /// <summary>
@@ -275,7 +275,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void TestTransformWhenOrOperation()
         {
             Expression<Func<SomeData, bool>> testedFilter = d => (d.Id <= FILTER_VALUE) || (d.Id >= FILTER_VALUE);
-            TestTransformWhenBinaryOperation(testedFilter, SqlBinaryOperationType.Or);
+            TestTransformWhenBinaryOperation(testedFilter, SqlBinaryLogicOperationType.Or);
         }
 
         /// <summary>

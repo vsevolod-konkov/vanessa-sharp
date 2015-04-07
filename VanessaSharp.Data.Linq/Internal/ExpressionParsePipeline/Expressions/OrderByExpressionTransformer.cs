@@ -6,47 +6,33 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Преобразователь LINQ-выражение метода OrderBy[Descending] и ThenBy[Descending] в SQL-условие под ORDER BY.</summary>
-    internal sealed class OrderByExpressionTransformer : FieldAccessExpressionTransformerBase<SqlFieldExpression>
+    internal sealed class OrderByExpressionTransformer : ExpressionToSqlObjectTransformer<SqlExpression>
     {
         /// <summary>Конструктор принимающий выражение записи данных.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="fieldAccessVisitorStrategy">Стратегия посещения доступа к полю.</param>
-        /// <param name="fieldHolder">Хранитель выражения поля.</param>
+        /// <param name="recordExpression">Выражение записи.</param>
+        /// <param name="mappingProvider">Поставщик соответствий типам CLR источников данных 1С.</param>
         private OrderByExpressionTransformer(
-            QueryParseContext context, FieldAccessVisitorStrategy fieldAccessVisitorStrategy, FieldHolder fieldHolder)
-            : base(context, fieldAccessVisitorStrategy)
-        {
-            _fieldHolder = fieldHolder;
-        }
+            QueryParseContext context,
+            ParameterExpression recordExpression,
+            IOneSMappingProvider mappingProvider)
+            : base(context, recordExpression, mappingProvider)
+        {}
 
-        /// <summary>Выражение указывающее на поле сортировки.</summary>
-        private readonly FieldHolder _fieldHolder;
-
-        /// <summary>Получение результата трансформации.</summary>
-        protected override SqlFieldExpression GetTransformResult()
+        /// <summary>
+        /// Получение результа преобразования.
+        /// </summary>
+        /// <returns></returns>
+        protected override SqlExpression GetResult()
         {
-            return _fieldHolder.FieldExpression;
-        }
-
-        /// <summary>Фабрика преобразователя.</summary>
-        private sealed class Factory : TransformerFactoryBase
-        {
-            public override FieldAccessExpressionTransformerBase<SqlFieldExpression> Create(
-                IOneSMappingProvider mappingProvider, QueryParseContext context, ParameterExpression recordExpression)
-            {
-                var fieldHolder = new FieldHolder();
-                var fieldAccessVisitorStrategy = CreateFieldAccessVisitorStrategy(
-                    fieldHolder, recordExpression, mappingProvider);
-                
-                return new OrderByExpressionTransformer(context, fieldAccessVisitorStrategy, fieldHolder);
-            }
+            return GetExpression();
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
         /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора.</param>
         /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
-        public static SqlFieldExpression Transform(
+        public static SqlExpression Transform(
             IOneSMappingProvider mappingProvider,
             QueryParseContext context,
             LambdaExpression sortKeyExpression)
@@ -55,29 +41,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
             Contract.Requires<ArgumentException>(sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
-            Contract.Ensures(Contract.Result<SqlFieldExpression>() != null);
+            Contract.Ensures(Contract.Result<SqlExpression>() != null);
 
             return Transform<Factory>(mappingProvider, context, sortKeyExpression);
         }
 
-        /// <summary>Держатель выражения поля.</summary>
-        private sealed class FieldHolder : IFieldAccessVisitorForOnlySql
+        private sealed class Factory : ITransformerFactory
         {
-            /// <summary>Выражение поле.</summary>
-            public SqlFieldExpression FieldExpression { get; private set; }
-
-            /// <summary>Посещение узла доступа к полю.</summary>
-            /// <param name="fieldExpression">SQL-Выражение поля.</param>
-            void IFieldAccessVisitorForOnlySql.VisitFieldAccess(SqlFieldExpression fieldExpression)
+            public ExpressionToSqlObjectTransformer<SqlExpression> Create(
+                QueryParseContext context,
+                ParameterExpression recordExpression,
+                IOneSMappingProvider mappingProvider)
             {
-                if (FieldExpression != null)
-                {
-                    throw new InvalidOperationException(string.Format(
-                        "Неоднозначность результата поля для сортировки: \"{0}\" и \"{1}\".",
-                        FieldExpression.FieldName, fieldExpression.FieldName));
-                }
-
-                FieldExpression = fieldExpression;
+                return new OrderByExpressionTransformer(context, recordExpression, mappingProvider);
             }
         }
     }

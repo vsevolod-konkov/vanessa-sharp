@@ -9,7 +9,7 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>Построитель выражений для запроса колонок.</summary>
-    internal sealed class ColumnExpressionBuilder : IFieldAccessVisitor
+    internal sealed class ColumnExpressionBuilder
     {
         /// <summary>Список выражений колонок.</summary>
         private readonly List<SqlExpression> _columns = new List<SqlExpression>();
@@ -79,7 +79,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
-        /// Получение выражения получения значения колонки записи с конветацией.
+        /// Получение выражения получения значения колонки записи с конвертацией.
         /// </summary>
         /// <param name="columnExpression">Выражение колонки.</param>
         /// <param name="valueConverterMethod">Метод конвертации к нужному типу.</param>
@@ -141,14 +141,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 
                 return new ReadOnlyCollection<SqlExpression>(_columns);
             }
-        }
-
-        /// <summary>Посещение узла доступа к полю записи.</summary>
-        /// <param name="fieldExpression">SQL-Выражение поля.</param>
-        /// <param name="fieldType">Тип поля.</param>
-        Expression IFieldAccessVisitor.VisitFieldAccess(SqlFieldExpression fieldExpression, Type fieldType)
-        {
-            return GetColumnAccessExpression(fieldExpression, fieldType);
         }
     }
 }
