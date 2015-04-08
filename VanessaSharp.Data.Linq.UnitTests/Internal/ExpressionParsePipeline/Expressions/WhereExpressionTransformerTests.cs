@@ -16,6 +16,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
     {
         private const string FILTER_FIELD = "filter_field";
         private const string NULLABLE_FIELD = "nullable_field";
+
+        private const string PRICE_FIELD = "price";
+        private const string QUANTITY_FIELD = "quantity";
+
         private const int FILTER_VALUE = 24;
 
         private Mock<IOneSMappingProvider> _mappingProviderMock;
@@ -33,6 +37,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .BeginSetupGetTypeMappingFor<SomeData>("?")
                     .FieldMap(d => d.Id, FILTER_FIELD)
                     .FieldMap(d => d.Name, NULLABLE_FIELD)
+                    .FieldMap(d => d.Price, PRICE_FIELD)
+                    .FieldMap(d => d.Quantity, QUANTITY_FIELD)
                 .End();
 
             _context = new QueryParseContext();
@@ -312,6 +318,32 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             TestTransformWhenIsNull(d => d.Name != null, false);
         }
 
+        /// <summary>
+        /// Тестирование бинарной операции разности.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenSubtractOperation()
+        {
+            Expression<Func<SomeData, bool>> testedFilter = d => (d.Price - d.Quantity) == d.Id;
+
+            // Act
+            var result = Transform(testedFilter);
+
+            // Assert
+            var binaryRelationCondition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(result);
+            Assert.AreEqual(SqlBinaryRelationType.Equal, binaryRelationCondition.RelationType);
+            
+            var first = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationExpression>(binaryRelationCondition.FirstOperand);
+            Assert.AreEqual(SqlBinaryArithmeticOperationType.Subtract, first.OperationType);
+
+            var left = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(first.Left);
+            Assert.AreEqual(PRICE_FIELD, left.FieldName);
+
+            var right = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(first.Right);
+            Assert.AreEqual(QUANTITY_FIELD, right.FieldName);
+        }
+
+
         // TODO Надо подумать о желаемом поведении"
         /// <summary>
         /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
@@ -364,6 +396,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public int Id;
 
             public string Name;
+
+            public int Price;
+
+            public int Quantity;
         }
     }
 }
