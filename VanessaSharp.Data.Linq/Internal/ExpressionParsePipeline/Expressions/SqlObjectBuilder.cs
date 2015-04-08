@@ -53,12 +53,23 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return _stackEngine.GetExpression();
         }
 
+        public SqlExpression PeekExpression()
+        {
+            return _stackEngine.PeekExpression();
+        }
+
         /// <summary>Получение условия.</summary>
         public SqlCondition GetCondition()
         {
             Contract.Ensures(Contract.Result<SqlCondition>() != null);
             
             return _stackEngine.GetCondition();
+        }
+
+        /// <summary>Очистка состояния построителя.</summary>
+        public void Clear()
+        {
+            _stackEngine.Clear();
         }
 
         /// <summary>
@@ -148,10 +159,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     }
                 }
 
-                var operationType = GetSqlBinaryOperationType(node.NodeType);
-                if (operationType.HasValue)
+                var logicOperationType = GetSqlBinaryOperationType(node.NodeType);
+                if (logicOperationType.HasValue)
                 {
-                    _stackEngine.BinaryOperation(operationType.Value);
+                    _stackEngine.BinaryLogicOperation(logicOperationType.Value);
                     return true;
                 }
             }
@@ -160,6 +171,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             if (relationType.HasValue)
             {
                 _stackEngine.BinaryRelation(relationType.Value);
+                return true;
+            }
+
+            var arithmeticOperationType = GetSqlBinaryArithmeticOperationType(node.NodeType);
+            if (arithmeticOperationType.HasValue)
+            {
+                _stackEngine.BinaryArithmeticOperation(arithmeticOperationType.Value);
                 return true;
             }
 
@@ -176,11 +194,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public bool HandleUnary(UnaryExpression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
-            
-            if (node.NodeType == ExpressionType.Not)
+
+            switch (node.NodeType)
             {
-                _stackEngine.NotOperation();
-                return true;
+                case ExpressionType.Not:
+                    _stackEngine.NotOperation();
+                    return true;
+
+                case ExpressionType.Negate:
+                    _stackEngine.NegateOperation();
+                    return true;
             }
 
             return false;
@@ -225,6 +248,27 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
         }
 
+        /// <summary>
+        /// Получение типа бинарной арифметической операции в зависимости от типа узла выражения.
+        /// </summary>
+        private static SqlBinaryArithmeticOperationType? GetSqlBinaryArithmeticOperationType(
+            ExpressionType expressionType)
+        {
+            switch (expressionType)
+            {
+                case ExpressionType.Add:
+                    return SqlBinaryArithmeticOperationType.Add;
+                case ExpressionType.Subtract:
+                    return SqlBinaryArithmeticOperationType.Subtract;
+                case ExpressionType.Multiply:
+                    return SqlBinaryArithmeticOperationType.Multiply;
+                case ExpressionType.Divide:
+                    return SqlBinaryArithmeticOperationType.Divide;
+                default:
+                    return null;
+            }
+        }
+
         #region Вспомогательные типы
 
         /// <summary>
@@ -235,9 +279,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <summary>Стек выражений.</summary>
             private readonly Stack<object> _stack = new Stack<object>();
 
-            /// <summary>Вытягивание типизированного объекта из стека.</summary>
-            /// <typeparam name="T">Тип объекта.</typeparam>
-            private T Pop<T>()
+            /// <summary>
+            /// Получение головного элемента из стека заданного типа.
+            /// </summary>
+            /// <typeparam name="T">Заданный тип.</typeparam>
+            /// <param name="stackAction">Действие со стеком, в результате которого получается головной элемент.</param>
+            private T GetHeadElement<T>(Func<Stack<object>, object> stackAction)
                 where T : class
             {
                 if (_stack.Count == 0)
@@ -246,7 +293,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                         "В стеке ожидался объект типа \"{0}\", но стек оказался пуст.", typeof(T)));
                 }
 
-                var obj = _stack.Pop();
+                var obj = stackAction(_stack);
+
                 var result = obj as T;
 
                 if (result == null)
@@ -256,6 +304,22 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 }
 
                 return result;
+            }
+
+            /// <summary>Вытягивание типизированного объекта из стека.</summary>
+            /// <typeparam name="T">Тип объекта.</typeparam>
+            private T Pop<T>()
+                where T : class
+            {
+                return GetHeadElement<T>(s => s.Pop());
+            }
+
+            /// <summary>Считывание типизированного объекта из стека.</summary>
+            /// <typeparam name="T">Тип объекта.</typeparam>
+            private T Peek<T>()
+                where T : class
+            {
+                return GetHeadElement<T>(s => s.Peek());
             }
 
             /// <summary>
@@ -293,12 +357,25 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// Вытягивание двух условий из стека и положение в стек созданного условия бинарной логической операции.
             /// </summary>
             /// <param name="operationType">Тип бинарной логической операции.</param>
-            public void BinaryOperation(SqlBinaryLogicOperationType operationType)
+            public void BinaryLogicOperation(SqlBinaryLogicOperationType operationType)
             {
                 var secondOperand = Pop<SqlCondition>();
                 var firstOperand = Pop<SqlCondition>();
 
                 var condition = new SqlBinaryOperationCondition(operationType, firstOperand, secondOperand);
+                _stack.Push(condition);
+            }
+
+            /// <summary>
+            /// Вытягивание двух выражений из стека и положение в стек созданного условия бинарной арифментической операции.
+            /// </summary>
+            /// <param name="operationType">Тип бинарной арифметической операции.</param>
+            public void BinaryArithmeticOperation(SqlBinaryArithmeticOperationType operationType)
+            {
+                var secondOperand = Pop<SqlExpression>();
+                var firstOperand = Pop<SqlExpression>();
+
+                var condition = new SqlBinaryOperationExpression(operationType, firstOperand, secondOperand);
                 _stack.Push(condition);
             }
 
@@ -310,6 +387,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 var operand = Pop<SqlCondition>();
 
                 var condition = new SqlNotCondition(operand);
+                _stack.Push(condition);
+            }
+
+            /// <summary>
+            /// Вытягивание выражения из стека и заталкивания в него созданного условия отрицания.
+            /// </summary>
+            public void NegateOperation()
+            {
+                var operand = Pop<SqlExpression>();
+
+                var condition = new SqlNegateExpression(operand);
                 _stack.Push(condition);
             }
 
@@ -375,6 +463,20 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public Tuple<object, object> Peek2()
             {
                 return Tuple.Create(_stack.ElementAt(0), _stack.ElementAt(1));
+            }
+
+            /// <summary>
+            /// Считывание из стека выражения, без его удаления.
+            /// </summary>
+            /// <returns></returns>
+            public SqlExpression PeekExpression()
+            {
+                return Peek<SqlExpression>();
+            }
+
+            public void Clear()
+            {
+                _stack.Clear();
             }
         }
 

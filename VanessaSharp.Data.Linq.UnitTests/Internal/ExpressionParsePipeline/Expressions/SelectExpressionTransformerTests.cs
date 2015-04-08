@@ -181,6 +181,91 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Test();
         }
 
+        /// <summary>
+        /// Тестирование парсинга выражения получение экземпляра
+        /// анонимного типа выборкой произведения полей типизированной записи.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectorWithMultiply()
+        {
+            // Arrange
+            const string PRICE_FIELD_NAME = "цена";
+            const string VALUE_FIELD_NAME = "значение";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.Name, "наименование")
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
+                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
+                .End();
+
+            var selectExpression = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => new { Name = d.Name, Summa = d.Price * d.Value });
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            Assert.AreEqual(2, result.Columns.Count);
+            Assert.IsInstanceOf<SqlFieldExpression>(result.Columns[0]);
+
+            var operation = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationExpression>(result.Columns[1]);
+            Assert.AreEqual(SqlBinaryArithmeticOperationType.Multiply, operation.OperationType);
+
+            var left = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Left);
+            Assert.AreEqual(PRICE_FIELD_NAME, left.FieldName);
+
+            var right = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Right);
+            Assert.AreEqual(VALUE_FIELD_NAME, right.FieldName);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, i => i.Name, c => c.ToString(null), "Test")
+                    .Field(1, i => i.Summa, c => c.ToDecimal(null), 354.78m)
+                .Test();
+        }
+
+        /// <summary>
+        /// Тестирование парсинга выражения получение экземпляра
+        /// анонимного типа выборкой отрицания поля типизированной записи.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectorWithNegate()
+        {
+            // Arrange
+            const string VALUE_FIELD_NAME = "значение";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
+                .End();
+
+            var selectExpression = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => -d.Value);
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            Assert.AreEqual(1, result.Columns.Count);
+
+            var operation = AssertEx.IsInstanceAndCastOf<SqlNegateExpression>(result.Columns[0]);
+
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Operand);
+            Assert.AreEqual(VALUE_FIELD_NAME, operand.FieldName);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 1)
+                    .Field(0, i => i, c => c.ToDecimal(null), 354.78m)
+                .Test();
+        }
+
         #region Тестовые типы
 
         /// <summary>
@@ -193,6 +278,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public string Name;
 
             public decimal Price;
+
+            public decimal Value;
         }
 
         /// <summary>
@@ -206,6 +293,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             public decimal Price;
         }
+
 
         #endregion
     }

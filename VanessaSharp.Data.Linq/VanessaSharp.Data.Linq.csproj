@@ -146,6 +146,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryLogicOperationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlIsNullCondition.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNegateExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNotCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlOrderByStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSortFieldExpression.cs" />

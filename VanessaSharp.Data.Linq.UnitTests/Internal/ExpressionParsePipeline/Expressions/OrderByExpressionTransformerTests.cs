@@ -62,11 +62,75 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
+        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// в случае если передано выражение получения значения суммы полей типизированного кортежа.
+        /// </summary>
+        [Test]
+        public void TestTransfromTypedRecordSum()
+        {
+            // Arrange
+            const string PRICE_FIELD_NAME = "price";
+            const string VALUE_FIELD_NAME = "value";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("X")
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
+                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
+                .End();
+
+            Expression<Func<SomeData, double>> sortKeyExpression = d => d.Price + d.Value;
+
+            // Act
+            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+
+            // Assert
+            var operation = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationExpression>(result);
+            
+            Assert.AreEqual(SqlBinaryArithmeticOperationType.Add, operation.OperationType);
+
+            var leftOperand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Left);
+            Assert.AreEqual(PRICE_FIELD_NAME, leftOperand.FieldName);
+
+            var rightOperand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Right);
+            Assert.AreEqual(VALUE_FIELD_NAME, rightOperand.FieldName);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// в случае если передано выражение получения значения отрицания поля типизированного кортежа.
+        /// </summary>
+        [Test]
+        public void TestTransfromTypedRecordNegate()
+        {
+            // Arrange
+            const string VALUE_FIELD_NAME = "value";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("X")
+                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
+                .End();
+
+            Expression<Func<SomeData, double>> sortKeyExpression = d => -d.Value;
+
+            // Act
+            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+
+            // Assert
+            var operation = AssertEx.IsInstanceAndCastOf<SqlNegateExpression>(result);
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Operand);
+            Assert.AreEqual(VALUE_FIELD_NAME, operand.FieldName);
+        }
+
+        /// <summary>
         /// Тип тестовой типизированной записи.
         /// </summary>
         public sealed class SomeData
         {
             public int Id;
+
+            public double Price;
+
+            public double Value;
         }
     }
 }
