@@ -150,5 +150,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             return base.VisitUnary(node);
         }
+
+        /// <summary>
+        /// Посещение узла выражения операции выражения и типа по умолчанию.
+        /// </summary>
+        /// <param name="node">Посещаемый узел.</param>
+        protected Expression DefaultVisitTypeBinary(TypeBinaryExpression node)
+        {
+            return base.VisitTypeBinary(node);
+        }
     }
 }

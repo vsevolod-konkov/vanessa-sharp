@@ -194,14 +194,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             var left = HandledNode(node.Left);
             var right = HandledNode(node.Right);
 
-            if (left.HasSql && right.HasSql)
-            {
-                if (_expressionBuilder.HandleBinary(node))
-                {
-                    _hasSql = true;
-                    return node;
-                }
-            }
+            _hasSql = left.HasSql && right.HasSql && _expressionBuilder.HandleBinary(node);
+            if (_hasSql)
+                return node;
 
             Clear();
 
@@ -396,9 +391,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitTypeBinary(TypeBinaryExpression node)
         {
-            var obj = TransformNode(node.Expression);
+            var obj = HandledNode(node.Expression);
 
-            return node.Update(obj);
+            _hasSql = obj.HasSql && _expressionBuilder.HandleVisitTypeBinary(node);
+            
+            if (_hasSql)
+                return node;
+
+            Clear();
+            return node.Update(obj.GetTransformedNode());
         }
 
         /// <summary>

@@ -169,6 +169,23 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return result;
         }
 
+        /// <summary>
+        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.TypeBinaryExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
+        protected override Expression VisitTypeBinary(TypeBinaryExpression node)
+        {
+            var result = DefaultVisitTypeBinary(node);
+
+            if (!_sqlConditionBuilder.HandleVisitTypeBinary(node))
+                throw node.CreateExpressionNotSupportedException();
+
+            return result;
+        }
+
         #region Вспомогательные типы
 
         /// <summary>

@@ -24,6 +24,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private readonly FieldAccessRecognizer _fieldAccessRecognizer;
 
         /// <summary>
+        /// Поставщик карт соответствия типов CLR структурам 1С.
+        /// </summary>
+        private readonly IOneSMappingProvider _mappingProvider;
+
+        /// <summary>
         /// Стековая машина.
         /// </summary>
         private readonly StackEngine _stackEngine = new StackEngine();
@@ -41,6 +46,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             _context = context;
             _fieldAccessRecognizer = FieldAccessRecognizer.Create(recordExpression, mappingProvider);
+            _mappingProvider = mappingProvider;
         }
 
         /// <summary>
@@ -129,12 +135,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
-        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.BinaryExpression"/>.
+        /// Обрабатывает выражение <see cref="T:System.Linq.Expressions.BinaryExpression"/>.
         /// </summary>
-        /// <returns>
-        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
-        /// </returns>
-        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         public bool HandleBinary(BinaryExpression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
@@ -185,12 +187,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
-        /// Просматривает дочерний элемент выражения <see cref="T:System.Linq.Expressions.UnaryExpression"/>.
+        /// Обрабатывает выражение <see cref="T:System.Linq.Expressions.UnaryExpression"/>.
         /// </summary>
-        /// <returns>
-        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
-        /// </returns>
-        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         public bool HandleUnary(UnaryExpression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
@@ -204,6 +202,26 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 case ExpressionType.Negate:
                     _stackEngine.NegateOperation();
                     return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Обрабатывает выражение <see cref="TypeBinaryExpression"/>.
+        /// </summary>
+        public bool HandleVisitTypeBinary(TypeBinaryExpression node)
+        {
+            Contract.Requires<ArgumentNullException>(node != null);
+
+            if (node.NodeType == ExpressionType.TypeIs)
+            {
+                var dataSourceName = _mappingProvider
+                    .GetTypeMapping(node.TypeOperand)
+                    .SourceName;
+
+                _stackEngine.Refs(dataSourceName);
+                return true;
             }
 
             return false;
@@ -429,8 +447,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     operand = Pop<SqlExpression>();
                 }
 
-
                 var condition = new SqlIsNullCondition(operand, isNull);
+                _stack.Push(condition);
+            }
+
+            /// <summary>
+            /// Вытягивает выражение из стека и запихивает условие проверки ссылки на источник данных.
+            /// </summary>
+            /// <param name="dataSourceName">Имя источника данных, проверка на ссылку которого создается.</param>
+            public void Refs(string dataSourceName)
+            {
+                var operand = Pop<SqlExpression>();
+                var condition = new SqlRefsCondition(operand, dataSourceName);
                 _stack.Push(condition);
             }
 
@@ -655,5 +683,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         #endregion
+
+        
     }
 }

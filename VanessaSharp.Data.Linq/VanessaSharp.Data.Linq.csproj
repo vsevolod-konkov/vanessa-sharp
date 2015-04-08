@@ -149,6 +149,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNegateExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNotCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlOrderByStatement.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlRefsCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSortFieldExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\WhereExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ParseParameterCollection.cs" />

@@ -19,6 +19,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
         private const string PRICE_FIELD = "price";
         private const string QUANTITY_FIELD = "quantity";
+        private const string REFERENCE_FIELD = "object";
+
+        private const string REFERENCE_TABLE = "some_table";
 
         private const int FILTER_VALUE = 24;
 
@@ -39,6 +42,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                     .FieldMap(d => d.Name, NULLABLE_FIELD)
                     .FieldMap(d => d.Price, PRICE_FIELD)
                     .FieldMap(d => d.Quantity, QUANTITY_FIELD)
+                    .FieldMap(d => d.Reference, REFERENCE_FIELD)
+                .End();
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<RefData>(REFERENCE_TABLE)
                 .End();
 
             _context = new QueryParseContext();
@@ -343,6 +351,25 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(QUANTITY_FIELD, right.FieldName);
         }
 
+        /// <summary>
+        /// Тестирование условия проверки ссылки.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenRefsCondition()
+        {
+            Expression<Func<SomeData, bool>> testedFilter = d => d.Reference is RefData;
+
+            // Act
+            var result = Transform(testedFilter);
+
+            // Assert
+            var refsCondition = AssertEx.IsInstanceAndCastOf<SqlRefsCondition>(result);
+            Assert.AreEqual(REFERENCE_TABLE, refsCondition.DataSourceName);
+
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(refsCondition.Operand);
+            Assert.AreEqual(REFERENCE_FIELD, operand.FieldName);
+        }
+
 
         // TODO Надо подумать о желаемом поведении"
         /// <summary>
@@ -400,6 +427,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public int Price;
 
             public int Quantity;
+
+            public object Reference;
+        }
+
+        /// <summary>
+        /// Тестовый тип записи для тестирования ссылки на нее.
+        /// </summary>
+        public sealed class RefData
+        {
+             
         }
     }
 }
