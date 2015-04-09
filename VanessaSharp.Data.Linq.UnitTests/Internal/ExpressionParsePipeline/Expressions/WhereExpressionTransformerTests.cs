@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
@@ -368,6 +371,73 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(refsCondition.Operand);
             Assert.AreEqual(REFERENCE_FIELD, operand.FieldName);
+        }
+
+        /// <summary>
+        /// Тестирование условия проверки в списке значений.
+        /// </summary>
+        private void TestTransformWhenInCondition(Expression<Func<SomeData, bool>> testedFilter, bool expectedIsHierarchy, IEnumerable expectedValues)
+        {
+            // Arrange
+            testedFilter = PreEvaluator.Evaluate(testedFilter);
+            
+            // Act
+            var result = Transform(testedFilter);
+
+            // Assert
+            var inValuesListCondition = AssertEx.IsInstanceAndCastOf<SqlInValuesListCondition>(result);
+            Assert.IsTrue(inValuesListCondition.IsIn);
+            Assert.AreEqual(expectedIsHierarchy, inValuesListCondition.IsHierarchy);
+
+            var parametersMap = _context.Parameters
+                                        .GetSqlParameters()
+                                        .ToDictionary(p => p.Name, p => p.Value);
+
+            var actualValues = inValuesListCondition
+                .ValuesList
+                .Select(p => parametersMap[p.ParameterName])
+                .ToArray();
+
+            CollectionAssert.AreEqual(expectedValues, actualValues);
+
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(inValuesListCondition.Operand);
+            Assert.AreEqual(FILTER_FIELD, operand.FieldName);
+        }
+
+        /// <summary>
+        /// Тестирование условия проверки в списке значений.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenContains()
+        {
+            var values = new[] {1, 2, 3, 4};
+            Expression<Func<SomeData, bool>> testedFilter = d => values.Contains(d.Id);
+
+            TestTransformWhenInCondition(testedFilter, false, values);
+        }
+
+        /// <summary>
+        /// Тестирование условия проверки в списке значений с помощью метода <see cref="OneSSqlFunctions.In{T}"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenIn()
+        {
+            var values = new[] { 1, 2, 3, 4 };
+            Expression<Func<SomeData, bool>> testedFilter = d => OneSSqlFunctions.In(d.Id, 1, 2, 3, 4);
+
+            TestTransformWhenInCondition(testedFilter, false, values);
+        }
+
+        /// <summary>
+        /// Тестирование условия проверки в списке значений с помощью метода <see cref="OneSSqlFunctions.InHierarchy{T}"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenInHierarchy()
+        {
+            var values = new[] { 1, 2, 3, 4 };
+            Expression<Func<SomeData, bool>> testedFilter = d => OneSSqlFunctions.InHierarchy(d.Id, 1, 2, 3, 4);
+
+            TestTransformWhenInCondition(testedFilter, true, values);
         }
 
 

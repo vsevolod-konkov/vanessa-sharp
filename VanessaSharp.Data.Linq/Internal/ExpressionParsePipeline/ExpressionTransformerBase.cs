@@ -159,5 +159,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             return base.VisitTypeBinary(node);
         }
+
+        /// <summary>
+        /// Посещение узла выражения вызова метода.
+        /// </summary>
+        protected Expression DefaultVisitMethodCall(MethodCallExpression node)
+        {
+            return base.VisitMethodCall(node);
+        }
     }
 }

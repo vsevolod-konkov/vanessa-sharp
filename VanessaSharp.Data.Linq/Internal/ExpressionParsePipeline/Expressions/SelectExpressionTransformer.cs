@@ -95,13 +95,27 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (_expressionBuilder.HandleMethodCall(node))
+            if (_expressionBuilder.HandleMethodCallBeforeVisit(node))
             {
                 _hasSql = true;
                 return node;
             }
 
-            return base.VisitMethodCall(node);
+            HandledNodeInfo obj = null;
+            if (node.Object != null)
+                obj = HandledNode(node.Object);
+
+            var args = node.Arguments.Select(HandledNode).ToArray();
+
+            if(_expressionBuilder.HandleMethodCall(node))
+            {
+                _hasSql = true;
+                return node;
+            }
+
+            return node.Update(
+                obj == null ? null: obj.GetTransformedNode(),
+                args.Select(a => a.GetTransformedNode()));
         }
 
         /// <summary>

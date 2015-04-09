@@ -288,6 +288,22 @@ namespace VanessaSharp.Data.Linq
             return false;
         }
 
+        #region Методы Enumerable
+
+        /// <summary>
+        /// Является ли методом <see cref="Enumerable.Contains{TSource}(System.Collections.Generic.IEnumerable{TSource},TSource)"/>
+        /// </summary>
+        public static bool IsEnumerableContainsMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return method.DeclaringType == typeof(Enumerable)
+                   && method.Name == "Contains"
+                   && method.GetParameters().Length == 2;
+        }
+
+        #endregion
+
         #region Методы OneSDataRecord
 
         /// <summary>Метод <see cref="OneSDataRecord.GetString(string)"/>.</summary>
@@ -503,6 +519,44 @@ namespace VanessaSharp.Data.Linq
             Expression<Func<OneSValue>> lambda = () => new OneSValue(null, null);
 
             return ((NewExpression)lambda.Body).Constructor;
+        }
+
+        #endregion
+
+        #region Методы OneSSqlFunctions
+
+        /// <summary>
+        /// Является ли метод методом <see cref="OneSSqlFunctions"/>
+        /// с данным именем <paramref name="methodName"/>.
+        /// </summary>
+        private static bool IsSqlFunction(MethodInfo method, string methodName)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return method.DeclaringType == typeof(OneSSqlFunctions)
+                   && method.Name == methodName;
+        }
+        
+        /// <summary>
+        /// Является ли метод методом <see cref="OneSSqlFunctions.In{T}"/>.
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        public static bool IsSqlFunctionIn(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsSqlFunction(method, "In");
+        }
+
+        /// <summary>
+        /// Является ли метод методом <see cref="OneSSqlFunctions.InHierarchy{T}"/>.
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        public static bool IsSqlFunctionInHierarchy(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsSqlFunction(method, "InHierarchy");
         }
 
         #endregion

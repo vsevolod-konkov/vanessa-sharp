@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -79,9 +81,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
-        /// Обработка выражения вызова метода.
+        /// Обработка выражения вызова метода перед посещением дочерних узлов.
         /// </summary>
-        public bool HandleMethodCall(MethodCallExpression node)
+        public bool HandleMethodCallBeforeVisit(MethodCallExpression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
             
@@ -94,6 +96,35 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _stackEngine.Field(fieldName);
 
             return result;
+        }
+
+        /// <summary>
+        /// Обработка выражения вызова метода после посещения дочерних узлов.
+        /// </summary>
+        public bool HandleMethodCall(MethodCallExpression node)
+        {
+            Contract.Requires<ArgumentNullException>(node != null);
+
+            if (OneSQueryExpressionHelper.IsEnumerableContainsMethod(node.Method))
+            {
+                _stackEngine.Swap();
+                _stackEngine.InValuesListCondition();
+                return true;
+            }
+
+            if (OneSQueryExpressionHelper.IsSqlFunctionIn(node.Method))
+            {
+                _stackEngine.InValuesListCondition();
+                return true;
+            }
+
+            if (OneSQueryExpressionHelper.IsSqlFunctionInHierarchy(node.Method))
+            {
+                _stackEngine.InValuesListCondition(true);
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -127,8 +158,22 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
             else
             {
-                var parameterName = _context.Parameters.GetOrAddNewParameterName(node.Value);
-                _stackEngine.Parameter(parameterName);    
+                if (node.Type == typeof(string) || !typeof(IEnumerable).IsAssignableFrom(node.Type))
+                {
+                    var parameterName = _context.Parameters.GetOrAddNewParameterName(node.Value);
+                    _stackEngine.Parameter(parameterName);
+                }
+                else
+                {
+                    var parameterNames = new List<string>();
+                    foreach (var value in (IEnumerable)node.Value)
+                    {
+                        parameterNames.Add(
+                            _context.Parameters.GetOrAddNewParameterName(value));
+                    }
+
+                    _stackEngine.ParameterList(parameterNames);
+                }
             }
 
             return true;
@@ -341,6 +386,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             /// <summary>
+            /// Перемена местами первых двух элементов стека.
+            /// </summary>
+            public void Swap()
+            {
+                var first = _stack.Pop();
+                var second = _stack.Pop();
+
+                _stack.Push(first);
+                _stack.Push(second);
+            }
+
+            /// <summary>
             /// Добавление выражения доступа к параметру запроса в стек.
             /// </summary>
             /// <param name="parameterName">Имя параметра.</param>
@@ -348,6 +405,20 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             {
                _stack.Push(
                     new SqlParameterExpression(parameterName));
+            }
+
+            /// <summary>
+            /// Добавление списка параметров в стек.
+            /// </summary>
+            /// <param name="parameterNames">Имена параметров.</param>
+            public void ParameterList(IEnumerable<string> parameterNames)
+            {
+                var expressions = parameterNames
+                    .Select(n => new SqlParameterExpression(n))
+                    .ToArray();
+
+                _stack.Push(
+                    new ReadOnlyCollection<SqlParameterExpression>(expressions));
             }
 
             /// <summary>
@@ -463,6 +534,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             /// <summary>
+            /// Вытягивает из стека выражение и список параметров.
+            /// Запихивает в стек условие IN.
+            /// </summary>
+            public void InValuesListCondition(bool isHierarchy = false)
+            {
+                var valuesList = Pop<ReadOnlyCollection<SqlParameterExpression>>();
+                var operand = Pop<SqlExpression>();
+
+                var condition = new SqlInValuesListCondition(operand, valuesList, true, isHierarchy);
+                _stack.Push(condition);
+            }
+
+            /// <summary>
             /// Получение выражения.
             /// </summary>
             public SqlExpression GetExpression()
@@ -502,6 +586,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return Peek<SqlExpression>();
             }
 
+            /// <summary>Очистка стека.</summary>
             public void Clear()
             {
                 _stack.Clear();

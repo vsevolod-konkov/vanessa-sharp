@@ -99,10 +99,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected sealed override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (!_sqlConditionBuilder.HandleMethodCall(node))
-                throw node.CreateExpressionNotSupportedException();
+            if (_sqlConditionBuilder.HandleMethodCallBeforeVisit(node))
+                return node;
 
-            return node;
+            var result = DefaultVisitMethodCall(node);
+
+            if (_sqlConditionBuilder.HandleMethodCall(node))
+                return result;
+
+            throw node.CreateExpressionNotSupportedException();
         }
 
         /// <summary>
