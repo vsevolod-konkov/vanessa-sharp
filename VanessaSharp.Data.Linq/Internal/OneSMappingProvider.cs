@@ -82,6 +82,25 @@ namespace VanessaSharp.Data.Linq.Internal
         }
 
         /// <summary>
+        /// Является ли тип, типом данных который имеет соответствие объекту 1С.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool IsDataType(Type type)
+        {
+            try
+            {
+                CheckDataType(type);
+            }
+            catch (InvalidDataTypeException)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Добавление соответствия поля в результирующий список <paramref name="resultList"/>
         /// в случае если член типа маркирован атрибутом <see cref="OneSDataColumnAttribute"/>.
         /// </summary>

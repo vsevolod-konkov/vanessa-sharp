@@ -84,6 +84,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(expectedRelationType, binaryCondition.RelationType);
 
             var fieldExpression = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(binaryCondition.FirstOperand);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(fieldExpression.Table);
             Assert.AreEqual(FILTER_FIELD, fieldExpression.FieldName);
 
             var parameterExpression = AssertEx.IsInstanceAndCastOf<SqlParameterExpression>(binaryCondition.SecondOperand);
@@ -308,6 +309,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(expectedTestIsNull, isNullCondition.IsNull);
 
             var fieldExpression = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(isNullCondition.Expression);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(fieldExpression.Table);
             Assert.AreEqual(NULLABLE_FIELD, fieldExpression.FieldName);
         }
 
@@ -348,9 +350,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(SqlBinaryArithmeticOperationType.Subtract, first.OperationType);
 
             var left = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(first.Left);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(left.Table);
             Assert.AreEqual(PRICE_FIELD, left.FieldName);
 
             var right = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(first.Right);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(right.Table);
             Assert.AreEqual(QUANTITY_FIELD, right.FieldName);
         }
 
@@ -370,6 +374,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(REFERENCE_TABLE, refsCondition.DataSourceName);
 
             var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(refsCondition.Operand);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
             Assert.AreEqual(REFERENCE_FIELD, operand.FieldName);
         }
 
@@ -401,6 +406,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             CollectionAssert.AreEqual(expectedValues, actualValues);
 
             var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(inValuesListCondition.Operand);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
             Assert.AreEqual(FILTER_FIELD, operand.FieldName);
         }
 

@@ -17,9 +17,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
                     new SqlColumnListExpression(
                         new SqlExpression[]
                         {
-                            new SqlFieldExpression("field1"),
-                            new SqlFieldExpression("field2"),
-                            new SqlFieldExpression("field3")
+                            new SqlFieldExpression(SqlDefaultTableExpression.Instance, "field1"),
+                            new SqlFieldExpression(SqlDefaultTableExpression.Instance, "field2"),
+                            new SqlFieldExpression(SqlDefaultTableExpression.Instance, "field3")
                         })
                      ),
                 new SqlFromStatement("source"),

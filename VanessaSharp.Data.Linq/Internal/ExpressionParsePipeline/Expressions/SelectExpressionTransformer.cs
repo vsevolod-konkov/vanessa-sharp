@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
@@ -16,6 +17,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private SelectExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression, IOneSMappingProvider mappingProvider)
         {
             _expressionBuilder = new SqlObjectBuilder(context, recordExpression, mappingProvider);
+            _columnExpressionBuilder = new ColumnExpressionBuilderWrapper(mappingProvider);
         }
 
         /// <summary>Преобразование LINQ-выражения метода Select.</summary>
@@ -41,7 +43,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private readonly SqlObjectBuilder _expressionBuilder;
 
         /// <summary>Построитель выражений для колонок выборки.</summary>
-        private readonly ColumnExpressionBuilder _columnExpressionBuilder = new ColumnExpressionBuilder();
+        private readonly ColumnExpressionBuilderWrapper _columnExpressionBuilder;
 
         /// <summary>
         /// Флаг, указывающий результат посещения узла.  Удалось ли построить SQL-выражение.
@@ -95,12 +97,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (_expressionBuilder.HandleMethodCallBeforeVisit(node))
-            {
-                _hasSql = true;
-                return node;
-            }
-
             HandledNodeInfo obj = null;
             if (node.Object != null)
                 obj = HandledNode(node.Object);
@@ -127,13 +123,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitMember(MemberExpression node)
         {
+            HandledNodeInfo obj = null;
+            if (node.Expression != null)
+                obj = HandledNode(node.Expression);
+            
             if (_expressionBuilder.HandleMember(node))
             {
                 _hasSql = true;
                 return node;
             }
 
-            return base.VisitMember(node);
+            return node.Update(obj == null ? null : obj.GetTransformedNode());
         }
 
         /// <summary>
@@ -145,8 +145,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitParameter(ParameterExpression node)
         {
-            throw new InvalidOperationException(
-                "Недопустимо использовать запись данных в качестве члена в выходной структуре. Можно использовать в выражении запись только для доступа к ее полям.");
+            _hasSql = _expressionBuilder.HandleParameter(node);
+
+            return node;
         }
 
         /// <summary>Обработка узла.</summary>
@@ -445,7 +446,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <summary>
             /// Построитель выражений для чтения из колонок.
             /// </summary>
-            private readonly ColumnExpressionBuilder _columnExpressionBuilder;
+            private readonly ColumnExpressionBuilderWrapper _columnExpressionBuilder;
 
             /// <summary>
             /// Выражение - результат обработки узла.
@@ -458,12 +459,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             private readonly Type _type;
 
             /// <summary>
-            /// SQL-выражение, построенное при обработки узла.
+            /// Поставщик SQL-выражения, которое можно построить после обработки узла.
             /// </summary>
-            /// <remarks>Может быть <c>null</c>, если выражение не удалось построить.</remarks>
-            private readonly SqlExpression _sqlExpression;
+            /// <remarks>Может быть <c>null</c>, если выражение нельзя построить.</remarks>
+            private readonly SqlObjectBuilder.ISqlExpressionProvider _sqlExpressionProvider;
 
-            public HandledNodeInfo(ColumnExpressionBuilder columnExpressionBuilder, Expression handledNode, Type type, SqlExpression sqlExpression)
+            public HandledNodeInfo(
+                ColumnExpressionBuilderWrapper columnExpressionBuilder,
+                Expression handledNode,
+                Type type,
+                SqlObjectBuilder.ISqlExpressionProvider sqlExpressionProvider)
             {
                 Contract.Requires<ArgumentNullException>(columnExpressionBuilder != null);
                 Contract.Requires<ArgumentNullException>(handledNode != null);
@@ -472,17 +477,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _columnExpressionBuilder = columnExpressionBuilder;
                 _handledNode = handledNode;
                 _type = type;
-                _sqlExpression = sqlExpression;
+                _sqlExpressionProvider = sqlExpressionProvider;
             }
 
-            public bool HasSql { get { return _sqlExpression != null; } }
+            public bool HasSql { get { return _sqlExpressionProvider != null; } }
             
             /// <summary>
             /// Получение преобразованного выражения, считвыающего данные из колонки запроса.
             /// </summary>
             private Expression GetColumnAccessExpression()
             {
-                return _columnExpressionBuilder.GetColumnAccessExpression(_sqlExpression, _type);
+                return _columnExpressionBuilder.GetColumnAccessExpression(
+                    _sqlExpressionProvider.GetExpression(), _type);
             }
 
             /// <summary>
@@ -492,6 +498,84 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public Expression GetTransformedNode()
             {
                 return HasSql ? GetColumnAccessExpression() : _handledNode;
+            }
+        }
+
+        /// <summary>
+        /// Построитель выражения читающий из колонок читателя записей.
+        /// Тип выражения необязательно примитивный тип, но и маппируемые на таблицы 1С типы.
+        /// </summary>
+        private sealed class ColumnExpressionBuilderWrapper
+        {
+            private readonly ColumnExpressionBuilder _columnExpressionBuilder = new ColumnExpressionBuilder();
+            private readonly IOneSMappingProvider _mappingProvider;
+            private readonly TypedRecordParseProductBuilder _typedRecordParseProductBuilder;
+
+            /// <summary>Конструктор.</summary>
+            /// <param name="mappingProvider">Поставщик соответствий типов источникам данных 1С.</param>
+            public ColumnExpressionBuilderWrapper(IOneSMappingProvider mappingProvider)
+            {
+                Contract.Requires<ArgumentNullException>(mappingProvider != null);
+
+                _mappingProvider = mappingProvider;
+                _typedRecordParseProductBuilder = new TypedRecordParseProductBuilder(_mappingProvider);
+            }
+
+            /// <summary>
+            /// Получение выражения получения значения колонки записи.
+            /// </summary>
+            /// <param name="column">Выражение колонки.</param>
+            /// <param name="type">Тип, который требуется для колонки.</param>
+            public Expression GetColumnAccessExpression(SqlExpression column, Type type)
+            {
+                Contract.Requires<ArgumentNullException>(column != null);
+                Contract.Requires<ArgumentNullException>(type != null);
+                Contract.Ensures(Contract.Result<Expression>() != null);
+
+                if (type == typeof (OneSDataRecord))
+                {
+                    throw new InvalidOperationException(
+                        "Недопустимо использовать запись данных в качестве члена в выходной структуре. Можно использовать в выражении запись только для доступа к ее полям.");
+                }
+
+                return _mappingProvider.IsDataType(type)
+                    ? _typedRecordParseProductBuilder.GetReaderExpression(column, _columnExpressionBuilder, type)
+                    : _columnExpressionBuilder.GetColumnAccessExpression(column, type);
+            }
+
+            /// <summary>Вычитываемые колонки.</summary>
+            public ReadOnlyCollection<SqlExpression> Columns
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<ReadOnlyCollection<SqlExpression>>() != null);
+
+                    return _columnExpressionBuilder.Columns;
+                }
+            }
+
+            /// <summary>Параметр для результирующего делегата создания элемента - конвертер значений.</summary>
+            public ParameterExpression ConverterParameter
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<ParameterExpression>() != null);
+                    Contract.Ensures(Contract.Result<ParameterExpression>().Type == typeof(IValueConverter));
+
+                    return _columnExpressionBuilder.ConverterParameter;
+                }
+            }
+
+            /// <summary>Параметр для результирующего делегата создания элемента - массив вычитанных значений.</summary>
+            public ParameterExpression ValuesParameter
+            {
+                get
+                {
+                    Contract.Ensures(Contract.Result<ParameterExpression>() != null);
+                    Contract.Ensures(Contract.Result<ParameterExpression>().Type == typeof(object[]));
+
+                    return _columnExpressionBuilder.ValuesParameter;
+                }
             }
         }
 

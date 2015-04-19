@@ -65,6 +65,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void SetUp()
         {
             _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
+            _mappingProviderMock
+                .Setup(p => p.IsDataType(It.IsAny<Type>()))
+                .Returns(false);
+
             _testedInstance = new QueryTransformer(_mappingProviderMock.Object);
         }
         

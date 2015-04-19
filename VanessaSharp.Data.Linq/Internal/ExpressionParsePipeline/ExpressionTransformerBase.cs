@@ -161,6 +161,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         }
 
         /// <summary>
+        /// Посещение узла выражения доступа к члену.
+        /// </summary>
+        /// <param name="node">Посещаемый узел.</param>
+        protected Expression DefaultVisitMember(MemberExpression node)
+        {
+            return base.VisitMember(node);
+        }
+
+        /// <summary>
         /// Посещение узла выражения вызова метода.
         /// </summary>
         protected Expression DefaultVisitMethodCall(MethodCallExpression node)

@@ -526,37 +526,41 @@ namespace VanessaSharp.Data.Linq
         #region Методы OneSSqlFunctions
 
         /// <summary>
-        /// Является ли метод методом <see cref="OneSSqlFunctions"/>
-        /// с данным именем <paramref name="methodName"/>.
+        /// Методы <see cref="OneSSqlFunctions"/>
         /// </summary>
-        private static bool IsSqlFunction(MethodInfo method, string methodName)
+        public enum SqlFunction
         {
-            Contract.Requires<ArgumentNullException>(method != null);
-
-            return method.DeclaringType == typeof(OneSSqlFunctions)
-                   && method.Name == methodName;
-        }
-        
-        /// <summary>
-        /// Является ли метод методом <see cref="OneSSqlFunctions.In{T}"/>.
-        /// </summary>
-        /// <param name="method">Проверяемый метод.</param>
-        public static bool IsSqlFunctionIn(MethodInfo method)
-        {
-            Contract.Requires<ArgumentNullException>(method != null);
-
-            return IsSqlFunction(method, "In");
+            In,
+            InHierarchy,
+            ToBoolean,
+            ToInt16,
+            ToInt32,
+            ToInt64,
+            ToSingle,
+            ToDouble,
+            ToDecimal,
+            ToString,
+            ToDateTime,
+            ToDataRecord
         }
 
-        /// <summary>
-        /// Является ли метод методом <see cref="OneSSqlFunctions.InHierarchy{T}"/>.
-        /// </summary>
-        /// <param name="method">Проверяемый метод.</param>
-        public static bool IsSqlFunctionInHierarchy(MethodInfo method)
-        {
-            Contract.Requires<ArgumentNullException>(method != null);
+        private static readonly Dictionary<string, SqlFunction> _sqlFunctions 
+            = Enum.GetValues(typeof(SqlFunction))
+                  .Cast<object>()
+                  .ToDictionary(o => Enum.GetName(typeof(SqlFunction), o), o => (SqlFunction)o);
 
-            return IsSqlFunction(method, "InHierarchy");
+        /// <summary>
+        /// Является ли метод методом <see cref="OneSSqlFunctions"/>.
+        /// </summary>
+        public static bool IsSqlFunction(MethodInfo method, out SqlFunction sqlFunction)
+        {
+            if (method.DeclaringType != typeof (OneSSqlFunctions))
+            {
+                sqlFunction = default(SqlFunction);
+                return false;
+            }
+
+            return _sqlFunctions.TryGetValue(method.Name, out sqlFunction);
         }
 
         #endregion

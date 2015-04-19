@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
@@ -33,7 +35,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             var columnBuilder = new ColumnExpressionBuilder();
 
             var readerLambda = Expression.Lambda<Func<IValueConverter, object[], T>>(
-                GetReaderBody(columnBuilder, typeof(T)), 
+                GetReaderExpression(SqlDefaultTableExpression.Instance, columnBuilder, typeof(T)), 
                 columnBuilder.ConverterParameter, 
                 columnBuilder.ValuesParameter);
 
@@ -42,17 +44,32 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 readerLambda.Compile());
         }
 
-        private Expression GetReaderBody(
+        /// <summary>
+        /// Получение выражения читателя объекта данных.
+        /// </summary>
+        /// <param name="table">Выражение определяющее таблицу.</param>
+        /// <param name="columnBuilder">Построитель выражений доступа к колонкам читателя данных.</param>
+        /// <param name="dataObjectType">Тип объекта данных.</param>
+        public Expression GetReaderExpression(
+            SqlExpression table,
             ColumnExpressionBuilder columnBuilder,
-            Type type)
+            Type dataObjectType)
         {
-            return GetReaderBody(
-                columnBuilder, 
-                type, 
-                _mappingProvider.GetTypeMapping(type).FieldMappings);
+            Contract.Requires<ArgumentNullException>(table != null);
+            Contract.Requires<ArgumentNullException>(columnBuilder != null);
+            Contract.Requires<ArgumentNullException>(dataObjectType != null);
+            Contract.Ensures(Contract.Result<Expression>() != null);
+
+            return GetReaderExpression(
+                table,
+                columnBuilder,
+                dataObjectType,
+                _mappingProvider.GetTypeMapping(dataObjectType).FieldMappings);
         }
 
-        private static Expression GetReaderBody(
+
+        private static Expression GetReaderExpression(
+            SqlExpression table,
             ColumnExpressionBuilder columnBuilder,
             Type type,
             IEnumerable<OneSFieldMapping> fieldMappings)
@@ -60,20 +77,22 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return Expression.MemberInit(
                 Expression.New(type), 
                 fieldMappings
-                    .Select(fm => GetMemberBinding(columnBuilder, fm))
+                    .Select(fm => GetMemberBinding(table, columnBuilder, fm))
                     .ToArray());
         }
 
         private static MemberBinding GetMemberBinding(
+            SqlExpression table,
             ColumnExpressionBuilder columnBuilder,
             OneSFieldMapping fieldMapping)
         {
+            var fieldExpression = new SqlFieldExpression(table, fieldMapping.FieldName);
+            
             return Expression.Bind(
                 fieldMapping.MemberInfo,
                 columnBuilder.GetColumnAccessExpression(
-                    fieldMapping.FieldName,
+                    fieldExpression,
                     fieldMapping.MemberInfo.GetMemberType()));
-
         }
     }
 }

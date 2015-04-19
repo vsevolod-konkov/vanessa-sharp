@@ -34,7 +34,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Func<IValueConverter, object[], T> selectionFunc, params string[] fields)
         {
             return new SelectionPartParseProduct<T>(
-                fields.Select(c => (SqlExpression)new SqlFieldExpression(c)).ToReadOnly(),
+                fields.Select(c => (SqlExpression)new SqlFieldExpression(SqlDefaultTableExpression.Instance, c)).ToReadOnly(),
                 selectionFunc);
         }
 
@@ -60,7 +60,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
                     return new SqlBinaryRelationCondition(
                         SqlBinaryRelationType.Equal,
-                        new SqlFieldExpression(filterField),
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, filterField),
                         new SqlParameterExpression(parameterName));
                 });
         }
@@ -69,7 +69,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             _transformMethodsMock
                 .Setup(t => t.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression))
-                .Returns(new SqlFieldExpression(fieldName));
+                .Returns(new SqlFieldExpression(SqlDefaultTableExpression.Instance, fieldName));
         }
 
         private void VerifySourceDescription()

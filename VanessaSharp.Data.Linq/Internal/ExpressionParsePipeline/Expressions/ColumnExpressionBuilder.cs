@@ -51,7 +51,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(columnType != null);
 
             return GetColumnAccessExpression(
-                new SqlFieldExpression(fieldName),
+                new SqlFieldExpression(SqlDefaultTableExpression.Instance, fieldName),
                 columnType);
         }
 

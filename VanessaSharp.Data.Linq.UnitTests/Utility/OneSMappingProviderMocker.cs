@@ -60,6 +60,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             public void End()
             {
                 _mock
+                    .Setup(p => p.IsDataType(typeof(T)))
+                    .Returns(true);
+                
+                _mock
                     .Setup(p => p.GetTypeMapping(typeof(T)))
                     .Returns(_builder.End);
             }

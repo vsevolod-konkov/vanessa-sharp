@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
@@ -23,6 +24,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void SetUp()
         {
             _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
+
+            _mappingProviderMock
+                .Setup(p => p.IsDataType(It.IsAny<Type>()))
+                .Returns(false);
         }
 
         /// <summary>
@@ -64,7 +69,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             CollectionAssert.AreEqual(
-                new[] { new SqlFieldExpression(FIRST_FIELD_NAME), new SqlFieldExpression(SECOND_FIELD_NAME) }, 
+                new[]
+                    {
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, FIRST_FIELD_NAME),
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, SECOND_FIELD_NAME)
+                    }, 
                 result.Columns);
 
             // Тестирование полученного делегата чтения кортежа
@@ -93,7 +102,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             CollectionAssert.AreEqual(
-                new[] { new SqlFieldExpression(FIRST_FIELD_NAME), new SqlFieldExpression(SECOND_FIELD_NAME) },
+                new[]
+                    {
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, FIRST_FIELD_NAME),
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, SECOND_FIELD_NAME)
+                    },
                 result.Columns);
 
             // Тестирование полученного делегата чтения кортежа
@@ -130,7 +143,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             CollectionAssert.AreEquivalent(
-                new[] { new SqlFieldExpression(ID_FIELD_NAME), new SqlFieldExpression(NAME_FIELD_NAME) },
+                new[]
+                    {
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, ID_FIELD_NAME), 
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, NAME_FIELD_NAME)
+                    },
                 result.Columns);
 
             // Тестирование полученного делегата чтения кортежа
@@ -170,7 +187,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             CollectionAssert.AreEquivalent(
-                new[] { new SqlFieldExpression(ID_FIELD_NAME), new SqlFieldExpression(NAME_FIELD_NAME) },
+                new[]
+                    {
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, ID_FIELD_NAME), 
+                        new SqlFieldExpression(SqlDefaultTableExpression.Instance, NAME_FIELD_NAME)
+                    },
                 result.Columns);
 
             // Тестирование полученного делегата чтения кортежа
@@ -215,9 +236,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(SqlBinaryArithmeticOperationType.Multiply, operation.OperationType);
 
             var left = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Left);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(left.Table);
             Assert.AreEqual(PRICE_FIELD_NAME, left.FieldName);
 
             var right = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Right);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(right.Table);
             Assert.AreEqual(VALUE_FIELD_NAME, right.FieldName);
 
             // Тестирование полученного делегата чтения кортежа
@@ -257,12 +280,131 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var operation = AssertEx.IsInstanceAndCastOf<SqlNegateExpression>(result.Columns[0]);
 
             var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Operand);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
             Assert.AreEqual(VALUE_FIELD_NAME, operand.FieldName);
 
             // Тестирование полученного делегата чтения кортежа
             ItemReaderTester
                 .For(result.SelectionFunc, 1)
                     .Field(0, i => i, c => c.ToDecimal(null), 354.78m)
+                .Test();
+        }
+
+        /// <summary>
+        /// Тестирование парсинга выражения получение экземпляра
+        /// анонимного типа выборкой приведения к заданному типу типизированной записи.
+        /// </summary>
+        private void TestTransformSelectorWithCast<T>(SqlTypeKind expectedTypeKind, Expression<Func<IValueConverter, T>> convertMethod, T expectedValue)
+        {
+            // Arrange
+            const string ADD_INFO_FIELD_NAME = "допинфо";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.AddInfo, ADD_INFO_FIELD_NAME)
+                .End();
+
+            var selectExpression = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => (T)d.AddInfo);
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            Assert.AreEqual(1, result.Columns.Count);
+
+            var operation = AssertEx.IsInstanceAndCastOf<SqlCastExpression>(result.Columns[0]);
+
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Operand);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
+            Assert.AreEqual(ADD_INFO_FIELD_NAME, operand.FieldName);
+
+            Assert.AreEqual(expectedTypeKind, operation.SqlType.Kind);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 1)
+                    .Field(0, i => i, convertMethod, expectedValue)
+                .Test();
+        }
+
+        /// <summary>
+        /// Тестирование парсинга выражения получение экземпляра
+        /// анонимного типа выборкой приведения к булевому типу типизированной записи.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectorWithBooleanCast()
+        {
+            TestTransformSelectorWithCast(SqlTypeKind.Boolean, c => c.ToBoolean(null), true);
+        }
+
+        /// <summary>
+        /// Тестирование парсинга выражения получение экземпляра
+        /// анонимного типа выборкой приведения к типу даты типизированной записи.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectorWithDateTimeCast()
+        {
+            TestTransformSelectorWithCast(SqlTypeKind.Date, c => c.ToDateTime(null), DateTime.Today);
+        }
+
+        /// <summary>
+        /// Тестирование парсинга выборки привдения к записи на которую ссылается другая запись.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectorWithTableCast()
+        {
+            // Arrange
+            const string REF_TABLE_NAME = "тест_словарь";
+            const string NAME_FIELD_NAME = "наименование";
+            const string PRICE_FIELD_NAME = "цена";
+            const string ADD_INFO_FIELD_NAME = "допинфо";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.AddInfo, ADD_INFO_FIELD_NAME)
+                .End();
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<RefData>(REF_TABLE_NAME)
+                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
+                .End();
+
+            var selectExpression = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => (RefData)d.AddInfo);
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            Assert.AreEqual(2, result.Columns.Count);
+
+            var expectedFieldNames = new[] {NAME_FIELD_NAME, PRICE_FIELD_NAME};
+            for (var i = 0; i < result.Columns.Count; i++)
+            {
+                var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result.Columns[i]);
+                Assert.AreEqual(expectedFieldNames[i], field.FieldName);
+
+                var operation = AssertEx.IsInstanceAndCastOf<SqlCastExpression>(field.Table);
+
+                Assert.AreEqual(SqlTypeKind.Table, operation.SqlType.Kind);
+                var table = AssertEx.IsInstanceAndCastOf<SqlTableTypeDescription>(operation.SqlType);
+                Assert.AreEqual(REF_TABLE_NAME, table.TableName);
+
+                var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Operand);
+                Assert.AreEqual(ADD_INFO_FIELD_NAME, operand.FieldName);
+            }
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, i => i.Name, c => c.ToString(null), "test")
+                    .Field(1, i => i.Price, c => c.ToDecimal(null), 23434.43m)
                 .Test();
         }
 
@@ -280,6 +422,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public decimal Price;
 
             public decimal Value;
+
+            public object AddInfo;
         }
 
         /// <summary>
@@ -290,6 +434,13 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public object Id;
 
             public OneSValue Name;
+
+            public decimal Price;
+        }
+
+        public sealed class RefData
+        {
+            public string Name;
 
             public decimal Price;
         }

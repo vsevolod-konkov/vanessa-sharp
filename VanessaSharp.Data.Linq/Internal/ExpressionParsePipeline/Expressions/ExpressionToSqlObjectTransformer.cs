@@ -99,9 +99,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected sealed override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (_sqlConditionBuilder.HandleMethodCallBeforeVisit(node))
-                return node;
-
             var result = DefaultVisitMethodCall(node);
 
             if (_sqlConditionBuilder.HandleMethodCall(node))
@@ -119,10 +116,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected sealed override Expression VisitMember(MemberExpression node)
         {
-            if (!_sqlConditionBuilder.HandleMember(node))
-                throw node.CreateExpressionNotSupportedException();
-
-            return node;
+            var result = DefaultVisitMember(node);
+            
+            if (_sqlConditionBuilder.HandleMember(node))
+                return result;
+    
+            throw node.CreateExpressionNotSupportedException();
         }
 
         /// <summary>
@@ -189,6 +188,21 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 throw node.CreateExpressionNotSupportedException();
 
             return result;
+        }
+
+        /// <summary>
+        /// Просматривает выражение <see cref="T:System.Linq.Expressions.ParameterExpression"/>.
+        /// </summary>
+        /// <returns>
+        /// Измененное выражение в случае изменения самого выражения или любого его подвыражения; в противном случае возвращается исходное выражение.
+        /// </returns>
+        /// <param name="node">Выражение, которое необходимо просмотреть.</param>
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            if (!_sqlConditionBuilder.HandleParameter(node))
+                throw node.CreateExpressionNotSupportedException();
+
+            return node;
         }
 
         #region Вспомогательные типы

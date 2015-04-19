@@ -145,10 +145,13 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryOperationExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryLogicOperationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCastExpression.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlDefaultTableExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlInValuesListCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlIsNullCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNegateExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNotCondition.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNumberTypeDescription.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlOrderByStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlRefsCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSortFieldExpression.cs" />
@@ -170,6 +173,10 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlParameterExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlQueryStatement.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlSelectStatement.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlStringTypeDescription.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlTableTypeDescription.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlTypeDescription.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlTypeKind.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlWhereStatement.cs" />
     <Compile Include="Internal\ExpressionParseProduct.cs" />
     <Compile Include="Internal\CollectionReadExpressionParseProduct.cs" />

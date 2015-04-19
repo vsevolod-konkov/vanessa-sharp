@@ -64,7 +64,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             CollectionAssert.AreEqual(
-                new[] { "Наименование", "Идентификатор", "Цена" }.Select(fieldName => new SqlFieldExpression(fieldName)),
+                new[] { "Наименование", "Идентификатор", "Цена" }.Select(fieldName => new SqlFieldExpression(SqlDefaultTableExpression.Instance, fieldName)),
                 result.Columns
                 );
 
@@ -95,7 +95,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             CollectionAssert.AreEqual(
-                new[] { "Наименование", "Цена" }.Select(fieldName => new SqlFieldExpression(fieldName)),
+                new[] { "Наименование", "Цена" }.Select(fieldName => new SqlFieldExpression(SqlDefaultTableExpression.Instance, fieldName)),
                 result.Columns
                 );
 

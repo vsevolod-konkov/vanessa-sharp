@@ -15,15 +15,29 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     /// </summary>
     internal sealed class SqlObjectBuilder
     {
-        /// <summary>
-        /// Контекст разбора запроса.
-        /// </summary>
-        private readonly QueryParseContext _context;
+        /// <summary>Набор методов доступа к полям записи.</summary>
+        private static readonly ISet<MethodInfo>
+            _getValueMethods = new HashSet<MethodInfo>
+            {
+                OneSQueryExpressionHelper.DataRecordGetCharMethod,
+                OneSQueryExpressionHelper.DataRecordGetStringMethod,
+                OneSQueryExpressionHelper.DataRecordGetByteMethod,
+                OneSQueryExpressionHelper.DataRecordGetInt16Method,
+                OneSQueryExpressionHelper.DataRecordGetInt32Method,
+                OneSQueryExpressionHelper.DataRecordGetInt64Method,
+                OneSQueryExpressionHelper.DataRecordGetFloatMethod,
+                OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
+                OneSQueryExpressionHelper.DataRecordGetDecimalMethod,
+                OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
+                OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
+                OneSQueryExpressionHelper.DataRecordGetValueMethod
+            };
+            
 
         /// <summary>
-        /// Распознаватель доступа к полю записи. 
+        /// Параметр выражения - запись данных.
         /// </summary>
-        private readonly FieldAccessRecognizer _fieldAccessRecognizer;
+        private readonly ParameterExpression _recordExpression;
 
         /// <summary>
         /// Поставщик карт соответствия типов CLR структурам 1С.
@@ -33,7 +47,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>
         /// Стековая машина.
         /// </summary>
-        private readonly StackEngine _stackEngine = new StackEngine();
+        private readonly StackEngine _stackEngine;
 
         /// <summary>
         /// Конструктор.
@@ -46,8 +60,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             ParameterExpression recordExpression,
             IOneSMappingProvider mappingProvider)
         {
-            _context = context;
-            _fieldAccessRecognizer = FieldAccessRecognizer.Create(recordExpression, mappingProvider);
+            Contract.Requires<ArgumentNullException>(context != null);
+            Contract.Requires<ArgumentNullException>(recordExpression != null);
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
+            
+            _stackEngine = new StackEngine(context);
+            _recordExpression = recordExpression;
             _mappingProvider = mappingProvider;
         }
 
@@ -61,11 +79,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return _stackEngine.GetExpression();
         }
 
-        public SqlExpression PeekExpression()
-        {
-            return _stackEngine.PeekExpression();
-        }
-
         /// <summary>Получение условия.</summary>
         public SqlCondition GetCondition()
         {
@@ -74,36 +87,32 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return _stackEngine.GetCondition();
         }
 
+        /// <summary>Просмотр выражения.</summary>
+        public ISqlExpressionProvider PeekExpression()
+        {
+            return _stackEngine.PeekExpression();
+        }
+
         /// <summary>Очистка состояния построителя.</summary>
         public void Clear()
         {
             _stackEngine.Clear();
         }
-
-        /// <summary>
-        /// Обработка выражения вызова метода перед посещением дочерних узлов.
-        /// </summary>
-        public bool HandleMethodCallBeforeVisit(MethodCallExpression node)
-        {
-            Contract.Requires<ArgumentNullException>(node != null);
-            
-            string fieldName;
-            
-            var result = _fieldAccessRecognizer
-                .HandleMethodCall(node, out fieldName);
-
-            if (result)
-                _stackEngine.Field(fieldName);
-
-            return result;
-        }
-
+        
         /// <summary>
         /// Обработка выражения вызова метода после посещения дочерних узлов.
         /// </summary>
         public bool HandleMethodCall(MethodCallExpression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
+
+            if (_getValueMethods.Contains(node.Method))
+            {
+                var fieldName = _stackEngine.GetValue<string>();
+                _stackEngine.Field(fieldName);
+                
+                return true;
+            }
 
             if (OneSQueryExpressionHelper.IsEnumerableContainsMethod(node.Method))
             {
@@ -112,18 +121,54 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return true;
             }
 
-            if (OneSQueryExpressionHelper.IsSqlFunctionIn(node.Method))
+            OneSQueryExpressionHelper.SqlFunction sqlFunction;
+            if (OneSQueryExpressionHelper.IsSqlFunction(node.Method, out sqlFunction))
             {
-                _stackEngine.InValuesListCondition();
-                return true;
-            }
+                int? length;
+                
+                switch (sqlFunction)
+                {
+                    case OneSQueryExpressionHelper.SqlFunction.ToInt16:
+                    case OneSQueryExpressionHelper.SqlFunction.ToInt32:
+                    case OneSQueryExpressionHelper.SqlFunction.ToInt64:
+                        length = _stackEngine.GetValue<int?>();
+                        _stackEngine.Cast(SqlTypeDescription.Number(length));
+                        return true;
 
-            if (OneSQueryExpressionHelper.IsSqlFunctionInHierarchy(node.Method))
-            {
-                _stackEngine.InValuesListCondition(true);
-                return true;
-            }
+                    case OneSQueryExpressionHelper.SqlFunction.ToSingle:
+                    case OneSQueryExpressionHelper.SqlFunction.ToDouble:
+                    case OneSQueryExpressionHelper.SqlFunction.ToDecimal:
+                        var precision = _stackEngine.GetValue<int?>();
+                        length = _stackEngine.GetValue<int?>();
+                        _stackEngine.Cast(SqlTypeDescription.Number(length, precision));
+                        return true;
 
+                    case OneSQueryExpressionHelper.SqlFunction.ToString:
+                        length = _stackEngine.GetValue<int?>();
+                        _stackEngine.Cast(SqlTypeDescription.String(length));
+                        return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.ToDataRecord:
+                        var tableName = _stackEngine.GetValue<string>();
+                        _stackEngine.Cast(SqlTypeDescription.Table(tableName));
+                        return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.In:
+                        _stackEngine.InValuesListCondition();
+                        return true;
+                    case OneSQueryExpressionHelper.SqlFunction.InHierarchy:
+                        _stackEngine.InValuesListCondition(true);
+                        return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.ToBoolean:
+                        _stackEngine.Cast(SqlTypeDescription.Boolean);
+                        return true;
+                    case OneSQueryExpressionHelper.SqlFunction.ToDateTime:
+                        _stackEngine.Cast(SqlTypeDescription.Date);
+                        return true;
+                }
+            }
+            
             return false;
         }
 
@@ -133,16 +178,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public bool HandleMember(MemberExpression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
-            
-            string fieldName;
 
-            var result = _fieldAccessRecognizer
-                .HandleMember(node, out fieldName);
+            var fieldName = _mappingProvider
+                .GetTypeMapping(node.Expression.Type)
+                .GetFieldNameByMemberInfo(node.Member);
 
-            if (result)
+            if (fieldName != null)
+            {
                 _stackEngine.Field(fieldName);
+                return true;
+            }
 
-            return result;
+            return false;
         }
 
         /// <summary>
@@ -151,30 +198,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public bool HandleConstant(ConstantExpression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
-            
-            if (node.Value == null)
-            {
-                _stackEngine.Null();
-            }
-            else
-            {
-                if (node.Type == typeof(string) || !typeof(IEnumerable).IsAssignableFrom(node.Type))
-                {
-                    var parameterName = _context.Parameters.GetOrAddNewParameterName(node.Value);
-                    _stackEngine.Parameter(parameterName);
-                }
-                else
-                {
-                    var parameterNames = new List<string>();
-                    foreach (var value in (IEnumerable)node.Value)
-                    {
-                        parameterNames.Add(
-                            _context.Parameters.GetOrAddNewParameterName(value));
-                    }
 
-                    _stackEngine.ParameterList(parameterNames);
-                }
-            }
+            _stackEngine.Value(node.Value);
 
             return true;
         }
@@ -192,8 +217,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 {
                     var values = _stackEngine.Peek2();
 
-                    var leftIsNull = values.Item2 == null;
-                    var rightIsNull = values.Item1 == null;
+                    var leftIsNull = IsNullValue(values.Item2);
+                    var rightIsNull = IsNullValue(values.Item1);
 
                     if (leftIsNull || rightIsNull)
                     {
@@ -231,6 +256,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return false;
         }
 
+        /// <summary>Является ли объект стека нулевым значением.</summary>
+        /// <param name="obj">Проверяемый объект стека.</param>
+        private static bool IsNullValue(object obj)
+        {
+            var valueHolder = obj as ValueHolder;
+
+            return (valueHolder != null)
+                   && valueHolder.IsNull;
+        }
+
         /// <summary>
         /// Обрабатывает выражение <see cref="T:System.Linq.Expressions.UnaryExpression"/>.
         /// </summary>
@@ -247,10 +282,90 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 case ExpressionType.Negate:
                     _stackEngine.NegateOperation();
                     return true;
+
+                case ExpressionType.Convert:
+                    return HandleConvert(node.Type);
             }
 
             return false;
         }
+
+        /// <summary>
+        /// Обрабатывает выражение приведения к типу.
+        /// </summary>
+        /// <param name="type">Тип, к которому приводится выражение.</param>
+        private bool HandleConvert(Type type)
+        {
+            SqlTypeDescription sqlTypeDescription;
+            var result = TryGetSqlTypeDescription(type, out sqlTypeDescription);
+
+            if (result)
+                _stackEngine.Cast(sqlTypeDescription);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Обрабатывает выражение параметра.
+        /// </summary>
+        public bool HandleParameter(ParameterExpression node)
+        {
+            Contract.Requires<ArgumentNullException>(node != null);
+
+            if (_recordExpression == node)
+            {
+                _stackEngine.DefaultTable();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Попытка получения описания SQL-типа по типу CLR.
+        /// </summary>
+        private bool TryGetSqlTypeDescription(Type type, out SqlTypeDescription result)
+        {
+            if (type == typeof(bool))
+            {
+                result = SqlTypeDescription.Boolean;
+                return true;
+            }
+
+            if (type == typeof(DateTime))
+            {
+                result = SqlTypeDescription.Date;
+                return true;
+            }
+
+            if (type == typeof(string))
+            {
+                result = SqlTypeDescription.String();
+                return true;
+            }
+
+            if (_numberTypes.Contains(type))
+            {
+                result = SqlTypeDescription.Number();
+                return true;
+            }
+
+            if (_mappingProvider.IsDataType(type))
+            {
+                var mapping = _mappingProvider.GetTypeMapping(type);
+                result = SqlTypeDescription.Table(mapping.SourceName);
+                return true;
+            }
+
+            result = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Поддерживаемые числовые типы.
+        /// </summary>
+        private static readonly Type[] _numberTypes = new[]
+            {typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal)};
 
         /// <summary>
         /// Обрабатывает выражение <see cref="TypeBinaryExpression"/>.
@@ -335,6 +450,65 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         #region Вспомогательные типы
 
         /// <summary>
+        /// Интерфейс поставщика выражения SQL.
+        /// </summary>
+        public interface ISqlExpressionProvider
+        {
+            /// <summary>
+            /// Получение выражение.
+            /// </summary>
+            /// <remarks>
+            /// Вызов метода может изменить контекст запроса.
+            /// </remarks>
+            SqlExpression GetExpression();
+        }
+
+        /// <summary>
+        /// Реализация <see cref="ISqlExpressionProvider"/>
+        /// хранящая готовое выражение.
+        /// </summary>
+        private sealed class SqlExpressionHolder : ISqlExpressionProvider
+        {
+            private readonly SqlExpression _expression;
+
+            public SqlExpressionHolder(SqlExpression expression)
+            {
+                Contract.Requires<ArgumentNullException>(expression != null);
+                
+                _expression = expression;
+            }
+
+            public SqlExpression GetExpression()
+            {
+                return _expression;
+            }
+        }
+
+        /// <summary>
+        /// Реализация <see cref="ISqlExpressionProvider"/>
+        /// создающее выражение из хранимого значения.
+        /// </summary>
+        private sealed class SqlExpressionFromValueProvider : ISqlExpressionProvider
+        {
+            private readonly QueryParseContext _context;
+            private readonly ValueHolder _valueHolder;
+
+            public SqlExpressionFromValueProvider(QueryParseContext context, ValueHolder valueHolder)
+            {
+                Contract.Requires<ArgumentNullException>(context != null);
+                Contract.Requires<ArgumentNullException>(valueHolder != null);
+                
+                _context = context;
+                _valueHolder = valueHolder;
+            }
+
+            public SqlExpression GetExpression()
+            {
+                return _valueHolder.GetExpression(_context);
+            }
+        }
+
+        /// <summary>
         /// Стековая машина для разбора выражений.
         /// </summary>
         private sealed class StackEngine
@@ -343,12 +517,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             private readonly Stack<object> _stack = new Stack<object>();
 
             /// <summary>
-            /// Получение головного элемента из стека заданного типа.
+            /// Контекст разбора запроса.
             /// </summary>
-            /// <typeparam name="T">Заданный тип.</typeparam>
-            /// <param name="stackAction">Действие со стеком, в результате которого получается головной элемент.</param>
-            private T GetHeadElement<T>(Func<Stack<object>, object> stackAction)
-                where T : class
+            private readonly QueryParseContext _context;
+
+            /// <summary>Конструктор.</summary>
+            /// <param name="context">Контекст разбора запроса.</param>
+            public StackEngine(QueryParseContext context)
+            {
+                Contract.Requires<ArgumentNullException>(context != null);
+
+                _context = context;
+            }
+
+            /// <summary>
+            /// Вытягивание объекта из стека с кастингом.
+            /// </summary>
+            private T Pop<T>(Func<object, T> castingAction)
+                where T : class 
             {
                 if (_stack.Count == 0)
                 {
@@ -356,9 +542,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                         "В стеке ожидался объект типа \"{0}\", но стек оказался пуст.", typeof(T)));
                 }
 
-                var obj = stackAction(_stack);
+                var obj = _stack.Pop();
 
-                var result = obj as T;
+                var result = castingAction(obj);
 
                 if (result == null)
                 {
@@ -369,20 +555,46 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return result;
             }
 
+
             /// <summary>Вытягивание типизированного объекта из стека.</summary>
             /// <typeparam name="T">Тип объекта.</typeparam>
             private T Pop<T>()
                 where T : class
             {
-                return GetHeadElement<T>(s => s.Pop());
+                return Pop(o => o as T);
             }
 
-            /// <summary>Считывание типизированного объекта из стека.</summary>
-            /// <typeparam name="T">Тип объекта.</typeparam>
-            private T Peek<T>()
-                where T : class
+            /// <summary>Вытягивание <see cref="SqlExpression"/> из стека.</summary>
+            private SqlExpression PopExpression()
             {
-                return GetHeadElement<T>(s => s.Peek());
+                return Pop(o =>
+                    {
+                        var expression = o as SqlExpression;
+
+                        if (expression != null)
+                            return expression;
+
+                        var valueHolder = o as ValueHolder;
+
+                        if (valueHolder != null)
+                            return valueHolder.GetExpression(_context);
+
+                        return null;
+                    });
+            }
+
+            /// <summary>Вытягивание списка <see cref="SqlExpression"/> из стека.</summary>
+            private IList<SqlExpression> PopValueList()
+            {
+                return Pop(o =>
+                    {
+                        var valueHolder = o as ValueHolder;
+
+                        if (valueHolder != null && valueHolder.IsList)
+                            return valueHolder.GetExpressionList(_context);
+
+                        return null;
+                    });
             }
 
             /// <summary>
@@ -398,27 +610,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             /// <summary>
-            /// Добавление выражения доступа к параметру запроса в стек.
+            /// Добавление значения в стек.
             /// </summary>
-            /// <param name="parameterName">Имя параметра.</param>
-            public void Parameter(string parameterName)
+            public void Value(object value)
             {
-               _stack.Push(
-                    new SqlParameterExpression(parameterName));
+                _stack.Push(new ValueHolder(value));
             }
 
             /// <summary>
-            /// Добавление списка параметров в стек.
+            /// Добавление выражения таблицы по умолчанию в стек.
             /// </summary>
-            /// <param name="parameterNames">Имена параметров.</param>
-            public void ParameterList(IEnumerable<string> parameterNames)
+            public void DefaultTable()
             {
-                var expressions = parameterNames
-                    .Select(n => new SqlParameterExpression(n))
-                    .ToArray();
-
-                _stack.Push(
-                    new ReadOnlyCollection<SqlParameterExpression>(expressions));
+                _stack.Push(SqlDefaultTableExpression.Instance);
             }
 
             /// <summary>
@@ -427,16 +631,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <param name="fieldName">Имя поля.</param>
             public void Field(string fieldName)
             {
+                var table = PopExpression();
+                
                 _stack.Push(
-                    new SqlFieldExpression(fieldName));
+                    new SqlFieldExpression(table, fieldName));
             }
 
             /// <summary>Вытягивание двух выражений из стека и положение в стек созданного условия бинарного отношения.</summary>
             /// <param name="relationType">Тип бинарного отношения.</param>
             public void BinaryRelation(SqlBinaryRelationType relationType)
             {
-                var secondOperand = Pop<SqlExpression>();
-                var firstOperand = Pop<SqlExpression>();
+                var secondOperand = PopExpression();
+                var firstOperand = PopExpression();
 
                 var condition = new SqlBinaryRelationCondition(relationType, firstOperand, secondOperand);
                 _stack.Push(condition);
@@ -461,8 +667,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <param name="operationType">Тип бинарной арифметической операции.</param>
             public void BinaryArithmeticOperation(SqlBinaryArithmeticOperationType operationType)
             {
-                var secondOperand = Pop<SqlExpression>();
-                var firstOperand = Pop<SqlExpression>();
+                var secondOperand = PopExpression();
+                var firstOperand = PopExpression();
 
                 var condition = new SqlBinaryOperationExpression(operationType, firstOperand, secondOperand);
                 _stack.Push(condition);
@@ -484,18 +690,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// </summary>
             public void NegateOperation()
             {
-                var operand = Pop<SqlExpression>();
+                var operand = PopExpression();
 
                 var condition = new SqlNegateExpression(operand);
                 _stack.Push(condition);
-            }
-
-            /// <summary>
-            /// Вставка <c>NULL</c> в стек.
-            /// </summary>
-            public void Null()
-            {
-                _stack.Push(null);
             }
 
             /// <summary>
@@ -505,17 +703,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public void TestIsNull(bool isNull)
             {
                 SqlExpression operand;
-                if (_stack.Peek() is SqlExpression)
+                if (IsNullValue(_stack.Peek()))
                 {
-                    operand = Pop<SqlExpression>();
-
-                    Contract.Assert(_stack.Pop() == null);
+                    _stack.Pop();
+                    
+                    operand = PopExpression();
                 }
                 else
                 {
-                    Contract.Assert(_stack.Pop() == null);
+                    operand = PopExpression();
 
-                    operand = Pop<SqlExpression>();
+                    Contract.Assert(IsNullValue(_stack.Pop()));
                 }
 
                 var condition = new SqlIsNullCondition(operand, isNull);
@@ -528,7 +726,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <param name="dataSourceName">Имя источника данных, проверка на ссылку которого создается.</param>
             public void Refs(string dataSourceName)
             {
-                var operand = Pop<SqlExpression>();
+                var operand = PopExpression();
                 var condition = new SqlRefsCondition(operand, dataSourceName);
                 _stack.Push(condition);
             }
@@ -539,11 +737,27 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// </summary>
             public void InValuesListCondition(bool isHierarchy = false)
             {
-                var valuesList = Pop<ReadOnlyCollection<SqlParameterExpression>>();
-                var operand = Pop<SqlExpression>();
+                var valuesList = new ReadOnlyCollection<SqlParameterExpression>(
+                    PopValueList().Cast<SqlParameterExpression>().ToArray());
+                var operand = PopExpression();
 
                 var condition = new SqlInValuesListCondition(operand, valuesList, true, isHierarchy);
                 _stack.Push(condition);
+            }
+
+
+            /// <summary>
+            /// Вытягивание выражения из стека и запихивание выражения кастинга.
+            /// </summary>
+            /// <param name="sqlType">Тип к которому делается приведение.</param>
+            public void Cast(SqlTypeDescription sqlType)
+            {
+                Contract.Requires<ArgumentNullException>(sqlType != null);
+
+                var operand = PopExpression();
+
+                _stack.Push(
+                    new SqlCastExpression(operand, sqlType));
             }
 
             /// <summary>
@@ -551,7 +765,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// </summary>
             public SqlExpression GetExpression()
             {
-                var result = Pop<SqlExpression>();
+                var result = PopExpression();
 
                 Contract.Assert(_stack.Count == 0, "Остались не собранные узлы SQL-модели");
 
@@ -581,9 +795,41 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// Считывание из стека выражения, без его удаления.
             /// </summary>
             /// <returns></returns>
-            public SqlExpression PeekExpression()
+            public ISqlExpressionProvider PeekExpression()
             {
-                return Peek<SqlExpression>();
+                if (_stack.Count == 0)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "В стеке ожидался объект типа \"{0}\", но стек оказался пуст.", typeof(SqlExpression)));
+                }
+
+                var obj = _stack.Peek();
+
+                var expression = obj as SqlExpression;
+
+                if (expression != null)
+                    return new SqlExpressionHolder(expression);
+
+                var valueHolder = obj as ValueHolder;
+
+                if (valueHolder != null)
+                    return new SqlExpressionFromValueProvider(_context, valueHolder);
+
+                throw new InvalidOperationException(string.Format(
+                        "В стеке ожидался объект типа \"{0}\", но оказался объект \"{1}\".", typeof(SqlExpression), obj));
+            }
+
+            /// <summary>Получение значения заданного типа.</summary>
+            public T GetValue<T>()
+            {
+                var obj = _stack.Pop();
+
+                var valueHolder = obj as ValueHolder;
+                if (valueHolder != null)
+                    return valueHolder.GetValue<T>();
+
+                throw new InvalidOperationException(string.Format(
+                        "В стеке ожидался объект типа \"{0}\", но оказался объект \"{1}\".", typeof(ValueHolder), obj));
             }
 
             /// <summary>Очистка стека.</summary>
@@ -594,181 +840,83 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
-        /// Распознаватель доступа к полям записей.
+        /// Держатель значения.
         /// </summary>
-        private abstract class FieldAccessRecognizer
+        private sealed class ValueHolder
         {
-            /// <summary>Создание стратегии.</summary>
-            /// <param name="recordExpression">Выражение записи.</param>
-            /// <param name="mappingProvider">Поставщик соответствий типам CLR источников данных 1С.</param>
-            public static FieldAccessRecognizer Create(
-                ParameterExpression recordExpression, IOneSMappingProvider mappingProvider)
-            {
-                Contract.Requires<ArgumentNullException>(recordExpression != null);
-                Contract.Requires<ArgumentNullException>(mappingProvider != null);
-
-                return (recordExpression.Type == typeof(OneSDataRecord))
-                           ? (FieldAccessRecognizer)new DataRecordFieldAccessRecognizer(recordExpression)
-                           : new TypedRecordFieldAccessRecognizer(recordExpression,
-                                                     mappingProvider.GetTypeMapping(recordExpression.Type));
-            }
-            
             /// <summary>
-            /// Конструктор.
+            /// Значение.
             /// </summary>
-            /// <param name="recordExpression">Выражение записи.</param>
-            protected FieldAccessRecognizer(ParameterExpression recordExpression)
-            {
-                Contract.Requires<ArgumentNullException>(recordExpression != null);
+            private readonly object _value;
 
-                _recordExpression = recordExpression;
-            }
-            
-            /// <summary>Выражение записи данных.</summary>
-            protected ParameterExpression RecordExpression
+            public ValueHolder(object value)
             {
-                get { return _recordExpression; }
-            }
-            private readonly ParameterExpression _recordExpression;
-            
-            /// <summary>Обработчик вызова метода.</summary>
-            /// <param name="node">Обрабатываемый узел выражения.</param>
-            /// <param name="fieldName">
-            /// Имя поля к которому производится доступ в выражении.
-            /// Будет возвращен <c>null</c>, в случае если выражение не является доступом к полю записи.
-            /// </param>
-            /// <returns>
-            /// Возвращает <c>true</c> в случае если узел выражает доступ к полю записи.
-            /// В ином случае возвращается <c>false</c>.
-            /// </returns>
-            public virtual bool HandleMethodCall(MethodCallExpression node, out string fieldName)
-            {
-                Contract.Requires<ArgumentNullException>(node != null);
-
-                fieldName = null;
-                return false;
+                _value = value;
             }
 
-            /// <summary>Обработчик получения члена.</summary>
-            /// <param name="node">Обрабатываемый узел выражения.</param>
-            /// <param name="fieldName">
-            /// Имя поля к которому производится доступ в выражении.
-            /// Будет возвращен <c>null</c>, в случае если выражение не является доступом к полю записи.
-            /// </param>
-            /// <returns>
-            /// Возвращает <c>true</c> в случае если узел выражает доступ к полю записи.
-            /// В ином случае возвращается <c>false</c>.
-            /// </returns>
-            public virtual bool HandleMember(MemberExpression node, out string fieldName)
+            /// <summary>Является ли значение списком.</summary>
+            public bool IsList
             {
-                Contract.Requires<ArgumentNullException>(node != null);
-
-                fieldName = null;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Распознаватель доступа к полям записей,
-        /// ассоциируемых с нетипизированной записью <see cref="OneSDataRecord"/>.
-        /// </summary>
-        private sealed class DataRecordFieldAccessRecognizer : FieldAccessRecognizer
-        {
-            /// <summary>Набор методов доступа к полям записи.</summary>
-            private static readonly ISet<MethodInfo>
-                _getValueMethods = new HashSet<MethodInfo>
-            {
-                OneSQueryExpressionHelper.DataRecordGetCharMethod,
-                OneSQueryExpressionHelper.DataRecordGetStringMethod,
-                OneSQueryExpressionHelper.DataRecordGetByteMethod,
-                OneSQueryExpressionHelper.DataRecordGetInt16Method,
-                OneSQueryExpressionHelper.DataRecordGetInt32Method,
-                OneSQueryExpressionHelper.DataRecordGetInt64Method,
-                OneSQueryExpressionHelper.DataRecordGetFloatMethod,
-                OneSQueryExpressionHelper.DataRecordGetDoubleMethod,
-                OneSQueryExpressionHelper.DataRecordGetDecimalMethod,
-                OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
-                OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
-                OneSQueryExpressionHelper.DataRecordGetValueMethod
-            };
-            
-            public DataRecordFieldAccessRecognizer(ParameterExpression recordExpression)
-                : base(recordExpression)
-            {
-                Contract.Requires<ArgumentNullException>(recordExpression != null);
-            }
-
-
-            /// <summary>Обработчик вызова метода.</summary>
-            /// <param name="node">Обрабатываемый узел выражения.</param>
-            /// <param name="fieldName">
-            /// Имя поля к которому производится доступ в выражении.
-            /// Будет возвращен <c>null</c>, в случае если выражение не является доступом к полю записи.
-            /// </param>
-            /// <returns>
-            /// Возвращает <c>true</c> в случае если узел выражает доступ к полю записи.
-            /// В ином случае возвращается <c>false</c>.
-            /// </returns>
-            public override bool HandleMethodCall(MethodCallExpression node, out string fieldName)
-            {
-                if (node.Object == RecordExpression)
+                get
                 {
-                    if (_getValueMethods.Contains(node.Method))
-                    {
-                        fieldName = node.Arguments[0].GetConstant<string>();
-                        return true;
-                    }
+                    var type = _value.GetType();
+
+                    return type != typeof(string)
+                           && typeof(IEnumerable).IsAssignableFrom(type);
+                }
+            }
+
+            /// <summary>Получение выражения из значения.</summary>
+            public SqlExpression GetExpression(QueryParseContext context)
+            {
+                var parameterName = context.Parameters.GetOrAddNewParameterName(_value);
+
+                return new SqlParameterExpression(parameterName);
+            }
+
+            /// <summary>
+            /// Получение списка выражений из значения.
+            /// </summary>
+            public IList<SqlExpression> GetExpressionList(QueryParseContext context)
+            {
+                Contract.Assert(IsList);
+                
+                var parameterNames = new List<string>();
+                    
+                foreach (var value in (IEnumerable)_value)
+                {
+                    parameterNames.Add(
+                        context.Parameters.GetOrAddNewParameterName(value));
                 }
 
-                return base.HandleMethodCall(node, out fieldName);
-            }
-        }
-
-        /// <summary>
-        /// Распознаватель доступа к полям записей,
-        /// ассоциируемых с типизированными записями.
-        /// </summary>
-        private sealed class TypedRecordFieldAccessRecognizer : FieldAccessRecognizer
-        {
-            /// <summary>Карта соответствия типизированной записи источнику данных 1С.</summary>
-            private readonly OneSTypeMapping _typeMapping;
-
-            public TypedRecordFieldAccessRecognizer(ParameterExpression recordExpression, OneSTypeMapping typeMapping)
-                : base(recordExpression)
-            {
-                Contract.Requires<ArgumentNullException>(recordExpression != null);
-                Contract.Requires<ArgumentNullException>(typeMapping != null);
-
-                _typeMapping = typeMapping;
+                return parameterNames
+                    .Select(n => new SqlParameterExpression(n))
+                    .ToArray();
             }
 
-            /// <summary>Обработчик получения члена.</summary>
-            /// <param name="node">Обрабатываемый узел выражения.</param>
-            /// <param name="fieldName">
-            /// Имя поля к которому производится доступ в выражении.
-            /// Будет возвращен <c>null</c>, в случае если выражение не является доступом к полю записи.
-            /// </param>
-            /// <returns>
-            /// Возвращает <c>true</c> в случае если узел выражает доступ к полю записи.
-            /// В ином случае возвращается <c>false</c>.
-            /// </returns>
-            public override bool HandleMember(MemberExpression node, out string fieldName)
+            /// <summary>Получение значение заданного типа.</summary>
+            public T GetValue<T>()
             {
-                if (node.Expression == RecordExpression)
+                try
                 {
-                    fieldName = _typeMapping.GetFieldNameByMemberInfo(node.Member);
-                    if (fieldName != null)
-                        return true;
-
-                    throw node.CreateExpressionNotSupportedException();
+                    return (T)_value;
                 }
+                catch (InvalidCastException e)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Вместо значения \"{0}\" ожидалось значение типа \"{1}\".",
+                        _value,
+                        typeof(T)), e);
+                }
+            }
 
-                return base.HandleMember(node, out fieldName);
+            /// <summary>Является ли значение <c>null</c>.</summary>
+            public bool IsNull
+            {
+                get { return _value == null; }
             }
         }
 
         #endregion
-
-        
     }
 }

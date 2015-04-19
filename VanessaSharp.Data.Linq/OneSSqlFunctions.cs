@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace VanessaSharp.Data.Linq
 {
@@ -10,6 +11,13 @@ namespace VanessaSharp.Data.Linq
     /// </remarks>
     public static class OneSSqlFunctions
     {
+        private static Exception CreateInvalidCallException(MethodBase method)
+        {
+            throw new InvalidOperationException(
+                string.Format("Ошибка вызова метода \"{0}\". Данный метод можно использовать только в linq-запросе.",
+                method));
+        }
+
         /// <summary>
         /// Условие IN со списком значений.
         /// </summary>
@@ -24,7 +32,7 @@ namespace VanessaSharp.Data.Linq
         /// </exception>
         public static bool In<T>(T operand, params T[] values)
         {
-            throw new InvalidOperationException();
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
         }
 
         /// <summary>
@@ -41,7 +49,108 @@ namespace VanessaSharp.Data.Linq
         /// </exception>
         public static bool InHierarchy<T>(T operand, params T[] values)
         {
-            throw new InvalidOperationException();
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к булевому типу.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        public static bool ToBoolean<T>(T operand)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="short"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="length">Длина числа.</param>
+        public static short ToInt16<T>(T operand, int? length = null)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="int"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="length">Длина числа.</param>
+        public static int ToInt32<T>(T operand, int? length = null)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="long"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="length">Длина числа.</param>
+        public static long ToInt64<T>(T operand, int? length = null)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="float"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="length">Длина числа.</param>
+        /// <param name="precision">Точность числа.</param>
+        public static float ToSingle<T>(T operand, int? length = null, int? precision = null)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="double"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="length">Длина числа.</param>
+        /// <param name="precision">Точность числа.</param>
+        public static double ToDouble<T>(T operand, int? length = null, int? precision = null)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="decimal"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="length">Длина числа.</param>
+        /// <param name="precision">Точность числа.</param>
+        public static decimal ToDecimal<T>(T operand, int? length = null, int? precision = null)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к строковому типу.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="length">Длина строки.</param>
+        public static string ToString<T>(T operand, int? length = null)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="DateTime"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        public static DateTime ToDateTime<T>(T operand)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Преобразование к <see cref="OneSDataRecord"/>.
+        /// </summary>
+        /// <param name="operand">Преобразуемый операнд.</param>
+        /// <param name="dataSourceName">Имя источника данных записи.</param>
+        public static OneSDataRecord ToDataRecord<T>(T operand, string dataSourceName)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
         }
     }
 }
