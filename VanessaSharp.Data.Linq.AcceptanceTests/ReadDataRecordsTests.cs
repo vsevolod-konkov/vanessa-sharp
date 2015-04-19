@@ -233,10 +233,8 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                     
                     )
 
-                .ExpectedSql("SELECT * FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1")
+                .ExpectedSql("SELECT * FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = \"Тестирование\"")
 
-                .ExpectedSqlParameter("p1", "Тестирование")
-                
                 .ExpectedRows(0)
 
             .Run();

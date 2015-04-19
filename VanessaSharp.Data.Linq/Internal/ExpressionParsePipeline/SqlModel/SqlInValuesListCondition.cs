@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics.Contracts;
 using System.Text;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
@@ -14,8 +16,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <param name="isIn">Проверка операнда в списке или вне его.</param>
         /// <param name="isHierarchy">Проверка операнда в иерархии списка значений.</param>
         public SqlInValuesListCondition(
-            SqlExpression operand, ReadOnlyCollection<SqlParameterExpression> valuesList, bool isIn, bool isHierarchy)
+            SqlExpression operand, ReadOnlyCollection<SqlExpression> valuesList, bool isIn, bool isHierarchy)
         {
+            Contract.Requires<ArgumentNullException>(operand != null);
+            Contract.Requires<ArgumentNullException>(valuesList != null);
+            Contract.Requires<ArgumentException>(Contract.ForAll(valuesList, e => e is SqlLiteralExpression || e is SqlParameterExpression));
+            
             _operand = operand;
             _valuesList = valuesList;
             _isIn = isIn;
@@ -34,11 +40,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <summary>
         /// Список значений.
         /// </summary>
-        public ReadOnlyCollection<SqlParameterExpression> ValuesList
+        public ReadOnlyCollection<SqlExpression> ValuesList
         {
             get { return _valuesList; }
         }
-        private readonly ReadOnlyCollection<SqlParameterExpression> _valuesList;
+        private readonly ReadOnlyCollection<SqlExpression> _valuesList;
 
         /// <summary>
         /// Проверка операнда в списке или вне его.

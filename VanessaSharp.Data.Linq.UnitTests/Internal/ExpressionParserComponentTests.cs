@@ -54,12 +54,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
             // Assert
             var command = result.Command;
-            Assert.AreEqual(1, command.Parameters.Count);
-            Assert.AreEqual(FILTER_VALUE, command.Parameters[0].Value);
+            Assert.AreEqual(0, command.Parameters.Count);
 
-            var parameterName = command.Parameters[0].Name;
             Assert.AreEqual(
-                expected: "SELECT * FROM " + SOURCE_NAME + " WHERE " + FILTER_FIELD_NAME + " = &" + parameterName + " ORDER BY " + SORT_FIELD_2_NAME + " DESC, " + SORT_FIELD_3_NAME,
+                expected: "SELECT * FROM " + SOURCE_NAME + " WHERE " + FILTER_FIELD_NAME + " = \"" + FILTER_VALUE + "\" ORDER BY " + SORT_FIELD_2_NAME + " DESC, " + SORT_FIELD_3_NAME,
                 actual: command.Sql
                 );
 
@@ -100,12 +98,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
 
             // Assert
             var command = result.Command;
-            Assert.AreEqual(1, command.Parameters.Count);
-            Assert.AreEqual(FILTER_VALUE, command.Parameters[0].Value);
+            Assert.AreEqual(0, command.Parameters.Count);
 
-            var parameterName = command.Parameters[0].Name;
             Assert.AreEqual(
-                expected: "SELECT " + STRING_FIELD_NAME + ", " + INT32_FIELD_NAME + " FROM " + SOURCE_NAME + " WHERE " + FILTER_FIELD_NAME + " = &" + parameterName + " ORDER BY " + SORT_FIELD_1_NAME + ", " + SORT_FIELD_2_NAME + " DESC",
+                expected: "SELECT " + STRING_FIELD_NAME + ", " + INT32_FIELD_NAME + " FROM " + SOURCE_NAME + " WHERE " + FILTER_FIELD_NAME + " = \"" + FILTER_VALUE + "\" ORDER BY " + SORT_FIELD_1_NAME + ", " + SORT_FIELD_2_NAME + " DESC",
                 actual: command.Sql
                 );
 
@@ -182,16 +178,13 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             // Assert
             var product = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<SomeData>>(result);
 
-            Assert.AreEqual(1, product.Command.Parameters.Count);
-            var parameter = product.Command.Parameters[0];
+            Assert.AreEqual(0, product.Command.Parameters.Count);
 
             Assert.AreEqual(
-                "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест WHERE Наименование = &" + parameter.Name,
+                "SELECT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест WHERE Наименование = \"Тест\"",
                 product.Command.Sql
                 );
 
-
-            Assert.AreEqual("Тест", parameter.Value);
             AssertTypedRecordsReaderFactory(product.ItemReaderFactory);
         }
 

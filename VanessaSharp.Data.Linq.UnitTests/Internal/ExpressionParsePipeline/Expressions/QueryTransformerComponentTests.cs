@@ -121,12 +121,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             // Assert
             var command = result.Command;
             
-            Assert.AreEqual(1, command.Parameters.Count);
-            var parameter = command.Parameters[0];
-            Assert.AreEqual(FILTER_VALUE, parameter.Value);
+            Assert.AreEqual(0, command.Parameters.Count);
 
             Assert.AreEqual(
-                "SELECT * FROM "+ SOURCE_NAME + " WHERE " + FILTER_FIELD + " = &" + parameter.Name, command.Sql);
+                "SELECT * FROM "+ SOURCE_NAME + " WHERE " + FILTER_FIELD + " = \"" + FILTER_VALUE + "\"", command.Sql);
 
             var parseProduct = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
             Assert.IsInstanceOf<OneSDataRecordReaderFactory>(parseProduct.ItemReaderFactory);
@@ -215,10 +213,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<SomeData, bool>> filter = d => d.Name == FILTER_VALUE;
 
             TestTransformTypedRecords(
-                parameters => "WHERE Наименование = &" + parameters[0].Name,
-                1,
-                parameters => Assert.AreEqual(FILTER_VALUE, parameters[0].Value),
-                filter
+                parameters => "WHERE Наименование = \"" + FILTER_VALUE + "\"",
+                0,
+                filter: filter
                 );
         }
 

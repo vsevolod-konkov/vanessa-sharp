@@ -737,8 +737,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// </summary>
             public void InValuesListCondition(bool isHierarchy = false)
             {
-                var valuesList = new ReadOnlyCollection<SqlParameterExpression>(
-                    PopValueList().Cast<SqlParameterExpression>().ToArray());
+                var valuesList = new ReadOnlyCollection<SqlExpression>(PopValueList());
                 var operand = PopExpression();
 
                 var condition = new SqlInValuesListCondition(operand, valuesList, true, isHierarchy);
@@ -867,11 +866,59 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             /// <summary>Получение выражения из значения.</summary>
-            public SqlExpression GetExpression(QueryParseContext context)
+            private static SqlExpression GetExpression(object value, QueryParseContext context)
             {
-                var parameterName = context.Parameters.GetOrAddNewParameterName(_value);
+                if (value is bool)
+                    return SqlLiteralExpression.Create((bool)value);
+
+                if (value is sbyte)
+                    return SqlLiteralExpression.Create((sbyte)value);
+
+                if (value is short)
+                    return SqlLiteralExpression.Create((short)value);
+
+                if (value is int)
+                    return SqlLiteralExpression.Create((int)value);
+
+                if (value is long)
+                    return SqlLiteralExpression.Create((long)value);
+
+                if (value is byte)
+                    return SqlLiteralExpression.Create((byte)value);
+
+                if (value is ushort)
+                    return SqlLiteralExpression.Create((ushort)value);
+
+                if (value is uint)
+                    return SqlLiteralExpression.Create((uint)value);
+
+                if (value is ulong)
+                    return SqlLiteralExpression.Create((ulong)value);
+
+                if (value is float)
+                    return SqlLiteralExpression.Create((float)value);
+
+                if (value is double)
+                    return SqlLiteralExpression.Create((double)value);
+
+                if (value is decimal)
+                    return SqlLiteralExpression.Create((decimal)value);
+
+                if (value is string)
+                    return SqlLiteralExpression.Create((string)value);
+
+                if (value is DateTime)
+                    return SqlLiteralExpression.Create((DateTime)value);
+
+                var parameterName = context.Parameters.GetOrAddNewParameterName(value);
 
                 return new SqlParameterExpression(parameterName);
+            }
+
+            /// <summary>Получение выражения из значения.</summary>
+            public SqlExpression GetExpression(QueryParseContext context)
+            {
+                return GetExpression(_value, context);
             }
 
             /// <summary>
@@ -881,17 +928,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             {
                 Contract.Assert(IsList);
                 
-                var parameterNames = new List<string>();
+                var expressions = new List<SqlExpression>();
                     
                 foreach (var value in (IEnumerable)_value)
-                {
-                    parameterNames.Add(
-                        context.Parameters.GetOrAddNewParameterName(value));
-                }
+                    expressions.Add(GetExpression(value, context));
 
-                return parameterNames
-                    .Select(n => new SqlParameterExpression(n))
-                    .ToArray();
+                return expressions;
             }
 
             /// <summary>Получение значение заданного типа.</summary>

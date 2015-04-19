@@ -110,9 +110,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                 )
 
                 .ExpectedSql(
-                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1")
-
-                .ExpectedSqlParameter("p1", "Тестирование")
+                    "SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле, ДатаВремяПоле, ВремяПоле, НеограниченноеСтроковоеПоле, СимвольноеПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = \"Тестирование\"")
 
                 .AssertItem<ExpectedTestDictionary>((expected, actual) =>
                     {
@@ -321,9 +319,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
                               }
                 )
 
-                .ExpectedSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = &p1")
-
-                .ExpectedSqlParameter("p1", "Тестирование")
+                .ExpectedSql("SELECT СтроковоеПоле, ЦелочисленноеПоле, ЧисловоеПоле, БулевоПоле, ДатаПоле FROM Справочник.ТестовыйСправочник WHERE СтроковоеПоле = \"Тестирование\"")
 
                 .AssertItem<ExpectedTestDictionary>((expected, actual) =>
                     {

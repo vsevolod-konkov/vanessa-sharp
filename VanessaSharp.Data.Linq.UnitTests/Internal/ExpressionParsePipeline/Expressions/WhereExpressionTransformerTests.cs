@@ -79,6 +79,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// <param name="expectedRelationType">Тип сравнения.</param>
         private void AssertBinaryRelation(SqlCondition testedCondition, SqlBinaryRelationType expectedRelationType)
         {
+            var parameters = GetSqlParameters();
+            Assert.AreEqual(0, parameters.Count);
+            
             var binaryCondition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(testedCondition);
 
             Assert.AreEqual(expectedRelationType, binaryCondition.RelationType);
@@ -87,14 +90,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.IsInstanceOf<SqlDefaultTableExpression>(fieldExpression.Table);
             Assert.AreEqual(FILTER_FIELD, fieldExpression.FieldName);
 
-            var parameterExpression = AssertEx.IsInstanceAndCastOf<SqlParameterExpression>(binaryCondition.SecondOperand);
-            var parameterName = parameterExpression.ParameterName;
-
-            var parameters = GetSqlParameters();
-            Assert.AreEqual(1, parameters.Count);
-            var parameter = parameters[0];
-            Assert.AreEqual(parameterName, parameter.Name);
-            Assert.AreEqual(FILTER_VALUE, parameter.Value);
+            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(binaryCondition.SecondOperand);
+            
+            Assert.AreEqual(FILTER_VALUE, literal.Value);
         }
 
         /// <summary>Тестирование преобразования бинарного отношения.</summary>
@@ -394,13 +392,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.IsTrue(inValuesListCondition.IsIn);
             Assert.AreEqual(expectedIsHierarchy, inValuesListCondition.IsHierarchy);
 
-            var parametersMap = _context.Parameters
-                                        .GetSqlParameters()
-                                        .ToDictionary(p => p.Name, p => p.Value);
-
             var actualValues = inValuesListCondition
                 .ValuesList
-                .Select(p => parametersMap[p.ParameterName])
+                .Cast<SqlLiteralExpression>()
+                .Select(l => l.Value)
                 .ToArray();
 
             CollectionAssert.AreEqual(expectedValues, actualValues);
