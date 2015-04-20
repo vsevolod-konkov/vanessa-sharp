@@ -408,6 +408,46 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Test();
         }
 
+        /// <summary>
+        /// Тестирование <see cref="DateTime.DayOfWeek"/>
+        /// </summary>
+        [Test]
+        public void TestTransformSelectorWithDayOfWeek()
+        {
+            // Arrange
+            const string SALE_DATE_FIELD_NAME = "день_продаж";
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.SaleDate, SALE_DATE_FIELD_NAME)
+                .End();
+
+            var selectExpression = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => d.SaleDate.DayOfWeek);
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            Assert.AreEqual(1, result.Columns.Count);
+
+            var function = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(result.Columns[0]);
+            Assert.AreEqual(SqlEmbeddedFunction.DayWeek, function.Function);
+            Assert.AreEqual(1, function.Arguments.Count);
+
+            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(function.Arguments[0]);
+            Assert.AreEqual(SALE_DATE_FIELD_NAME, field.FieldName);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 1)
+                    .Field(0, i => i, c => c.ToInt32(null), 3, DayOfWeek.Wednesday)
+                .Test();
+        }
+
         #region Тестовые типы
 
         /// <summary>
@@ -422,6 +462,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public decimal Price;
 
             public decimal Value;
+
+            public DateTime SaleDate;
 
             public object AddInfo;
         }

@@ -108,7 +108,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
             if (_getValueMethods.Contains(node.Method))
             {
-                var fieldName = _stackEngine.GetValue<string>();
+                var fieldName = _stackEngine.PopValue<string>();
                 _stackEngine.Field(fieldName);
                 
                 return true;
@@ -128,36 +128,36 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 
                 switch (sqlFunction)
                 {
+                    case OneSQueryExpressionHelper.SqlFunction.In:
+                        _stackEngine.InValuesListCondition();
+                        return true;
+                    case OneSQueryExpressionHelper.SqlFunction.InHierarchy:
+                        _stackEngine.InValuesListCondition(true);
+                        return true;
+                    
                     case OneSQueryExpressionHelper.SqlFunction.ToInt16:
                     case OneSQueryExpressionHelper.SqlFunction.ToInt32:
                     case OneSQueryExpressionHelper.SqlFunction.ToInt64:
-                        length = _stackEngine.GetValue<int?>();
+                        length = _stackEngine.PopValue<int?>();
                         _stackEngine.Cast(SqlTypeDescription.Number(length));
                         return true;
 
                     case OneSQueryExpressionHelper.SqlFunction.ToSingle:
                     case OneSQueryExpressionHelper.SqlFunction.ToDouble:
                     case OneSQueryExpressionHelper.SqlFunction.ToDecimal:
-                        var precision = _stackEngine.GetValue<int?>();
-                        length = _stackEngine.GetValue<int?>();
+                        var precision = _stackEngine.PopValue<int?>();
+                        length = _stackEngine.PopValue<int?>();
                         _stackEngine.Cast(SqlTypeDescription.Number(length, precision));
                         return true;
 
                     case OneSQueryExpressionHelper.SqlFunction.ToString:
-                        length = _stackEngine.GetValue<int?>();
+                        length = _stackEngine.PopValue<int?>();
                         _stackEngine.Cast(SqlTypeDescription.String(length));
                         return true;
 
                     case OneSQueryExpressionHelper.SqlFunction.ToDataRecord:
-                        var tableName = _stackEngine.GetValue<string>();
+                        var tableName = _stackEngine.PopValue<string>();
                         _stackEngine.Cast(SqlTypeDescription.Table(tableName));
-                        return true;
-
-                    case OneSQueryExpressionHelper.SqlFunction.In:
-                        _stackEngine.InValuesListCondition();
-                        return true;
-                    case OneSQueryExpressionHelper.SqlFunction.InHierarchy:
-                        _stackEngine.InValuesListCondition(true);
                         return true;
 
                     case OneSQueryExpressionHelper.SqlFunction.ToBoolean:
@@ -166,7 +166,34 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     case OneSQueryExpressionHelper.SqlFunction.ToDateTime:
                         _stackEngine.Cast(SqlTypeDescription.Date);
                         return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.GetQuarter:
+                        _stackEngine.CallQuarter();
+                        return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.GetWeek:
+                        _stackEngine.CallWeek();
+                        return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.GetDayWeek:
+                        _stackEngine.CallDayWeek();
+                        return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.BeginOfPeriod:
+                        _stackEngine.CallBeginOfPeriod();
+                        return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.EndOfPeriod:
+                        _stackEngine.CallEndOfPeriod();
+                        return true;
                 }
+            }
+
+            if (node.Method.DeclaringType == typeof(string) && node.Method.Name == "Substring" &&
+                node.Arguments.Count == 2)
+            {
+                _stackEngine.CallSubstring();
+                return true;
             }
             
             return false;
@@ -179,14 +206,55 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             Contract.Requires<ArgumentNullException>(node != null);
 
-            var fieldName = _mappingProvider
-                .GetTypeMapping(node.Expression.Type)
-                .GetFieldNameByMemberInfo(node.Member);
-
-            if (fieldName != null)
+            if (node.Member.DeclaringType == typeof(DateTime))
             {
-                _stackEngine.Field(fieldName);
-                return true;
+                switch (node.Member.Name)
+                {
+                    case "Year":
+                        _stackEngine.CallYear();
+                        return true;
+                    
+                    case "Month":
+                        _stackEngine.CallMonth();
+                        return true;
+
+                    case "DayOfYear":
+                        _stackEngine.CallDayOfYear();
+                        return true;
+
+                    case "Day":
+                        _stackEngine.CallDay();
+                        return true;
+
+                    case "DayOfWeek":
+                        _stackEngine.CallDayWeek();
+                        return true;
+
+                    case "Hour":
+                        _stackEngine.CallHour();
+                        return true;
+
+                    case "Minute":
+                        _stackEngine.CallMinute();
+                        return true;
+
+                    case "Second":
+                        _stackEngine.CallSecond();
+                        return true;
+                }
+            }
+
+            if (_mappingProvider.IsDataType(node.Expression.Type))
+            {
+                var fieldName = _mappingProvider
+                    .GetTypeMapping(node.Expression.Type)
+                    .GetFieldNameByMemberInfo(node.Member);
+
+                if (fieldName != null)
+                {
+                    _stackEngine.Field(fieldName);
+                    return true;
+                }
             }
 
             return false;
@@ -760,6 +828,134 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             /// <summary>
+            /// Вызов функции подстроки.
+            /// </summary>
+            public void CallSubstring()
+            {
+                var length = PopExpression();
+                var position = PopExpression();
+                var str = PopExpression();
+
+                var function = SqlEmbeddedFunctionExpression.Substring(str, position, length);
+
+                _stack.Push(function);
+            }
+
+            private void CallDateFunction(Func<SqlExpression, SqlEmbeddedFunctionExpression> creator)
+            {
+                var date = PopExpression();
+                var function = creator(date);
+
+                _stack.Push(function);
+            }
+
+            /// <summary>
+            /// Вызов функции получения года.
+            /// </summary>
+            public void CallYear()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Year);
+            }
+
+            /// <summary>
+            /// Вызов функции получения квартала.
+            /// </summary>
+            public void CallQuarter()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Quarter);
+            }
+
+            /// <summary>
+            /// Вызов функции получения месяца.
+            /// </summary>
+            public void CallMonth()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Month);
+            }
+
+            /// <summary>
+            /// Вызов функции получения дня года.
+            /// </summary>
+            public void CallDayOfYear()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.DayOfYear);
+            }
+
+            /// <summary>
+            /// Вызов функции получения дня месяца.
+            /// </summary>
+            public void CallDay()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Day);
+            }
+
+            /// <summary>
+            /// Вызов функции получения недели года даты.
+            /// </summary>
+            public void CallWeek()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Week);
+            }
+
+            /// <summary>
+            /// Вызов функции получения дня недели даты.
+            /// </summary>
+            public void CallDayWeek()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.DayWeek);
+            }
+
+            /// <summary>
+            /// Вызов функции получения часа даты.
+            /// </summary>
+            public void CallHour()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Hour);
+            }
+
+            /// <summary>
+            /// Вызов функции получения минуты даты.
+            /// </summary>
+            public void CallMinute()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Minute);
+            }
+
+            /// <summary>
+            /// Вызов функции получения секунды даты.
+            /// </summary>
+            public void CallSecond()
+            {
+                CallDateFunction(SqlEmbeddedFunctionExpression.Second);
+            }
+
+            private void CallDefineDatePeriodFunction(
+                Func<SqlExpression, OneSTimePeriodKind, SqlEmbeddedFunctionExpression> creator)
+            {
+                var kind = PopValue<OneSTimePeriodKind>();
+                var date = PopExpression();
+                var function = creator(date, kind);
+
+                _stack.Push(function);
+            }
+
+            /// <summary>
+            /// Вызов функции получения начальной даты периода.
+            /// </summary>
+            public void CallBeginOfPeriod()
+            {
+                CallDefineDatePeriodFunction(SqlEmbeddedFunctionExpression.BeginOfPeriod);
+            }
+
+            /// <summary>
+            /// Вызов функции получения конечной даты периода.
+            /// </summary>
+            public void CallEndOfPeriod()
+            {
+                CallDefineDatePeriodFunction(SqlEmbeddedFunctionExpression.EndOfPeriod);
+            }
+
+            /// <summary>
             /// Получение выражения.
             /// </summary>
             public SqlExpression GetExpression()
@@ -819,7 +1015,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             /// <summary>Получение значения заданного типа.</summary>
-            public T GetValue<T>()
+            public T PopValue<T>()
             {
                 var obj = _stack.Pop();
 
@@ -909,6 +1105,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
                 if (value is DateTime)
                     return SqlLiteralExpression.Create((DateTime)value);
+
+                if (value is DayOfWeek)
+                    return SqlLiteralExpression.Create(DayOfWeekConverter.ToInt32((DayOfWeek)value));
 
                 var parameterName = context.Parameters.GetOrAddNewParameterName(value);
 

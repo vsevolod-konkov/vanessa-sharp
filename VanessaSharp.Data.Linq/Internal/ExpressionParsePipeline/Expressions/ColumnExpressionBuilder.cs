@@ -73,6 +73,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     : Expression.Convert(getOneSValueExpression, columnType);
             }
 
+            if (columnType == typeof(DayOfWeek))
+            {
+                return Expression.Call(
+                    null,
+                    OneSQueryExpressionHelper.DayOfWeekFromInt32Method,
+                    GetColumnAccessExpression(columnExpression, typeof(int)));
+            }
+
             return GetColumnAccessAndConvertExpression(
                 columnExpression,
                 OneSQueryExpressionHelper.GetValueConvertMethod(columnType));

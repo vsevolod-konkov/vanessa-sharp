@@ -22,6 +22,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
         private const string PRICE_FIELD = "price";
         private const string QUANTITY_FIELD = "quantity";
+        private const string BIRTH_DATE_FIELD = "birthdate";
         private const string REFERENCE_FIELD = "object";
 
         private const string REFERENCE_TABLE = "some_table";
@@ -40,11 +41,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
 
             _mappingProviderMock
+                .Setup(p => p.IsDataType(It.IsAny<Type>()))
+                .Returns(false);
+
+            _mappingProviderMock
                 .BeginSetupGetTypeMappingFor<SomeData>("?")
                     .FieldMap(d => d.Id, FILTER_FIELD)
                     .FieldMap(d => d.Name, NULLABLE_FIELD)
                     .FieldMap(d => d.Price, PRICE_FIELD)
                     .FieldMap(d => d.Quantity, QUANTITY_FIELD)
+                    .FieldMap(d => d.BirthDate, BIRTH_DATE_FIELD)
                     .FieldMap(d => d.Reference, REFERENCE_FIELD)
                 .End();
 
@@ -441,6 +447,34 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             TestTransformWhenInCondition(testedFilter, true, values);
         }
 
+        /// <summary>
+        /// Тестирование условия равенства свойства <see cref="DateTime.DayOfWeek"/> значению <see cref="DayOfWeek"/>.
+        /// </summary>
+        [Test]
+        [Ignore("Есть проблема, связанная с компилятором, который вставляет узел преобразования.")]
+        public void TestTransformWhenEqualsDayOfWeek()
+        {
+            Expression<Func<SomeData, bool>> testedFilter = d => d.BirthDate.DayOfWeek == DayOfWeek.Wednesday;
+
+            // Act
+            var result = Transform(testedFilter);
+
+            // Assert
+            var equals = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(result);
+
+            Assert.AreEqual(SqlBinaryRelationType.Equal, equals.RelationType);
+            var left = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(equals.FirstOperand);
+
+            Assert.AreEqual(SqlEmbeddedFunction.DayWeek, left.Function);
+            Assert.AreEqual(1, left.Arguments.Count);
+            
+            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(left.Arguments[0]);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
+            Assert.AreEqual(BIRTH_DATE_FIELD, field.FieldName);
+
+            var right = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(equals.SecondOperand);
+            Assert.AreEqual(3, right.Value);
+        }
 
         // TODO Надо подумать о желаемом поведении"
         /// <summary>
@@ -498,6 +532,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public int Price;
 
             public int Quantity;
+
+            public DateTime BirthDate;
 
             public object Reference;
         }

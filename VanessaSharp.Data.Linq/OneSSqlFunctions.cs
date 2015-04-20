@@ -18,6 +18,8 @@ namespace VanessaSharp.Data.Linq
                 method));
         }
 
+        #region Синтаксические конструкции
+
         /// <summary>
         /// Условие IN со списком значений.
         /// </summary>
@@ -51,6 +53,10 @@ namespace VanessaSharp.Data.Linq
         {
             throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
         }
+
+        #endregion
+
+        #region Приведения
 
         /// <summary>
         /// Преобразование к булевому типу.
@@ -152,5 +158,51 @@ namespace VanessaSharp.Data.Linq
         {
             throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
         }
+
+        #endregion
+
+        #region Встроенные функции
+
+        /// <summary>
+        /// Получение квартала даты.
+        /// </summary>
+        public static int GetQuarter(DateTime date)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Получение недели года даты.
+        /// </summary>
+        public static int GetWeek(DateTime date)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>
+        /// Получение номера дня недели даты.
+        /// </summary>
+        public static int GetDayWeek(DateTime date)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>Получение начальной даты периода, в который входит заданная дата.</summary>
+        /// <param name="date">Заданная дата.</param>
+        /// <param name="kind">Вид периода.</param>
+        public static DateTime BeginOfPeriod(DateTime date, OneSTimePeriodKind kind)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        /// <summary>Получение конечной даты периода, в который входит заданная дата.</summary>
+        /// <param name="date">Заданная дата.</param>
+        /// <param name="kind">Вид периода.</param>
+        public static DateTime EndOfPeriod(DateTime date, OneSTimePeriodKind kind)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        #endregion
     }
 }

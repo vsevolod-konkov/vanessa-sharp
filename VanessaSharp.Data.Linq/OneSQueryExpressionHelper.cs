@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 
 namespace VanessaSharp.Data.Linq
 {
@@ -541,7 +542,12 @@ namespace VanessaSharp.Data.Linq
             ToDecimal,
             ToString,
             ToDateTime,
-            ToDataRecord
+            ToDataRecord,
+            GetQuarter,
+            GetWeek,
+            GetDayWeek,
+            BeginOfPeriod,
+            EndOfPeriod
         }
 
         private static readonly Dictionary<string, SqlFunction> _sqlFunctions 
@@ -562,6 +568,19 @@ namespace VanessaSharp.Data.Linq
 
             return _sqlFunctions.TryGetValue(method.Name, out sqlFunction);
         }
+
+        #endregion
+
+        #region Методы конвертеров
+
+        /// <summary>
+        /// Метод <see cref="DayOfWeekConverter.FromInt32"/>.
+        /// </summary>
+        public static MethodInfo DayOfWeekFromInt32Method
+        {
+            get { return _dayOfWeekFromInt32Method; }
+        }
+        private static readonly MethodInfo _dayOfWeekFromInt32Method = typeof(DayOfWeekConverter).GetMethod("FromInt32");
 
         #endregion
 

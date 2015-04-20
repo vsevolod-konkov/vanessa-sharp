@@ -113,6 +113,7 @@
     <Compile Include="..\ProductInfo.cs">
       <Link>Properties\ProductInfo.cs</Link>
     </Compile>
+    <Compile Include="DayOfWeekConverter.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExplicitSourceDescription.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionHelper.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ColumnExpressionBuilder.cs" />
@@ -147,6 +148,8 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCastExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlDefaultTableExpression.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlEmbeddedFunction.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlEmbeddedFunctionExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlInValuesListCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlIsNullCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlLiteralExpression.cs" />
@@ -214,6 +217,7 @@
     <Compile Include="OneSQueryMethods.cs" />
     <Compile Include="OneSQueryProvider.cs" />
     <Compile Include="OneSSqlFunctions.cs" />
+    <Compile Include="OneSTimePeriodKind.cs" />
     <Compile Include="OneSTypeMapperBuilder.cs" />
     <Compile Include="OneSValue.cs" />
     <Compile Include="PredefinedData\Fields.cs" />

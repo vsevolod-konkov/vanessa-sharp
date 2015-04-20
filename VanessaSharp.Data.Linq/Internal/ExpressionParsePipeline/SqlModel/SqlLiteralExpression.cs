@@ -48,6 +48,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
                           value.Year, value.Month, value.Day, value.Hour, value.Minute, value.Second));
         }
 
+        public static SqlLiteralExpression Create(OneSTimePeriodKind kind)
+        {
+            return new SqlLiteralExpression(
+                kind, 
+                Enum.GetName(typeof(OneSTimePeriodKind), kind).ToUpperInvariant());
+        }
+
         /// <summary>
         /// SQL-выражение литерала.
         /// </summary>

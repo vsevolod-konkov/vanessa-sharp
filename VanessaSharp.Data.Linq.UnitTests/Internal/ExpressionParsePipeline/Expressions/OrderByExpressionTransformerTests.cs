@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
@@ -369,6 +371,215 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
+        /// Тестирование преобразования вызова метода <see cref="string.Substring(int, int)"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformSubstring()
+        {
+            const string NAME_FIELD_NAME = "name";
+            const int LENGTH = 2;
+            const int POSITION = 5;
+
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("X")
+                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                .End();
+
+            Expression<Func<SomeData, string>> sortKeyExpression = d => d.Name.Substring(LENGTH, POSITION);
+            sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
+
+            // Act
+            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+
+            // Assert
+            var function = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(result);
+
+            Assert.AreEqual(SqlEmbeddedFunction.Substring, function.Function);
+            Assert.AreEqual(3, function.Arguments.Count);
+
+            var str = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(function.Arguments[0]);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(str.Table);
+            Assert.AreEqual(NAME_FIELD_NAME, str.FieldName);
+
+            var lengthLiteral = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(function.Arguments[1]);
+            Assert.AreEqual(LENGTH, lengthLiteral.Value);
+
+            var positionLiteral = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(function.Arguments[2]);
+            Assert.AreEqual(POSITION, positionLiteral.Value);
+        }
+
+        private ReadOnlyCollection<SqlExpression> BeginTestTransformCallDateTimeFunction<T>(
+            Expression<Func<SomeData, T>> sortKeyExpression,
+            SqlEmbeddedFunction expectedFunction)
+        {
+            const string DATE_FIELD_NAME = "birthdate";
+
+            // Arrange
+            _mappingProviderMock
+                .Setup(p => p.IsDataType(It.IsAny<Type>()))
+                .Returns(false);
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("X")
+                    .FieldMap(d => d.BirthDate, DATE_FIELD_NAME)
+                .End();
+
+            sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
+
+            // Act
+            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+
+            // Assert
+            var function = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(result);
+
+            Assert.AreEqual(expectedFunction, function.Function);
+            Assert.Greater(function.Arguments.Count, 0);
+
+            var date = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(function.Arguments[0]);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(date.Table);
+            Assert.AreEqual(DATE_FIELD_NAME, date.FieldName);
+
+            return function.Arguments;
+        }
+
+        private void TestTransformCallDateTimeFunction(
+            Expression<Func<SomeData, int>> sortKeyExpression,
+            SqlEmbeddedFunction expectedFunction)
+        {
+
+            var args = BeginTestTransformCallDateTimeFunction(sortKeyExpression, expectedFunction);
+            Assert.AreEqual(1, args.Count);
+        }
+        
+        /// <summary>
+        /// Тестирование преобразования вызова свойства <see cref="DateTime.Year"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformYear()
+        {
+            TestTransformCallDateTimeFunction(d => d.BirthDate.Year, SqlEmbeddedFunction.Year);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова метода <see cref="OneSSqlFunctions.GetQuarter"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformGetQuarter()
+        {
+            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetQuarter(d.BirthDate), SqlEmbeddedFunction.Quarter);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова свойства <see cref="DateTime.Month"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformMonth()
+        {
+            TestTransformCallDateTimeFunction(d => d.BirthDate.Month, SqlEmbeddedFunction.Month);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова свойства <see cref="DateTime.DayOfYear"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformDayOfYear()
+        {
+            TestTransformCallDateTimeFunction(d => d.BirthDate.DayOfYear, SqlEmbeddedFunction.DayOfYear);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова свойства <see cref="DateTime.Day"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformDay()
+        {
+            TestTransformCallDateTimeFunction(d => d.BirthDate.Day, SqlEmbeddedFunction.Day);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова метода <see cref="OneSSqlFunctions.GetWeek"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformGetWeek()
+        {
+            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetWeek(d.BirthDate), SqlEmbeddedFunction.Week);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова метода <see cref="OneSSqlFunctions.GetDayWeek"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformGetDayWeek()
+        {
+            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetDayWeek(d.BirthDate), SqlEmbeddedFunction.DayWeek);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова свойства <see cref="DateTime.Hour"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformHour()
+        {
+            TestTransformCallDateTimeFunction(d => d.BirthDate.Hour, SqlEmbeddedFunction.Hour);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова свойства <see cref="DateTime.Minute"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformMinute()
+        {
+            TestTransformCallDateTimeFunction(d => d.BirthDate.Minute, SqlEmbeddedFunction.Minute);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова свойства <see cref="DateTime.Second"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformSecond()
+        {
+            TestTransformCallDateTimeFunction(d => d.BirthDate.Second, SqlEmbeddedFunction.Second);
+        }
+
+        private void TestTransformCallPeriodFunction(Expression<Func<SomeData, DateTime>> sortKeyExpression,
+                                                     SqlEmbeddedFunction expectedFunction,
+                                                     OneSTimePeriodKind expectedKind)
+        {
+            var args = BeginTestTransformCallDateTimeFunction(sortKeyExpression, expectedFunction);
+
+            Assert.AreEqual(2, args.Count);
+            var periodKind = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(args[1]);
+            Assert.AreEqual(expectedKind, periodKind.Value);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова метода <see cref="OneSSqlFunctions.BeginOfPeriod"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformBeginOfPeriod()
+        {
+            TestTransformCallPeriodFunction(
+                d => OneSSqlFunctions.BeginOfPeriod(d.BirthDate, OneSTimePeriodKind.Quarter),
+                SqlEmbeddedFunction.BeginOfPeriod,
+                OneSTimePeriodKind.Quarter
+                );
+        }
+
+        /// <summary>
+        /// Тестирование преобразования вызова метода <see cref="OneSSqlFunctions.EndOfPeriod"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformEndOfPeriod()
+        {
+            TestTransformCallPeriodFunction(
+                d => OneSSqlFunctions.EndOfPeriod(d.BirthDate, OneSTimePeriodKind.Month),
+                SqlEmbeddedFunction.EndOfPeriod,
+                OneSTimePeriodKind.Month
+                );
+        }
+
+        /// <summary>
         /// Тип тестовой типизированной записи.
         /// </summary>
         public sealed class SomeData
@@ -378,6 +589,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public double Price;
 
             public double Value;
+
+            public string Name;
+
+            public DateTime BirthDate;
 
             public object AddInfo;
         }

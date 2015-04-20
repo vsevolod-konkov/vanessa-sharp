@@ -68,6 +68,19 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             /// <param name="expectedValue">Ожидаемое значение элемента.</param>
             public TestBuilder<T> Field<TValue>(int valueIndex, Func<T, TValue> fieldAccessor, Expression<Func<IValueConverter, TValue>> convertMethod, TValue expectedValue)
             {
+                return Field(valueIndex, fieldAccessor, convertMethod, expectedValue, expectedValue);
+            }
+
+            /// <summary>Инициализация тестирования поля.</summary>
+            /// <typeparam name="TValue">Тип значения поля.</typeparam>
+            /// <typeparam name="TRawValue">Тип значения колонки.</typeparam>
+            /// <param name="valueIndex">Индекс значения в буфере данных.</param>
+            /// <param name="fieldAccessor">Получатель значения поля из вычитанного элемента.</param>
+            /// <param name="convertMethod">Выражение используемого метода конвертации.</param>
+            /// <param name="rawValue">Сырое значение колонки.</param>
+            /// <param name="expectedValue">Ожидаемое значение элемента.</param>
+            public TestBuilder<T> Field<TRawValue, TValue>(int valueIndex, Func<T, TValue> fieldAccessor, Expression<Func<IValueConverter, TRawValue>> convertMethod, TRawValue rawValue, TValue expectedValue)
+            {
                 Contract.Requires<ArgumentOutOfRangeException>(valueIndex >= 0 && valueIndex < FieldsCount);
                 Contract.Requires<ArgumentNullException>(fieldAccessor != null);
                 Contract.Requires<ArgumentNullException>(convertMethod != null);
@@ -78,10 +91,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
                 // Инициализация мока конвертера вызова метода с заданным аргументом из буфера
                 _valueConverterMock
                     .Setup(substitutedConvertMethod)
-                    .Returns(expectedValue);
+                    .Returns(rawValue);
 
-                _fieldTesters[valueIndex] = new FieldTester<TValue>(fieldAccessor, expectedValue, substitutedConvertMethod);
-                
+                _fieldTesters[valueIndex] = new FieldTester<TRawValue, TValue>(fieldAccessor, expectedValue, substitutedConvertMethod);
+
                 return this;
             }
 
@@ -143,8 +156,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             /// <summary>
             /// Тестировщик поля для конкретного типа поля.
             /// </summary>
+            /// <typeparam name="TRawValue">Тип колонки.</typeparam>
             /// <typeparam name="TValue">Тип значения поля.</typeparam>
-            private sealed class FieldTester<TValue> : IFieldTester
+            private sealed class FieldTester<TRawValue, TValue> : IFieldTester
             {
                 /// <summary>
                 /// Получатель значения поля из вычитанного элемента.
@@ -159,9 +173,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
                 /// <summary>
                 /// Выражение конвертации значения из буфера.
                 /// </summary>
-                private readonly Expression<Func<IValueConverter, TValue>> _convertExpression;
+                private readonly Expression<Func<IValueConverter, TRawValue>> _convertExpression;
 
-                public FieldTester(Func<T, TValue> fieldAccessor, TValue expectedValue, Expression<Func<IValueConverter, TValue>> convertExpression)
+                public FieldTester(Func<T, TValue> fieldAccessor, TValue expectedValue, Expression<Func<IValueConverter, TRawValue>> convertExpression)
                 {
                     _fieldAccessor = fieldAccessor;
                     _expectedValue = expectedValue;
