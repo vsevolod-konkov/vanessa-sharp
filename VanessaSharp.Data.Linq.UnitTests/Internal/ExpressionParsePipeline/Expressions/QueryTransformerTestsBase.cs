@@ -30,6 +30,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             params SortExpression[] sorters)
         {
             var queryMock = new Mock<IQuery<TInput, TOutput>>(MockBehavior.Strict);
+
+            queryMock
+                .SetupGet(q => q.IsDistinct)
+                .Returns(false);
+
             queryMock
                 .SetupGet(q => q.Source)
                 .Returns(source);

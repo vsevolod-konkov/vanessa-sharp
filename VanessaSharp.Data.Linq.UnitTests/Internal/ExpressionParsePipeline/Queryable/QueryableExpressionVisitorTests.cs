@@ -24,6 +24,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         private static readonly MethodInfo _handleGettingRecordsMethod =
             GetMethod(h => h.HandleGettingRecords(It.IsAny<string>()));
 
+        private static readonly MethodInfo _handleDistinct =
+            GetMethod(h => h.HandleDistinct());
+
         private static readonly MethodInfo _handleSelectMethod =
             GetMethod(h => h.HandleSelect(It.IsAny<LambdaExpression>()));
 
@@ -61,6 +64,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         {
             _handlerMock.Setup(h => h.HandleGettingEnumerator(itemType))
                 .Callback(() => _methodCallsLog.Add(_handleGettingEnumeratorMethod))
+                .Verifiable();
+        }
+
+        private void HandlerSetupHandleDistinct()
+        {
+            _handlerMock
+                .Setup(h => h.HandleDistinct())
+                .Callback(() => _methodCallsLog.Add(_handleDistinct))
                 .Verifiable();
         }
 
@@ -144,6 +155,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("sort_field_3");
 
             HandlerSetupHandleGettingEnumerator(itemType);
+            HandlerSetupHandleDistinct();
             HandlerSetupHandleSelect(selectExpression);
             HandlerSetupHandleOrderBy(sortKey1Expression);
             HandlerSetupHandleThenBy(sortKey2Expression);
@@ -158,12 +170,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                     .OrderBy(sortKey1Expression)
                     .ThenBy(sortKey2Expression)
                     .ThenByDescending(sortKey3Expression)
-                    .Select(selectExpression));
+                    .Select(selectExpression)
+                    .Distinct());
             // Act
             _testedInstance.Visit(expression);
 
             // Assert
             _handlerMock.Verify(h => h.HandleGettingEnumerator(itemType), Times.Once());
+            _handlerMock.Verify(h => h.HandleDistinct(), Times.Once());
             _handlerMock.Verify(h => h.HandleSelect(selectExpression), Times.Once());
             _handlerMock.Verify(h => h.HandleOrderBy(sortKey1Expression), Times.Once());
             _handlerMock.Verify(h => h.HandleThenBy(sortKey2Expression), Times.Once());
@@ -173,6 +187,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
             AssertMethodCalls(
                         _handleGettingEnumeratorMethod,
+                        _handleDistinct,
                         _handleSelectMethod,
                         _handleThenByDescendingMethod,
                         _handleThenByMethod,

@@ -266,6 +266,18 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// </summary>
+        public static bool IsQueryableDistinctMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethod(method, "Distinct")
+                && method.GetParameters().Length == 1;
+        }
+
+        /// <summary>
         /// Проверка того, что тип является <see cref="Expression{TDelegate}"/>.
         /// И что делегат является обобщенным типом <paramref name="openDelegateType"/>.
         /// </summary>

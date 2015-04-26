@@ -26,6 +26,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
         /// <summary>Выражение сортировки.</summary>
         ReadOnlyCollection<SortExpression> Sorters { get; }
+
+        /// <summary>Выборка различных.</summary>
+        bool IsDistinct { get; }
     }
 
     [ContractClassFor(typeof(IQuery<,>))]
@@ -73,6 +76,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 return null;
             }
         }
+
+        /// <summary>Выборка различных.</summary>
+        bool IQuery<TInput, TOutput>.IsDistinct { get { return false; } }
 
         /// <summary>Преобразование результат парсинга запроса, готового к выполенению.</summary>
         /// <param name="transformService">Сервис преобразования запросов.</param>

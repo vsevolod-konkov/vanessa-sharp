@@ -55,7 +55,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             var orderByStatement = ParseSortExpressions(query.Sorters);
 
             var queryStatement = new SqlQueryStatement(
-                selectPart.Statement, new SqlFromStatement(source), whereStatement, orderByStatement);
+                selectPart.GetStatement(query.IsDistinct), new SqlFromStatement(source), whereStatement, orderByStatement);
 
             return GetExpressionParseProduct(
                 queryStatement, selectPart.ItemReaderFactory);
@@ -163,20 +163,21 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <typeparam name="T">Тип читаемых данных.</typeparam>
         private struct SelectPartInfo<T>
         {
+            private readonly SqlColumnSetExpression _columns;
+
             public SelectPartInfo(SqlColumnSetExpression columns, IItemReaderFactory<T> itemReaderFactory) : this()
             {
-                _statement = new SqlSelectStatement(columns);
+                _columns = columns;
                 _itemReaderFactory = itemReaderFactory;
             }
 
             /// <summary>
             /// SELECT часть инструкции SQL-запроса.
             /// </summary>
-            public SqlSelectStatement Statement
+            public SqlSelectStatement GetStatement(bool isDistinct)
             {
-                get { return _statement; }
+                return new SqlSelectStatement(_columns, isDistinct);
             }
-            private readonly SqlSelectStatement _statement;
 
             /// <summary>
             /// Фабрика читателей элементов из последовательности.

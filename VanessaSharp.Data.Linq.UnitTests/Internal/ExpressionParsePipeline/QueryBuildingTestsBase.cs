@@ -18,11 +18,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
         private static void AssertQuery<TInput, TOutput>(IQuery<TInput, TOutput> testedQuery,
                                               Expression<Func<TInput, TOutput>> expectedSelector,
                                               Expression<Func<TInput, bool>> expectedFilter,
-                                              IList<SortExpression> expectedSorters)
+                                              IList<SortExpression> expectedSorters,
+                                              bool exceptedIsDistinct)
         {
             Assert.AreSame(expectedSelector, testedQuery.Selector);
             Assert.AreSame(expectedFilter, testedQuery.Filter);
             AssertSortExpressions(expectedSorters, testedQuery.Sorters);
+
+            Assert.AreEqual(exceptedIsDistinct, testedQuery.IsDistinct);
         }
 
         private static void AssertSortExpressions(IList<SortExpression> expectedExpressions,
@@ -45,17 +48,19 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
                                                            string expectedSourceName,
                                                            Expression<Func<OneSDataRecord, TOutput>> expectedSelector,
                                                            Expression<Func<OneSDataRecord, bool>> expectedFilter,
-                                                           IList<SortExpression> expectedSorters)
+                                                           IList<SortExpression> expectedSorters,
+                                                           bool exceptedIsDistinct)
         {
             var explicitSource = AssertEx.IsInstanceAndCastOf<ExplicitSourceDescription>(testedQuery.Source);
             Assert.AreEqual(expectedSourceName, explicitSource.SourceName);
 
-            AssertQuery(testedQuery, expectedSelector, expectedFilter, expectedSorters);
+            AssertQuery(testedQuery, expectedSelector, expectedFilter, expectedSorters, exceptedIsDistinct);
         }
         
         internal static void AssertDataRecordsQuery(
             IQuery testedQuery, 
             string expectedSourceName,
+            bool expectedIsDistinct = false,
             Expression<Func<OneSDataRecord, bool>> expectedFilter = null,
             params SortExpression[] expectedSorters)
         {
@@ -63,6 +68,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
                 testedQuery,
                 expectedSourceName,
                 null,
+                expectedIsDistinct,
                 expectedFilter,
                 expectedSorters);
         }
@@ -70,42 +76,46 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
         internal static void AssertDataRecordsQuery<T>(
             IQuery testedQuery,
             string expectedSourceName,
-            Expression<Func<OneSDataRecord, T>> expectedSelector, 
+            Expression<Func<OneSDataRecord, T>> expectedSelector,
+            bool expectedIsDistinct = false,
             Expression<Func<OneSDataRecord, bool>> expectedFilter = null,
             params SortExpression[] expectedSorters)
         {
 
             var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<OneSDataRecord, T>>(testedQuery);
             
-            AssertDataRecordsQuery(typedQuery, expectedSourceName, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters);
+            AssertDataRecordsQuery(typedQuery, expectedSourceName, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters, expectedIsDistinct);
         }
 
         private static void AssertTypedRecordsQuery<TInput, TOutput>(
             IQuery<TInput, TOutput> testedQuery,
             Expression<Func<TInput, TOutput>> expectedSelector,
             Expression<Func<TInput, bool>> expectedFilter,
-            IList<SortExpression> expectedSorters)
+            IList<SortExpression> expectedSorters,
+            bool expectedIsDistinct)
         {
             Assert.IsInstanceOf<SourceDescriptionByType<TInput>>(testedQuery.Source);
-            AssertQuery(testedQuery, expectedSelector, expectedFilter, expectedSorters);
+            AssertQuery(testedQuery, expectedSelector, expectedFilter, expectedSorters, expectedIsDistinct);
         }
 
         internal static void AssertTypedRecordsQuery<TInput, TOutput>(
             IQuery testedQuery,
             Expression<Func<TInput, TOutput>> expectedSelector,
+            bool expectedIsDistinct = false,
             Expression<Func<TInput, bool>> expectedFilter = null,
             params SortExpression[] expectedSorters)
         {
             var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<TInput, TOutput>>(testedQuery);
-            AssertTypedRecordsQuery(typedQuery, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters);
+            AssertTypedRecordsQuery(typedQuery, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters, expectedIsDistinct);
         }
 
         internal static void AssertTypedRecordsQuery<T>(
             IQuery testedQuery,
+            bool expectedIsDistinct = false,
             Expression<Func<T, bool>> expectedFilter = null,
             params SortExpression[] expectedSorters)
         {
-            AssertTypedRecordsQuery<T, T>(testedQuery, null, expectedFilter, expectedSorters);
+            AssertTypedRecordsQuery<T, T>(testedQuery, null, expectedIsDistinct, expectedFilter, expectedSorters);
         }
     }
 }

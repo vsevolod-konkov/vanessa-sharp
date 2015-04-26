@@ -20,6 +20,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// <param name="itemType">Имя элемента.</param>
         void HandleGettingEnumerator(Type itemType);
 
+        /// <summary>Обработка выборки различных записей.</summary>
+        void HandleDistinct();
+
         /// <summary>Обработка выборки.</summary>
         /// <param name="selectExpression">Выражение выборки.</param>
         void HandleSelect(LambdaExpression selectExpression);
@@ -70,6 +73,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         {
             Contract.Requires<ArgumentNullException>(itemType != null);
         }
+
+        /// <summary>Обработка выборки различных записей.</summary>
+        void IQueryableExpressionHandler.HandleDistinct()
+        {}
 
         /// <summary>Обработка выборки.</summary>
         /// <param name="selectExpression">Выражение выборки.</param>

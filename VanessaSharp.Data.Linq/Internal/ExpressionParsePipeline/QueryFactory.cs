@@ -13,9 +13,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="sourceName">Имя источника.</param>
         /// <param name="filter">Выражение фильтрации.</param>
         /// <param name="sorters">Коллекция выражений сортировки.</param>
+        /// <param name="isDistinct">Выборка различных.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(string sourceName, LambdaExpression filter,
-                                         ReadOnlyCollection<SortExpression> sorters)
+                                         ReadOnlyCollection<SortExpression> sorters,
+                                         bool isDistinct)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
             
@@ -30,16 +32,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 new ExplicitSourceDescription(sourceName),
                 null,
                 (Expression<Func<OneSDataRecord, bool>>)filter,
-                sorters);
+                sorters, isDistinct);
         }
 
         /// <summary>Создание запроса последовательности элементов проекции.</summary>
         private static IQuery CreateQuery(Type outputType, string sourceName, LambdaExpression selector,
-                                          LambdaExpression filter, ReadOnlyCollection<SortExpression> sorters)
+                                          LambdaExpression filter, ReadOnlyCollection<SortExpression> sorters,
+                                          bool isDistinct)
         {
             var type = typeof(Query<,>).MakeGenericType(typeof(OneSDataRecord), outputType);
 
-            return (IQuery)Activator.CreateInstance(type, new ExplicitSourceDescription(sourceName), selector, filter, sorters);
+            return (IQuery)Activator.CreateInstance(type, new ExplicitSourceDescription(sourceName), selector, filter, sorters, isDistinct);
         }
 
         /// <summary>Создание запроса последовательности проекций из <see cref="OneSDataRecord"/>.</summary>
@@ -47,9 +50,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="selector">Выражение выборки - проекции <see cref="OneSDataRecord"/>.</param>
         /// <param name="filter">Выражение фильтрации.</param>
         /// <param name="sorters">Коллекция выражений сортировки.</param>
+        /// <param name="isDistinct">Выборка различных.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(string sourceName, LambdaExpression selector, LambdaExpression filter,
-                                         ReadOnlyCollection<SortExpression> sorters)
+                                         ReadOnlyCollection<SortExpression> sorters, bool isDistinct)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
 
@@ -65,25 +69,28 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
             var outputType = selector.Type.GetGenericArguments()[1];
 
-            return CreateQuery(outputType, sourceName, selector, filter, sorters);
+            return CreateQuery(outputType, sourceName, selector, filter, sorters, isDistinct);
         }
 
         /// <summary>Создание запроса для типизированных записей.</summary>
         private static IQuery CreateQuery(Type inputType, Type outputType,
                                           LambdaExpression selector, LambdaExpression filter,
-                                          ReadOnlyCollection<SortExpression> sorters)
+                                          ReadOnlyCollection<SortExpression> sorters,
+                                          bool isDistinct)
         {
             var type = typeof(Query<,>).MakeGenericType(inputType, outputType);
-            return (IQuery)Activator.CreateInstance(type, selector, filter, sorters);
+            return (IQuery)Activator.CreateInstance(type, selector, filter, sorters, isDistinct);
         }
 
         /// <summary>Создание запроса последовательности элементов типизированных записей.</summary>
         /// <param name="itemType">Тип элементов типизированных записей.</param>
         /// <param name="filter">Выражение фильтрации записей.</param>
         /// <param name="sorters">Выражения сортировки записей.</param>
+        /// <param name="isDistinct">Выборка различных.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(Type itemType, LambdaExpression filter,
-                                         ReadOnlyCollection<SortExpression> sorters)
+                                         ReadOnlyCollection<SortExpression> sorters,
+                                         bool isDistinct)
         {
             Contract.Requires<ArgumentNullException>(itemType != null);
             Contract.Requires<ArgumentNullException>(itemType != typeof(OneSDataRecord));
@@ -95,16 +102,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             Contract.Requires<ArgumentException>(
                 sorters.All(s => IsInputTypeForLambda(s.KeyExpression, itemType)));
 
-            return CreateQuery(itemType, itemType, null, filter, sorters);
+            return CreateQuery(itemType, itemType, null, filter, sorters, isDistinct);
         }
 
         /// <summary>Создание запроса последовательности элементов проекций типизированных записей.</summary>
         /// <param name="selector">Выражение выборки типизированных записей.</param>
         /// <param name="filter">Выражение фильтрации типизированных записей.</param>
         /// <param name="sorters">Выражения сортировки типизированных записей.</param>
+        /// <param name="isDistinct">Выборка различных.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(LambdaExpression selector, LambdaExpression filter,
-                                         ReadOnlyCollection<SortExpression> sorters)
+                                         ReadOnlyCollection<SortExpression> sorters,
+                                         bool isDistinct)
         {
             Contract.Requires<ArgumentNullException>(selector != null);
             Contract.Requires<ArgumentException>(
@@ -120,7 +129,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 sorters.All(s => IsInputTypeForLambda(s.KeyExpression, selector.Type.GetGenericArguments()[0])));
 
             var selectorArgs = selector.Type.GetGenericArguments();
-            return CreateQuery(selectorArgs[0], selectorArgs[1], selector, filter, sorters);
+            return CreateQuery(selectorArgs[0], selectorArgs[1], selector, filter, sorters, isDistinct);
         }
 
         /// <summary>
@@ -152,9 +161,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             /// <param name="selector">Выражение выборки.</param>
             /// <param name="filter">Выражение фильтрации.</param>
             /// <param name="sorters">Выражения сортировки.</param>
+            /// <param name="isDistinct">Выборка различных.</param>
             public Query(Expression<Func<TInput, TOutput>> selector,
-                         Expression<Func<TInput, bool>> filter, ReadOnlyCollection<SortExpression> sorters)
-            : this(SourceDescriptionByType<TInput>.Instance, selector, filter, sorters)
+                         Expression<Func<TInput, bool>> filter,
+                         ReadOnlyCollection<SortExpression> sorters,
+                         bool isDistinct)
+            : this(SourceDescriptionByType<TInput>.Instance, selector, filter, sorters, isDistinct)
             {
             }
 
@@ -163,7 +175,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             /// <param name="selector">Выражение выборки.</param>
             /// <param name="filter">Выражение фильтрации.</param>
             /// <param name="sorters">Выражения сортировки.</param>
-            public Query(ISourceDescription source, Expression<Func<TInput, TOutput>> selector, Expression<Func<TInput, bool>> filter, ReadOnlyCollection<SortExpression> sorters)
+            /// <param name="isDistinct">Выборка различных.</param>
+            public Query(
+                ISourceDescription source,
+                Expression<Func<TInput, TOutput>> selector,
+                Expression<Func<TInput, bool>> filter,
+                ReadOnlyCollection<SortExpression> sorters,
+                bool isDistinct)
             {
                 Contract.Requires<ArgumentNullException>(source != null);
                 Contract.Requires<ArgumentException>(
@@ -171,7 +189,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                     ||
                     ((typeof(TInput) != typeof(OneSDataRecord)) && (source is SourceDescriptionByType<TInput>))
                     );
-                
+
                 Contract.Requires<ArgumentException>(
                     (typeof(TInput) == typeof(TOutput) && selector == null)
                     ||
@@ -191,6 +209,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 _selector = selector;
                 _filter = filter;
                 _sorters = sorters;
+                _isDistinct = isDistinct;
             }
 
             /// <summary>Описание источника данных 1С.</summary>
@@ -219,6 +238,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             {
                 get { return _sorters; }
             }
+
+            /// <summary>Выборка различных.</summary>
+            public override bool IsDistinct
+            {
+                get { return _isDistinct; }
+            }
+            private readonly bool _isDistinct;
+
             private readonly ReadOnlyCollection<SortExpression> _sorters;
         }
     }

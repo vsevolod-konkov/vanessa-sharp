@@ -48,6 +48,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             _internalHandler.HandleGettingEnumerator(itemType);
         }
 
+        /// <summary>Обработка выборки различных записей.</summary>
+        public void HandleDistinct()
+        {
+            _internalHandler.HandleDistinct();
+        }
+
         /// <summary>Обработка выборки.</summary>
         /// <param name="selectExpression">Выражение выборки.</param>
         void IQueryableExpressionHandler.HandleSelect(LambdaExpression selectExpression)

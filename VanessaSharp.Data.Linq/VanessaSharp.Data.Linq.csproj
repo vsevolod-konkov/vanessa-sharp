@@ -138,6 +138,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryFactory.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SelectExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SortKind.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SourceDescriptionByType.cs" />

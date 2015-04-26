@@ -43,6 +43,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             _currentState = _currentState.HandleGettingEnumerator(itemType);
         }
 
+        /// <summary>Обработка выборки различных записей.</summary>
+        public void HandleDistinct()
+        {
+            _currentState = _currentState.HandleDistinct();
+        }
+
         /// <summary>Обработка выборки.</summary>
         /// <param name="selectExpression">Выражение выборки.</param>
         public void HandleSelect(LambdaExpression selectExpression)
@@ -146,6 +152,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// <summary>Тип элементов во входной последовательности.</summary>
             public Type InputItemType { get; set; }
 
+            /// <summary>Выборка различных.</summary>
+            public bool IsDistinct { get; set; }
+
             /// <summary>Выражение фильтрации записей.</summary>
             public LambdaExpression FilterExpression
             {
@@ -237,8 +246,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 CheckSelectExpressionForQuery(selectExpression);
 
                 return (selectExpression == null)
-                    ? QueryFactory.CreateQuery(sourceName, FilterExpression, CreateSortExpressionList())
-                    : QueryFactory.CreateQuery(sourceName, selectExpression, FilterExpression, CreateSortExpressionList());
+                    ? QueryFactory.CreateQuery(sourceName, FilterExpression, CreateSortExpressionList(), IsDistinct)
+                    : QueryFactory.CreateQuery(sourceName, selectExpression, FilterExpression, CreateSortExpressionList(), IsDistinct);
             }
 
             /// <summary>Создание объекта запроса.</summary>
@@ -266,8 +275,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 CheckSelectExpressionForQuery(selectExpression);
 
                 return (selectExpression == null)
-                           ? QueryFactory.CreateQuery(InputItemType, FilterExpression, CreateSortExpressionList())
-                           : QueryFactory.CreateQuery(selectExpression, FilterExpression, CreateSortExpressionList());
+                           ? QueryFactory.CreateQuery(InputItemType, FilterExpression, CreateSortExpressionList(), IsDistinct)
+                           : QueryFactory.CreateQuery(selectExpression, FilterExpression, CreateSortExpressionList(), IsDistinct);
             }
 
             private void CheckLambdaExpression(LambdaExpression lambda)
@@ -485,6 +494,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             {
                 throw CreateException(MethodBase.GetCurrentMethod());
             }
+
+            /// <summary>Обработка маркировки получения различных записей.</summary>
+            public virtual BuilderState HandleDistinct()
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
         }
 
         /// <summary>Начальное состояние.</summary>
@@ -659,6 +674,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 var parameter = lambda.Parameters[0];
 
                 return lambda.Body == parameter;
+            }
+
+            /// <summary>Обработка маркировки получения различных записей.</summary>
+            public override BuilderState HandleDistinct()
+            {
+                _stateDataWithoutSelection.IsDistinct = true;
+                return this;
             }
         }
 

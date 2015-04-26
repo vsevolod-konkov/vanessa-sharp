@@ -249,6 +249,139 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             AssertTypedRecordsReaderFactory(product.ItemReaderFactory);
         }
 
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// над получением записей данных.
+        /// </summary>
+        [Test]
+        public void TestWhenDistinctDataRecord()
+        {
+            // Arrange
+            var testedExpression = QueryableExpression
+                .ForDataRecords("Справочник.Тест")
+                .Query(q => q.Distinct());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT DISTINCT * FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var recordProduct = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<OneSDataRecord>>(result);
+            Assert.IsInstanceOf<OneSDataRecordReaderFactory>(recordProduct.ItemReaderFactory);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// над получением выборки записей данных.
+        /// </summary>
+        [Test]
+        public void TestWhenDistinctSelectDataRecord()
+        {
+            var selector = Trait.Of<OneSDataRecord>()
+                                .SelectExpression(r => new {Id = r.GetInt32("Идентификатор"), Name = r.GetString("Наименование")});
+            
+            // Arrange
+            var testedExpression = QueryableExpression
+                .ForDataRecords("Справочник.Тест")
+                .Query(q => q
+                    .Select(selector)
+                    .Distinct());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT DISTINCT Идентификатор, Наименование FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var recordProduct = IsInstanceAndCastCollectionReadExpressionParseProduct(selector.GetTraitOfOutputType(), result);
+            var factory = IsInstanceAndCastNoSideEffectItemReaderFactory(recordProduct.ItemReaderFactory);
+            
+            ItemReaderTester.For(factory.ItemReader, 2)
+                .Field(0, r => r.Id, c => c.ToInt32(null), 5)
+                .Field(1, r => r.Name, c => c.ToString(null), "test")
+            .Test();
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// над получением типизированных записей данных.
+        /// </summary>
+        [Test]
+        public void TestWhenDistinctTypedRecord()
+        {
+            // Arrange
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Query(q => q
+                    .Distinct());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT DISTINCT Идентификатор, Цена, ДатаНачала, Наименование FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var product = AssertEx.IsInstanceAndCastOf<CollectionReadExpressionParseProduct<SomeData>>(result);
+            AssertTypedRecordsReaderFactory(product.ItemReaderFactory);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// над получением выборки типизированных записей данных.
+        /// </summary>
+        [Test]
+        public void TestWhenDistinctSelectTypedRecord()
+        {
+            // Arrange
+            var selector = Trait.Of<SomeData>().SelectExpression(r => new {r.Id, r.Name});
+            
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Query(q => q
+                    .Select(selector)
+                    .Distinct());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT DISTINCT Идентификатор, Наименование FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var product = IsInstanceAndCastCollectionReadExpressionParseProduct(selector.GetTraitOfOutputType(), result);
+            var factory = IsInstanceAndCastNoSideEffectItemReaderFactory(product.ItemReaderFactory);
+
+            ItemReaderTester
+                .For(factory.ItemReader, 2)
+                    .Field(0, r => r.Id, c => c.ToInt32(null), 2)
+                    .Field(1, r => r.Name, c => c.ToString(null), "test")
+                .Test();
+        }
+
         public abstract class DataBase
         {
             [OneSDataColumn("Наименование")]

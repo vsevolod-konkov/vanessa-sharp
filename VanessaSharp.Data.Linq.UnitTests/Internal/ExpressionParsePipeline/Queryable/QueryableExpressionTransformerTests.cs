@@ -85,7 +85,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertDataRecordsQuery(result, SOURCE_NAME, filter);
+            AssertDataRecordsQuery(result, SOURCE_NAME, expectedFilter: filter);
         }
 
         /// <summary>
@@ -214,7 +214,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                     .OrderBy(sortKey1)
                     .ThenByDescending(sortKey2)
                     .ThenBy(sortKey3)
-                    .Select(selector));
+                    .Select(selector)
+                    .Distinct());
 
             // Act
             var result = _testedInstance.Transform(testedExpression);
@@ -224,6 +225,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                 result,
                 SOURCE_NAME,
                 selector,
+                true,
                 filter, 
                 new SortExpression(sortKey1, SortKind.Ascending), 
                 new SortExpression(sortKey2, SortKind.Descending),
@@ -267,7 +269,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertTypedRecordsQuery(result, expectedFilter);
+            AssertTypedRecordsQuery(result, expectedFilter: expectedFilter);
         }
 
         /// <summary>
@@ -294,6 +296,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             // Assert
             AssertTypedRecordsQuery<SomeData>(
                 result,
+                false,
                 null,
                 new SortExpression(sortKeySelector1, SortKind.Descending),
                 new SortExpression(sortKeySelector2, SortKind.Ascending));

@@ -9,11 +9,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
     {
         /// <summary>Конструктор.</summary>
         /// <param name="columns">Список выбыираемых колонок.</param>
-        public SqlSelectStatement(SqlColumnSetExpression columns)
+        /// <param name="isDistinct">Выборка различных записей.</param>
+        public SqlSelectStatement(SqlColumnSetExpression columns, bool isDistinct)
         {
             Contract.Requires<ArgumentNullException>(columns != null);
             
             _columns = columns;
+            _isDistinct = isDistinct;
         }
 
         [ContractInvariantMethod]
@@ -22,10 +24,22 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             Contract.Invariant(_columns != null);
         }
 
+        /// <summary>Выборка различных записей.</summary>
+        public bool IsDistinct
+        {
+            get { return _isDistinct; }
+        }
+        private readonly bool _isDistinct;
+
         /// <summary>Коллекция колонок.</summary>
         public SqlColumnSetExpression Columns
         {
-            get { return _columns; }
+            get
+            {
+                Contract.Ensures(Contract.Result<SqlColumnSetExpression>() != null);
+                
+                return _columns;
+            }
         }
         private readonly SqlColumnSetExpression _columns;
 
@@ -35,6 +49,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             Contract.Requires<ArgumentException>(sqlBuilder != null);
 
             sqlBuilder.Append("SELECT ");
+
+            if (IsDistinct)
+                sqlBuilder.Append("DISTINCT ");
+
             Columns.BuildSql(sqlBuilder);
         }
     }

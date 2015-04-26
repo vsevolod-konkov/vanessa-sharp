@@ -75,7 +75,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsQuery(result, SOURCE_NAME, expectedFilter);
+            AssertDataRecordsQuery(result, SOURCE_NAME, expectedFilter: expectedFilter);
         }
 
         /// <summary>Тестирование построения запроса выборки и фильтрации записей.</summary>
@@ -100,7 +100,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsQuery(result, SOURCE_NAME, expectedSelector, expectedFilter);
+            AssertDataRecordsQuery(result, SOURCE_NAME, expectedSelector, expectedFilter: expectedFilter);
         }
 
         private void TestBuildQueryWhenSorting(Action<QueryBuilder> queryBuilderAction,
@@ -218,6 +218,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             _testedInstance.HandleStart();
             _testedInstance.HandleGettingEnumerator(traitOfOutputType.Type);
             
+            _testedInstance.HandleDistinct();
             _testedInstance.HandleSelect(expectedSelector);
 
             _testedInstance.HandleThenBy(sortKey3);
@@ -235,6 +236,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                 result,
                 SOURCE_NAME,
                 expectedSelector,
+                true,
                 expectedFilter,
                 new SortExpression(sortKey1, SortKind.Descending),
                 new SortExpression(sortKey2, SortKind.Descending),

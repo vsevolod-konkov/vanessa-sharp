@@ -28,7 +28,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                             new CallQueryableOrderByHandler(),
                             new CallQueryableOrderByDescendingHandler(),
                             new CallQueryableThenByHandler(),
-                            new CallQueryableThenByDescendingHandler()
+                            new CallQueryableThenByDescendingHandler(),
+                            new CallQueryableDistinctHandler() 
                         }
                 );
 
@@ -341,6 +342,26 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             protected override void Handle(IQueryableExpressionHandler handler, LambdaExpression lambdaExpression)
             {
                 handler.HandleThenByDescending(lambdaExpression);
+            }
+        }
+
+        /// <summary>
+        /// Обработчик вызова метода <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>.
+        /// </summary>
+        private sealed class CallQueryableDistinctHandler : ICallMethodHandler
+        {
+            public bool CheckAndHandle(IQueryableExpressionHandler handler, MethodCallExpression node, out Expression childNode)
+            {
+                if (OneSQueryExpressionHelper.IsQueryableDistinctMethod(node.Method))
+                {
+                    childNode = node.Arguments[0];
+                    handler.HandleDistinct();
+
+                    return true;
+                }
+                
+                childNode = null;
+                return false;
             }
         }
 

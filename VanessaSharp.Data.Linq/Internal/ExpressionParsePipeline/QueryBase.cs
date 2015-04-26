@@ -22,6 +22,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Выражение сортировки.</summary>
         public abstract ReadOnlyCollection<SortExpression> Sorters { get; }
 
+        /// <summary>Выборка различных.</summary>
+        public abstract bool IsDistinct { get; }
+
         /// <summary>Преобразование результат парсинга запроса, готового к выполенению.</summary>
         /// <param name="transformService">Сервис преобразования запросов.</param>
         public ExpressionParseProduct Transform(IQueryTransformService transformService)
