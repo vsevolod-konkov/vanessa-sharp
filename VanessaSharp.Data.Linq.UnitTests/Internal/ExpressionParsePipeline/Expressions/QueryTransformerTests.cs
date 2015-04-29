@@ -53,7 +53,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         private void SetupTransformFilter<T>(Expression<Func<T, bool>> filter, string filterField, string filterValue)
         {
             _transformMethodsMock
-                .Setup(m => m.TransformWhereExpression(It.IsAny<QueryParseContext>(), filter))
+                .Setup(m => m.TransformCondition(It.IsAny<QueryParseContext>(), filter))
                 .Returns<QueryParseContext, Expression<Func<T, bool>>>((ctx, f) =>
                 {
                     var parameterName = ctx.Parameters.GetOrAddNewParameterName(filterValue);
@@ -65,10 +65,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 });
         }
 
-        private void SetupTransformSorter<T, TKey>(Expression<Func<T, TKey>> sortKeyExpression, string fieldName)
+        private void SetupTransformField<T, TKey>(Expression<Func<T, TKey>> fieldExpression, string fieldName)
         {
             _transformMethodsMock
-                .Setup(t => t.TransformOrderByExpression(It.IsAny<QueryParseContext>(), sortKeyExpression))
+                .Setup(t => t.TransformExpression(It.IsAny<QueryParseContext>(), fieldExpression))
                 .Returns(new SqlFieldExpression(SqlDefaultTableExpression.Instance, fieldName));
         }
 
@@ -177,10 +177,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Order by
             Expression<Func<OneSDataRecord, int>> sortKeyExpression1 = r => 10;
-            SetupTransformSorter(sortKeyExpression1, "Ключ1");
+            SetupTransformField(sortKeyExpression1, "Ключ1");
 
             Expression<Func<OneSDataRecord, string>> sortKeyExpression2 = r => "Test";
-            SetupTransformSorter(sortKeyExpression2, "Ключ2");
+            SetupTransformField(sortKeyExpression2, "Ключ2");
 
             var query = CreateQuery(
                 selector, 
@@ -217,10 +217,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Returns(selectPart);
 
             Expression<Func<SomeData, int>> sortKeyExpression1 = d => 5;
-            SetupTransformSorter(sortKeyExpression1, "Ключ1");
+            SetupTransformField(sortKeyExpression1, "Ключ1");
 
             Expression<Func<SomeData, string>> sortKeyExpression2 = d => "Test";
-            SetupTransformSorter(sortKeyExpression2, "Ключ2");
+            SetupTransformField(sortKeyExpression2, "Ключ2");
             
             var testedQuery = CreateQuery<SomeData, SomeData>(sorters: 
                 new[]
@@ -271,6 +271,34 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 "SELECT Первый, Второй FROM {0} WHERE КраткоеИмя = &",
                 "Фильтр", result.Command);
             AssertCollectionReadExpressionParseProduct(expectedItemReader, result);
+            VerifySourceDescription();
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса выборки типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestTransformScalarSumFieldTypedRecordsQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.ResolveSourceNameForTypedRecord<SomeData>())
+                .Returns("Тест");
+
+            Expression<Func<SomeData, bool>> filter = d => true;
+            SetupTransformFilter(filter, "КраткоеИмя", "Фильтр");
+
+            Expression<Func<SomeData, int>> selector = d => d.Id;
+            SetupTransformField(selector, "Количество");
+
+            var testedQuery = CreateScalarQuery<SomeData, int, decimal>(AggregateFunction.Summa, _sourceDescriptionMock.Object, selector, filter);
+
+            // Act
+            var result = _testedInstance.TransformScalar(testedQuery);
+
+            // Assert
+            AssertFilteringCommand("SELECT SUM(Количество) FROM {0} WHERE КраткоеИмя = &", "Фильтр", result.Command);
+
             VerifySourceDescription();
         }
     }

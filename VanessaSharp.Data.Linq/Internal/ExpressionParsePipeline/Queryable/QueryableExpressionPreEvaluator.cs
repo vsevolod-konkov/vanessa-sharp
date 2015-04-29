@@ -48,8 +48,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             _internalHandler.HandleGettingEnumerator(itemType);
         }
 
+        /// <summary>Обработка агрегации данных.</summary>
+        /// <param name="outputItemType">Тип элементов выходной последовательности.</param>
+        /// <param name="function">Функция агрегации.</param>
+        /// <param name="scalarType">Тип результата.</param>
+        void IQueryableExpressionHandler.HandleAggregate(Type outputItemType, AggregateFunction function, Type scalarType)
+        {
+            _internalHandler.HandleAggregate(outputItemType, function, scalarType);
+        }
+
         /// <summary>Обработка выборки различных записей.</summary>
-        public void HandleDistinct()
+        void IQueryableExpressionHandler.HandleDistinct()
         {
             _internalHandler.HandleDistinct();
         }

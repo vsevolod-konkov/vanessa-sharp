@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
@@ -44,6 +45,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
         private static readonly MethodInfo _handleThenByDescendingMethod =
             GetMethod(h => h.HandleThenByDescending(It.IsAny<LambdaExpression>()));
+
+        private static readonly MethodInfo _handleAggregateMethod =
+            GetMethod(h => h.HandleAggregate(It.IsAny<Type>(), It.IsAny<AggregateFunction>(), It.IsAny<Type>()));
 
         private static MethodInfo GetMethod(Expression<Action<IQueryableExpressionHandler>> expression)
         {
@@ -128,6 +132,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             _handlerMock
                 .Setup(h => h.HandleGettingRecords(sourceName))
                 .Callback(() => _methodCallsLog.Add(_handleGettingRecordsMethod))
+                .Verifiable();
+        }
+
+        private void HandlerSetupHandleAggregate(Type outputItemType, AggregateFunction function, Type scalarType)
+        {
+            _handlerMock
+                .Setup(h => h.HandleAggregate(outputItemType, function, scalarType))
+                .Callback(() => _methodCallsLog.Add(_handleAggregateMethod))
                 .Verifiable();
         }
 
@@ -276,6 +288,78 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                         _handleOrderByMethod,
                         _handleOrderByMethod,
                         _handleGettingRecordsMethod);
+        }
+
+        /// <summary>
+        /// Тестирование посещения выражения 
+        /// c функцией получения агрегатного значения.
+        /// </summary>
+        private void TestVisitAggregate<T>(Expression<Func<IQueryable<int>, T>> scalarGetter, AggregateFunction expectedFunction)
+        {
+            // Arrange
+            const string SOURCE_NAME = "[source]";
+            Expression<Func<OneSDataRecord, int>> selectExpression = r => r.GetInt32("field_1");
+
+            HandlerSetupHandleAggregate(typeof(int), expectedFunction, typeof(T));
+            HandlerSetupHandleSelect(selectExpression);
+            HandlerSetupHandleGettingRecords(SOURCE_NAME);
+
+            var expression = QueryableExpression
+                .ForDataRecords(SOURCE_NAME)
+                .ScalarQuery(q => q.Select(selectExpression), scalarGetter);
+
+            // Act
+            _testedInstance.Visit(expression);
+
+            // Assert
+            _handlerMock.Verify(h => h.HandleAggregate(typeof(int), expectedFunction, typeof(T)), Times.Once());
+            _handlerMock.Verify(h => h.HandleSelect(selectExpression), Times.Once());
+            _handlerMock.Verify(h => h.HandleGettingRecords(SOURCE_NAME), Times.Once());
+
+            AssertMethodCalls(
+                        _handleAggregateMethod,
+                        _handleSelectMethod,
+                        _handleGettingRecordsMethod);
+        }
+
+        /// <summary>
+        /// Тестирование посещения выражения 
+        /// c функцией получения суммы.
+        /// </summary>
+        [Test]
+        public void TestVisitSum()
+        {
+            TestVisitAggregate(q => q.Sum(), AggregateFunction.Summa);
+        }
+
+        /// <summary>
+        /// Тестирование посещения выражения 
+        /// c функцией получения среднего.
+        /// </summary>
+        [Test]
+        public void TestVisitAverage()
+        {
+            TestVisitAggregate(q => q.Average(), AggregateFunction.Average);
+        }
+
+        /// <summary>
+        /// Тестирование посещения выражения 
+        /// c функцией получения максимума.
+        /// </summary>
+        [Test]
+        public void TestVisitMax()
+        {
+            TestVisitAggregate(q => q.Max(), AggregateFunction.Maximum);
+        }
+
+        /// <summary>
+        /// Тестирование посещения выражения 
+        /// c функцией получения минимума.
+        /// </summary>
+        [Test]
+        public void TestVisitMin()
+        {
+            TestVisitAggregate(q => q.Min(), AggregateFunction.Minimum);
         }
     }
 }

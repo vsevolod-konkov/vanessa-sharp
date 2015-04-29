@@ -67,7 +67,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var result = QueryFactory.CreateQuery(typeof(InputData), filter, new[]{sorter}.ToReadOnly(), true);
 
             // Assert
-            AssertTypedRecordsQuery(result, true, filter, sorter);
+            AssertTypedRecordsQueryAndTestTransform(result, true, filter, sorter);
         }
 
         /// <summary>
@@ -87,7 +87,49 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var result = QueryFactory.CreateQuery(selector, filter, new[]{sorter}.ToReadOnly(), false);
 
             // Assert
-            AssertTypedRecordsQuery(result, selector,  false, filter, sorter);
+            AssertTypedRecordsQueryAndTestTransform(result, selector,  false, filter, sorter);
+        }
+
+        /// <summary>
+        /// Тестирование 
+        /// <see cref="QueryFactory.CreateScalarQuery(System.Linq.Expressions.LambdaExpression,System.Linq.Expressions.LambdaExpression,System.Collections.ObjectModel.ReadOnlyCollection{VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SortExpression},bool,VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.AggregateFunction,System.Type)"/>
+        /// </summary>
+        [Test]
+        public void TestCreateDataRecordsScalarQuery()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, OutputData>> selector = r => new OutputData();
+            Expression<Func<OneSDataRecord, bool>> filter = r => true;
+            Expression<Func<OneSDataRecord, int>> sortKey = r => 5;
+            var sorter = new SortExpression(sortKey, SortKind.Ascending);
+            const AggregateFunction AGGREGATE_FUNCTION = AggregateFunction.Maximum;
+
+            // Act
+            var result = QueryFactory.CreateScalarQuery(SOURCE_NAME, selector, filter, new[] { sorter }.ToReadOnly(), true, AGGREGATE_FUNCTION, typeof(int));
+
+            // Assert
+            AssertDataRecordsScalarQuery<OutputData, int>(result, SOURCE_NAME, selector, AGGREGATE_FUNCTION, true, filter, sorter);
+        }
+
+        /// <summary>
+        /// Тестирование 
+        /// <see cref="QueryFactory.CreateScalarQuery(System.Linq.Expressions.LambdaExpression,System.Linq.Expressions.LambdaExpression,System.Collections.ObjectModel.ReadOnlyCollection{VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SortExpression},bool,VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.AggregateFunction,System.Type)"/>
+        /// </summary>
+        [Test]
+        public void TestCreateTypedRecordsScalarQuery()
+        {
+            // Arrange
+            Expression<Func<InputData, OutputData>> selector = r => new OutputData();
+            Expression<Func<InputData, bool>> filter = r => true;
+            Expression<Func<InputData, int>> sortKey = r => 5;
+            var sorter = new SortExpression(sortKey, SortKind.Ascending);
+            const AggregateFunction AGGREGATE_FUNCTION = AggregateFunction.Average;
+
+            // Act
+            var result = QueryFactory.CreateScalarQuery(selector, filter, new[] { sorter }.ToReadOnly(), true, AGGREGATE_FUNCTION, typeof(int));
+
+            // Assert
+            AssertTypedRecordsScalarQuery<InputData, OutputData, int>(result, selector, AGGREGATE_FUNCTION, true, filter, sorter);
         }
 
         public sealed class InputData

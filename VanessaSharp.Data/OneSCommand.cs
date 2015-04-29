@@ -358,5 +358,13 @@ namespace VanessaSharp.Data
                 throw new NotSupportedException("Настройка свойства UpdatedRowSource не поддерживается.");
             }
         }
+
+        /// <summary>
+        /// Преобразователь значений.
+        /// </summary>
+        public IValueConverter ValueConverter
+        {
+            get { return Data.ValueConverter.Default; }
+        }
     }
 }

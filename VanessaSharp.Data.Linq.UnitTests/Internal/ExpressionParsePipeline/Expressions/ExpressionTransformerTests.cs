@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using Moq;
@@ -13,15 +12,15 @@ using VanessaSharp.Data.Linq.UnitTests.Utility;
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
 {
     /// <summary>
-    /// Тестирование <see cref="OrderByExpressionTransformer"/>.
+    /// Тестирование <see cref="ExpressionTransformer"/>.
     /// </summary>
     [TestFixture]
-    public sealed class OrderByExpressionTransformerTests
+    public sealed class ExpressionTransformerTests
     {
         private readonly Mock<IOneSMappingProvider> _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
         
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения значения поля записи методом <see cref="OneSDataRecord.GetInt32(string)"/>.
         /// </summary>
         [Test]
@@ -33,7 +32,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32(FIELD_NAME);
 
             // Act
-            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
             var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result);
@@ -42,7 +41,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения значения поля типизированного кортежа.
         /// </summary>
         [Test]
@@ -58,7 +57,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<SomeData, int>> sortKeyExpression = d => d.Id;
 
             // Act
-            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
             var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result);
@@ -67,7 +66,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения значения суммы полей типизированного кортежа.
         /// </summary>
         [Test]
@@ -86,7 +85,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<SomeData, double>> sortKeyExpression = d => d.Price + d.Value;
 
             // Act
-            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
             var operation = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationExpression>(result);
@@ -103,7 +102,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения значения отрицания поля типизированного кортежа.
         /// </summary>
         [Test]
@@ -120,7 +119,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<SomeData, double>> sortKeyExpression = d => -d.Value;
 
             // Act
-            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
             var operation = AssertEx.IsInstanceAndCastOf<SqlNegateExpression>(result);
@@ -130,7 +129,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения приведения поля к заданному типу типизированного кортежа.
         /// </summary>
         private void TestTransfromCast<T>(SqlTypeKind expectedSqlType, Action<SqlTypeDescription> assertType = null)
@@ -146,7 +145,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<SomeData, T>> sortKeyExpression = d => (T)d.AddInfo;
 
             // Act
-            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
             var castOperation = AssertEx.IsInstanceAndCastOf<SqlCastExpression>(result);
@@ -162,7 +161,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения приведения поля к булевому типу типизированного кортежа.
         /// </summary>
         [Test]
@@ -172,7 +171,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения приведения поля к типу даты типизированного кортежа.
         /// </summary>
         [Test]
@@ -182,7 +181,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения приведения поля к строковому типу типизированного кортежа.
         /// </summary>
         [Test]
@@ -198,7 +197,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения приведения поля к числовому типу типизированного кортежа.
         /// </summary>
         [Test]
@@ -215,7 +214,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передано выражение получения приведения поля к числовому типу типизированного кортежа.
         /// </summary>
         [Test]
@@ -251,7 +250,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
 
             // Act
-            return OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            return ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
         }
 
         private SqlTypeDescription TestTransfromSqlFunctionsTo<T>(
@@ -277,7 +276,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передан вызов метода <see cref="OneSSqlFunctions.ToInt64{T}"/>.
         /// </summary>
         [Test]
@@ -297,7 +296,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передан вызов метода <see cref="OneSSqlFunctions.ToDecimal{T}"/>.
         /// </summary>
         [Test]
@@ -318,7 +317,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передан вызов метода <see cref="OneSSqlFunctions.ToString{T}"/>.
         /// </summary>
         [Test]
@@ -338,7 +337,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="OrderByExpressionTransformer.Transform"/>
+        /// Тестирование <see cref="ExpressionTransformer.Transform"/>
         /// в случае если передан вызов метода <see cref="OneSSqlFunctions.ToDataRecord{T}"/>.
         /// </summary>
         [Test]
@@ -390,7 +389,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
 
             // Act
-            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
             var function = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(result);
@@ -428,7 +427,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
 
             // Act
-            var result = OrderByExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
 
             // Assert
             var function = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(result);

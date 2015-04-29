@@ -43,6 +43,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             _currentState = _currentState.HandleGettingEnumerator(itemType);
         }
 
+        /// <summary>Обработка агрегации данных.</summary>
+        /// <param name="outputItemType">Тип элементов выходной последовательности.</param>
+        /// <param name="function">Функция агрегации.</param>
+        /// <param name="scalarType">Тип результата.</param>
+        public void HandleAggregate(Type outputItemType, AggregateFunction function, Type scalarType)
+        {
+            _currentState = _currentState.HandleAggregate(outputItemType, function, scalarType);
+        }
+
         /// <summary>Обработка выборки различных записей.</summary>
         public void HandleDistinct()
         {
@@ -134,7 +143,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         }
 
         /// <summary>Данные состояний когда не происходило выборки.</summary>
-        private sealed class StateDataWithoutSelection : IStateData
+        private class StateDataWithoutSelection : IStateData
         {
             public StateDataWithoutSelection(Type outputItemType)
             {
@@ -158,7 +167,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// <summary>Выражение фильтрации записей.</summary>
             public LambdaExpression FilterExpression
             {
-                private get { return _filterExpression; }
+                protected get { return _filterExpression; }
                 
                 set
                 {
@@ -187,7 +196,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             }
 
             /// <summary>Создание списка выражений сортировки.</summary>
-            private ReadOnlyCollection<SortExpression> CreateSortExpressionList()
+            protected ReadOnlyCollection<SortExpression> CreateSortExpressionList()
             {
                 return new ReadOnlyCollection<SortExpression>(
                     _sortExpressionStack.ToArray());
@@ -239,7 +248,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// </summary>
             /// <param name="sourceName">Имя источника данных.</param>
             /// <param name="selectExpression">Выражение выборки.</param>
-            public IQuery CreateQuery(string sourceName, LambdaExpression selectExpression)
+            public virtual IQuery CreateQuery(string sourceName, LambdaExpression selectExpression)
             {
                 Contract.Assert(InputItemType == typeof(OneSDataRecord));
 
@@ -261,7 +270,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// </summary>
             /// <param name="itemType">Тип элементов входной последовательности.</param>
             /// <param name="selectExpression">Выражение выборки элементов.</param>
-            public IQuery CreateQuery(Type itemType, LambdaExpression selectExpression)
+            public virtual IQuery CreateQuery(Type itemType, LambdaExpression selectExpression)
             {
                 Contract.Assert(itemType != typeof(OneSDataRecord));
                 
@@ -312,6 +321,33 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             {
                 return VerifyLambdaType(lambdaType)
                        && lambdaType.GetGenericArguments()[1] == typeof(bool);
+            }
+        }
+
+        private sealed class AggregateStateData : StateDataWithoutSelection
+        {
+            private readonly AggregateFunction _aggregateFunction;
+            private readonly Type _scalarType;
+
+            public AggregateStateData(Type outputItemType, AggregateFunction aggregateFunction, Type scalarType)
+                : base(outputItemType)
+            {
+                Contract.Requires<ArgumentNullException>(scalarType != null);
+
+                _aggregateFunction = aggregateFunction;
+                _scalarType = scalarType;
+            }
+
+            public override IQuery CreateQuery(string sourceName, LambdaExpression selectExpression)
+            {
+                return QueryFactory.CreateScalarQuery(sourceName, selectExpression, FilterExpression, CreateSortExpressionList(),
+                                                      IsDistinct, _aggregateFunction, _scalarType);
+            }
+
+            public override IQuery CreateQuery(Type itemType, LambdaExpression selectExpression)
+            {
+                return QueryFactory.CreateScalarQuery(selectExpression, FilterExpression, CreateSortExpressionList(),
+                                                      IsDistinct, _aggregateFunction, _scalarType);
             }
         }
 
@@ -500,6 +536,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             {
                 throw CreateException(MethodBase.GetCurrentMethod());
             }
+
+            /// <summary>
+            /// Обработка вызова агрегатной функции.
+            /// </summary>
+            /// <param name="outputItemType">Тип элементов выходной последовательности.</param>
+            /// <param name="function">Агрегатная функция.</param>
+            /// <param name="scalarType">Тип скалярного значения как результат функции.</param>
+            public virtual BuilderState HandleAggregate(Type outputItemType, AggregateFunction function, Type scalarType)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
         }
 
         /// <summary>Начальное состояние.</summary>
@@ -516,7 +563,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         {
             public override BuilderState HandleGettingEnumerator(Type itemType)
             {
-                return new EnumeratorState(itemType);
+                return new ResultState(new StateDataWithoutSelection(itemType));
+            }
+
+            public override BuilderState HandleAggregate(Type outputItemType, AggregateFunction function, Type scalarType)
+            {
+                return new ResultState(
+                    new AggregateStateData(outputItemType, function, scalarType));
             }
         }
 
@@ -634,15 +687,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// <summary>
         /// Состояние после получения перечислителя элементов данных.
         /// </summary>
-        private sealed class EnumeratorState : IntermediateStateBase
+        private sealed class ResultState : IntermediateStateBase
         {
             private readonly StateDataWithoutSelection _stateDataWithoutSelection;
             
-            public EnumeratorState(Type itemType) 
-                : this(new StateDataWithoutSelection(itemType))
-            {}
-
-            private EnumeratorState(StateDataWithoutSelection stateDataWithoutSelection) 
+            public ResultState(StateDataWithoutSelection stateDataWithoutSelection) 
                 : base(stateDataWithoutSelection)
             {
                 _stateDataWithoutSelection = stateDataWithoutSelection;

@@ -20,6 +20,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         /// <param name="itemType">Имя элемента.</param>
         void HandleGettingEnumerator(Type itemType);
 
+        /// <summary>Обработка агрегации данных.</summary>
+        /// <param name="outputItemType">Тип элементов выходной последовательности.</param>
+        /// <param name="function">Функция агрегации.</param>
+        /// <param name="scalarType">Тип результата.</param>
+        void HandleAggregate(Type outputItemType, AggregateFunction function, Type scalarType);
+
         /// <summary>Обработка выборки различных записей.</summary>
         void HandleDistinct();
 
@@ -73,6 +79,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
         {
             Contract.Requires<ArgumentNullException>(itemType != null);
         }
+
+        /// <summary>Обработка агрегации данных.</summary>
+        /// <param name="outputItemType">Тип элементов выходной последовательности.</param>
+        /// <param name="function">Функция агрегации.</param>
+        /// <param name="scalarType">Тип результата.</param>
+        void IQueryableExpressionHandler.HandleAggregate(Type outputItemType, AggregateFunction function, Type scalarType)
+        {}
 
         /// <summary>Обработка выборки различных записей.</summary>
         void IQueryableExpressionHandler.HandleDistinct()

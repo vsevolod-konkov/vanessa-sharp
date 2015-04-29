@@ -29,7 +29,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                             new CallQueryableOrderByDescendingHandler(),
                             new CallQueryableThenByHandler(),
                             new CallQueryableThenByDescendingHandler(),
-                            new CallQueryableDistinctHandler() 
+                            new CallQueryableDistinctHandler(),
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableSumMethod, AggregateFunction.Summa),
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableAverageMethod, AggregateFunction.Average),
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableMaxMethod, AggregateFunction.Maximum),
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableMinMethod, AggregateFunction.Minimum)
                         }
                 );
 
@@ -360,6 +364,39 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                     return true;
                 }
                 
+                childNode = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Обработчик вызова метода <see cref="Queryable.Max{TSource}(System.Linq.IQueryable{TSource})"/>.
+        /// </summary>
+        private sealed class CallQueryableAggregateMethodHandler : ICallMethodHandler
+        {
+            private readonly Func<MethodInfo, bool> _testAction;
+            private readonly AggregateFunction _aggregateFunction;
+
+            /// <summary>Конструктор.</summary>
+            /// <param name="testAction">Действие тестирующее метод.</param>
+            /// <param name="aggregateFunction">Агрегируемая функция соответствующая тестируемому методу.</param>
+            public CallQueryableAggregateMethodHandler(Func<MethodInfo, bool> testAction, AggregateFunction aggregateFunction)
+            {
+                _testAction = testAction;
+                _aggregateFunction = aggregateFunction;
+            }
+
+            public bool CheckAndHandle(IQueryableExpressionHandler handler, MethodCallExpression node, out Expression childNode)
+            {
+                if (_testAction(node.Method))
+                {
+                    childNode = node.Arguments[0];
+                    var outputItemType = childNode.Type.GetGenericArguments()[0];
+                    handler.HandleAggregate(outputItemType, _aggregateFunction, node.Method.ReturnType);
+
+                    return true;
+                }
+
                 childNode = null;
                 return false;
             }

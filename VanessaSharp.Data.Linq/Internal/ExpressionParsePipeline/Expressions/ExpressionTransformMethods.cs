@@ -49,20 +49,20 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
         /// <typeparam name="T">Тип элементов.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="filterExpression">Выражение фильтрации.</param>
-        public SqlCondition TransformWhereExpression<T>(
-            QueryParseContext context, Expression<Func<T, bool>> filterExpression)
+        /// <param name="predicateExpression">Выражение фильтрации.</param>
+        public SqlCondition TransformCondition<T>(
+            QueryParseContext context, Expression<Func<T, bool>> predicateExpression)
         {
-            return WhereExpressionTransformer.Transform(_mappingProvider, context, filterExpression);
+            return ConditionTransformer.Transform(_mappingProvider, context, predicateExpression);
         }
 
         /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
-        public SqlExpression TransformOrderByExpression(
-            QueryParseContext context, LambdaExpression sortKeyExpression)
+        /// <param name="expression">Выражение ключа сортировки.</param>
+        public SqlExpression TransformExpression(
+            QueryParseContext context, LambdaExpression expression)
         {
-            return OrderByExpressionTransformer.Transform(_mappingProvider, context, sortKeyExpression);
+            return ExpressionTransformer.Transform(_mappingProvider, context, expression);
         }
 
         /// <summary>Получение имени источника данных для типизированной записи.</summary>

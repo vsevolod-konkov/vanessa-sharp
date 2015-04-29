@@ -13,9 +13,9 @@ using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expressions
 {
-    /// <summary>Тестирование <see cref="WhereExpressionTransformer"/>.</summary>
+    /// <summary>Тестирование <see cref="ConditionTransformer"/>.</summary>
     [TestFixture]
-    public sealed class WhereExpressionTransformerTests
+    public sealed class ConditionTransformerTests
     {
         private const string FILTER_FIELD = "filter_field";
         private const string NULLABLE_FIELD = "nullable_field";
@@ -67,7 +67,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// <param name="testedFilter">Тестируемое выражение.</param>
         private SqlCondition Transform<T>(Expression<Func<T, bool>> testedFilter)
         {
-            return WhereExpressionTransformer.Transform(_mappingProviderMock.Object, _context, testedFilter);
+            return ConditionTransformer.Transform(_mappingProviderMock.Object, _context, testedFilter);
         }
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
         
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие равенства.
         /// </summary>
         [Test]
@@ -140,7 +140,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие неравенства.
         /// </summary>
         [Test]
@@ -150,7 +150,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие больше.
         /// </summary>
         [Test]
@@ -160,7 +160,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие больше или равно.
         /// </summary>
         [Test]
@@ -170,7 +170,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие меньше.
         /// </summary>
         [Test]
@@ -180,7 +180,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие меньше или равно.
         /// </summary>
         [Test]
@@ -190,7 +190,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие равенства.
         /// </summary>
         [Test]
@@ -200,7 +200,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие неравенства.
         /// </summary>
         [Test]
@@ -210,7 +210,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие больше.
         /// </summary>
         [Test]
@@ -220,7 +220,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие больше или равно.
         /// </summary>
         [Test]
@@ -230,7 +230,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие меньше.
         /// </summary>
         [Test]
@@ -240,7 +240,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие меньше или равно.
         /// </summary>
         [Test]
@@ -478,7 +478,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
         // TODO Надо подумать о желаемом поведении"
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие всегда истина.
         /// </summary>
         [Ignore("Надо подумать о желаемом поведении")]
@@ -491,7 +491,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<OneSDataRecord, bool>> testedFilter = r => true;
 
             // Act
-            var result = WhereExpressionTransformer.Transform(_mappingProviderMock.Object, context, testedFilter);
+            var result = ConditionTransformer.Transform(_mappingProviderMock.Object, context, testedFilter);
             var parameters = context.Parameters.GetSqlParameters();
 
             // Assert
@@ -500,7 +500,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
         // TODO Надо подумать о желаемом поведении"
         /// <summary>
-        /// Тестирование <see cref="WhereExpressionTransformer.Transform{T}"/>
+        /// Тестирование <see cref="ConditionTransformer.Transform{T}"/>
         /// в случае если в обрабатывается условие получения булевого значения поля.
         /// </summary>
         [Ignore("Надо подумать о желаемом поведении")]
@@ -513,7 +513,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<OneSDataRecord, bool>> testedFilter = r => r.GetBoolean(FILTER_FIELD);
 
             // Act
-            var result = WhereExpressionTransformer.Transform(_mappingProviderMock.Object, context, testedFilter);
+            var result = ConditionTransformer.Transform(_mappingProviderMock.Object, context, testedFilter);
             var parameters = context.Parameters.GetSqlParameters();
 
             // Assert

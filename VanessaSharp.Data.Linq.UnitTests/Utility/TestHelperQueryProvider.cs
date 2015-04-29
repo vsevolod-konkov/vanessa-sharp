@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -12,9 +13,30 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
         /// <param name="queryable">Объект запроса.</param>
         public static Expression BuildTestQueryExpression<T>(IQueryable<T> queryable)
         {
+            Contract.Requires<ArgumentNullException>(queryable != null);
+            
             return Expression.Call(
                 queryable.Expression,
                 OneSQueryExpressionHelper.GetGetEnumeratorMethodInfo<T>());
+        }
+
+        /// <summary>Построение тестового выражения запроса скалярного значения.</summary>
+        /// <typeparam name="TItem">Тип элементов последовательности.</typeparam>
+        /// <typeparam name="TValue">Тип значения.</typeparam>
+        /// <param name="queryable">Объект запроса.</param>
+        /// <param name="scalarGetter">Выражение получения скалярного значения.</param>
+        public static Expression BuildTestScalarQueryExpression<TItem, TValue>(
+            IQueryable<TItem> queryable, Expression<Func<IQueryable<TItem>, TValue>> scalarGetter)
+        {
+            Contract.Requires<ArgumentNullException>(queryable != null);
+            
+            var getScalarMethod = OneSQueryExpressionHelper.ExtractMethodInfo(scalarGetter);
+            Contract.Assert(getScalarMethod.IsStatic);
+
+            return Expression.Call(
+                null,
+                getScalarMethod,
+                queryable.Expression);
         }
 
         public static IQueryable<OneSDataRecord> QueryOfDataRecords(string sourceName)

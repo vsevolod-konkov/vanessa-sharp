@@ -5,14 +5,14 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
-    /// <summary>Преобразователь LINQ-выражение метода OrderBy[Descending] и ThenBy[Descending] в SQL-условие под ORDER BY.</summary>
-    internal sealed class OrderByExpressionTransformer : ExpressionToSqlObjectTransformer<SqlExpression>
+    /// <summary>Преобразователь LINQ-выражения в SQL-выражение.</summary>
+    internal sealed class ExpressionTransformer : ExpressionToSqlObjectTransformer<SqlExpression>
     {
         /// <summary>Конструктор принимающий выражение записи данных.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи.</param>
         /// <param name="mappingProvider">Поставщик соответствий типам CLR источников данных 1С.</param>
-        private OrderByExpressionTransformer(
+        private ExpressionTransformer(
             QueryParseContext context,
             ParameterExpression recordExpression,
             IOneSMappingProvider mappingProvider)
@@ -28,7 +28,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return GetExpression();
         }
 
-        /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
+        /// <summary>Преобразование выражения в SQL-выражение.</summary>
         /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора.</param>
         /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
@@ -53,7 +53,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 ParameterExpression recordExpression,
                 IOneSMappingProvider mappingProvider)
             {
-                return new OrderByExpressionTransformer(context, recordExpression, mappingProvider);
+                return new ExpressionTransformer(context, recordExpression, mappingProvider);
             }
         }
     }

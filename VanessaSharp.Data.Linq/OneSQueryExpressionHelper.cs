@@ -266,6 +266,21 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Определяет, является ли метод <paramref name="method"/>
+        /// методом query-методом <see cref="Queryable"/> с именем <paramref name="testedMethodName"/>
+        /// и не имеющий дополнительных аргументов.
+        /// </summary>
+        /// <param name="method">Проверяемый метод.</param>
+        /// <param name="testedMethodName">Ожидаемое имя метода.</param>
+        private static bool IsQueryableMethodWithoutArgs(MethodInfo method, string testedMethodName)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethod(method, testedMethodName)
+                && method.GetParameters().Length == 1;
+        }
+
+        /// <summary>
         /// Определяется, является ли метод методом
         /// <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>
         /// </summary>
@@ -273,8 +288,51 @@ namespace VanessaSharp.Data.Linq
         {
             Contract.Requires<ArgumentNullException>(method != null);
 
-            return IsQueryableMethod(method, "Distinct")
-                && method.GetParameters().Length == 1;
+            return IsQueryableMethodWithoutArgs(method, "Distinct");
+        }
+
+        /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.Sum(System.Linq.IQueryable{int})"/>
+        /// </summary>
+        public static bool IsQueryableSumMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethodWithoutArgs(method, "Sum");
+        }
+
+        /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.Average(System.Linq.IQueryable{int})"/>
+        /// </summary>
+        public static bool IsQueryableAverageMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethodWithoutArgs(method, "Average");
+        }
+
+        /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.Max{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// </summary>
+        public static bool IsQueryableMaxMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethodWithoutArgs(method, "Max");
+        }
+
+        /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.Min{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// </summary>
+        public static bool IsQueryableMinMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethodWithoutArgs(method, "Min");
         }
 
         /// <summary>
@@ -513,6 +571,50 @@ namespace VanessaSharp.Data.Linq
                 { typeof(bool), ValueConverterToBooleanMethod },
                 { typeof(DateTime), ValueConverterToDateTimeMethod }
             };
+
+        /// <summary>Получение конвертера, преобразующего сырое значение 1С в значение требуемого типа.</summary>
+        /// <typeparam name="T">Требуемый тип.</typeparam>
+        public static Func<IValueConverter, object, T> GetConverter<T>()
+        {
+            return (Func<IValueConverter, object, T>)GetConverter(typeof(T));
+        }
+
+        /// <summary>Получение конвертера, преобразующего сырое значение 1С в значение требуемого типа.</summary>
+        private static Delegate GetConverter(Type type)
+        {
+            Contract.Requires<ArgumentNullException>(type != null);
+
+            Delegate result;
+            if (_convertersMap.TryGetValue(type, out result))
+                return result;
+
+            throw new InvalidOperationException(string.Format(
+                "Для типа \"{0}\" не найден метод конвертации значения 1С.", type));
+        }
+        private static readonly Dictionary<Type, Delegate> _convertersMap
+            = CreateConvertersMap();
+
+        /// <summary>Создание карты соответствия типа, конвертеру преобразующему к данному типу.</summary>
+        private static Dictionary<Type, Delegate> CreateConvertersMap()
+        {
+            return _valueConvertMethodsMap
+                .ToDictionary(p => p.Key, p => CreateConverter(p.Key, p.Value));
+        }
+
+        /// <summary>Создание конвертера по типу и методу <see cref="IValueConverter"/>.</summary>
+        private static Delegate CreateConverter(Type type, MethodInfo method)
+        {
+            var delegateType = typeof(Func<,,>).MakeGenericType(typeof(IValueConverter), typeof(object), type);
+
+            var valueConverter = Expression.Parameter(typeof(IValueConverter), "c");
+            var value = Expression.Parameter(typeof(object), "o");
+
+            var lambda = Expression.Lambda(delegateType,
+                                           Expression.Call(valueConverter, method, value),
+                                           valueConverter, value);
+
+            return lambda.Compile();
+        }
 
         #endregion
 

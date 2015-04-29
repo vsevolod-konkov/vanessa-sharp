@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 {
@@ -132,6 +133,73 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             return CreateQuery(selectorArgs[0], selectorArgs[1], selector, filter, sorters, isDistinct);
         }
 
+        /// <summary>Создание скалярного запроса.</summary>
+        /// <param name="selector">Выражение выборки записей.</param>
+        /// <param name="filter">Выражение фильтрации записей.</param>
+        /// <param name="sorters">Выражения сортировки записей.</param>
+        /// <param name="isDistinct">Выборка различных.</param>
+        /// <param name="aggregateFunction">Функция агрегирования.</param>
+        /// <param name="scalarType">Тип скалярного значения.</param>
+        /// <returns>Созданный запрос.</returns>
+        public static IQuery CreateScalarQuery(LambdaExpression selector, LambdaExpression filter,
+                                               ReadOnlyCollection<SortExpression> sorters,
+                                               bool isDistinct,
+                                               AggregateFunction aggregateFunction,
+                                               Type scalarType)
+        {
+            Contract.Requires<ArgumentNullException>(selector != null);
+            Contract.Requires<ArgumentException>(
+                selector.Type.IsGenericType
+                && selector.Type.GetGenericTypeDefinition() == typeof(Func<,>)
+                && selector.Type.GetGenericArguments()[0] != typeof(OneSDataRecord));
+            Contract.Requires<ArgumentException>(
+                (filter == null) || IsInputTypeForLambda(filter, selector.Type.GetGenericArguments()[0]));
+
+            Contract.Requires<ArgumentNullException>(sorters != null);
+            Contract.Requires<ArgumentException>(
+                sorters.All(s => IsInputTypeForLambda(s.KeyExpression, selector.Type.GetGenericArguments()[0])));
+
+
+            var itemInputType = selector.Type.GetGenericArguments()[0];
+            var itemOutputType = selector.Type.GetGenericArguments()[1];
+
+            var type = typeof(ScalarQuery<,,>).MakeGenericType(itemInputType, itemOutputType, scalarType);
+            return (IQuery)Activator.CreateInstance(type, selector, filter, sorters, isDistinct, aggregateFunction);
+        }
+
+        /// <summary>Создание скалярного запроса.</summary>
+        /// <param name="sourceName">Имя источника.</param>
+        /// <param name="selector">Выражение выборки записей.</param>
+        /// <param name="filter">Выражение фильтрации записей.</param>
+        /// <param name="sorters">Выражения сортировки записей.</param>
+        /// <param name="isDistinct">Выборка различных.</param>
+        /// <param name="aggregateFunction">Функция агрегирования.</param>
+        /// <param name="scalarType">Тип скалярного значения.</param>
+        /// <returns>Созданный запрос.</returns>
+        public static IQuery CreateScalarQuery(
+            string sourceName, LambdaExpression selector, LambdaExpression filter,
+            ReadOnlyCollection<SortExpression> sorters, bool isDistinct,
+            AggregateFunction aggregateFunction, Type scalarType)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
+
+            Contract.Requires<ArgumentNullException>(selector != null);
+            Contract.Requires<ArgumentException>(IsInputTypeForLambda(selector, typeof(OneSDataRecord)));
+
+            Contract.Requires<ArgumentException>(
+                (filter == null) || IsInputTypeForLambda(filter, typeof(OneSDataRecord)));
+
+            Contract.Requires<ArgumentNullException>(sorters != null);
+            Contract.Requires<ArgumentException>(
+                sorters.All(s => IsInputTypeForLambda(s.KeyExpression, typeof(OneSDataRecord))));
+
+            var itemInputType = selector.Type.GetGenericArguments()[0];
+            var itemOutputType = selector.Type.GetGenericArguments()[1];
+
+            var type = typeof(ScalarQuery<,,>).MakeGenericType(itemInputType, itemOutputType, scalarType);
+            return (IQuery)Activator.CreateInstance(type, new ExplicitSourceDescription(sourceName), selector, filter, sorters, isDistinct, aggregateFunction);
+        }
+
         /// <summary>
         /// Проверка того, что в выражении выборки входной тип является заданным <paramref name="type"/>.
         /// </summary>
@@ -182,71 +250,52 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 Expression<Func<TInput, bool>> filter,
                 ReadOnlyCollection<SortExpression> sorters,
                 bool isDistinct)
+                : base(source, selector, filter, sorters, isDistinct)
+            {}
+
+            /// <summary>Преобразование результат парсинга запроса, готового к выполенению.</summary>
+            protected override ExpressionParseProduct Transform(Expressions.IQueryTransformer transformer)
             {
-                Contract.Requires<ArgumentNullException>(source != null);
-                Contract.Requires<ArgumentException>(
-                    ((typeof(TInput) == typeof(OneSDataRecord)) && (source is ExplicitSourceDescription))
-                    ||
-                    ((typeof(TInput) != typeof(OneSDataRecord)) && (source is SourceDescriptionByType<TInput>))
-                    );
+                return transformer.Transform(this);
+            }
+        }
 
-                Contract.Requires<ArgumentException>(
-                    (typeof(TInput) == typeof(TOutput) && selector == null)
-                    ||
-                    (typeof(TInput) == typeof(TOutput) || selector != null));
-
-                Contract.Requires<ArgumentNullException>(sorters != null);
-                Contract.Requires<ArgumentException>(sorters.All(s =>
-                {
-                    var type = s.KeyExpression.Type;
-
-                    return type.IsGenericType
-                        && type.GetGenericTypeDefinition() == typeof(Func<,>)
-                        && type.GetGenericArguments()[0] == typeof(TInput);
-                }));
-
-                _source = source;
-                _selector = selector;
-                _filter = filter;
-                _sorters = sorters;
-                _isDistinct = isDistinct;
+        private sealed class ScalarQuery<TItemInput, TItemOutput, TResult>
+            : QueryBase<TItemInput, TItemOutput>, IScalarQuery<TItemInput, TItemOutput, TResult>
+        {
+            public ScalarQuery(
+                ISourceDescription source,
+                Expression<Func<TItemInput, TItemOutput>> selector,
+                Expression<Func<TItemInput, bool>> filter,
+                ReadOnlyCollection<SortExpression> sorters,
+                bool isDistinct,
+                AggregateFunction aggregateFunction)
+                : base(source, selector, filter, sorters, isDistinct)
+            {
+                _aggregateFunction = aggregateFunction;
             }
 
-            /// <summary>Описание источника данных 1С.</summary>
-            public override ISourceDescription Source
+            public ScalarQuery(
+                Expression<Func<TItemInput, TItemOutput>> selector,
+                Expression<Func<TItemInput, bool>> filter,
+                ReadOnlyCollection<SortExpression> sorters,
+                bool isDistinct,
+                AggregateFunction aggregateFunction)
+                : this(SourceDescriptionByType<TItemInput>.Instance, selector, filter, sorters, isDistinct, aggregateFunction)
             {
-                get { return _source; }
-            }
-            private readonly ISourceDescription _source;
-
-            /// <summary>Выражение выборки.</summary>
-            public override Expression<Func<TInput, TOutput>> Selector
-            {
-                get { return _selector; }
-            }
-            private readonly Expression<Func<TInput, TOutput>> _selector;
-
-            /// <summary>Выражение фильтрации.</summary>
-            public override Expression<Func<TInput, bool>> Filter
-            {
-                get { return _filter; }
-            }
-            private readonly Expression<Func<TInput, bool>> _filter;
-
-            /// <summary>Выражения сортировки.</summary>
-            public override ReadOnlyCollection<SortExpression> Sorters
-            {
-                get { return _sorters; }
+                _aggregateFunction = aggregateFunction;
             }
 
-            /// <summary>Выборка различных.</summary>
-            public override bool IsDistinct
+            protected override ExpressionParseProduct Transform(IQueryTransformer transformer)
             {
-                get { return _isDistinct; }
+                return transformer.TransformScalar(this);
             }
-            private readonly bool _isDistinct;
 
-            private readonly ReadOnlyCollection<SortExpression> _sorters;
+            public AggregateFunction AggregateFunction
+            {
+                get { return _aggregateFunction; }
+            }
+            private readonly AggregateFunction _aggregateFunction;
         }
     }
 }

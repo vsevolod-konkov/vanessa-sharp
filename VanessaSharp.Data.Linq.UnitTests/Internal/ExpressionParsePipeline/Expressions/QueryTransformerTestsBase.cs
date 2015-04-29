@@ -12,6 +12,32 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
     /// </summary>
     public abstract class QueryTransformerTestsBase
     {
+        private static void SetupQueryMock<TQuery, TInput, TOutput>(
+            Mock<TQuery> queryMock,
+            ISourceDescription source,
+            Expression<Func<TInput, TOutput>> selector,
+            Expression<Func<TInput, bool>> filter,
+            SortExpression[] sorters)
+            where TQuery : class, IQuery<TInput, TOutput>
+        {
+            queryMock
+                .SetupGet(q => q.IsDistinct)
+                .Returns(false);
+
+            queryMock
+                .SetupGet(q => q.Source)
+                .Returns(source);
+            queryMock
+                .SetupGet(q => q.Selector)
+                .Returns(selector);
+            queryMock
+                .SetupGet(q => q.Filter)
+                .Returns(filter);
+            queryMock
+                .SetupGet(q => q.Sorters)
+                .Returns(sorters.ToReadOnly());
+        }
+        
         /// <summary>Создание объекта запроса.</summary>
         /// <typeparam name="TInput">
         /// Тип элементов входной последовательности.
@@ -31,22 +57,38 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             var queryMock = new Mock<IQuery<TInput, TOutput>>(MockBehavior.Strict);
 
-            queryMock
-                .SetupGet(q => q.IsDistinct)
-                .Returns(false);
+            SetupQueryMock(queryMock, source, selector, filter, sorters);
+
+            return queryMock.Object;
+        }
+
+        /// <summary>Создание объекта запроса.</summary>
+        /// <typeparam name="TInput">
+        /// Тип элементов входной последовательности.
+        /// </typeparam>
+        /// <typeparam name="TOutput">
+        /// Тип элементов выходной последовательности.
+        /// </typeparam>
+        /// <typeparam name="TResult">Тип результата скалярного запроса.</typeparam>
+        /// <param name="aggregateFunction">Агрегируемая функция.</param>
+        /// <param name="source">Описание источника.</param>
+        /// <param name="selector">Выражение выборки.</param>
+        /// <param name="filter">Выражение фильтрации.</param>
+        /// <param name="sorters">Выражения сортировки.</param>
+        internal static IScalarQuery<TInput, TOutput, TResult> CreateScalarQuery<TInput, TOutput, TResult>(
+            AggregateFunction aggregateFunction,
+            ISourceDescription source,
+            Expression<Func<TInput, TOutput>> selector = null,
+            Expression<Func<TInput, bool>> filter = null,
+            params SortExpression[] sorters)
+        {
+            var queryMock = new Mock<IScalarQuery<TInput, TOutput, TResult>>(MockBehavior.Strict);
 
             queryMock
-                .SetupGet(q => q.Source)
-                .Returns(source);
-            queryMock
-                .SetupGet(q => q.Selector)
-                .Returns(selector);
-            queryMock
-                .SetupGet(q => q.Filter)
-                .Returns(filter);
-            queryMock
-                .SetupGet(q => q.Sorters)
-                .Returns(sorters.ToReadOnly());
+                .SetupGet(q => q.AggregateFunction)
+                .Returns(aggregateFunction);
+
+            SetupQueryMock(queryMock, source, selector, filter, sorters);
 
             return queryMock.Object;
         }

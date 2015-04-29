@@ -5,14 +5,14 @@ using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 {
-    /// <summary>Преобразователь LINQ-выражение метода Where в SQL-условие WHERE.</summary>
-    internal sealed class WhereExpressionTransformer : ExpressionToSqlObjectTransformer<SqlCondition>
+    /// <summary>Преобразователь LINQ-выражения в SQL-условие.</summary>
+    internal sealed class ConditionTransformer : ExpressionToSqlObjectTransformer<SqlCondition>
     {
         /// <summary>Конструктор.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи.</param>
         /// <param name="mappingProvider">Поставщик соответствий типам CLR источников данных 1С.</param>
-        private WhereExpressionTransformer(QueryParseContext context,
+        private ConditionTransformer(QueryParseContext context,
                                            ParameterExpression recordExpression,
                                            IOneSMappingProvider mappingProvider)
             : base(context, recordExpression, mappingProvider)
@@ -50,7 +50,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public ExpressionToSqlObjectTransformer<SqlCondition> Create(
                 QueryParseContext context, ParameterExpression recordExpression, IOneSMappingProvider mappingProvider)
             {
-                return new WhereExpressionTransformer(context, recordExpression, mappingProvider);
+                return new ConditionTransformer(context, recordExpression, mappingProvider);
             }
         }
     }

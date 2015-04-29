@@ -21,14 +21,16 @@ namespace VanessaSharp.Data.Linq.Internal
             _connection = connection;
         }
 
-        /// <summary>Выполнение SQL-запроса для получения табличных данных.</summary>
-        /// <param name="command">Команда SQL-запроса.</param>
-        public ISqlResultReader ExecuteReader(SqlCommand command)
+        /// <summary>
+        /// Создание экземпляра <see cref="OneSCommand"/>
+        /// и проверка соединение на то, что оно открыто.
+        /// </summary>
+        private OneSCommand CreateOneSCommandAndCheckConnection(SqlCommand command)
         {
             var oneSCommand = new OneSCommand(_connection)
-                {
-                    CommandText = command.Sql
-                };
+            {
+                CommandText = command.Sql
+            };
 
             foreach (var sqlParameter in command.Parameters)
                 oneSCommand.Parameters.Add(sqlParameter.Name, sqlParameter.Value);
@@ -36,15 +38,28 @@ namespace VanessaSharp.Data.Linq.Internal
             if (_connection.State != ConnectionState.Open)
                 _connection.Open();
 
+            return oneSCommand;
+        }
+
+        /// <summary>Выполнение SQL-запроса для получения табличных данных.</summary>
+        /// <param name="command">Команда SQL-запроса.</param>
+        public ISqlResultReader ExecuteReader(SqlCommand command)
+        {
+            var oneSCommand = CreateOneSCommandAndCheckConnection(command);
+
             return new SqlResultReader(
                 oneSCommand.ExecuteReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult));
         }
 
         /// <summary>Выполенение SQL-запроса для получения скалярного значения.</summary>
         /// <param name="command">Команда SQL-запроса.</param>
-        public object ExecuteScalar(SqlCommand command)
+        public Tuple<IValueConverter, object> ExecuteScalar(SqlCommand command)
         {
-            throw new NotImplementedException();
+            var oneSCommand = CreateOneSCommandAndCheckConnection(command);
+
+            return Tuple.Create(
+                oneSCommand.ValueConverter,
+                oneSCommand.ExecuteScalar());
         }
 
         public void Dispose()

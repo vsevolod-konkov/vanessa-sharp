@@ -242,5 +242,28 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                 new SortExpression(sortKey2, SortKind.Descending),
                 new SortExpression(sortKey3, SortKind.Ascending));
         }
+
+        [Test]
+        public void TestBuildSumQuery()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, bool>> expectedFilter = r => r.GetString("[filterField]") == "filterValue";
+            Expression<Func<OneSDataRecord, int>> expectedSelector = r => r.GetInt32("any_field");
+
+            // Act
+            _testedInstance.HandleStart();
+            _testedInstance.HandleAggregate(typeof(int), AggregateFunction.Summa, typeof(int));
+
+            _testedInstance.HandleSelect(expectedSelector);
+
+            _testedInstance.HandleFilter(expectedFilter);
+            _testedInstance.HandleGettingRecords(SOURCE_NAME);
+            _testedInstance.HandleEnd();
+
+            var result = _testedInstance.BuiltQuery;
+
+            // Assert
+            AssertDataRecordsScalarQuery<int, int>(result, SOURCE_NAME,  expectedSelector, AggregateFunction.Summa, expectedFilter: expectedFilter);
+        }
     }
 }

@@ -273,5 +273,77 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Field(1, d => d.Price, c => c.ToDecimal(null), 45.65m)
                 .Test();
         }
+
+        /// <summary>
+        /// Тестирование преобразования запроса получения суммы поля <see cref="OneSDataRecord"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformSumFieldDataRecords()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, int>> selectExpression = r => r.GetInt32("quantity");
+
+            var query = CreateScalarQuery<OneSDataRecord, int, int>(
+                                          AggregateFunction.Summa, new ExplicitSourceDescription(SOURCE_NAME),
+                                          selectExpression);
+
+            // Act
+            var result = _testedInstance.TransformScalar(query);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual("SELECT SUM(quantity) FROM " + SOURCE_NAME, command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            var rawValue = new object();
+            const int EXPECTED_VALUE = 435345;
+            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
+            valueConverterMock
+                .Setup(c => c.ToInt32(rawValue))
+                .Returns(EXPECTED_VALUE);
+
+            Assert.AreEqual(EXPECTED_VALUE, result.Converter(valueConverterMock.Object, rawValue));
+            valueConverterMock
+                .Verify(c => c.ToInt32(rawValue), Times.Once());
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса получения суммы поля <see cref="OneSDataRecord"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformAvgFieldDataRecords()
+        {
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
+
+            Expression<Func<SomeData, decimal>> selectExpression = r => r.Price;
+
+            var query = CreateScalarQuery<SomeData, decimal, decimal>(
+                                          AggregateFunction.Average,
+                                          SourceDescriptionByType<SomeData>.Instance,
+                                          selectExpression);
+
+            // Act
+            var result = _testedInstance.TransformScalar(query);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual("SELECT AVG(Цена) FROM ТестовыйИсточник", command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            var rawValue = new object();
+            const decimal EXPECTED_VALUE = 435345.55m;
+            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
+            valueConverterMock
+                .Setup(c => c.ToDecimal(rawValue))
+                .Returns(EXPECTED_VALUE);
+
+            Assert.AreEqual(EXPECTED_VALUE, result.Converter(valueConverterMock.Object, rawValue));
+            valueConverterMock
+                .Verify(c => c.ToDecimal(rawValue), Times.Once());
+        }
     }
 }

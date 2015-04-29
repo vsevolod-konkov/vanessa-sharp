@@ -1,4 +1,7 @@
-﻿using Moq;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq.Expressions;
+using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
@@ -16,28 +19,30 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
         public void TestTransform()
         {
             // Arrange
-            var query = new Mock<QueryBase<InputData, OutputData>>(MockBehavior.Strict).Object;
-            var expressionParseProduct = new CollectionReadExpressionParseProduct<OutputData>(
-                new SqlCommand("SQL", Empty.ReadOnly<SqlParameter>()), 
-                new Mock<IItemReaderFactory<OutputData>>(MockBehavior.Strict).Object);
+            var sourceDescription = SourceDescriptionByType<InputData>.Instance;
+            Expression<Func<InputData, OutputData>> selector = i => new OutputData();
 
-            var queryTransformerMock = new Mock<IQueryTransformer>(MockBehavior.Strict);
-            queryTransformerMock
-                .Setup(t => t.Transform(query))
-                .Returns(expressionParseProduct);
+            var expressionParseProduct = new Mock<ExpressionParseProduct>(
+                MockBehavior.Strict,
+                new SqlCommand("SQL", Empty.ReadOnly<SqlParameter>())).Object;
+
+            var testedQuery = new TestedQuery<InputData, OutputData>(sourceDescription, selector);
+            testedQuery.ExpectedExpressionParseProduct = expressionParseProduct;
+
+            var queryTransformer = new Mock<IQueryTransformer>(MockBehavior.Strict).Object;
 
             var queryTransformServiceMock = new Mock<IQueryTransformService>(MockBehavior.Strict);
             queryTransformServiceMock
                 .Setup(s => s.CreateTransformer())
-                .Returns(queryTransformerMock.Object);
+                .Returns(queryTransformer);
 
             // Act
-            var result = query.Transform(queryTransformServiceMock.Object);
+            var result = testedQuery.Transform(queryTransformServiceMock.Object);
 
             // Assert
             Assert.AreSame(expressionParseProduct, result);
+            Assert.AreSame(queryTransformer, testedQuery.ActualTransformer);
 
-            queryTransformerMock.Verify(t => t.Transform(query), Times.Once());
             queryTransformServiceMock.Verify(s => s.CreateTransformer(), Times.Once());
         }
 
@@ -46,5 +51,27 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
 
         public sealed class OutputData
         {}
+
+        private sealed class TestedQuery<TInput, TOutput> : QueryBase<TInput, TOutput>
+        {
+            public TestedQuery(ISourceDescription source, Expression<Func<TInput, TOutput>> selector)
+                : base(source, selector, null, Empty.ReadOnly<SortExpression>(), false)
+            {}
+
+            public ExpressionParseProduct ExpectedExpressionParseProduct 
+            { 
+                private get;
+                set;
+            }
+
+            public IQueryTransformer ActualTransformer { get; private set; }
+
+            protected override ExpressionParseProduct Transform(IQueryTransformer transformer)
+            {
+                ActualTransformer = transformer;
+
+                return ExpectedExpressionParseProduct;
+            }
+        }
     }
 }

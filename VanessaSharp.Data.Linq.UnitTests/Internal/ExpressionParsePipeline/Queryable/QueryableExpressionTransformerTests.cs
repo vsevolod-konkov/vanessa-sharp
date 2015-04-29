@@ -248,7 +248,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-           AssertTypedRecordsQuery<SomeData>(result);
+           AssertTypedRecordsQueryAndTestTransform<SomeData>(result);
         }
 
         /// <summary>
@@ -269,7 +269,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertTypedRecordsQuery(result, expectedFilter: expectedFilter);
+            AssertTypedRecordsQueryAndTestTransform(result, expectedFilter: expectedFilter);
         }
 
         /// <summary>
@@ -294,7 +294,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertTypedRecordsQuery<SomeData>(
+            AssertTypedRecordsQueryAndTestTransform<SomeData>(
                 result,
                 false,
                 null,
@@ -320,7 +320,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.Transform(testedExpression);
 
             // Assert
-            AssertTypedRecordsQuery(result, selector);
+            AssertTypedRecordsQueryAndTestTransform(result, selector);
         }
 
         /// <summary>

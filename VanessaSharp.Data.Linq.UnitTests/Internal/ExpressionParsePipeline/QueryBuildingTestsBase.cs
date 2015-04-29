@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.UnitTests.Utility;
 
 namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
@@ -43,6 +46,55 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             Assert.AreEqual(expectedSortExpression.Kind, actualSortExpression.Kind);
             Assert.AreSame(expectedSortExpression.KeyExpression, actualSortExpression.KeyExpression);
         }
+
+        private static void TestTransformQuery<TInput, TOutput>(IQuery<TInput, TOutput> testedQuery)
+        {
+            var expressionParseProduct = new CollectionReadExpressionParseProduct<TOutput>(
+                _sqlCommand,
+                new Mock<IItemReaderFactory<TOutput>>(MockBehavior.Strict).Object); 
+
+            var transformerMock = new Mock<IQueryTransformer>(MockBehavior.Strict);
+            transformerMock
+                .Setup(t => t.Transform(testedQuery))
+                .Returns(expressionParseProduct);
+
+            TestTransform(testedQuery, transformerMock.Object, expressionParseProduct);
+
+            transformerMock.Verify(t => t.Transform(testedQuery), Times.Once());
+        }
+
+        private static void TestTransformScalarQuery<TInput, TOutput, TResult>(IScalarQuery<TInput, TOutput, TResult> testedQuery)
+        {
+            var expressionParseProduct = new ScalarReadExpressionParseProduct<TResult>(_sqlCommand, (c, o) => (TResult)o);
+
+            var transformerMock = new Mock<IQueryTransformer>(MockBehavior.Strict);
+            transformerMock
+                .Setup(t => t.TransformScalar(testedQuery))
+                .Returns(expressionParseProduct);
+
+            TestTransform(testedQuery, transformerMock.Object, expressionParseProduct);
+
+            transformerMock.Verify(t => t.TransformScalar(testedQuery), Times.Once());
+        }
+
+        private static void TestTransform<TInput, TOutput>(IQuery<TInput, TOutput> testedQuery, IQueryTransformer transformer,
+                                                    ExpressionParseProduct expectedResult)
+        {
+            var transformServiceMock = new Mock<IQueryTransformService>(MockBehavior.Strict);
+            transformServiceMock
+                .Setup(s => s.CreateTransformer())
+                .Returns(transformer);
+
+            // Act
+            var actualResult = testedQuery.Transform(transformServiceMock.Object);
+
+            // Assert
+            Assert.AreSame(expectedResult, actualResult);
+
+            transformServiceMock.Verify(s => s.CreateTransformer(), Times.Once());
+        }
+
+        private static readonly SqlCommand _sqlCommand = new SqlCommand("SQL", Empty.ReadOnly<SqlParameter>());
 
         private static void AssertDataRecordsQuery<TOutput>(IQuery<OneSDataRecord, TOutput> testedQuery,
                                                            string expectedSourceName,
@@ -85,6 +137,19 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<OneSDataRecord, T>>(testedQuery);
             
             AssertDataRecordsQuery(typedQuery, expectedSourceName, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters, expectedIsDistinct);
+            TestTransformQuery(typedQuery);
+        }
+
+        private static void AssertTypedRecordsQueryAndTestTransform<TInput, TOutput>(
+            IQuery<TInput, TOutput> testedQuery,
+            Expression<Func<TInput, TOutput>> expectedSelector,
+            Expression<Func<TInput, bool>> expectedFilter,
+            IList<SortExpression> expectedSorters,
+            bool expectedIsDistinct)
+        {
+            AssertTypedRecordsQuery(testedQuery, expectedSelector, expectedFilter, expectedSorters, expectedIsDistinct);
+
+            TestTransformQuery(testedQuery);
         }
 
         private static void AssertTypedRecordsQuery<TInput, TOutput>(
@@ -98,7 +163,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             AssertQuery(testedQuery, expectedSelector, expectedFilter, expectedSorters, expectedIsDistinct);
         }
 
-        internal static void AssertTypedRecordsQuery<TInput, TOutput>(
+        internal static void AssertTypedRecordsQueryAndTestTransform<TInput, TOutput>(
             IQuery testedQuery,
             Expression<Func<TInput, TOutput>> expectedSelector,
             bool expectedIsDistinct = false,
@@ -106,16 +171,53 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             params SortExpression[] expectedSorters)
         {
             var typedQuery = AssertEx.IsInstanceAndCastOf<QueryBase<TInput, TOutput>>(testedQuery);
-            AssertTypedRecordsQuery(typedQuery, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters, expectedIsDistinct);
+            AssertTypedRecordsQueryAndTestTransform(typedQuery, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters, expectedIsDistinct);
         }
 
-        internal static void AssertTypedRecordsQuery<T>(
+        internal static void AssertTypedRecordsQueryAndTestTransform<T>(
             IQuery testedQuery,
             bool expectedIsDistinct = false,
             Expression<Func<T, bool>> expectedFilter = null,
             params SortExpression[] expectedSorters)
         {
-            AssertTypedRecordsQuery<T, T>(testedQuery, null, expectedIsDistinct, expectedFilter, expectedSorters);
+            AssertTypedRecordsQueryAndTestTransform<T, T>(testedQuery, null, expectedIsDistinct, expectedFilter, expectedSorters);
+        }
+
+        internal static void AssertDataRecordsScalarQuery<TOutput, TResult>(
+            IQuery testedQuery,
+            string expectedSourceName,
+            Expression<Func<OneSDataRecord, TOutput>> expectedSelector,
+            AggregateFunction aggregateFunction,
+            bool expectedIsDistinct = false,
+            Expression<Func<OneSDataRecord, bool>> expectedFilter = null,
+            params SortExpression[] expectedSorters)
+        {
+
+            var typedScalarQuery = AssertEx.IsInstanceAndCastOf<IScalarQuery<OneSDataRecord, TOutput, TResult>>(testedQuery);
+
+            IQuery<OneSDataRecord, TOutput> typedQuery = typedScalarQuery;
+            AssertDataRecordsQuery(typedQuery, expectedSourceName, expectedSelector, expectedFilter, (IList<SortExpression>)expectedSorters, expectedIsDistinct);
+            Assert.AreEqual(aggregateFunction, typedScalarQuery.AggregateFunction);
+
+            TestTransformScalarQuery(typedScalarQuery);
+        }
+
+        internal static void AssertTypedRecordsScalarQuery<TInput, TOutput, TResult>(
+            IQuery testedQuery,
+            Expression<Func<TInput, TOutput>> expectedSelector,
+            AggregateFunction aggregateFunction,
+            bool expectedIsDistinct = false,
+            Expression<Func<TInput, bool>> expectedFilter = null,
+            params SortExpression[] expectedSorters)
+        {
+
+            var typedScalarQuery = AssertEx.IsInstanceAndCastOf<IScalarQuery<TInput, TOutput, TResult>>(testedQuery);
+
+            IQuery<TInput, TOutput> typedQuery = typedScalarQuery;
+            AssertTypedRecordsQuery(typedQuery, expectedSelector, expectedFilter, expectedSorters, expectedIsDistinct);
+            Assert.AreEqual(aggregateFunction, typedScalarQuery.AggregateFunction);
+
+            TestTransformScalarQuery(typedScalarQuery);
         }
     }
 }

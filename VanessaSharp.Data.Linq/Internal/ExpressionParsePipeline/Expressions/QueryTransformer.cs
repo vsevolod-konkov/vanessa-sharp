@@ -43,6 +43,22 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private readonly IExpressionTransformMethods _expressionTransformMethods;
 
         /// <summary>
+        /// Получение модели инструкции SQL-запроса.
+        /// </summary>
+        /// <param name="query">Исходный запрос.</param>
+        /// <param name="selectStatement">SQL-Инструкция выборки.</param>
+        private SqlQueryStatement GetQueryStatement<TInput, TOutput>(IQuery<TInput, TOutput> query,
+                                                                     SqlSelectStatement selectStatement)
+        {
+            var source = query.Source.GetSourceName(_expressionTransformMethods);
+            var whereStatement = ParseFilterExpression(query.Filter);
+            var orderByStatement = ParseSortExpressions(query.Sorters);
+
+            return new SqlQueryStatement(
+                selectStatement, new SqlFromStatement(source), whereStatement, orderByStatement);
+        }
+
+        /// <summary>
         /// Преобразование запроса в результат 
         /// разбора выражения.
         /// </summary>
@@ -50,15 +66,60 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public CollectionReadExpressionParseProduct<TOutput> Transform<TInput, TOutput>(IQuery<TInput, TOutput> query)
         {
             var selectPart = GetSelectPart(query);
-            var source = query.Source.GetSourceName(_expressionTransformMethods);
-            var whereStatement = ParseFilterExpression(query.Filter);
-            var orderByStatement = ParseSortExpressions(query.Sorters);
-
-            var queryStatement = new SqlQueryStatement(
-                selectPart.GetStatement(query.IsDistinct), new SqlFromStatement(source), whereStatement, orderByStatement);
+            var queryStatement = GetQueryStatement(query, selectPart.GetStatement(query.IsDistinct));
 
             return GetExpressionParseProduct(
                 queryStatement, selectPart.ItemReaderFactory);
+        }
+
+        /// <summary>Преобразовывает скалярные запросы в результат парсинга LINQ-выражения готового в выполнению.</summary>
+        /// <typeparam name="TInput">Тип элементов входной последовательности.</typeparam>
+        /// <typeparam name="TOutput">Тип элементов выходной последовательности.</typeparam>
+        /// <typeparam name="TResult">Тип скалярного значения.</typeparam>
+        /// <param name="query">Объект скалярного запроса.</param>
+        public ScalarReadExpressionParseProduct<TResult> 
+            TransformScalar<TInput, TOutput, TResult>(IScalarQuery<TInput, TOutput, TResult> query)
+        {
+            var selectStatement = GetSelectStatementForAggreagate(query.Selector, query.AggregateFunction);
+            var queryStatement = GetQueryStatement(query, selectStatement);
+
+            return new ScalarReadExpressionParseProduct<TResult>(
+                BuildSqlCommand(queryStatement),
+                OneSQueryExpressionHelper.GetConverter<TResult>()
+                );
+        }
+
+        /// <summary>Получение инструкции выборки для агрегирования данных.</summary>
+        /// <param name="selector">LINQ-выражение выборки.</param>
+        /// <param name="aggregateFunction">Агрегируемая функция.</param>
+        private SqlSelectStatement GetSelectStatementForAggreagate(LambdaExpression selector,
+                                                                   AggregateFunction aggregateFunction)
+        {
+            var selectExpression = _expressionTransformMethods.TransformExpression(_context, selector);
+
+            return new SqlSelectStatement(
+                new SqlColumnListExpression(new[]
+                    {
+                        new SqlAggregateFunctionExpression(GetSqlAggregateFunction(aggregateFunction), selectExpression) 
+                    }),
+                false);
+        }
+
+        private static SqlAggregateFunction GetSqlAggregateFunction(AggregateFunction aggregateFunction)
+        {
+            switch (aggregateFunction)
+            {
+                case AggregateFunction.Summa:
+                    return SqlAggregateFunction.Sum;
+                case AggregateFunction.Average:
+                    return SqlAggregateFunction.Avg;
+                case AggregateFunction.Minimum:
+                    return SqlAggregateFunction.Min;
+                case AggregateFunction.Maximum:
+                    return SqlAggregateFunction.Max;
+                default:
+                    throw new ArgumentOutOfRangeException("aggregateFunction");
+            }
         }
 
         /// <summary>
@@ -92,6 +153,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         /// <summary>
+        /// Построение SQL-команды.
+        /// </summary>
+        /// <param name="queryStatement">Объект SQL-инструкции запроса.</param>
+        private SqlCommand BuildSqlCommand(SqlQueryStatement queryStatement)
+        {
+            return new SqlCommand(
+                queryStatement.BuildSql(),
+                _context.Parameters.GetSqlParameters());
+        }
+
+        /// <summary>
         /// Конструирование результата парсинга для запроса последовательности элементов.
         /// </summary>
         /// <typeparam name="T">Тип элементов выходной последовательности.</typeparam>
@@ -102,9 +174,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             IItemReaderFactory<T> itemReaderFactory)
         {
             return new CollectionReadExpressionParseProduct<T>(
-                new SqlCommand(
-                        queryStatement.BuildSql(),
-                        _context.Parameters.GetSqlParameters()),
+                BuildSqlCommand(queryStatement),
                 itemReaderFactory);
         }
 
@@ -120,7 +190,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return null;
 
             return new SqlWhereStatement(
-                _expressionTransformMethods.TransformWhereExpression(_context, filterExpression));
+                _expressionTransformMethods.TransformCondition(_context, filterExpression));
         }
 
         /// <summary>
@@ -153,7 +223,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(sortExpression != null);
 
             return new SqlSortFieldExpression(
-                _expressionTransformMethods.TransformOrderByExpression(_context, sortExpression.KeyExpression),
+                _expressionTransformMethods.TransformExpression(_context, sortExpression.KeyExpression),
                 sortExpression.Kind);
         }
 

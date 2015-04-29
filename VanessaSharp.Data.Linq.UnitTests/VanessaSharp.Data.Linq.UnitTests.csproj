@@ -125,13 +125,14 @@
     <Compile Include="Internal\ExpressionParsePipeline\QueryBuildingTestsBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryBaseTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\QueryFactoryTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\ScalarReadExpressionParseProductTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SourceDescriptionByTypeTests.cs" />
     <Compile Include="Internal\ExpressionParserComponentTests.cs" />
     <Compile Include="Internal\ExpressionParserTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionTransformerTests.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\Expressions\OrderByExpressionTransformerTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionTransformerTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerTestsBase.cs" />
-    <Compile Include="Internal\ExpressionParsePipeline\Expressions\WhereExpressionTransformerTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\ConditionTransformerTests.cs" />
     <Compile Include="Internal\ItemEnumeratorTests.cs" />
     <Compile Include="Internal\OneSMappingProviderTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />

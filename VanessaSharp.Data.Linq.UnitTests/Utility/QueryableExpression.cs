@@ -67,6 +67,24 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             }
 
             /// <summary>
+            /// Построение выражения скалярного запроса
+            /// методом выполения методов linq над объектом
+            /// <see cref="IQueryable{T}"/>.
+            /// </summary>
+            /// <typeparam name="TResult">Тип результата скалярного запроса.</typeparam>
+            /// <typeparam name="TItem">Тип элементов выходной последовательности.</typeparam>
+            /// <param name="queryAction">Действие над объектом запроса.</param>
+            /// <param name="scalarGetter">Выражение вызова метода получения скалярного значения.</param>
+            public Expression ScalarQuery<TItem, TResult>(Func<IQueryable<T>, IQueryable<TItem>> queryAction,
+                Expression<Func<IQueryable<TItem>, TResult>> scalarGetter)
+            {
+                Contract.Requires<ArgumentNullException>(queryAction != null);
+
+                return TestHelperQueryProvider.BuildTestScalarQueryExpression(
+                    queryAction(_queryable), scalarGetter);
+            }
+
+            /// <summary>
             /// Выражение текущего объекта запроса.
             /// </summary>
             public Expression Expression

@@ -13,7 +13,7 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>Выполенение SQL-запроса для получения скалярного значения.</summary>
         /// <param name="command">Команда SQL-запроса.</param>
-        object ExecuteScalar(SqlCommand command);
+        Tuple<IValueConverter, object> ExecuteScalar(SqlCommand command);
     }
 
     [ContractClassFor(typeof(ISqlCommandExecuter))]
@@ -31,9 +31,10 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>Выполенение SQL-запроса для получения скалярного значения.</summary>
         /// <param name="command">Команда SQL-запроса.</param>
-        object ISqlCommandExecuter.ExecuteScalar(SqlCommand command)
+        Tuple<IValueConverter, object> ISqlCommandExecuter.ExecuteScalar(SqlCommand command)
         {
             Contract.Requires<ArgumentNullException>(command != null);
+            Contract.Ensures(Contract.Result<Tuple<IValueConverter, object>>().Item1 != null);
 
             return null;
         }

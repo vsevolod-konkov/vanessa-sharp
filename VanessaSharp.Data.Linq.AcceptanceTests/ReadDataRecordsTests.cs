@@ -264,7 +264,7 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         }
 
         /// <summary>
-        /// Состояние после описания тестируюемого запроса.
+        /// Состояние после описания тестируемого запроса.
         /// </summary>
         private sealed class QueryDefinedBuilderState
         {

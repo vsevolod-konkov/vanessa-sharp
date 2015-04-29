@@ -19,18 +19,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         SelectionPartParseProduct<TOutput> TransformSelectExpression<TInput, TOutput>(
             QueryParseContext context, Expression<Func<TInput, TOutput>> selectExpression);
 
-        /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
+        /// <summary>Преобразование выражения в SQL-условие.</summary>
         /// <typeparam name="T">Тип элементов.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="filterExpression">Выражение фильтрации.</param>
-        SqlCondition TransformWhereExpression<T>(
+        /// <param name="predicateExpression">Выражение фильтрации.</param>
+        SqlCondition TransformCondition<T>(
             QueryParseContext context,
-            Expression<Func<T, bool>> filterExpression);
+            Expression<Func<T, bool>> predicateExpression);
 
-        /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
+        /// <summary>Преобразование выражения в SQL-выражения.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
-        SqlExpression TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression);
+        /// <param name="expression">Выражение ключа сортировки.</param>
+        SqlExpression TransformExpression(QueryParseContext context, LambdaExpression expression);
 
         /// <summary>Преобразование получения типизированных записей.</summary>
         /// <typeparam name="T">Тип записей.</typeparam>
@@ -61,12 +61,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>
         /// <typeparam name="T">Тип элементов.</typeparam>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="filterExpression">Выражение фильтрации.</param>
+        /// <param name="predicateExpression">Выражение фильтрации.</param>
         SqlCondition 
-            IExpressionTransformMethods.TransformWhereExpression<T>(QueryParseContext context, Expression<Func<T, bool>> filterExpression)
+            IExpressionTransformMethods.TransformCondition<T>(QueryParseContext context, Expression<Func<T, bool>> predicateExpression)
         {
             Contract.Requires<ArgumentNullException>(context != null);
-            Contract.Requires<ArgumentNullException>(filterExpression != null);
+            Contract.Requires<ArgumentNullException>(predicateExpression != null);
             Contract.Ensures(Contract.Result<SqlCondition>() != null);
 
             return null;
@@ -74,11 +74,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
         /// <summary>Преобразование выражения получения ключа сортировки в SQL-выражения поля под выражением ORDER BY.</summary>
         /// <param name="context">Контекст разбора запроса.</param>
-        /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
-        SqlExpression IExpressionTransformMethods.TransformOrderByExpression(QueryParseContext context, LambdaExpression sortKeyExpression)
+        /// <param name="expression">Выражение ключа сортировки.</param>
+        SqlExpression IExpressionTransformMethods.TransformExpression(QueryParseContext context, LambdaExpression expression)
         {
             Contract.Requires<ArgumentNullException>(context != null);
-            Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
+            Contract.Requires<ArgumentNullException>(expression != null);
             Contract.Ensures(Contract.Result<SqlExpression>() != null);
 
             return null;
