@@ -80,7 +80,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public ScalarReadExpressionParseProduct<TResult> 
             TransformScalar<TInput, TOutput, TResult>(IScalarQuery<TInput, TOutput, TResult> query)
         {
-            var selectStatement = GetSelectStatementForAggreagate(query.Selector, query.AggregateFunction);
+            var selectStatement = GetSelectStatementForAggregate(query.Selector, query.AggregateFunction, query.IsDistinct);
             var queryStatement = GetQueryStatement(query, selectStatement);
 
             return new ScalarReadExpressionParseProduct<TResult>(
@@ -92,17 +92,58 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Получение инструкции выборки для агрегирования данных.</summary>
         /// <param name="selector">LINQ-выражение выборки.</param>
         /// <param name="aggregateFunction">Агрегируемая функция.</param>
-        private SqlSelectStatement GetSelectStatementForAggreagate(LambdaExpression selector,
-                                                                   AggregateFunction aggregateFunction)
+        /// <param name="isDistinct">Выбирать различные.</param>
+        private SqlSelectStatement GetSelectStatementForAggregate(LambdaExpression selector,
+                                                                   AggregateFunction aggregateFunction,
+                                                                   bool isDistinct)
         {
-            var selectExpression = _expressionTransformMethods.TransformExpression(_context, selector);
-
             return new SqlSelectStatement(
                 new SqlColumnListExpression(new[]
                     {
-                        new SqlAggregateFunctionExpression(GetSqlAggregateFunction(aggregateFunction), selectExpression) 
+                        GetCallAggregateFunctionExpression(aggregateFunction, selector, isDistinct)
                     }),
                 false);
+        }
+
+        /// <summary>Получение вызова агрегируемой функции.</summary>
+        private SqlExpression GetCallAggregateFunctionExpression(AggregateFunction aggregateFunction,
+                                                                 LambdaExpression selector,
+                                                                 bool isDistinct)
+        {
+            if (aggregateFunction == AggregateFunction.Count && selector == null)
+            {
+                Contract.Assert(!isDistinct);
+
+                return SqlCountExpression.All;
+            }
+
+            SqlExpression selectExpression;
+            try
+            {
+                selectExpression = _expressionTransformMethods.TransformExpression(_context, selector);
+            }
+            catch (NotSupportedException e)
+            {
+                throw new NotSupportedException(string.Format(
+                    "Неподдерживается вызов агрегируемой функции \"{0}\" с выражением \"{1}\".",
+                    aggregateFunction,
+                    selector), e);
+            }
+            
+            return GetCallAggregateFunctionExpression(aggregateFunction, selectExpression, isDistinct);
+        }
+
+        /// <summary>Получение вызова агрегируемой функции.</summary>
+        private static SqlExpression GetCallAggregateFunctionExpression(AggregateFunction aggregateFunction,
+                                                                        SqlExpression expression,
+                                                                        bool isDistinct)
+        {
+            if (aggregateFunction == AggregateFunction.Count)
+            {
+                return SqlCountExpression.CreateForExpression(expression, isDistinct);
+            }
+
+            return new SqlAggregateFunctionExpression(GetSqlAggregateFunction(aggregateFunction), expression);
         }
 
         private static SqlAggregateFunction GetSqlAggregateFunction(AggregateFunction aggregateFunction)

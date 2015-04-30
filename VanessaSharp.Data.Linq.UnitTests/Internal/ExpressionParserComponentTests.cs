@@ -382,6 +382,128 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
                 .Test();
         }
 
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Count{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// для <see cref="OneSDataRecord"/>.
+        /// </summary>
+        [Test]
+        public void TestWhenCountDataRecords()
+        {
+            // Arrange
+            var testedExpression = QueryableExpression
+                .ForDataRecords("Справочник.Тест")
+                .ScalarQuery(q => q, q1 => q1.Count());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT COUNT(*) FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var product = AssertEx.IsInstanceAndCastOf<ScalarReadExpressionParseProduct<int>>(result);
+            
+            ConverterTester.Test(product.Converter, c => c.ToInt32(null), 3534);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Count{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// для типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestWhenCountTypedRecords()
+        {
+            // TODO: CopyPaste
+
+            // Arrange
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .ScalarQuery(q => q, q1 => q1.Count());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT COUNT(*) FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var product = AssertEx.IsInstanceAndCastOf<ScalarReadExpressionParseProduct<int>>(result);
+
+            ConverterTester.Test(product.Converter, c => c.ToInt32(null), 3534);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Count{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// для полей.
+        /// </summary>
+        [Test]
+        public void TestWhenCountField()
+        {
+            // TODO: CopyPaste
+
+            // Arrange
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .ScalarQuery(q => q.Select(d => d.Price), q1 => q1.Count());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT COUNT(Цена) FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var product = AssertEx.IsInstanceAndCastOf<ScalarReadExpressionParseProduct<int>>(result);
+
+            ConverterTester.Test(product.Converter, c => c.ToInt32(null), 3534);
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Count{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// для полей.
+        /// </summary>
+        [Test]
+        public void TestWhenDistinctCountField()
+        {
+            // TODO: CopyPaste
+
+            // Arrange
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .ScalarQuery(q => q.Select(d => d.Price).Distinct(), q1 => q1.LongCount());
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT COUNT(DISTINCT Цена) FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var product = AssertEx.IsInstanceAndCastOf<ScalarReadExpressionParseProduct<long>>(result);
+
+            ConverterTester.Test(product.Converter, c => c.ToInt64(null), 3534L);
+        }
+
         public abstract class DataBase
         {
             [OneSDataColumn("Наименование")]

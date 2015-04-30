@@ -340,12 +340,28 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
 
             public override IQuery CreateQuery(string sourceName, LambdaExpression selectExpression)
             {
+                if (selectExpression == null)
+                {
+                    Contract.Assert(_aggregateFunction == AggregateFunction.Count);
+
+                    return QueryFactory.CreateCountQuery(
+                        sourceName, FilterExpression, CreateSortExpressionList(), _scalarType);
+                }
+                
                 return QueryFactory.CreateScalarQuery(sourceName, selectExpression, FilterExpression, CreateSortExpressionList(),
                                                       IsDistinct, _aggregateFunction, _scalarType);
             }
 
             public override IQuery CreateQuery(Type itemType, LambdaExpression selectExpression)
             {
+                if (selectExpression == null)
+                {
+                    Contract.Assert(_aggregateFunction == AggregateFunction.Count);
+
+                    return QueryFactory.CreateCountQuery(
+                        itemType, FilterExpression, CreateSortExpressionList(), _scalarType);
+                }
+                
                 return QueryFactory.CreateScalarQuery(selectExpression, FilterExpression, CreateSortExpressionList(),
                                                       IsDistinct, _aggregateFunction, _scalarType);
             }

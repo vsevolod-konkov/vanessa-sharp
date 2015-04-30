@@ -16,20 +16,20 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Mock<TQuery> queryMock,
             ISourceDescription source,
             Expression<Func<TInput, TOutput>> selector,
+            bool isDistinct,
             Expression<Func<TInput, bool>> filter,
             SortExpression[] sorters)
             where TQuery : class, IQuery<TInput, TOutput>
         {
-            queryMock
-                .SetupGet(q => q.IsDistinct)
-                .Returns(false);
-
             queryMock
                 .SetupGet(q => q.Source)
                 .Returns(source);
             queryMock
                 .SetupGet(q => q.Selector)
                 .Returns(selector);
+            queryMock
+                .SetupGet(q => q.IsDistinct)
+                .Returns(isDistinct);
             queryMock
                 .SetupGet(q => q.Filter)
                 .Returns(filter);
@@ -57,7 +57,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             var queryMock = new Mock<IQuery<TInput, TOutput>>(MockBehavior.Strict);
 
-            SetupQueryMock(queryMock, source, selector, filter, sorters);
+            SetupQueryMock(queryMock, source, selector, false, filter, sorters);
 
             return queryMock.Object;
         }
@@ -73,12 +73,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// <param name="aggregateFunction">Агрегируемая функция.</param>
         /// <param name="source">Описание источника.</param>
         /// <param name="selector">Выражение выборки.</param>
+        /// <param name="isDistinct">Учитывать различные.</param>
         /// <param name="filter">Выражение фильтрации.</param>
         /// <param name="sorters">Выражения сортировки.</param>
         internal static IScalarQuery<TInput, TOutput, TResult> CreateScalarQuery<TInput, TOutput, TResult>(
             AggregateFunction aggregateFunction,
             ISourceDescription source,
             Expression<Func<TInput, TOutput>> selector = null,
+            bool isDistinct = false,
             Expression<Func<TInput, bool>> filter = null,
             params SortExpression[] sorters)
         {
@@ -88,7 +90,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .SetupGet(q => q.AggregateFunction)
                 .Returns(aggregateFunction);
 
-            SetupQueryMock(queryMock, source, selector, filter, sorters);
+            SetupQueryMock(queryMock, source, selector, isDistinct, filter, sorters);
 
             return queryMock.Object;
         }

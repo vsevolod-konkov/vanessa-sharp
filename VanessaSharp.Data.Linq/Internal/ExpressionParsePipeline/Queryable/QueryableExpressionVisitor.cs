@@ -33,7 +33,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                             new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableSumMethod, AggregateFunction.Summa),
                             new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableAverageMethod, AggregateFunction.Average),
                             new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableMaxMethod, AggregateFunction.Maximum),
-                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableMinMethod, AggregateFunction.Minimum)
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableMinMethod, AggregateFunction.Minimum),
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableCountMethod, AggregateFunction.Count),
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableLongCountMethod, AggregateFunction.Count)
                         }
                 );
 

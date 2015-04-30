@@ -295,23 +295,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual("SELECT SUM(quantity) FROM " + SOURCE_NAME, command.Sql);
             Assert.AreEqual(0, command.Parameters.Count);
 
-            var rawValue = new object();
-            const int EXPECTED_VALUE = 435345;
-            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
-            valueConverterMock
-                .Setup(c => c.ToInt32(rawValue))
-                .Returns(EXPECTED_VALUE);
-
-            Assert.AreEqual(EXPECTED_VALUE, result.Converter(valueConverterMock.Object, rawValue));
-            valueConverterMock
-                .Verify(c => c.ToInt32(rawValue), Times.Once());
+            ConverterTester.Test(result.Converter, c => c.ToInt32(null), 43534);
         }
 
         /// <summary>
-        /// Тестирование преобразования запроса получения суммы поля <see cref="OneSDataRecord"/>.
+        /// Тестирование преобразования запроса получения суммы поля.
         /// </summary>
         [Test]
-        public void TestTransformAvgFieldDataRecords()
+        public void TestTransformAvgField()
         {
             // Arrange
             _mappingProviderMock
@@ -334,16 +325,119 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual("SELECT AVG(Цена) FROM ТестовыйИсточник", command.Sql);
             Assert.AreEqual(0, command.Parameters.Count);
 
-            var rawValue = new object();
-            const decimal EXPECTED_VALUE = 435345.55m;
-            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
-            valueConverterMock
-                .Setup(c => c.ToDecimal(rawValue))
-                .Returns(EXPECTED_VALUE);
+            ConverterTester.Test(result.Converter, c => c.ToDecimal(null), 435345.55m);
+        }
 
-            Assert.AreEqual(EXPECTED_VALUE, result.Converter(valueConverterMock.Object, rawValue));
-            valueConverterMock
-                .Verify(c => c.ToDecimal(rawValue), Times.Once());
+        /// <summary>
+        /// Тестирование преобразования запроса получения количества ненулевых значений поля.
+        /// </summary>
+        [Test]
+        public void TestTransformCountField()
+        {
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
+
+            Expression<Func<SomeData, decimal>> selectExpression = r => r.Price;
+
+            var query = CreateScalarQuery<SomeData, decimal, int>(
+                                          AggregateFunction.Count,
+                                          SourceDescriptionByType<SomeData>.Instance,
+                                          selectExpression);
+
+            // Act
+            var result = _testedInstance.TransformScalar(query);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual("SELECT COUNT(Цена) FROM ТестовыйИсточник", command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            ConverterTester.Test(result.Converter, c => c.ToInt32(null), 5);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса получения количества ненулевых значений поля.
+        /// </summary>
+        [Test]
+        public void TestTransformDistinctCountField()
+        {
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
+
+            Expression<Func<SomeData, decimal>> selectExpression = r => r.Price;
+
+            var query = CreateScalarQuery<SomeData, decimal, long>(
+                                          AggregateFunction.Count,
+                                          SourceDescriptionByType<SomeData>.Instance,
+                                          selectExpression,
+                                          true);
+
+            // Act
+            var result = _testedInstance.TransformScalar(query);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual("SELECT COUNT(DISTINCT Цена) FROM ТестовыйИсточник", command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            ConverterTester.Test(result.Converter, c => c.ToInt64(null), 5L);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса получения количества типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestTransformAllCountTypedRecords()
+        {
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
+
+            var query = CreateScalarQuery<SomeData, SomeData, long>(
+                                          AggregateFunction.Count,
+                                          SourceDescriptionByType<SomeData>.Instance,
+                                          filter: d => d.Price > 10m);
+
+            // Act
+            var result = _testedInstance.TransformScalar(query);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual("SELECT COUNT(*) FROM ТестовыйИсточник WHERE Цена > 10", command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            ConverterTester.Test(result.Converter, c => c.ToInt64(null), 5L);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса получения количества типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestTransformAllCountDataRecords()
+        {
+            // Arrange
+            var query = CreateScalarQuery<OneSDataRecord, OneSDataRecord, int>(
+                                          AggregateFunction.Count,
+                                          new ExplicitSourceDescription("ТестовыйИсточник"),
+                                          filter: r => r.GetDecimal("Цена") <= 10m);
+
+            // Act
+            var result = _testedInstance.TransformScalar(query);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual("SELECT COUNT(*) FROM ТестовыйИсточник WHERE Цена <= 10", command.Sql);
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            ConverterTester.Test(result.Converter, c => c.ToInt32(null), 5);
         }
     }
 }

@@ -324,6 +324,88 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         }
 
         /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае получения суммы.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableSum()
+        {
+            // Arrange
+            Expression<Func<SomeData, int>> selector = d => d.Id;
+
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .ScalarQuery(q => q.Select(selector), q1 => q1.Sum());
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            AssertTypedRecordsScalarQueryAndTestTransform<SomeData, int, int>(result, selector, AggregateFunction.Summa);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае получения суммы.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableFieldCount()
+        {
+            // Arrange
+            Expression<Func<SomeData, int>> selector = d => d.Id;
+
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .ScalarQuery(q => q.Select(selector), q1 => q1.Count());
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            AssertTypedRecordsScalarQueryAndTestTransform<SomeData, int, int>(result, selector, AggregateFunction.Count);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае получения суммы.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableDistinctFieldCount()
+        {
+            // Arrange
+            Expression<Func<SomeData, int>> selector = d => d.Id;
+
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .ScalarQuery(q => q.Select(selector).Distinct(), q1 => q1.LongCount());
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            AssertTypedRecordsScalarQueryAndTestTransform<SomeData, int, long>(result, selector, AggregateFunction.Count, expectedIsDistinct: true);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае получения количества всех записей.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableCount()
+        {
+            // Arrange
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .ScalarQuery(q => q, q1 => q1.LongCount());
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            AssertTypedRecordsScalarQueryAndTestTransform<SomeData, SomeData, long>(result, null, AggregateFunction.Count);
+        }
+
+        /// <summary>
         /// Тестовый тип записей.
         /// </summary>
         public sealed class SomeData

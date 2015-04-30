@@ -86,7 +86,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
                 Contract.Requires<ArgumentNullException>(convertMethod != null);
 
                 var value = _values[valueIndex];
-                var substitutedConvertMethod = SubstituteConvertValue(convertMethod, value);
+                var substitutedConvertMethod = ConverterTester.SubstituteConvertValue(convertMethod, value);
 
                 // Инициализация мока конвертера вызова метода с заданным аргументом из буфера
                 _valueConverterMock
@@ -96,27 +96,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
                 _fieldTesters[valueIndex] = new FieldTester<TRawValue, TValue>(fieldAccessor, expectedValue, substitutedConvertMethod);
 
                 return this;
-            }
-
-            /// <summary>
-            /// Конструирование выражения вызова метода конвертации
-            /// для конкретного значения буфера.
-            /// </summary>
-            /// <typeparam name="TValue">Тип значения, ожидаемого на выходе.</typeparam>
-            /// <param name="convertMethodExpression">Переданное выражение вызова метода конвертации.</param>
-            /// <param name="value">Значение из буфера данных.</param>
-            private static Expression<Func<IValueConverter, TValue>> SubstituteConvertValue<TValue>(
-                Expression<Func<IValueConverter, TValue>> convertMethodExpression, object value)
-            {
-                var convertMethod = ((MethodCallExpression)convertMethodExpression.Body).Method;
-                var converterParameter = Expression.Parameter(typeof(IValueConverter));
-
-                return Expression.Lambda<Func<IValueConverter, TValue>>(
-                    Expression.Call(
-                        converterParameter,
-                        convertMethod,
-                        Expression.Constant(value)),
-                    converterParameter);
             }
 
             /// <summary>

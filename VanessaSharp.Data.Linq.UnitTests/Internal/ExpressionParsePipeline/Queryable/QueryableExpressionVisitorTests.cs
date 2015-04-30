@@ -361,5 +361,25 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         {
             TestVisitAggregate(q => q.Min(), AggregateFunction.Minimum);
         }
+
+        /// <summary>
+        /// Тестирование посещения выражения 
+        /// c функцией получения количества.
+        /// </summary>
+        [Test]
+        public void TestVisitCount()
+        {
+            TestVisitAggregate(q => q.Count(), AggregateFunction.Count);
+        }
+
+        /// <summary>
+        /// Тестирование посещения выражения 
+        /// c функцией получения количества.
+        /// </summary>
+        [Test]
+        public void TestVisitLongCount()
+        {
+            TestVisitAggregate(q => q.LongCount(), AggregateFunction.Count);
+        }
     }
 }

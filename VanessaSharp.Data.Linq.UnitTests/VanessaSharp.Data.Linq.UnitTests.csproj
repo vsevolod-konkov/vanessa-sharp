@@ -149,6 +149,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryBuilderTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlQueryStatementTests.cs" />
     <Compile Include="Utility\AssertEx.cs" />
+    <Compile Include="Utility\ConverterTester.cs" />
     <Compile Include="Utility\Empty.cs" />
     <Compile Include="Utility\EnumerableExtensions.cs" />
     <Compile Include="Utility\ItemReaderTester.cs" />

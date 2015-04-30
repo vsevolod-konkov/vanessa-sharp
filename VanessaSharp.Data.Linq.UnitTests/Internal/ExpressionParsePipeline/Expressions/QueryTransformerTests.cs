@@ -291,13 +291,94 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<SomeData, int>> selector = d => d.Id;
             SetupTransformField(selector, "Количество");
 
-            var testedQuery = CreateScalarQuery<SomeData, int, decimal>(AggregateFunction.Summa, _sourceDescriptionMock.Object, selector, filter);
+            var testedQuery = CreateScalarQuery<SomeData, int, decimal>(AggregateFunction.Summa, _sourceDescriptionMock.Object, selector, filter: filter);
 
             // Act
             var result = _testedInstance.TransformScalar(testedQuery);
 
             // Assert
             AssertFilteringCommand("SELECT SUM(Количество) FROM {0} WHERE КраткоеИмя = &", "Фильтр", result.Command);
+
+            VerifySourceDescription();
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса выборки типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestTransformScalarCountFieldTypedRecordsQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.ResolveSourceNameForTypedRecord<SomeData>())
+                .Returns("Тест");
+
+            Expression<Func<SomeData, bool>> filter = d => true;
+            SetupTransformFilter(filter, "КраткоеИмя", "Фильтр");
+
+            Expression<Func<SomeData, int>> selector = d => d.Id;
+            SetupTransformField(selector, "Количество");
+
+            var testedQuery = CreateScalarQuery<SomeData, int, int>(AggregateFunction.Count, _sourceDescriptionMock.Object, selector, filter: filter);
+
+            // Act
+            var result = _testedInstance.TransformScalar(testedQuery);
+
+            // Assert
+            AssertFilteringCommand("SELECT COUNT(Количество) FROM {0} WHERE КраткоеИмя = &", "Фильтр", result.Command);
+
+            VerifySourceDescription();
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса выборки типизированных записей.
+        /// </summary>
+        [Test]
+        public void TestTransformScalarDistinctCountFieldTypedRecordsQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.ResolveSourceNameForTypedRecord<SomeData>())
+                .Returns("Тест");
+
+            Expression<Func<SomeData, bool>> filter = d => true;
+            SetupTransformFilter(filter, "КраткоеИмя", "Фильтр");
+
+            Expression<Func<SomeData, int>> selector = d => d.Id;
+            SetupTransformField(selector, "Количество");
+
+            var testedQuery = CreateScalarQuery<SomeData, int, int>(AggregateFunction.Count, _sourceDescriptionMock.Object, selector, true, filter);
+
+            // Act
+            var result = _testedInstance.TransformScalar(testedQuery);
+
+            // Assert
+            AssertFilteringCommand("SELECT COUNT(DISTINCT Количество) FROM {0} WHERE КраткоеИмя = &", "Фильтр", result.Command);
+
+            VerifySourceDescription();
+        }
+
+        /// <summary>
+        /// Тестирование преобразования запроса получения количества записей.
+        /// </summary>
+        [Test]
+        public void TestTransformAllCountTypedRecordsQuery()
+        {
+            // Arrange
+            _transformMethodsMock
+                .Setup(t => t.ResolveSourceNameForTypedRecord<SomeData>())
+                .Returns("Тест");
+
+            Expression<Func<SomeData, bool>> filter = d => true;
+            SetupTransformFilter(filter, "КраткоеИмя", "Фильтр");
+
+            var testedQuery = CreateScalarQuery<SomeData, SomeData, int>(AggregateFunction.Count, _sourceDescriptionMock.Object, null, false, filter);
+
+            // Act
+            var result = _testedInstance.TransformScalar(testedQuery);
+
+            // Assert
+            AssertFilteringCommand("SELECT COUNT(*) FROM {0} WHERE КраткоеИмя = &", "Фильтр", result.Command);
 
             VerifySourceDescription();
         }

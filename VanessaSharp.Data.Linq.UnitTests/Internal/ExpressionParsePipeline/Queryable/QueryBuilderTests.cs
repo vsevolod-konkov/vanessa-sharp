@@ -263,7 +263,51 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             var result = _testedInstance.BuiltQuery;
 
             // Assert
-            AssertDataRecordsScalarQuery<int, int>(result, SOURCE_NAME,  expectedSelector, AggregateFunction.Summa, expectedFilter: expectedFilter);
+            AssertDataRecordsScalarQueryAndTestTransform<int, int>(result, SOURCE_NAME,  expectedSelector, AggregateFunction.Summa, expectedFilter: expectedFilter);
+        }
+
+        [Test]
+        public void TestBuildDistinctCountFieldQuery()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, bool>> expectedFilter = r => r.GetString("[filterField]") == "filterValue";
+            Expression<Func<OneSDataRecord, int>> expectedSelector = r => r.GetInt32("any_field");
+
+            // Act
+            _testedInstance.HandleStart();
+            _testedInstance.HandleAggregate(typeof(int), AggregateFunction.Count, typeof(long));
+
+            _testedInstance.HandleDistinct();
+            _testedInstance.HandleSelect(expectedSelector);
+
+            _testedInstance.HandleFilter(expectedFilter);
+            _testedInstance.HandleGettingRecords(SOURCE_NAME);
+            _testedInstance.HandleEnd();
+
+            var result = _testedInstance.BuiltQuery;
+
+            // Assert
+            AssertDataRecordsScalarQueryAndTestTransform<int, long>(result, SOURCE_NAME, expectedSelector, AggregateFunction.Count, expectedFilter: expectedFilter, expectedIsDistinct: true);
+        }
+
+        [Test]
+        public void TestBuildCountQuery()
+        {
+            // Arrange
+            Expression<Func<OneSDataRecord, bool>> expectedFilter = r => r.GetString("[filterField]") == "filterValue";
+
+            // Act
+            _testedInstance.HandleStart();
+            _testedInstance.HandleAggregate(typeof(OneSDataRecord), AggregateFunction.Count, typeof(int));
+
+            _testedInstance.HandleFilter(expectedFilter);
+            _testedInstance.HandleGettingRecords(SOURCE_NAME);
+            _testedInstance.HandleEnd();
+
+            var result = _testedInstance.BuiltQuery;
+
+            // Assert
+            AssertDataRecordsScalarQueryAndTestTransform<OneSDataRecord, int>(result, SOURCE_NAME, null, AggregateFunction.Count, expectedFilter: expectedFilter);
         }
     }
 }

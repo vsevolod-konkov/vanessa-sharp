@@ -559,14 +559,24 @@ namespace VanessaSharp.AcceptanceTests.Utility
                 {
                     Contract.Ensures(Contract.Result<DefinedExpectedDataBuilderState>() != null);
 
-                    var expectedData = GetExpectedData();
-                    var tableDataBuilder = new TableDataBuilder();
-                    tableDataBuilder.AddScalarField("COUNT", typeof(double), "Число");
-                    tableDataBuilder.AddRow(expectedData.Count);
-
-                    return GetNextState(
-                        tableDataBuilder, 0);
+                    return Aggregate(d => d.Count(), "COUNT", "Число", typeof(double));
                 }
+            }
+
+            public DefinedExpectedDataBuilderState Aggregate<TResult>(Func<IEnumerable<TExpectedData>, TResult> aggregator, string columnName, string dataTypeName, Type rawType = null)
+            {
+                Contract.Ensures(Contract.Result<DefinedExpectedDataBuilderState>() != null);
+
+                var expectedData = GetExpectedData();
+                
+                var tableDataBuilder = new TableDataBuilder();
+                tableDataBuilder.AddScalarField(
+                    columnName,
+                    rawType ?? typeof(TResult),
+                    dataTypeName);
+                tableDataBuilder.AddRow(aggregator(expectedData));
+
+                return GetNextState(tableDataBuilder, 0);
             }
         }
 

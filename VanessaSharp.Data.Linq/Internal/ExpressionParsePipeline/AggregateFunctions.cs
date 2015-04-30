@@ -5,6 +5,7 @@
     /// </summary>
     internal enum AggregateFunction
     {
+        Count,
         Summa,
         Average,
         Maximum,

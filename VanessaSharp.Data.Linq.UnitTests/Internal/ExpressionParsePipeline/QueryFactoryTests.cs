@@ -105,10 +105,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             const AggregateFunction AGGREGATE_FUNCTION = AggregateFunction.Maximum;
 
             // Act
-            var result = QueryFactory.CreateScalarQuery(SOURCE_NAME, selector, filter, new[] { sorter }.ToReadOnly(), true, AGGREGATE_FUNCTION, typeof(int));
+            var result = QueryFactory.CreateScalarQuery(SOURCE_NAME, selector, filter, new[] { sorter }.ToReadOnly(), false, AGGREGATE_FUNCTION, typeof(int));
 
             // Assert
-            AssertDataRecordsScalarQuery<OutputData, int>(result, SOURCE_NAME, selector, AGGREGATE_FUNCTION, true, filter, sorter);
+            AssertDataRecordsScalarQueryAndTestTransform<OutputData, int>(result, SOURCE_NAME, selector, AGGREGATE_FUNCTION, false, filter, sorter);
         }
 
         /// <summary>
@@ -123,13 +123,31 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             Expression<Func<InputData, bool>> filter = r => true;
             Expression<Func<InputData, int>> sortKey = r => 5;
             var sorter = new SortExpression(sortKey, SortKind.Ascending);
-            const AggregateFunction AGGREGATE_FUNCTION = AggregateFunction.Average;
+            const AggregateFunction AGGREGATE_FUNCTION = AggregateFunction.Count;
 
             // Act
             var result = QueryFactory.CreateScalarQuery(selector, filter, new[] { sorter }.ToReadOnly(), true, AGGREGATE_FUNCTION, typeof(int));
 
             // Assert
-            AssertTypedRecordsScalarQuery<InputData, OutputData, int>(result, selector, AGGREGATE_FUNCTION, true, filter, sorter);
+            AssertTypedRecordsScalarQueryAndTestTransform<InputData, OutputData, int>(result, selector, AGGREGATE_FUNCTION, true, filter, sorter);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryFactory.CreateCountQuery"/>.
+        /// </summary>
+        [Test]
+        public void TestCreateCountQuery()
+        {
+            // Arrange
+            Expression<Func<InputData, bool>> filter = r => true;
+            Expression<Func<InputData, int>> sortKey = r => 5;
+            var sorter = new SortExpression(sortKey, SortKind.Ascending);
+
+            // Act
+            var result = QueryFactory.CreateCountQuery(typeof(InputData), filter, new[] { sorter }.ToReadOnly(), typeof(int));
+
+            // Assert
+            AssertTypedRecordsScalarQueryAndTestTransform<InputData, InputData, int>(result, null, AggregateFunction.Count, false, filter, sorter);
         }
 
         public sealed class InputData

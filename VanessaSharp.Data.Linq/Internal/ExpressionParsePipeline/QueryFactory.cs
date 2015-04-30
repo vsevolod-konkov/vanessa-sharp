@@ -133,6 +133,72 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             return CreateQuery(selectorArgs[0], selectorArgs[1], selector, filter, sorters, isDistinct);
         }
 
+        private static IQuery CreateScalarQuery(
+            Type inputItemType, Type outputItemType, Type scalarType,
+            LambdaExpression selector, LambdaExpression filter,
+            ReadOnlyCollection<SortExpression> sorters, bool isDistinct,
+            AggregateFunction aggregateFunction)
+        {
+            var type = typeof(ScalarQuery<,,>).MakeGenericType(inputItemType, outputItemType, scalarType);
+            return (IQuery)Activator.CreateInstance(type, selector, filter, sorters, isDistinct, aggregateFunction);
+        }
+
+        private static IQuery CreateScalarQuery(
+            string sourceName, Type outputItemType, Type scalarType,
+            LambdaExpression selector, LambdaExpression filter,
+            ReadOnlyCollection<SortExpression> sorters, bool isDistinct,
+            AggregateFunction aggregateFunction)
+        {
+            var type = typeof(ScalarQuery<,,>).MakeGenericType(typeof(OneSDataRecord), outputItemType, scalarType);
+            return (IQuery)Activator.CreateInstance(type, new ExplicitSourceDescription(sourceName), selector, filter, sorters, isDistinct, aggregateFunction);
+        }
+
+        /// <summary>Создание скалярного запроса.</summary>
+        /// <param name="sourceName">Имя источника данных.</param>
+        /// <param name="filter">Выражение фильтрации записей.</param>
+        /// <param name="sorters">Выражения сортировки записей.</param>
+        /// <param name="scalarType">Тип скалярного значения.</param>
+        /// <returns>Созданный запрос.</returns>
+        public static IQuery CreateCountQuery(
+            string sourceName, LambdaExpression filter,
+            ReadOnlyCollection<SortExpression> sorters,
+            Type scalarType)
+        {
+            Contract.Requires<ArgumentException>(
+                (filter == null) || IsInputTypeForLambda(filter, typeof(OneSDataRecord)));
+
+            Contract.Requires<ArgumentNullException>(sorters != null);
+            Contract.Requires<ArgumentException>(
+                sorters.All(s => IsInputTypeForLambda(s.KeyExpression, typeof(OneSDataRecord))));
+
+
+            return CreateScalarQuery(
+                sourceName, typeof(OneSDataRecord), scalarType, null, filter, sorters, false, AggregateFunction.Count);
+        }
+
+        /// <summary>Создание скалярного запроса.</summary>
+        /// <param name="itemType">Тип элементов последовательности.</param>
+        /// <param name="filter">Выражение фильтрации записей.</param>
+        /// <param name="sorters">Выражения сортировки записей.</param>
+        /// <param name="scalarType">Тип скалярного значения.</param>
+        /// <returns>Созданный запрос.</returns>
+        public static IQuery CreateCountQuery(
+            Type itemType, LambdaExpression filter,
+            ReadOnlyCollection<SortExpression> sorters,
+            Type scalarType)
+        {
+            Contract.Requires<ArgumentException>(
+                (filter == null) || IsInputTypeForLambda(filter, itemType));
+
+            Contract.Requires<ArgumentNullException>(sorters != null);
+            Contract.Requires<ArgumentException>(
+                sorters.All(s => IsInputTypeForLambda(s.KeyExpression, itemType)));
+
+
+            return CreateScalarQuery(
+                itemType, itemType, scalarType, null, filter, sorters, false, AggregateFunction.Count);
+        }
+        
         /// <summary>Создание скалярного запроса.</summary>
         /// <param name="selector">Выражение выборки записей.</param>
         /// <param name="filter">Выражение фильтрации записей.</param>
@@ -141,13 +207,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="aggregateFunction">Функция агрегирования.</param>
         /// <param name="scalarType">Тип скалярного значения.</param>
         /// <returns>Созданный запрос.</returns>
-        public static IQuery CreateScalarQuery(LambdaExpression selector, LambdaExpression filter,
-                                               ReadOnlyCollection<SortExpression> sorters,
-                                               bool isDistinct,
-                                               AggregateFunction aggregateFunction,
-                                               Type scalarType)
+        public static IQuery CreateScalarQuery(
+            LambdaExpression selector, LambdaExpression filter,
+            ReadOnlyCollection<SortExpression> sorters,
+            bool isDistinct,
+            AggregateFunction aggregateFunction,
+            Type scalarType)
         {
-            Contract.Requires<ArgumentNullException>(selector != null);
+            Contract.Requires<ArgumentNullException>(aggregateFunction == AggregateFunction.Count || selector != null);
+            Contract.Requires<ArgumentNullException>(aggregateFunction == AggregateFunction.Count || !isDistinct);
             Contract.Requires<ArgumentException>(
                 selector.Type.IsGenericType
                 && selector.Type.GetGenericTypeDefinition() == typeof(Func<,>)
@@ -159,12 +227,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             Contract.Requires<ArgumentException>(
                 sorters.All(s => IsInputTypeForLambda(s.KeyExpression, selector.Type.GetGenericArguments()[0])));
 
+            return CreateScalarQuery(
+                selector.Type.GetGenericArguments()[0],
+                selector.Type.GetGenericArguments()[1],
+                scalarType,
 
-            var itemInputType = selector.Type.GetGenericArguments()[0];
-            var itemOutputType = selector.Type.GetGenericArguments()[1];
-
-            var type = typeof(ScalarQuery<,,>).MakeGenericType(itemInputType, itemOutputType, scalarType);
-            return (IQuery)Activator.CreateInstance(type, selector, filter, sorters, isDistinct, aggregateFunction);
+                selector, filter, sorters, isDistinct, aggregateFunction);
         }
 
         /// <summary>Создание скалярного запроса.</summary>
@@ -183,8 +251,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
 
-            Contract.Requires<ArgumentNullException>(selector != null);
-            Contract.Requires<ArgumentException>(IsInputTypeForLambda(selector, typeof(OneSDataRecord)));
+            Contract.Requires<ArgumentNullException>(aggregateFunction == AggregateFunction.Count || selector != null);
+            Contract.Requires<ArgumentNullException>(aggregateFunction == AggregateFunction.Count || !isDistinct);
+            
+            Contract.Requires<ArgumentException>(
+                (selector == null) || IsInputTypeForLambda(selector, typeof(OneSDataRecord)));
 
             Contract.Requires<ArgumentException>(
                 (filter == null) || IsInputTypeForLambda(filter, typeof(OneSDataRecord)));
@@ -254,7 +325,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             {}
 
             /// <summary>Преобразование результат парсинга запроса, готового к выполенению.</summary>
-            protected override ExpressionParseProduct Transform(Expressions.IQueryTransformer transformer)
+            protected override ExpressionParseProduct Transform(IQueryTransformer transformer)
             {
                 return transformer.Transform(this);
             }
@@ -272,6 +343,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 AggregateFunction aggregateFunction)
                 : base(source, selector, filter, sorters, isDistinct)
             {
+                Contract.Requires<ArgumentNullException>(
+                    aggregateFunction == AggregateFunction.Count ||
+                    selector != null);
+
+                Contract.Requires<ArgumentNullException>(
+                    aggregateFunction == AggregateFunction.Count ||
+                    !isDistinct);
+                
                 _aggregateFunction = aggregateFunction;
             }
 

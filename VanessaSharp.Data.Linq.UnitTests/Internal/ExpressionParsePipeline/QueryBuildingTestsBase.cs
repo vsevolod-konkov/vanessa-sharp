@@ -183,7 +183,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             AssertTypedRecordsQueryAndTestTransform<T, T>(testedQuery, null, expectedIsDistinct, expectedFilter, expectedSorters);
         }
 
-        internal static void AssertDataRecordsScalarQuery<TOutput, TResult>(
+        internal static void AssertDataRecordsScalarQueryAndTestTransform<TOutput, TResult>(
             IQuery testedQuery,
             string expectedSourceName,
             Expression<Func<OneSDataRecord, TOutput>> expectedSelector,
@@ -202,7 +202,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             TestTransformScalarQuery(typedScalarQuery);
         }
 
-        internal static void AssertTypedRecordsScalarQuery<TInput, TOutput, TResult>(
+        internal static void AssertTypedRecordsScalarQueryAndTestTransform<TInput, TOutput, TResult>(
             IQuery testedQuery,
             Expression<Func<TInput, TOutput>> expectedSelector,
             AggregateFunction aggregateFunction,

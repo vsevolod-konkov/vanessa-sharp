@@ -336,6 +336,28 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.Count{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// </summary>
+        public static bool IsQueryableCountMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethodWithoutArgs(method, "Count");
+        }
+
+        /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.LongCount{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// </summary>
+        public static bool IsQueryableLongCountMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethodWithoutArgs(method, "LongCount");
+        }
+
+        /// <summary>
         /// Проверка того, что тип является <see cref="Expression{TDelegate}"/>.
         /// И что делегат является обобщенным типом <paramref name="openDelegateType"/>.
         /// </summary>

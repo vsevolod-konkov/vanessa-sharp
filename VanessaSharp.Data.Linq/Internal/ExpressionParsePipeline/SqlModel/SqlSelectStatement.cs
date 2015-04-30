@@ -51,7 +51,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             sqlBuilder.Append("SELECT ");
 
             if (IsDistinct)
-                sqlBuilder.Append("DISTINCT ");
+            {
+                sqlBuilder.Append(SqlKeywords.DISTINCT);
+                sqlBuilder.Append(" ");
+            }
+                
 
             Columns.BuildSql(sqlBuilder);
         }
