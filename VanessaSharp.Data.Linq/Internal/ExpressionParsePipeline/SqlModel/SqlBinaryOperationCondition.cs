@@ -88,7 +88,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             switch (operationType)
             {
                 case SqlBinaryLogicOperationType.And:
-                    return "AND";
+                    return SqlKeywords.AND;
                 case SqlBinaryLogicOperationType.Or:
                     return "OR";
                 default:

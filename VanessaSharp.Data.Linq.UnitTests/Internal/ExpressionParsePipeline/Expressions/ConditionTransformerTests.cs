@@ -79,6 +79,30 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
+        /// Проверка выражения, на то что оно является литералом с ожидаемым значением.
+        /// </summary>
+        /// <param name="expectedValue">Ожидаемое значение.</param>
+        /// <param name="testedExpression">Проверяемое выражение.</param>
+        private static void AssertLiteral(object expectedValue, SqlExpression testedExpression)
+        {
+            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(testedExpression);
+            Assert.AreEqual(expectedValue, literal.Value);
+        }
+
+        /// <summary>
+        /// Проверка выражения, на то, что оно является выражением доступа к полю таблицы.
+        /// </summary>
+        /// <param name="expectedFieldName">Ожидаемое имя поля.</param>
+        /// <param name="testedExpression">Проверяемое выражение.</param>
+        private static void AssertField(string expectedFieldName, SqlExpression testedExpression)
+        {
+            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(testedExpression);
+            
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
+            Assert.AreEqual(expectedFieldName, field.FieldName);
+        }
+
+        /// <summary>
         /// Проверка бинарного отношения.
         /// </summary>
         /// <param name="testedCondition">Тестируемое условие.</param>
@@ -92,13 +116,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Assert.AreEqual(expectedRelationType, binaryCondition.RelationType);
 
-            var fieldExpression = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(binaryCondition.FirstOperand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(fieldExpression.Table);
-            Assert.AreEqual(FILTER_FIELD, fieldExpression.FieldName);
-
-            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(binaryCondition.SecondOperand);
-            
-            Assert.AreEqual(FILTER_VALUE, literal.Value);
+            AssertField(FILTER_FIELD, binaryCondition.FirstOperand);
+            AssertLiteral(FILTER_VALUE, binaryCondition.SecondOperand);
         }
 
         /// <summary>Тестирование преобразования бинарного отношения.</summary>
@@ -310,11 +329,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             var isNullCondition = AssertEx.IsInstanceAndCastOf<SqlIsNullCondition>(result);
+            
             Assert.AreEqual(expectedTestIsNull, isNullCondition.IsNull);
-
-            var fieldExpression = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(isNullCondition.Expression);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(fieldExpression.Table);
-            Assert.AreEqual(NULLABLE_FIELD, fieldExpression.FieldName);
+            AssertField(NULLABLE_FIELD, isNullCondition.Expression);
         }
 
         /// <summary>
@@ -353,13 +370,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var first = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationExpression>(binaryRelationCondition.FirstOperand);
             Assert.AreEqual(SqlBinaryArithmeticOperationType.Subtract, first.OperationType);
 
-            var left = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(first.Left);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(left.Table);
-            Assert.AreEqual(PRICE_FIELD, left.FieldName);
-
-            var right = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(first.Right);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(right.Table);
-            Assert.AreEqual(QUANTITY_FIELD, right.FieldName);
+            AssertField(PRICE_FIELD, first.Left);
+            AssertField(QUANTITY_FIELD, first.Right);
         }
 
         /// <summary>
@@ -375,11 +387,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             var refsCondition = AssertEx.IsInstanceAndCastOf<SqlRefsCondition>(result);
+            
             Assert.AreEqual(REFERENCE_TABLE, refsCondition.DataSourceName);
-
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(refsCondition.Operand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(REFERENCE_FIELD, operand.FieldName);
+            AssertField(REFERENCE_FIELD, refsCondition.Operand);
         }
 
         /// <summary>
@@ -406,9 +416,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             CollectionAssert.AreEqual(expectedValues, actualValues);
 
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(inValuesListCondition.Operand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(FILTER_FIELD, operand.FieldName);
+            AssertField(FILTER_FIELD, inValuesListCondition.Operand);
         }
 
         /// <summary>
@@ -448,7 +456,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
-        /// Тестирование условия проверки в списке значений с помощью метода <see cref="OneSSqlFunctions.InHierarchy{T}"/>.
+        /// Тестирование условия проверки в списке значений с помощью метода <see cref="OneSSqlFunctions.Like"/>.
         /// </summary>
         [Test]
         public void TestTransformWhenLike()
@@ -464,11 +472,31 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual("pattern", likeCondition.Pattern);
             Assert.AreEqual('_', likeCondition.EscapeSymbol);
 
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(likeCondition.TestedExpression);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(NULLABLE_FIELD, operand.FieldName);
+            AssertField(NULLABLE_FIELD, likeCondition.Operand);
         }
 
+        /// <summary>
+        /// Тестирование условия проверки в списке значений с помощью метода <see cref="OneSSqlFunctions.Between{T}"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenBetween()
+        {
+            var startDate = new DateTime(2011, 01, 01);
+            var endDate = new DateTime(2015, 12, 31);
+            
+            Expression<Func<SomeData, bool>> testedFilter = d => OneSSqlFunctions.Between(d.BirthDate, startDate, endDate);
+            testedFilter = PreEvaluator.Evaluate(testedFilter);
+
+            var result = Transform(testedFilter);
+
+            // Assert
+            var betweenCondition = AssertEx.IsInstanceAndCastOf<SqlBetweenCondition>(result);
+            Assert.IsTrue(betweenCondition.IsBetween);
+            
+            AssertField(BIRTH_DATE_FIELD, betweenCondition.Operand);
+            AssertLiteral(startDate, betweenCondition.Start);
+            AssertLiteral(endDate, betweenCondition.End);
+        }
 
         /// <summary>
         /// Тестирование условия равенства свойства <see cref="DateTime.DayOfWeek"/> значению <see cref="DayOfWeek"/>.

@@ -695,7 +695,8 @@ namespace VanessaSharp.Data.Linq
             GetDayWeek,
             BeginOfPeriod,
             EndOfPeriod,
-            Like
+            Like,
+            Between
         }
 
         private static readonly Dictionary<string, SqlFunction> _sqlFunctions 

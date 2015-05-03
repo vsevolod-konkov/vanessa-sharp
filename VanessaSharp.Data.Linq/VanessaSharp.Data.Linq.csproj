@@ -147,6 +147,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlAggregateFunction.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlAggregateFunctionExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlAllCountSubExpression.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBetweenCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryArithmeticOperationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryOperationCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryOperationExpression.cs" />

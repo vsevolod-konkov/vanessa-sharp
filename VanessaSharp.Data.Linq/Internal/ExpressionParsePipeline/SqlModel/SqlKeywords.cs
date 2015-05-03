@@ -5,5 +5,6 @@
     {
         public const string DISTINCT = "DISTINCT";
         public const string NOT = "NOT";
+        public const string AND = "AND";
     }
 }

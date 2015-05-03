@@ -190,6 +190,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     case OneSQueryExpressionHelper.SqlFunction.Like:
                         _stackEngine.Like();
                         return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.Between:
+                        _stackEngine.Between();
+                        return true;
                 }
             }
 
@@ -966,10 +970,23 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             {
                 var escapeSymbol = PopValue<char?>();
                 var pattern = PopValue<string>();
-                var testedExpression = PopExpression();
+                var operand = PopExpression();
 
-                var likeCondition = new SqlLikeCondition(testedExpression, true, pattern, escapeSymbol);
+                var likeCondition = new SqlLikeCondition(operand, true, pattern, escapeSymbol);
                 _stack.Push(likeCondition);
+            }
+
+            /// <summary>
+            /// Создание условия проверки вхождения в диапазон.
+            /// </summary>
+            public void Between()
+            {
+                var end = PopExpression();
+                var start = PopExpression();
+                var operand = PopExpression();
+
+                var betweenCondition = new SqlBetweenCondition(operand, true, start, end);
+                _stack.Push(betweenCondition);
             }
 
             /// <summary>

@@ -9,13 +9,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
     /// </summary>
     internal sealed class SqlLikeCondition : SqlCondition
     {
+        /// <summary>Конструктор.</summary>
+        /// <param name="operand">Тестируемое строковое выражение.</param>
+        /// <param name="isLike">Тестирование на соответствие.</param>
+        /// <param name="pattern">Шаблон строки для тестирование на соответствие.</param>
+        /// <param name="escapeSymbol">Нестандартный эскейп-символ в шаблоне.</param>
         public SqlLikeCondition(
-            SqlExpression testedExpression, bool isLike, string pattern, char? escapeSymbol)
+            SqlExpression operand, bool isLike, string pattern, char? escapeSymbol)
         {
-            Contract.Requires<ArgumentNullException>(testedExpression != null);
+            Contract.Requires<ArgumentNullException>(operand != null);
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(pattern));
 
-            _testedExpression = testedExpression;
+            _operand = operand;
             _isLike = isLike;
             _pattern = SqlLiteralExpression.Create(pattern);
             _escapeSymbol = escapeSymbol.HasValue
@@ -26,16 +31,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <summary>
         /// Тестируемое строковое выражение.
         /// </summary>
-        public SqlExpression TestedExpression
+        public SqlExpression Operand
         {
             get
             {
                 Contract.Ensures(Contract.Result<SqlExpression>() != null);
 
-                return _testedExpression;
+                return _operand;
             }
         }
-        private readonly SqlExpression _testedExpression;
+        private readonly SqlExpression _operand;
 
         /// <summary>
         /// Тестирование на соответствие.
@@ -77,7 +82,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <summary>Генерация кода SQL-запроса.</summary>
         public override void BuildSql(StringBuilder sqlBuilder)
         {
-            _testedExpression.BuildSql(sqlBuilder);
+            _operand.BuildSql(sqlBuilder);
 
             if (!IsLike)
             {

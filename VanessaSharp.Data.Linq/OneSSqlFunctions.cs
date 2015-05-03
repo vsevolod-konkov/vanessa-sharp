@@ -218,6 +218,18 @@ namespace VanessaSharp.Data.Linq
             throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
         }
 
+        /// <summary>
+        /// Проверка вхождения значения в диапазон.
+        /// </summary>
+        /// <typeparam name="T">Тип значения.</typeparam>
+        /// <param name="value">Проверяемое значение.</param>
+        /// <param name="start">Начало диапазона.</param>
+        /// <param name="end">Конец диапазона.</param>
+        public static bool Between<T>(T value, T start, T end)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
         #endregion
     }
 }
