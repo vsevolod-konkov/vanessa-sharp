@@ -55,7 +55,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             Expression.BuildSql(sqlBuilder);
 
             if (IsNull)
-                sqlBuilder.Append(" NOT");
+            {
+                sqlBuilder.Append(" ");
+                sqlBuilder.Append(SqlKeywords.NOT);
+            }
 
             sqlBuilder.Append(" NULL");
         }

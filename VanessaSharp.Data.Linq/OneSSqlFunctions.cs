@@ -204,5 +204,20 @@ namespace VanessaSharp.Data.Linq
         }
 
         #endregion
+
+        #region Прочие выражения
+
+        /// <summary>
+        /// Проверка на соответствие строки шаблону.
+        /// </summary>
+        /// <param name="str">Проверяемая строка.</param>
+        /// <param name="pattern">Шаблон.</param>
+        /// <param name="escapeSymbol">спецсимвол в шаблоне.</param>
+        public static bool Like(string str, string pattern, char? escapeSymbol)
+        {
+            throw CreateInvalidCallException(MethodBase.GetCurrentMethod());
+        }
+
+        #endregion
     }
 }

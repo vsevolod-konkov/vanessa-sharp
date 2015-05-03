@@ -70,7 +70,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             Operand.BuildSql(sqlBuilder);
 
             if (!IsIn)
-                sqlBuilder.Append(" NOT");
+            {
+                sqlBuilder.Append(" ");
+                sqlBuilder.Append(SqlKeywords.NOT);
+            }
 
             sqlBuilder.Append(" IN");
 

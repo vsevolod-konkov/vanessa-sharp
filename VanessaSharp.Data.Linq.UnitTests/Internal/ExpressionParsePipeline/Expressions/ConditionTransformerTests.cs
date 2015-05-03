@@ -448,6 +448,29 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
+        /// Тестирование условия проверки в списке значений с помощью метода <see cref="OneSSqlFunctions.InHierarchy{T}"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformWhenLike()
+        {
+            Expression<Func<SomeData, bool>> testedFilter = d => OneSSqlFunctions.Like(d.Name, "pattern", '_');
+            testedFilter = PreEvaluator.Evaluate(testedFilter);
+
+            var result = Transform(testedFilter);
+
+            // Assert
+            var likeCondition = AssertEx.IsInstanceAndCastOf<SqlLikeCondition>(result);
+            Assert.IsTrue(likeCondition.IsLike);
+            Assert.AreEqual("pattern", likeCondition.Pattern);
+            Assert.AreEqual('_', likeCondition.EscapeSymbol);
+
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(likeCondition.TestedExpression);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
+            Assert.AreEqual(NULLABLE_FIELD, operand.FieldName);
+        }
+
+
+        /// <summary>
         /// Тестирование условия равенства свойства <see cref="DateTime.DayOfWeek"/> значению <see cref="DayOfWeek"/>.
         /// </summary>
         [Test]

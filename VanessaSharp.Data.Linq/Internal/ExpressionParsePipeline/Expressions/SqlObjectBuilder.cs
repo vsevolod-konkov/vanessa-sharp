@@ -186,6 +186,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     case OneSQueryExpressionHelper.SqlFunction.EndOfPeriod:
                         _stackEngine.CallEndOfPeriod();
                         return true;
+
+                    case OneSQueryExpressionHelper.SqlFunction.Like:
+                        _stackEngine.Like();
+                        return true;
                 }
             }
 
@@ -953,6 +957,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public void CallEndOfPeriod()
             {
                 CallDefineDatePeriodFunction(SqlEmbeddedFunctionExpression.EndOfPeriod);
+            }
+
+            /// <summary>
+            /// Создание условие проверки соответствия строки шаблону.
+            /// </summary>
+            public void Like()
+            {
+                var escapeSymbol = PopValue<char?>();
+                var pattern = PopValue<string>();
+                var testedExpression = PopExpression();
+
+                var likeCondition = new SqlLikeCondition(testedExpression, true, pattern, escapeSymbol);
+                _stack.Push(likeCondition);
             }
 
             /// <summary>

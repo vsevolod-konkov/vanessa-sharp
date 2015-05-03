@@ -162,6 +162,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlInValuesListCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlIsNullCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlKeywords.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlLikeCondition.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlLiteralExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNegateExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlNotCondition.cs" />
