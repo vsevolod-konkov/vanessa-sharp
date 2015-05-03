@@ -448,6 +448,124 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .Test();
         }
 
+        /// <summary>
+        /// Тестирование преобразования тернарного оператора выбора.
+        /// </summary>
+        [Test]
+        public void TestTransformConditional()
+        {
+            const string PRICE_FIELD_NAME = "price";
+            const string VALUE_FIELD_NAME = "value";
+
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
+                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
+                .End();
+            
+            var selectExpression = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => (d.Price > 10.5m) ? d.Value : 14.2m);
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            Assert.AreEqual(1, result.Columns.Count);
+
+            var caseExpression = AssertEx.IsInstanceAndCastOf<SqlCaseExpression>(result.Columns[0]);
+            Assert.AreEqual(1, caseExpression.Cases.Count);
+
+            var condition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(caseExpression.Cases[0].Condition);
+            
+            AssertField(PRICE_FIELD_NAME, condition.FirstOperand);
+            Assert.AreEqual(SqlBinaryRelationType.Greater, condition.RelationType);
+            AssertLiteral(10.5m, condition.SecondOperand);
+
+            AssertField(VALUE_FIELD_NAME, caseExpression.Cases[0].Value);
+            AssertLiteral(14.2m, caseExpression.DefaultValue);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 1)
+                    .Field(0, i => i, c => c.ToDecimal(null), 3.43m)
+                .Test();
+        }
+
+        /// <summary>
+        /// Тестирование преобразования тернарного оператора выбора.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectBooleanColumn()
+        {
+            const string PRICE_FIELD_NAME = "price";
+            const string VALUE_FIELD_NAME = "value";
+
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
+                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
+                .End();
+
+            var selectExpression = Trait
+                .Of<SomeData>()
+                .SelectExpression(d => new { HasOverDraft = (d.Price > 10.5m), d.Value });
+
+            // Act
+            var result = SelectExpressionTransformer
+                .Transform(_mappingProviderMock.Object, new QueryParseContext(), selectExpression);
+
+            // Assert
+            Assert.AreEqual(2, result.Columns.Count);
+
+            var caseExpression = AssertEx.IsInstanceAndCastOf<SqlCaseExpression>(result.Columns[0]);
+            Assert.AreEqual(1, caseExpression.Cases.Count);
+
+            var condition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(caseExpression.Cases[0].Condition);
+
+            AssertField(PRICE_FIELD_NAME, condition.FirstOperand);
+            Assert.AreEqual(SqlBinaryRelationType.Greater, condition.RelationType);
+            AssertLiteral(10.5m, condition.SecondOperand);
+            AssertLiteral(true, caseExpression.Cases[0].Value);
+            AssertLiteral(false, caseExpression.DefaultValue);
+
+            AssertField(VALUE_FIELD_NAME, result.Columns[1]);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, i => i.HasOverDraft, c => c.ToBoolean(null), true)
+                    .Field(1, i => i.Value, c => c.ToDecimal(null), 45.3m)
+                .Test();
+        }
+
+        /// <summary>
+        /// Проверка выражения, на то что оно является литералом с ожидаемым значением.
+        /// </summary>
+        /// <param name="expectedValue">Ожидаемое значение.</param>
+        /// <param name="testedExpression">Проверяемое выражение.</param>
+        private static void AssertLiteral(object expectedValue, SqlExpression testedExpression)
+        {
+            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(testedExpression);
+            Assert.AreEqual(expectedValue, literal.Value);
+        }
+
+        /// <summary>
+        /// Проверка выражения, на то, что оно является выражением доступа к полю таблицы.
+        /// </summary>
+        /// <param name="expectedFieldName">Ожидаемое имя поля.</param>
+        /// <param name="testedExpression">Проверяемое выражение.</param>
+        private static void AssertField(string expectedFieldName, SqlExpression testedExpression)
+        {
+            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(testedExpression);
+
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
+            Assert.AreEqual(expectedFieldName, field.FieldName);
+        }
+
         #region Тестовые типы
 
         /// <summary>

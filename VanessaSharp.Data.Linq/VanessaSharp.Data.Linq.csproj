@@ -153,6 +153,8 @@
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryOperationExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryLogicOperationType.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBinaryRelationType.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCase.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCaseExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCastExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCountExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlCountSubExpression.cs" />

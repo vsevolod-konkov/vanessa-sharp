@@ -52,5 +52,31 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             sqlBuilder.Append(" REFS ");
             sqlBuilder.Append(DataSourceName);
         }
+
+        /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherRefs = other as SqlRefsCondition;
+
+            return otherRefs != null
+                   && Operand.Equals(otherRefs.Operand)
+                   && DataSourceName.Equals(otherRefs.DataSourceName, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof (SqlRefsCondition).GetHashCode()
+                   ^ Operand.GetHashCode()
+                   ^ DataSourceName.ToUpperInvariant().GetHashCode();
+        }
     }
 }

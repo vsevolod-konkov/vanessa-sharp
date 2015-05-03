@@ -55,6 +55,34 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             SecondOperand.BuildSql(sqlBuilder);
         }
 
+        /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherRelation = other as SqlBinaryRelationCondition;
+
+            return otherRelation != null
+                   && RelationType == otherRelation.RelationType
+                   && FirstOperand.Equals(otherRelation.FirstOperand)
+                   && SecondOperand.Equals(otherRelation.SecondOperand);
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof (SqlBinaryRelationCondition).GetHashCode()
+                   ^ RelationType.GetHashCode()
+                   ^ FirstOperand.GetHashCode()
+                   ^ SecondOperand.GetHashCode();
+        }
+
         /// <summary>Получение SQL-символа для бинарного отношения.</summary>
         /// <param name="relationType">Тип бинарного отношения.</param>
         private static string GetSqlSymbolForRelation(SqlBinaryRelationType relationType)

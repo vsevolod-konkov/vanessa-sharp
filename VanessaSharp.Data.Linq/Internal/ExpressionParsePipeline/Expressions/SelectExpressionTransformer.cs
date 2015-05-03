@@ -99,9 +99,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             HandledNodeInfo obj = null;
             if (node.Object != null)
-                obj = HandledNode(node.Object);
+                obj = HandleNode(node.Object);
 
-            var args = node.Arguments.Select(HandledNode).ToArray();
+            var args = node.Arguments.Select(HandleNode).ToArray();
 
             if(_expressionBuilder.HandleMethodCall(node))
             {
@@ -125,7 +125,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             HandledNodeInfo obj = null;
             if (node.Expression != null)
-                obj = HandledNode(node.Expression);
+                obj = HandleNode(node.Expression);
             
             if (_expressionBuilder.HandleMember(node))
             {
@@ -152,7 +152,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
         /// <summary>Обработка узла.</summary>
         /// <param name="node">Обрабатываемый узел.</param>
-        private HandledNodeInfo HandledNode(Expression node)
+        private HandledNodeInfo HandleNode(Expression node)
         {
             Contract.Requires<ArgumentNullException>(node != null);
             
@@ -183,7 +183,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             Contract.Requires<ArgumentNullException>(node != null);
             
-            var result = HandledNode(node).GetTransformedNode();
+            var result = HandleNode(node).GetTransformedNode();
             Clear();
 
             return result;
@@ -206,8 +206,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitBinary(BinaryExpression node)
         {
-            var left = HandledNode(node.Left);
-            var right = HandledNode(node.Right);
+            var left = HandleNode(node.Left);
+            var right = HandleNode(node.Right);
 
             _hasSql = left.HasSql && right.HasSql && _expressionBuilder.HandleBinary(node);
             if (_hasSql)
@@ -245,22 +245,24 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitConditional(ConditionalExpression node)
         {
-            _hasSql = false;
-            var test = Visit(node.Test);
-            
+            var test = HandleNode(node.Test);
+            var ifTrue = HandleNode(node.IfTrue);
+            var ifFalse = HandleNode(node.IfFalse);
+
+            _hasSql = test.HasSql
+                      && ifTrue.HasSql
+                      && ifFalse.HasSql
+                      && _expressionBuilder.HandleConditional(node);
+
             if (_hasSql)
-            {
-                // TODO
-                throw new NotSupportedException(string.Format(
-                    "Временно не поддерживаются sql-условия в Select-выражении. Неподдерживаемое выражение {0}",
-                    node.Test));
-            }
+                return node;
 
-            var ifTrue = TransformNode(node.IfTrue);
-            var ifFalse = TransformNode(node.IfFalse);
+            Clear();
 
-            return node
-                .Update(test, ifTrue, ifFalse);
+            return node.Update(
+                test.GetTransformedNode(),
+                ifTrue.GetTransformedNode(),
+                ifFalse.GetTransformedNode());
         }
 
         /// <summary>
@@ -406,7 +408,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitTypeBinary(TypeBinaryExpression node)
         {
-            var obj = HandledNode(node.Expression);
+            var obj = HandleNode(node.Expression);
 
             _hasSql = obj.HasSql && _expressionBuilder.HandleVisitTypeBinary(node);
             
@@ -426,7 +428,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="node">Выражение, которое необходимо просмотреть.</param>
         protected override Expression VisitUnary(UnaryExpression node)
         {
-            var operand = HandledNode(node.Operand);
+            var operand = HandleNode(node.Operand);
 
             _hasSql = operand.HasSql && _expressionBuilder.HandleUnary(node);
             if (_hasSql)

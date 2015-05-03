@@ -98,5 +98,33 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
 
             End.BuildSql(sqlBuilder);
         }
+
+        /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherBetween = other as SqlBetweenCondition;
+
+            return otherBetween != null
+                   && Operand.Equals(otherBetween.Operand)
+                   && Start.Equals(otherBetween.Start)
+                   && End.Equals(otherBetween.End);
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof(SqlBetweenCondition).GetHashCode()
+                   ^ Operand.GetHashCode()
+                   ^ Start.GetHashCode()
+                   ^ End.GetHashCode();
+        }
     }
 }

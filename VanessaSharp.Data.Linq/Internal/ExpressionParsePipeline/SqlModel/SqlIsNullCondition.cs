@@ -62,5 +62,31 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
 
             sqlBuilder.Append(" NULL");
         }
+
+        /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherIsNull = other as SqlIsNullCondition;
+
+            return otherIsNull != null
+                   && Expression.Equals(otherIsNull.Expression)
+                   && IsNull == otherIsNull.IsNull;
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof (SqlIsNullCondition).GetHashCode()
+                   ^ Expression.GetHashCode()
+                   ^ IsNull.GetHashCode();
+        }
     }
 }

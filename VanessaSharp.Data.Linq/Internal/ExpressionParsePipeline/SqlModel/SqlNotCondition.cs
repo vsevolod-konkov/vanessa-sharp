@@ -41,5 +41,29 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             Condition.BuildSql(sqlBuilder);
             sqlBuilder.Append(" )");
         }
+
+        /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherNot = other as SqlNotCondition;
+
+            return otherNot != null
+                   && Condition.Equals(otherNot.Condition);
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof(SqlNotCondition).GetHashCode()
+                   ^ Condition.GetHashCode();
+        }
     }
 }

@@ -176,5 +176,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         {
             return base.VisitMethodCall(node);
         }
+
+        /// <summary>
+        /// Посещение узла выражения тернарного оператора выбора.
+        /// </summary>
+        protected Expression DefaultVisitConditional(ConditionalExpression node)
+        {
+            return base.VisitConditional(node);
+        }
     }
 }

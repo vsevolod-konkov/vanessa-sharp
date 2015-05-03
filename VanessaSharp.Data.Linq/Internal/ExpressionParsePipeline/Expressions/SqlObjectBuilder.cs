@@ -329,6 +329,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return true;
             }
 
+            if (node.NodeType == ExpressionType.Coalesce)
+            {
+                _stackEngine.Coalesce();
+                return true;
+            }
+
             return false;
         }
 
@@ -379,6 +385,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _stackEngine.Cast(sqlTypeDescription);
 
             return result;
+        }
+
+        /// <summary>
+        /// Обрабатывает выражение тернарного оператора выбора.
+        /// </summary>
+        public bool HandleConditional(ConditionalExpression node)
+        {
+            Contract.Requires<ArgumentNullException>(node != null);
+
+            _stackEngine.Conditional();
+
+            return true;
         }
 
         /// <summary>
@@ -523,6 +541,18 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
         }
 
+        /// <summary>
+        /// Преобразование условия в выражение.
+        /// </summary>
+        private static SqlExpression ConvertConditionToExpression(SqlCondition condition)
+        {
+            Contract.Requires<ArgumentNullException>(condition != null);
+
+            return new SqlCaseExpression(condition,
+                    SqlLiteralExpression.Create(true),
+                    SqlLiteralExpression.Create(false));
+        }
+
         #region Вспомогательные типы
 
         /// <summary>
@@ -581,6 +611,23 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public SqlExpression GetExpression()
             {
                 return _valueHolder.GetExpression(_context);
+            }
+        }
+
+        private sealed class SqlExpressionFromConditionProvider : ISqlExpressionProvider
+        {
+            private readonly SqlCondition _condition;
+
+            public SqlExpressionFromConditionProvider(SqlCondition condition)
+            {
+                Contract.Requires<ArgumentNullException>(condition != null);
+                
+                _condition = condition;
+            }
+
+            public SqlExpression GetExpression()
+            {
+                return ConvertConditionToExpression(_condition);
             }
         }
 
@@ -645,17 +692,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             {
                 return Pop(o =>
                     {
-                        var expression = o as SqlExpression;
+                        var provider = CreateExpressionProvider(o);
 
-                        if (expression != null)
-                            return expression;
-
-                        var valueHolder = o as ValueHolder;
-
-                        if (valueHolder != null)
-                            return valueHolder.GetExpression(_context);
-
-                        return null;
+                        return provider == null ? null : provider.GetExpression();
                     });
             }
 
@@ -989,6 +1028,29 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _stack.Push(betweenCondition);
             }
 
+            public void Coalesce()
+            {
+                var notNullValue = PopExpression();
+                var value = PopExpression();
+
+                var caseExpression = new SqlCaseExpression(
+                    new SqlIsNullCondition(value, true),
+                    notNullValue,
+                    value);
+
+                _stack.Push(caseExpression);
+            }
+
+            public void Conditional()
+            {
+                var ifFalse = PopExpression();
+                var ifTrue = PopExpression();
+                var test = Pop<SqlCondition>();
+
+                var caseExpression = new SqlCaseExpression(test, ifTrue, ifFalse);
+                _stack.Push(caseExpression);
+            }
+
             /// <summary>
             /// Получение выражения.
             /// </summary>
@@ -1023,7 +1085,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <summary>
             /// Считывание из стека выражения, без его удаления.
             /// </summary>
-            /// <returns></returns>
             public ISqlExpressionProvider PeekExpression()
             {
                 if (_stack.Count == 0)
@@ -1034,18 +1095,32 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
                 var obj = _stack.Peek();
 
-                var expression = obj as SqlExpression;
+                var result = CreateExpressionProvider(obj);
 
+                if (result == null)
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "В стеке ожидался объект типа \"{0}\", но оказался объект \"{1}\".", typeof (SqlExpression), obj));
+                }
+
+                return result;
+            }
+
+            private ISqlExpressionProvider CreateExpressionProvider(object obj)
+            {
+                var expression = obj as SqlExpression;
                 if (expression != null)
                     return new SqlExpressionHolder(expression);
 
                 var valueHolder = obj as ValueHolder;
-
                 if (valueHolder != null)
                     return new SqlExpressionFromValueProvider(_context, valueHolder);
 
-                throw new InvalidOperationException(string.Format(
-                        "В стеке ожидался объект типа \"{0}\", но оказался объект \"{1}\".", typeof(SqlExpression), obj));
+                var condition = obj as SqlCondition;
+                if (condition != null)
+                    return new SqlExpressionFromConditionProvider(condition);
+
+                return null;
             }
 
             /// <summary>Получение значения заданного типа.</summary>
@@ -1193,5 +1268,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         }
 
         #endregion
+
+        
     }
 }

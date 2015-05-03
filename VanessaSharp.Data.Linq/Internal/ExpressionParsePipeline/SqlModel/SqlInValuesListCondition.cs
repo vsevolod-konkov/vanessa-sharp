@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Text;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
@@ -93,6 +94,37 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             }
 
             sqlBuilder.Append(")");
+        }
+
+        /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherList = other as SqlInValuesListCondition;
+
+            return otherList != null
+                   && Operand.Equals(otherList.Operand)
+                   && IsIn == otherList.IsIn
+                   && ValuesList.Count == otherList.ValuesList.Count
+                   && ValuesList.All(v => otherList.ValuesList.Any(v2 => v2.Equals(v)))
+                   && IsHierarchy == otherList.IsHierarchy;
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof (SqlInValuesListCondition).GetHashCode()
+                   ^ Operand.GetHashCode()
+                   ^ IsIn.GetHashCode()
+                   ^ ValuesList.Aggregate(0, (c, v) => c ^ v.GetHashCode())
+                   ^ IsHierarchy.GetHashCode();
         }
     }
 }

@@ -72,6 +72,34 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherBinary = other as SqlBinaryOperationCondition;
+
+            return otherBinary != null
+                   && OperationType == otherBinary.OperationType
+                   && FirstOperand.Equals(otherBinary.FirstOperand)
+                   && SecondOperand.Equals(otherBinary.SecondOperand);
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof(SqlBinaryOperationCondition).GetHashCode()
+                   ^ OperationType.GetHashCode()
+                   ^ FirstOperand.GetHashCode()
+                   ^ SecondOperand.GetHashCode();
+        }
+
+        /// <summary>
         /// Генерация SQL-кода для операнда операции.
         /// </summary>
         private static void BuildOperandSql(SqlCondition operand, StringBuilder sqlBuilder)

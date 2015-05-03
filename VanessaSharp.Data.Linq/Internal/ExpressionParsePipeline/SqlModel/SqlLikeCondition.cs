@@ -99,5 +99,35 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
                 _escapeSymbol.BuildSql(sqlBuilder);
             }
         }
+
+        /// <summary>
+        /// Проверка эквивалентности в дочернем классе.
+        /// </summary>
+        protected override bool OverrideEquals(SqlCondition other)
+        {
+            var otherLike = other as SqlLikeCondition;
+
+            return otherLike != null
+                   && Operand.Equals(otherLike.Operand)
+                   && IsLike == otherLike.IsLike
+                   && Pattern == otherLike.Pattern
+                   && Nullable.Equals(EscapeSymbol, otherLike.EscapeSymbol);
+        }
+
+        /// <summary>
+        /// Играет роль хэш-функции для определенного типа. 
+        /// </summary>
+        /// <returns>
+        /// Хэш-код для текущего объекта <see cref="T:System.Object"/>.
+        /// </returns>
+        /// <filterpriority>2</filterpriority>
+        public override int GetHashCode()
+        {
+            return typeof (SqlLikeCondition).GetHashCode()
+                   ^ Operand.GetHashCode()
+                   ^ IsLike.GetHashCode()
+                   ^ Pattern.GetHashCode()
+                   ^ EscapeSymbol.GetHashCode();
+        }
     }
 }

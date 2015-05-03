@@ -579,6 +579,90 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         }
 
         /// <summary>
+        /// Тестирование преобразования выражения ??
+        /// </summary>
+        [Test]
+        public void TestTransformCoalesce()
+        {
+            const string NAME_FIELD_NAME = "name";
+
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("X")
+                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                .End();
+
+            Expression<Func<SomeData, string>> expression = d => d.Name ?? "Test";
+            expression = PreEvaluator.Evaluate(expression);
+
+            // Act
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), expression);
+
+            // Assert
+            var caseExpression = AssertEx.IsInstanceAndCastOf<SqlCaseExpression>(result);
+
+            Assert.AreEqual(1, caseExpression.Cases.Count);
+
+            var condition = AssertEx.IsInstanceAndCastOf<SqlIsNullCondition>(caseExpression.Cases[0].Condition);
+            Assert.IsTrue(condition.IsNull);
+
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(condition.Expression);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
+            Assert.AreEqual(NAME_FIELD_NAME, operand.FieldName);
+
+            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(caseExpression.Cases[0].Value);
+            Assert.AreEqual("Test", literal.Value);
+
+            Assert.IsTrue(operand.Equals(caseExpression.DefaultValue));
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выражения тернарного оператора.
+        /// </summary>
+        [Test]
+        public void TestTransformConditional()
+        {
+            const string NAME_FIELD_NAME = "name";
+            const string PRICE_FIELD_NAME = "price";
+
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingFor<SomeData>("X")
+                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
+                .End();
+
+            Expression<Func<SomeData, string>> expression = d => d.Price > 20.5 ? d.Name : "Test";
+            expression = PreEvaluator.Evaluate(expression);
+
+            // Act
+            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), expression);
+
+            // Assert
+            var caseExpression = AssertEx.IsInstanceAndCastOf<SqlCaseExpression>(result);
+
+            Assert.AreEqual(1, caseExpression.Cases.Count);
+
+            var condition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(caseExpression.Cases[0].Condition);
+
+            Assert.AreEqual(SqlBinaryRelationType.Greater, condition.RelationType);
+            
+            var leftOperand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(condition.FirstOperand);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(leftOperand.Table);
+            Assert.AreEqual(PRICE_FIELD_NAME, leftOperand.FieldName);
+
+            var rightOperand = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(condition.SecondOperand);
+            Assert.AreEqual(20.5, rightOperand.Value);
+
+            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(caseExpression.Cases[0].Value);
+            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
+            Assert.AreEqual(NAME_FIELD_NAME, operand.FieldName);
+
+            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(caseExpression.DefaultValue);
+            Assert.AreEqual("Test", literal.Value);
+        }
+
+        /// <summary>
         /// Тип тестовой типизированной записи.
         /// </summary>
         public sealed class SomeData
