@@ -18,12 +18,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="filter">Выражение фильтрации.</param>
         /// <param name="sorters">Выражения сортировки.</param>
         /// <param name="isDistinct">Выборка различных.</param>
+        /// <param name="maxCount">Максимальное количество строк.</param>
         protected QueryBase(
             ISourceDescription source,
             Expression<Func<TInput, TOutput>> selector,
             Expression<Func<TInput, bool>> filter,
             ReadOnlyCollection<SortExpression> sorters,
-            bool isDistinct)
+            bool isDistinct,
+            int? maxCount)
         {
             Contract.Requires<ArgumentNullException>(source != null);
             Contract.Requires<ArgumentException>(
@@ -52,6 +54,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             _filter = filter;
             _sorters = sorters;
             _isDistinct = isDistinct;
+            _maxCount = maxCount;
         }
 
         /// <summary>Описание источника данных 1С.</summary>
@@ -88,6 +91,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             get { return _isDistinct; }
         }
         private readonly bool _isDistinct;
+
+        /// <summary>Максимальное количество строк.</summary>
+        public int? MaxCount
+        {
+            get { return _maxCount; }
+        }
+        private readonly int? _maxCount;
 
         /// <summary>Преобразование результат парсинга запроса, готового к выполенению.</summary>
         /// <param name="transformService">Сервис преобразования запросов.</param>

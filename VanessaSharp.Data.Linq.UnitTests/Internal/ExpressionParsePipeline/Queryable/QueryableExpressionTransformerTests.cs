@@ -226,6 +226,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                 SOURCE_NAME,
                 selector,
                 true,
+                null,
                 filter, 
                 new SortExpression(sortKey1, SortKind.Ascending), 
                 new SortExpression(sortKey2, SortKind.Descending),
@@ -297,6 +298,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             AssertTypedRecordsQueryAndTestTransform<SomeData>(
                 result,
                 false,
+                null,
                 null,
                 new SortExpression(sortKeySelector1, SortKind.Descending),
                 new SortExpression(sortKeySelector2, SortKind.Ascending));
@@ -403,6 +405,27 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
             // Assert
             AssertTypedRecordsScalarQueryAndTestTransform<SomeData, SomeData, long>(result, null, AggregateFunction.Count);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="QueryableExpressionTransformer.Transform"/>
+        /// в случае запроса типизированных кортежей с методом <see cref="Queryable.Take{TSource}"/>.
+        /// </summary>
+        [Test]
+        public void TestTransformQueryableTupleWithTake()
+        {
+            // Arrange
+            var selector = Trait.Of<SomeData>().SelectExpression(d => new { DataId = d.Id });
+
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Query(q => q.Select(selector).Take(5));
+
+            // Act
+            var result = _testedInstance.Transform(testedExpression);
+
+            // Assert
+            AssertTypedRecordsQueryAndTestTransform(result, selector, expectedMaxCount: 5);
         }
 
         /// <summary>

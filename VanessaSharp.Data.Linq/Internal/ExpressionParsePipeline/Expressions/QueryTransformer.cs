@@ -66,7 +66,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public CollectionReadExpressionParseProduct<TOutput> Transform<TInput, TOutput>(IQuery<TInput, TOutput> query)
         {
             var selectPart = GetSelectPart(query);
-            var queryStatement = GetQueryStatement(query, selectPart.GetStatement(query.IsDistinct));
+            var queryStatement = GetQueryStatement(
+                query,
+                selectPart.GetStatement(query.IsDistinct, query.MaxCount));
 
             return GetExpressionParseProduct(
                 queryStatement, selectPart.ItemReaderFactory);
@@ -102,7 +104,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     {
                         GetCallAggregateFunctionExpression(aggregateFunction, selector, isDistinct)
                     }),
-                false);
+                false, null);
         }
 
         /// <summary>Получение вызова агрегируемой функции.</summary>
@@ -285,9 +287,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <summary>
             /// SELECT часть инструкции SQL-запроса.
             /// </summary>
-            public SqlSelectStatement GetStatement(bool isDistinct)
+            public SqlSelectStatement GetStatement(bool isDistinct, int? maxCount)
             {
-                return new SqlSelectStatement(_columns, isDistinct);
+                return new SqlSelectStatement(_columns, isDistinct, maxCount);
             }
 
             /// <summary>

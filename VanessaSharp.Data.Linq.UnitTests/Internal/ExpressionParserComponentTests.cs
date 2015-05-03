@@ -504,6 +504,44 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             ConverterTester.Test(product.Converter, c => c.ToInt64(null), 3534L);
         }
 
+        /// <summary>
+        /// Тестирование метода <see cref="Queryable.Take{TSource}"/>
+        /// над получением выборки типизированных записей данных.
+        /// </summary>
+        [Test]
+        public void TestWhenTakeSelectTypedRecord()
+        {
+            // Arrange
+            var selector = Trait.Of<SomeData>().SelectExpression(r => new { r.Id, r.Name });
+
+            var testedExpression = QueryableExpression
+                .For<SomeData>()
+                .Query(q => q
+                    .Select(selector)
+                    .Take(5));
+
+            // Act
+            var result = _testedInstance.Parse(testedExpression);
+
+            // Assert
+            var command = result.Command;
+            Assert.AreEqual(0, command.Parameters.Count);
+
+            Assert.AreEqual(
+                expected: "SELECT TOP 5 Идентификатор, Наименование FROM Справочник.Тест",
+                actual: command.Sql
+                );
+
+            var product = IsInstanceAndCastCollectionReadExpressionParseProduct(selector.GetTraitOfOutputType(), result);
+            var factory = IsInstanceAndCastNoSideEffectItemReaderFactory(product.ItemReaderFactory);
+
+            ItemReaderTester
+                .For(factory.ItemReader, 2)
+                    .Field(0, r => r.Id, c => c.ToInt32(null), 2)
+                    .Field(1, r => r.Name, c => c.ToString(null), "test")
+                .Test();
+        }
+
         public abstract class DataBase
         {
             [OneSDataColumn("Наименование")]

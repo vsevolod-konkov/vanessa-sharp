@@ -358,6 +358,17 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Определяется, является ли метод методом
+        /// <see cref="Queryable.Take{TSource}"/>
+        /// </summary>
+        public static bool IsQueryableTakeMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return IsQueryableMethod(method, "Take");
+        }
+
+        /// <summary>
         /// Проверка того, что тип является <see cref="Expression{TDelegate}"/>.
         /// И что делегат является обобщенным типом <paramref name="openDelegateType"/>.
         /// </summary>

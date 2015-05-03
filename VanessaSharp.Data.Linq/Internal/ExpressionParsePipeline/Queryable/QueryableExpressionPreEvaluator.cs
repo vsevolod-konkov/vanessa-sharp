@@ -63,6 +63,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             _internalHandler.HandleDistinct();
         }
 
+        /// <summary>Обработка взятия ограниченного количетсва элементов.</summary>
+        /// <param name="count">Максимальное количество элементов.</param>
+        void IQueryableExpressionHandler.HandleTake(int count)
+        {
+            _internalHandler.HandleTake(count);
+        }
+
         /// <summary>Обработка выборки.</summary>
         /// <param name="selectExpression">Выражение выборки.</param>
         void IQueryableExpressionHandler.HandleSelect(LambdaExpression selectExpression)

@@ -49,6 +49,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         private static readonly MethodInfo _handleAggregateMethod =
             GetMethod(h => h.HandleAggregate(It.IsAny<Type>(), It.IsAny<AggregateFunction>(), It.IsAny<Type>()));
 
+        private static readonly MethodInfo _handleTakeMethod =
+            GetMethod(h => h.HandleTake(It.IsAny<int>()));
+
         private static MethodInfo GetMethod(Expression<Action<IQueryableExpressionHandler>> expression)
         {
             return OneSQueryExpressionHelper.ExtractMethodInfo(expression);
@@ -143,6 +146,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                 .Verifiable();
         }
 
+        private void HandlerSetupHandleTake(int count)
+        {
+            _handlerMock
+                .Setup(h => h.HandleTake(count))
+                .Callback(() => _methodCallsLog.Add(_handleTakeMethod))
+                .Verifiable();
+        }
+
         private void AssertMethodCalls(params MethodInfo[] expectedMethods)
         {
             CollectionAssert.AreEqual(expectedMethods, _methodCallsLog);
@@ -156,6 +167,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         {
             // Arrange
             const string SOURCE_NAME = "[source]";
+            const int COUNT = 5;
             var selectExpression = Trait
                      .Of<OneSDataRecord>()
                      .SelectExpression(r => new { Name = r.GetString("Name"), Value = r.GetInt32("Value") });
@@ -167,6 +179,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             Expression<Func<OneSDataRecord, DateTime>> sortKey3Expression = r => r.GetDateTime("sort_field_3");
 
             HandlerSetupHandleGettingEnumerator(itemType);
+            HandlerSetupHandleTake(COUNT);
             HandlerSetupHandleDistinct();
             HandlerSetupHandleSelect(selectExpression);
             HandlerSetupHandleOrderBy(sortKey1Expression);
@@ -183,12 +196,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                     .ThenBy(sortKey2Expression)
                     .ThenByDescending(sortKey3Expression)
                     .Select(selectExpression)
-                    .Distinct());
+                    .Distinct()
+                    .Take(COUNT));
             // Act
             _testedInstance.Visit(expression);
 
             // Assert
             _handlerMock.Verify(h => h.HandleGettingEnumerator(itemType), Times.Once());
+            _handlerMock.Verify(h => h.HandleTake(COUNT), Times.Once());
             _handlerMock.Verify(h => h.HandleDistinct(), Times.Once());
             _handlerMock.Verify(h => h.HandleSelect(selectExpression), Times.Once());
             _handlerMock.Verify(h => h.HandleOrderBy(sortKey1Expression), Times.Once());
@@ -199,6 +214,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
             AssertMethodCalls(
                         _handleGettingEnumeratorMethod,
+                        _handleTakeMethod,
                         _handleDistinct,
                         _handleSelectMethod,
                         _handleThenByDescendingMethod,

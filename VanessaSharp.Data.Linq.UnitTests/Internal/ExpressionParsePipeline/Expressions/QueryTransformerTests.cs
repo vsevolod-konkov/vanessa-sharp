@@ -24,10 +24,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         private const string SOURCE_NAME = "[source]";
 
         private IQuery<TInput, TOutput> CreateQuery<TInput, TOutput>(Expression<Func<TInput, TOutput>> selector = null,
+                                                                     int? maxCount = null,
                                                                      Expression<Func<TInput, bool>> filter = null,
                                                                      params SortExpression[] sorters)
         {
-            return CreateQuery(_sourceDescriptionMock.Object, selector, filter, sorters);
+            return CreateQuery(_sourceDescriptionMock.Object, selector, maxCount, filter, sorters);
         }
 
         private static SelectionPartParseProduct<T> CreateSelectionPartParseProduct<T>(
@@ -222,7 +223,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<SomeData, string>> sortKeyExpression2 = d => "Test";
             SetupTransformField(sortKeyExpression2, "Ключ2");
             
-            var testedQuery = CreateQuery<SomeData, SomeData>(sorters: 
+            var testedQuery = CreateQuery<SomeData, SomeData>(
+                maxCount: 10,
+                sorters: 
                 new[]
                     {
                         new SortExpression(sortKeyExpression1, SortKind.Ascending),
@@ -235,7 +238,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             // Assert
             AssertResult(
-                "SELECT Наименование, Идентификатор, Цена FROM {0} ORDER BY Ключ1, Ключ2 DESC",
+                "SELECT TOP 10 Наименование, Идентификатор, Цена FROM {0} ORDER BY Ключ1, Ключ2 DESC",
                 someDataReader,
                 result
                 );
@@ -261,7 +264,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var expectedItemReader = CreateItemReader((c, v) => new { First = 45, Second = "XXX" });
             SetupTransformSelector(selector, expectedItemReader, "Первый", "Второй");
 
-            var testedQuery = CreateQuery(selector, filter);
+            var testedQuery = CreateQuery(selector, filter: filter);
 
             // Act
             var result = _testedInstance.Transform(testedQuery);

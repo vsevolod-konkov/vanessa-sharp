@@ -14,7 +14,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
     {
         /// <summary>
         /// Тестирование 
-        /// <see cref="QueryFactory.CreateQuery(string,System.Linq.Expressions.LambdaExpression,System.Collections.ObjectModel.ReadOnlyCollection{VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SortExpression}, bool)"/>.
+        /// <see cref="QueryFactory.CreateQuery(string,System.Linq.Expressions.LambdaExpression,System.Collections.ObjectModel.ReadOnlyCollection{VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SortExpression},bool,System.Nullable{int})"/>.
         /// </summary>
         [Test]
         public void TestCreateDataRecordsQuery()
@@ -25,15 +25,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var sorter = new SortExpression(sortKey, SortKind.Ascending);
             
             // Act
-            var result = QueryFactory.CreateQuery(SOURCE_NAME, filter, new[] {sorter}.ToReadOnly(), true);
+            var result = QueryFactory.CreateQuery(SOURCE_NAME, filter, new[] {sorter}.ToReadOnly(), true, 5);
 
             // Assert
-            AssertDataRecordsQuery(result, SOURCE_NAME, true, filter, sorter);
+            AssertDataRecordsQuery(result, SOURCE_NAME, true, 5, filter, sorter);
         }
 
         /// <summary>
         /// Тестирование
-        /// <see cref="QueryFactory.CreateQuery(string,System.Linq.Expressions.LambdaExpression,System.Collections.ObjectModel.ReadOnlyCollection{VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SortExpression}, bool)"/>
+        /// <see cref="QueryFactory.CreateQuery"/>
         /// </summary>
         [Test]
         public void TestCreateSelectDataRecordsQuery()
@@ -45,15 +45,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var sorter = new SortExpression(sortKey, SortKind.Ascending);
 
             // Act
-            var result = QueryFactory.CreateQuery(SOURCE_NAME, selector, filter, new[]{sorter}.ToReadOnly(), true);
+            var result = QueryFactory.CreateQuery(SOURCE_NAME, selector, filter, new[]{sorter}.ToReadOnly(), true, 4);
 
             // Assert
-            AssertDataRecordsQuery(result, SOURCE_NAME, selector, true, filter, sorter);
+            AssertDataRecordsQuery(result, SOURCE_NAME, selector, true, 4, filter, sorter);
         }
 
         /// <summary>
         /// Тестирование
-        /// <see cref="QueryFactory.CreateQuery(string,System.Linq.Expressions.LambdaExpression,System.Collections.ObjectModel.ReadOnlyCollection{VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SortExpression}, bool)"/>.
+        /// <see cref="QueryFactory.CreateQuery"/>.
         /// </summary>
         [Test]
         public void TestCreateTypedRecordsQuery()
@@ -64,15 +64,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var sorter = new SortExpression(sortKey, SortKind.Ascending);
 
             // Act
-            var result = QueryFactory.CreateQuery(typeof(InputData), filter, new[]{sorter}.ToReadOnly(), true);
+            var result = QueryFactory.CreateQuery(typeof(InputData), filter, new[]{sorter}.ToReadOnly(), true, null);
 
             // Assert
-            AssertTypedRecordsQueryAndTestTransform(result, true, filter, sorter);
+            AssertTypedRecordsQueryAndTestTransform(result, true, null, filter, sorter);
         }
 
         /// <summary>
         /// Тестирование
-        /// <see cref="QueryFactory.CreateQuery(string,System.Linq.Expressions.LambdaExpression,System.Collections.ObjectModel.ReadOnlyCollection{VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SortExpression}, bool)"/>.
+        /// <see cref="QueryFactory.CreateQuery"/>.
         /// </summary>
         [Test]
         public void TestCreateSelectTypedRecordsQuery()
@@ -84,10 +84,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
             var sorter = new SortExpression(sortKey, SortKind.Ascending);
 
             // Act
-            var result = QueryFactory.CreateQuery(selector, filter, new[]{sorter}.ToReadOnly(), false);
+            var result = QueryFactory.CreateQuery(selector, filter, new[]{sorter}.ToReadOnly(), false, null);
 
             // Assert
-            AssertTypedRecordsQueryAndTestTransform(result, selector,  false, filter, sorter);
+            AssertTypedRecordsQueryAndTestTransform(result, selector,  false, null, filter, sorter);
         }
 
         /// <summary>

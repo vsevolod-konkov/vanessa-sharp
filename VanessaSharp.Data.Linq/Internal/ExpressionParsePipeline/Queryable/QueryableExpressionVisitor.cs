@@ -35,7 +35,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                             new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableMaxMethod, AggregateFunction.Maximum),
                             new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableMinMethod, AggregateFunction.Minimum),
                             new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableCountMethod, AggregateFunction.Count),
-                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableLongCountMethod, AggregateFunction.Count)
+                            new CallQueryableAggregateMethodHandler(OneSQueryExpressionHelper.IsQueryableLongCountMethod, AggregateFunction.Count),
+                            new CallQueryableTakeHandler() 
                         }
                 );
 
@@ -366,6 +367,27 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                     return true;
                 }
                 
+                childNode = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Обработчик вызова метода <see cref="Queryable.Take{TSource}"/>.
+        /// </summary>
+        private sealed class CallQueryableTakeHandler : ICallMethodHandler
+        {
+            public bool CheckAndHandle(IQueryableExpressionHandler handler, MethodCallExpression node, out Expression childNode)
+            {
+                if (OneSQueryExpressionHelper.IsQueryableTakeMethod(node.Method))
+                {
+                    childNode = node.Arguments[0];
+                    var count = node.Arguments[1].GetConstant<int>();
+
+                    handler.HandleTake(count);
+                    return true;
+                }
+
                 childNode = null;
                 return false;
             }

@@ -27,7 +27,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                                                                             Expression<Func<OneSDataRecord, bool>> filter = null,
                                                                             params SortExpression[] sorters)
         {
-            return CreateQuery(new ExplicitSourceDescription(source), selector, filter, sorters);
+            return CreateQuery(new ExplicitSourceDescription(source), selector, filter: filter, sorters: sorters);
         }
 
         private static IQuery<OneSDataRecord, OneSDataRecord> CreateDataRecordsQuery(
@@ -42,7 +42,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                                                                        Expression<Func<SomeData, bool>> filterExpression = null,
                                                                        params SortExpression[] sorters)
         {
-            return CreateQuery(SourceDescriptionByType<SomeData>.Instance, selectExpression, filterExpression, sorters);
+            return CreateQuery(SourceDescriptionByType<SomeData>.Instance, selectExpression, filter: filterExpression, sorters: sorters);
         }
 
         private static IQuery<SomeData, SomeData> CreateTypedRecordsQuery(

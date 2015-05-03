@@ -27,6 +27,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <summary>Выражение сортировки.</summary>
         ReadOnlyCollection<SortExpression> Sorters { get; }
 
+        /// <summary>Максимальное количество строк.</summary>
+        int? MaxCount { get; }
+
         /// <summary>Выборка различных.</summary>
         bool IsDistinct { get; }
     }
@@ -76,6 +79,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 return null;
             }
         }
+
+        /// <summary>Максимальное количество строк.</summary>
+        public int? MaxCount { get { return 0; } }
 
         /// <summary>Выборка различных.</summary>
         bool IQuery<TInput, TOutput>.IsDistinct { get { return false; } }

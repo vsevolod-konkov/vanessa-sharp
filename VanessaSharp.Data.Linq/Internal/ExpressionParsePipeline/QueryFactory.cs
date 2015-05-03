@@ -15,10 +15,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="filter">Выражение фильтрации.</param>
         /// <param name="sorters">Коллекция выражений сортировки.</param>
         /// <param name="isDistinct">Выборка различных.</param>
+        /// <param name="maxCount">Максимальное количество строк.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(string sourceName, LambdaExpression filter,
                                          ReadOnlyCollection<SortExpression> sorters,
-                                         bool isDistinct)
+                                         bool isDistinct,
+                                         int? maxCount)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
             
@@ -33,17 +35,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 new ExplicitSourceDescription(sourceName),
                 null,
                 (Expression<Func<OneSDataRecord, bool>>)filter,
-                sorters, isDistinct);
+                sorters, isDistinct, maxCount);
         }
 
         /// <summary>Создание запроса последовательности элементов проекции.</summary>
         private static IQuery CreateQuery(Type outputType, string sourceName, LambdaExpression selector,
                                           LambdaExpression filter, ReadOnlyCollection<SortExpression> sorters,
-                                          bool isDistinct)
+                                          bool isDistinct, int? maxCount)
         {
             var type = typeof(Query<,>).MakeGenericType(typeof(OneSDataRecord), outputType);
 
-            return (IQuery)Activator.CreateInstance(type, new ExplicitSourceDescription(sourceName), selector, filter, sorters, isDistinct);
+            return (IQuery)Activator.CreateInstance(type, new ExplicitSourceDescription(sourceName), selector, filter, sorters, isDistinct, maxCount);
         }
 
         /// <summary>Создание запроса последовательности проекций из <see cref="OneSDataRecord"/>.</summary>
@@ -52,9 +54,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="filter">Выражение фильтрации.</param>
         /// <param name="sorters">Коллекция выражений сортировки.</param>
         /// <param name="isDistinct">Выборка различных.</param>
+        /// <param name="maxCount">Максимальное количество строк.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(string sourceName, LambdaExpression selector, LambdaExpression filter,
-                                         ReadOnlyCollection<SortExpression> sorters, bool isDistinct)
+                                         ReadOnlyCollection<SortExpression> sorters, bool isDistinct, int? maxCount)
         {
             Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(sourceName));
 
@@ -70,17 +73,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
 
             var outputType = selector.Type.GetGenericArguments()[1];
 
-            return CreateQuery(outputType, sourceName, selector, filter, sorters, isDistinct);
+            return CreateQuery(outputType, sourceName, selector, filter, sorters, isDistinct, maxCount);
         }
 
         /// <summary>Создание запроса для типизированных записей.</summary>
         private static IQuery CreateQuery(Type inputType, Type outputType,
                                           LambdaExpression selector, LambdaExpression filter,
                                           ReadOnlyCollection<SortExpression> sorters,
-                                          bool isDistinct)
+                                          bool isDistinct, int? maxCount)
         {
             var type = typeof(Query<,>).MakeGenericType(inputType, outputType);
-            return (IQuery)Activator.CreateInstance(type, selector, filter, sorters, isDistinct);
+            return (IQuery)Activator.CreateInstance(type, selector, filter, sorters, isDistinct, maxCount);
         }
 
         /// <summary>Создание запроса последовательности элементов типизированных записей.</summary>
@@ -88,10 +91,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="filter">Выражение фильтрации записей.</param>
         /// <param name="sorters">Выражения сортировки записей.</param>
         /// <param name="isDistinct">Выборка различных.</param>
+        /// <param name="maxCount">Максимальное количество строк.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(Type itemType, LambdaExpression filter,
                                          ReadOnlyCollection<SortExpression> sorters,
-                                         bool isDistinct)
+                                         bool isDistinct, int? maxCount)
         {
             Contract.Requires<ArgumentNullException>(itemType != null);
             Contract.Requires<ArgumentNullException>(itemType != typeof(OneSDataRecord));
@@ -103,7 +107,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             Contract.Requires<ArgumentException>(
                 sorters.All(s => IsInputTypeForLambda(s.KeyExpression, itemType)));
 
-            return CreateQuery(itemType, itemType, null, filter, sorters, isDistinct);
+            return CreateQuery(itemType, itemType, null, filter, sorters, isDistinct, maxCount);
         }
 
         /// <summary>Создание запроса последовательности элементов проекций типизированных записей.</summary>
@@ -111,10 +115,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
         /// <param name="filter">Выражение фильтрации типизированных записей.</param>
         /// <param name="sorters">Выражения сортировки типизированных записей.</param>
         /// <param name="isDistinct">Выборка различных.</param>
+        /// <param name="maxCount">Максимальное количество строк.</param>
         /// <returns>Созданный запрос.</returns>
         public static IQuery CreateQuery(LambdaExpression selector, LambdaExpression filter,
                                          ReadOnlyCollection<SortExpression> sorters,
-                                         bool isDistinct)
+                                         bool isDistinct, int? maxCount)
         {
             Contract.Requires<ArgumentNullException>(selector != null);
             Contract.Requires<ArgumentException>(
@@ -130,7 +135,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 sorters.All(s => IsInputTypeForLambda(s.KeyExpression, selector.Type.GetGenericArguments()[0])));
 
             var selectorArgs = selector.Type.GetGenericArguments();
-            return CreateQuery(selectorArgs[0], selectorArgs[1], selector, filter, sorters, isDistinct);
+            return CreateQuery(selectorArgs[0], selectorArgs[1], selector, filter, sorters, isDistinct, maxCount);
         }
 
         private static IQuery CreateScalarQuery(
@@ -301,11 +306,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             /// <param name="filter">Выражение фильтрации.</param>
             /// <param name="sorters">Выражения сортировки.</param>
             /// <param name="isDistinct">Выборка различных.</param>
+            /// <param name="maxCount">Максимальное количество строк.</param>
             public Query(Expression<Func<TInput, TOutput>> selector,
                          Expression<Func<TInput, bool>> filter,
                          ReadOnlyCollection<SortExpression> sorters,
-                         bool isDistinct)
-            : this(SourceDescriptionByType<TInput>.Instance, selector, filter, sorters, isDistinct)
+                         bool isDistinct,
+                         int? maxCount)
+            : this(SourceDescriptionByType<TInput>.Instance, selector, filter, sorters, isDistinct, maxCount)
             {
             }
 
@@ -315,13 +322,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             /// <param name="filter">Выражение фильтрации.</param>
             /// <param name="sorters">Выражения сортировки.</param>
             /// <param name="isDistinct">Выборка различных.</param>
+            /// <param name="maxCount">Максимальное количество строк.</param>
             public Query(
                 ISourceDescription source,
                 Expression<Func<TInput, TOutput>> selector,
                 Expression<Func<TInput, bool>> filter,
                 ReadOnlyCollection<SortExpression> sorters,
-                bool isDistinct)
-                : base(source, selector, filter, sorters, isDistinct)
+                bool isDistinct,
+                int? maxCount)
+                : base(source, selector, filter, sorters, isDistinct, maxCount)
             {}
 
             /// <summary>Преобразование результат парсинга запроса, готового к выполенению.</summary>
@@ -341,7 +350,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
                 ReadOnlyCollection<SortExpression> sorters,
                 bool isDistinct,
                 AggregateFunction aggregateFunction)
-                : base(source, selector, filter, sorters, isDistinct)
+                : base(source, selector, filter, sorters, isDistinct, null)
             {
                 Contract.Requires<ArgumentNullException>(
                     aggregateFunction == AggregateFunction.Count ||

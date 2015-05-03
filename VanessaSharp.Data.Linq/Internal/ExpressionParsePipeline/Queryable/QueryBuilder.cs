@@ -58,6 +58,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             _currentState = _currentState.HandleDistinct();
         }
 
+        /// <summary>Обработка взятия ограниченного количетсва элементов.</summary>
+        /// <param name="count">Максимальное количество элементов.</param>
+        public void HandleTake(int count)
+        {
+            _currentState = _currentState.HandleTake(count);
+        }
+
         /// <summary>Обработка выборки.</summary>
         /// <param name="selectExpression">Выражение выборки.</param>
         public void HandleSelect(LambdaExpression selectExpression)
@@ -164,6 +171,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             /// <summary>Выборка различных.</summary>
             public bool IsDistinct { get; set; }
 
+            /// <summary>Максимальное количество записей.</summary>
+            public int? MaxCount { get; set; }
+
             /// <summary>Выражение фильтрации записей.</summary>
             public LambdaExpression FilterExpression
             {
@@ -255,8 +265,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 CheckSelectExpressionForQuery(selectExpression);
 
                 return (selectExpression == null)
-                    ? QueryFactory.CreateQuery(sourceName, FilterExpression, CreateSortExpressionList(), IsDistinct)
-                    : QueryFactory.CreateQuery(sourceName, selectExpression, FilterExpression, CreateSortExpressionList(), IsDistinct);
+                    ? QueryFactory.CreateQuery(sourceName, FilterExpression, CreateSortExpressionList(), IsDistinct, MaxCount)
+                    : QueryFactory.CreateQuery(sourceName, selectExpression, FilterExpression, CreateSortExpressionList(), IsDistinct, MaxCount);
             }
 
             /// <summary>Создание объекта запроса.</summary>
@@ -284,8 +294,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 CheckSelectExpressionForQuery(selectExpression);
 
                 return (selectExpression == null)
-                           ? QueryFactory.CreateQuery(InputItemType, FilterExpression, CreateSortExpressionList(), IsDistinct)
-                           : QueryFactory.CreateQuery(selectExpression, FilterExpression, CreateSortExpressionList(), IsDistinct);
+                           ? QueryFactory.CreateQuery(InputItemType, FilterExpression, CreateSortExpressionList(), IsDistinct, MaxCount)
+                           : QueryFactory.CreateQuery(selectExpression, FilterExpression, CreateSortExpressionList(), IsDistinct, MaxCount);
             }
 
             private void CheckLambdaExpression(LambdaExpression lambda)
@@ -553,6 +563,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
                 throw CreateException(MethodBase.GetCurrentMethod());
             }
 
+            /// <summary>Обработка получения ограниченного количества записей.</summary>
+            public virtual BuilderState HandleTake(int count)
+            {
+                throw CreateException(MethodBase.GetCurrentMethod());
+            }
+
             /// <summary>
             /// Обработка вызова агрегатной функции.
             /// </summary>
@@ -745,6 +761,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Queryable
             public override BuilderState HandleDistinct()
             {
                 _stateDataWithoutSelection.IsDistinct = true;
+                return this;
+            }
+
+            /// <summary>Обработка получения ограниченного количества записей.</summary>
+            public override BuilderState HandleTake(int count)
+            {
+                _stateDataWithoutSelection.MaxCount = (_stateDataWithoutSelection.MaxCount.HasValue)
+                                                          ? Math.Min(_stateDataWithoutSelection.MaxCount.Value, count)
+                                                          : count;
+
                 return this;
             }
         }

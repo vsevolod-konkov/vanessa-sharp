@@ -21,7 +21,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
                             new SqlFieldExpression(SqlDefaultTableExpression.Instance, "field2"),
                             new SqlFieldExpression(SqlDefaultTableExpression.Instance, "field3")
                         }),
-                        false
+                        false,
+                        null
                      ),
                 new SqlFromStatement("source"),
                 null, null);

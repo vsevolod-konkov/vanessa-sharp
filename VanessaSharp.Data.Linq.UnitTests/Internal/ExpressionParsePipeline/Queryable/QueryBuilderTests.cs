@@ -203,6 +203,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
         public void TestBuildQueryComplex()
         {
             // Arrange
+            const int MAX_COUNT = 10;
+
             Expression<Func<OneSDataRecord, bool>> expectedFilter = r => r.GetString("[filterField]") == "filterValue";
 
             Expression<Func<OneSDataRecord, int>> sortKey1 = r => r.GetInt32("any_field");
@@ -218,6 +220,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
             _testedInstance.HandleStart();
             _testedInstance.HandleGettingEnumerator(traitOfOutputType.Type);
             
+            _testedInstance.HandleTake(MAX_COUNT);
             _testedInstance.HandleDistinct();
             _testedInstance.HandleSelect(expectedSelector);
 
@@ -237,6 +240,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
                 SOURCE_NAME,
                 expectedSelector,
                 true,
+                MAX_COUNT,
                 expectedFilter,
                 new SortExpression(sortKey1, SortKind.Descending),
                 new SortExpression(sortKey2, SortKind.Descending),
@@ -308,6 +312,27 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Quer
 
             // Assert
             AssertDataRecordsScalarQueryAndTestTransform<OneSDataRecord, int>(result, SOURCE_NAME, null, AggregateFunction.Count, expectedFilter: expectedFilter);
+        }
+
+        /// <summary>
+        /// Тестирование построения при нескольких вызовах метода <see cref="QueryBuilder.HandleTake"/>.
+        /// </summary>
+        [Test]
+        public void TestBuildFewTakeQuery()
+        {
+            // Act
+            _testedInstance.HandleStart();
+            _testedInstance.HandleGettingEnumerator(typeof(OneSDataRecord));
+            _testedInstance.HandleTake(5);
+            _testedInstance.HandleTake(3);
+            _testedInstance.HandleTake(10);
+            _testedInstance.HandleGettingRecords(SOURCE_NAME);
+            _testedInstance.HandleEnd();
+
+            var result = _testedInstance.BuiltQuery;
+
+            // Assert
+            AssertDataRecordsQuery(result, SOURCE_NAME, expectedMaxCount: 3);
         }
     }
 }

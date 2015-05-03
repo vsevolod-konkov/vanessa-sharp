@@ -382,6 +382,47 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         }
 
         /// <summary>
+        /// Тестирование выполнения запроса с <see cref="Queryable.Distinct{TSource}(System.Linq.IQueryable{TSource})"/>
+        /// и <see cref="Queryable.Take{TSource}"/>.
+        /// </summary>
+        [Test]
+        public void TestSelectDistinctTakeQuery()
+        {
+            Test
+                .Query(dataContext =>
+                                        
+                                        (
+                                            from e in dataContext.Get<TestDictionary>()
+                                            orderby e.IntegerField descending 
+                                            select new { e.StringField, e.IntegerField }
+                                        )
+
+                                        .Distinct()
+                                        .Take(1)
+
+                                        )
+
+                .ExpectedSql("SELECT DISTINCT TOP 1 СтроковоеПоле, ЦелочисленноеПоле FROM Справочник.ТестовыйСправочник ORDER BY ЦелочисленноеПоле DESC")
+
+                .AssertItem<ExpectedTestDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.StringField, actual.StringField);
+                    Assert.AreEqual(expected.IntField, actual.IntegerField);
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.StringField)
+                    .Field(d => d.IntField)
+
+                    .Rows(0)
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
         /// Тестовая типизированная запись с полями имеющие слаботипизированные типы,
         /// такие как <see cref="object"/> и <see cref="OneSValue"/>.
         /// </summary>

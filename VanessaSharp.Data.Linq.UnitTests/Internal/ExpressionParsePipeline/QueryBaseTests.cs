@@ -55,7 +55,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline
         private sealed class TestedQuery<TInput, TOutput> : QueryBase<TInput, TOutput>
         {
             public TestedQuery(ISourceDescription source, Expression<Func<TInput, TOutput>> selector)
-                : base(source, selector, null, Empty.ReadOnly<SortExpression>(), false)
+                : base(source, selector, null, Empty.ReadOnly<SortExpression>(), false, null)
             {}
 
             public ExpressionParseProduct ExpectedExpressionParseProduct 
