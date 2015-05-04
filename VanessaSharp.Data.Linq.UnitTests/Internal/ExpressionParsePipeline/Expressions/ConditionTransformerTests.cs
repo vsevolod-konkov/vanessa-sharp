@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
-using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
@@ -15,51 +14,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 {
     /// <summary>Тестирование <see cref="ConditionTransformer"/>.</summary>
     [TestFixture]
-    public sealed class ConditionTransformerTests
+    public sealed class ConditionTransformerTests : ExpressionTransformerTestsBase
     {
-        private const string FILTER_FIELD = "filter_field";
-        private const string NULLABLE_FIELD = "nullable_field";
-
-        private const string PRICE_FIELD = "price";
-        private const string QUANTITY_FIELD = "quantity";
-        private const string BIRTH_DATE_FIELD = "birthdate";
-        private const string REFERENCE_FIELD = "object";
-
-        private const string REFERENCE_TABLE = "some_table";
-
         private const int FILTER_VALUE = 24;
-
-        private Mock<IOneSMappingProvider> _mappingProviderMock;
-        private QueryParseContext _context;
-
-        /// <summary>
-        /// Инициализация теста.
-        /// </summary>
-        [SetUp]
-        public void SetUp()
-        {
-            _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
-
-            _mappingProviderMock
-                .Setup(p => p.IsDataType(It.IsAny<Type>()))
-                .Returns(false);
-
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("?")
-                    .FieldMap(d => d.Id, FILTER_FIELD)
-                    .FieldMap(d => d.Name, NULLABLE_FIELD)
-                    .FieldMap(d => d.Price, PRICE_FIELD)
-                    .FieldMap(d => d.Quantity, QUANTITY_FIELD)
-                    .FieldMap(d => d.BirthDate, BIRTH_DATE_FIELD)
-                    .FieldMap(d => d.Reference, REFERENCE_FIELD)
-                .End();
-
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<RefData>(REFERENCE_TABLE)
-                .End();
-
-            _context = new QueryParseContext();
-        }
 
         /// <summary>
         /// Запуск тестируемого преобразования.
@@ -67,7 +24,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// <param name="testedFilter">Тестируемое выражение.</param>
         private SqlCondition Transform<T>(Expression<Func<T, bool>> testedFilter)
         {
-            return ConditionTransformer.Transform(_mappingProviderMock.Object, _context, testedFilter);
+            return ConditionTransformer.Transform(MappingProvider, Context, testedFilter);
         }
 
         /// <summary>
@@ -75,31 +32,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// </summary>
         private ReadOnlyCollection<SqlParameter> GetSqlParameters()
         {
-            return _context.Parameters.GetSqlParameters();
-        }
-
-        /// <summary>
-        /// Проверка выражения, на то что оно является литералом с ожидаемым значением.
-        /// </summary>
-        /// <param name="expectedValue">Ожидаемое значение.</param>
-        /// <param name="testedExpression">Проверяемое выражение.</param>
-        private static void AssertLiteral(object expectedValue, SqlExpression testedExpression)
-        {
-            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(testedExpression);
-            Assert.AreEqual(expectedValue, literal.Value);
-        }
-
-        /// <summary>
-        /// Проверка выражения, на то, что оно является выражением доступа к полю таблицы.
-        /// </summary>
-        /// <param name="expectedFieldName">Ожидаемое имя поля.</param>
-        /// <param name="testedExpression">Проверяемое выражение.</param>
-        private static void AssertField(string expectedFieldName, SqlExpression testedExpression)
-        {
-            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(testedExpression);
-            
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
-            Assert.AreEqual(expectedFieldName, field.FieldName);
+            return Context.Parameters.GetSqlParameters();
         }
 
         /// <summary>
@@ -116,7 +49,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Assert.AreEqual(expectedRelationType, binaryCondition.RelationType);
 
-            AssertField(FILTER_FIELD, binaryCondition.FirstOperand);
+            AssertField(ID_FIELD_NAME, binaryCondition.FirstOperand);
             AssertLiteral(FILTER_VALUE, binaryCondition.SecondOperand);
         }
 
@@ -155,7 +88,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenDataRecordEqual()
         {
-            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(FILTER_FIELD) == FILTER_VALUE, SqlBinaryRelationType.Equal);
+            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(ID_FIELD_NAME) == FILTER_VALUE, SqlBinaryRelationType.Equal);
         }
 
         /// <summary>
@@ -165,7 +98,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenDataRecordNotEqual()
         {
-            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(FILTER_FIELD) != FILTER_VALUE, SqlBinaryRelationType.NotEqual);
+            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(ID_FIELD_NAME) != FILTER_VALUE, SqlBinaryRelationType.NotEqual);
         }
 
         /// <summary>
@@ -175,7 +108,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformDataRecordWhenGreater()
         {
-            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(FILTER_FIELD) > FILTER_VALUE, SqlBinaryRelationType.Greater);
+            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(ID_FIELD_NAME) > FILTER_VALUE, SqlBinaryRelationType.Greater);
         }
 
         /// <summary>
@@ -185,7 +118,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenDataRecordGreaterOrEqual()
         {
-            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(FILTER_FIELD) >= FILTER_VALUE, SqlBinaryRelationType.GreaterOrEqual);
+            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(ID_FIELD_NAME) >= FILTER_VALUE, SqlBinaryRelationType.GreaterOrEqual);
         }
 
         /// <summary>
@@ -195,7 +128,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenDataRecordLess()
         {
-            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(FILTER_FIELD) < FILTER_VALUE, SqlBinaryRelationType.Less);
+            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(ID_FIELD_NAME) < FILTER_VALUE, SqlBinaryRelationType.Less);
         }
 
         /// <summary>
@@ -205,7 +138,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenDataRecordLessOrEqual()
         {
-            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(FILTER_FIELD) <= FILTER_VALUE, SqlBinaryRelationType.LessOrEqual);
+            TestTransformWhenDataRecordBinaryRelation(r => r.GetInt32(ID_FIELD_NAME) <= FILTER_VALUE, SqlBinaryRelationType.LessOrEqual);
         }
 
         /// <summary>
@@ -331,7 +264,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var isNullCondition = AssertEx.IsInstanceAndCastOf<SqlIsNullCondition>(result);
             
             Assert.AreEqual(expectedTestIsNull, isNullCondition.IsNull);
-            AssertField(NULLABLE_FIELD, isNullCondition.Expression);
+            AssertField(NAME_FIELD_NAME, isNullCondition.Expression);
         }
 
         /// <summary>
@@ -358,7 +291,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformWhenSubtractOperation()
         {
-            Expression<Func<SomeData, bool>> testedFilter = d => (d.Price - d.Quantity) == d.Id;
+            Expression<Func<SomeData, bool>> testedFilter = d => (d.Value - d.Quantity) == d.Id;
 
             // Act
             var result = Transform(testedFilter);
@@ -370,8 +303,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var first = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationExpression>(binaryRelationCondition.FirstOperand);
             Assert.AreEqual(SqlBinaryArithmeticOperationType.Subtract, first.OperationType);
 
-            AssertField(PRICE_FIELD, first.Left);
-            AssertField(QUANTITY_FIELD, first.Right);
+            AssertField(VALUE_FIELD_NAME, first.Left);
+            AssertField(QUANTITY_FIELD_NAME, first.Right);
         }
 
         /// <summary>
@@ -389,7 +322,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var refsCondition = AssertEx.IsInstanceAndCastOf<SqlRefsCondition>(result);
             
             Assert.AreEqual(REFERENCE_TABLE, refsCondition.DataSourceName);
-            AssertField(REFERENCE_FIELD, refsCondition.Operand);
+            AssertField(REF_FIELD_NAME, refsCondition.Operand);
         }
 
         /// <summary>
@@ -416,7 +349,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             CollectionAssert.AreEqual(expectedValues, actualValues);
 
-            AssertField(FILTER_FIELD, inValuesListCondition.Operand);
+            AssertField(ID_FIELD_NAME, inValuesListCondition.Operand);
         }
 
         /// <summary>
@@ -472,7 +405,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual("pattern", likeCondition.Pattern);
             Assert.AreEqual('_', likeCondition.EscapeSymbol);
 
-            AssertField(NULLABLE_FIELD, likeCondition.Operand);
+            AssertField(NAME_FIELD_NAME, likeCondition.Operand);
         }
 
         /// <summary>
@@ -484,7 +417,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var startDate = new DateTime(2011, 01, 01);
             var endDate = new DateTime(2015, 12, 31);
             
-            Expression<Func<SomeData, bool>> testedFilter = d => OneSSqlFunctions.Between(d.BirthDate, startDate, endDate);
+            Expression<Func<SomeData, bool>> testedFilter = d => OneSSqlFunctions.Between(d.CreatedDate, startDate, endDate);
             testedFilter = PreEvaluator.Evaluate(testedFilter);
 
             var result = Transform(testedFilter);
@@ -493,7 +426,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var betweenCondition = AssertEx.IsInstanceAndCastOf<SqlBetweenCondition>(result);
             Assert.IsTrue(betweenCondition.IsBetween);
             
-            AssertField(BIRTH_DATE_FIELD, betweenCondition.Operand);
+            AssertField(CREATED_DATE_FIELD_NAME, betweenCondition.Operand);
             AssertLiteral(startDate, betweenCondition.Start);
             AssertLiteral(endDate, betweenCondition.End);
         }
@@ -505,7 +438,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Ignore("Есть проблема, связанная с компилятором, который вставляет узел преобразования.")]
         public void TestTransformWhenEqualsDayOfWeek()
         {
-            Expression<Func<SomeData, bool>> testedFilter = d => d.BirthDate.DayOfWeek == DayOfWeek.Wednesday;
+            Expression<Func<SomeData, bool>> testedFilter = d => d.CreatedDate.DayOfWeek == DayOfWeek.Wednesday;
 
             // Act
             var result = Transform(testedFilter);
@@ -518,13 +451,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Assert.AreEqual(SqlEmbeddedFunction.DayWeek, left.Function);
             Assert.AreEqual(1, left.Arguments.Count);
-            
-            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(left.Arguments[0]);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
-            Assert.AreEqual(BIRTH_DATE_FIELD, field.FieldName);
 
-            var right = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(equals.SecondOperand);
-            Assert.AreEqual(3, right.Value);
+            AssertField(CREATED_DATE_FIELD_NAME, left.Arguments[0]);
+            AssertLiteral(3, equals.SecondOperand);
         }
 
         // TODO Надо подумать о желаемом поведении"
@@ -542,7 +471,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Expression<Func<OneSDataRecord, bool>> testedFilter = r => true;
 
             // Act
-            var result = ConditionTransformer.Transform(_mappingProviderMock.Object, context, testedFilter);
+            var result = Transform(testedFilter);
             var parameters = context.Parameters.GetSqlParameters();
 
             // Assert
@@ -559,42 +488,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void TestTransformWhenDataRecordGetBooleanField()
         {
             // Arrange
-            var context = new QueryParseContext();
-
-            Expression<Func<OneSDataRecord, bool>> testedFilter = r => r.GetBoolean(FILTER_FIELD);
+            Expression<Func<OneSDataRecord, bool>> testedFilter = r => r.GetBoolean(ID_FIELD_NAME);
 
             // Act
-            var result = ConditionTransformer.Transform(_mappingProviderMock.Object, context, testedFilter);
-            var parameters = context.Parameters.GetSqlParameters();
+            var result = Transform(testedFilter);
+            var parameters = GetSqlParameters();
 
             // Assert
             // ?
-        }
-
-        /// <summary>
-        /// Тестовый тип записи.
-        /// </summary>
-        public sealed class SomeData
-        {
-            public int Id;
-
-            public string Name;
-
-            public int Price;
-
-            public int Quantity;
-
-            public DateTime BirthDate;
-
-            public object Reference;
-        }
-
-        /// <summary>
-        /// Тестовый тип записи для тестирования ссылки на нее.
-        /// </summary>
-        public sealed class RefData
-        {
-             
         }
     }
 }

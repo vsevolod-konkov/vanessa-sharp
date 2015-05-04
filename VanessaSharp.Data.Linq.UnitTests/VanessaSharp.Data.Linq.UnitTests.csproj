@@ -119,6 +119,7 @@
     </Compile>
     <Compile Include="Internal\CollectionReadExpressionParseProductTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExplicitSourceDescriptionTests.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionTransformerTestsBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformServiceTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilderTests.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\PreEvaluatorTests.cs" />

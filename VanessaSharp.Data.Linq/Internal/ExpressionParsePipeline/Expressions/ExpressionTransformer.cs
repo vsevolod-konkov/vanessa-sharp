@@ -31,19 +31,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Преобразование выражения в SQL-выражение.</summary>
         /// <param name="mappingProvider">Поставщик соответствий типам источников данных 1С.</param>
         /// <param name="context">Контекст разбора.</param>
-        /// <param name="sortKeyExpression">Выражение ключа сортировки.</param>
+        /// <param name="expression">Выражение ключа сортировки.</param>
         public static SqlExpression Transform(
             IOneSMappingProvider mappingProvider,
             QueryParseContext context,
-            LambdaExpression sortKeyExpression)
+            LambdaExpression expression)
         {
             Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
-            Contract.Requires<ArgumentNullException>(sortKeyExpression != null);
-            Contract.Requires<ArgumentException>(sortKeyExpression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
+            Contract.Requires<ArgumentNullException>(expression != null);
+            Contract.Requires<ArgumentException>(expression.Type.GetGenericTypeDefinition() == typeof(Func<,>));
             Contract.Ensures(Contract.Result<SqlExpression>() != null);
 
-            return Transform<Factory>(mappingProvider, context, sortKeyExpression);
+            return Transform<Factory>(mappingProvider, context, expression);
         }
 
         private sealed class Factory : ITransformerFactory

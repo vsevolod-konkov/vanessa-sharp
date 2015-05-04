@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
-using Moq;
 using NUnit.Framework;
-using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
@@ -15,9 +13,23 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
     /// Тестирование <see cref="ExpressionTransformer"/>.
     /// </summary>
     [TestFixture]
-    public sealed class ExpressionTransformerTests
+    public sealed class ExpressionTransformerTests : ExpressionTransformerTestsBase
     {
-        private readonly Mock<IOneSMappingProvider> _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
+        private SqlExpression Transform<T, TResult>(Expression<Func<T, TResult>> testedExpression)
+        {
+            testedExpression = PreEvaluator.Evaluate(testedExpression);
+            return ExpressionTransformer.Transform(MappingProvider, Context, testedExpression);
+        }
+        
+        private SqlExpression Transform<TResult>(Expression<Func<OneSDataRecord, TResult>> testedExpression)
+        {
+            return Transform<OneSDataRecord, TResult>(testedExpression);
+        }
+        
+        private SqlExpression Transform<TResult>(Expression<Func<SomeData, TResult>> testedExpression)
+        {
+            return Transform<SomeData, TResult>(testedExpression);
+        }
         
         /// <summary>
         /// Тестирование <see cref="ExpressionTransformer.Transform"/>
@@ -26,18 +38,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformDataRecordGetInt32()
         {
-            const string FIELD_NAME = "sort_field";
-
             // Arrange
-            Expression<Func<OneSDataRecord, int>> sortKeyExpression = r => r.GetInt32(FIELD_NAME);
+            const string FIELD_NAME = "some_field";
 
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = Transform(r => r.GetInt32(FIELD_NAME));
 
             // Assert
-            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
-            Assert.AreEqual(FIELD_NAME, field.FieldName);
+            AssertField(FIELD_NAME, result);
         }
 
         /// <summary>
@@ -47,22 +55,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransfromTypedRecordField()
         {
-            // Arrange
-            const string FIELD_NAME = "id_field";
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.Id, FIELD_NAME)
-                .End();
-
-            Expression<Func<SomeData, int>> sortKeyExpression = d => d.Id;
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = Transform(d => d.Id);
 
             // Assert
-            var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(field.Table);
-            Assert.AreEqual(FIELD_NAME, field.FieldName);
+            AssertField(ID_FIELD_NAME, result);
         }
 
         /// <summary>
@@ -72,33 +69,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransfromTypedRecordSum()
         {
-            // Arrange
-            const string PRICE_FIELD_NAME = "price";
-            const string VALUE_FIELD_NAME = "value";
-
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
-                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
-                .End();
-
-            Expression<Func<SomeData, double>> sortKeyExpression = d => d.Price + d.Value;
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = Transform(d => d.Quantity + d.Value);
 
             // Assert
             var operation = AssertEx.IsInstanceAndCastOf<SqlBinaryOperationExpression>(result);
             
             Assert.AreEqual(SqlBinaryArithmeticOperationType.Add, operation.OperationType);
-
-            var leftOperand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Left);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(leftOperand.Table);
-            Assert.AreEqual(PRICE_FIELD_NAME, leftOperand.FieldName);
-
-            var rightOperand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Right);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(rightOperand.Table);
-            Assert.AreEqual(VALUE_FIELD_NAME, rightOperand.FieldName);
+            AssertField(QUANTITY_FIELD_NAME, operation.Left);
+            AssertField(VALUE_FIELD_NAME, operation.Right);
         }
 
         /// <summary>
@@ -108,24 +87,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransfromTypedRecordNegate()
         {
-            // Arrange
-            const string VALUE_FIELD_NAME = "value";
-
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.Value, VALUE_FIELD_NAME)
-                .End();
-
-            Expression<Func<SomeData, double>> sortKeyExpression = d => -d.Value;
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = Transform(d => -d.Value);
 
             // Assert
             var operation = AssertEx.IsInstanceAndCastOf<SqlNegateExpression>(result);
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(operation.Operand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(VALUE_FIELD_NAME, operand.FieldName);
+            AssertField(VALUE_FIELD_NAME, operation.Operand);
         }
 
         /// <summary>
@@ -134,26 +101,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         /// </summary>
         private void TestTransfromCast<T>(SqlTypeKind expectedSqlType, Action<SqlTypeDescription> assertType = null)
         {
-            // Arrange
-            const string INFO_FIELD_NAME = "value";
-
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.AddInfo, INFO_FIELD_NAME)
-                .End();
-
-            Expression<Func<SomeData, T>> sortKeyExpression = d => (T)d.AddInfo;
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = Transform(d => (T)d.AddInfo);
 
             // Assert
             var castOperation = AssertEx.IsInstanceAndCastOf<SqlCastExpression>(result);
-
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(castOperation.Operand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(INFO_FIELD_NAME, operand.FieldName);
-
+            AssertField(ADD_INFO_FIELD_NAME, castOperation.Operand);
             Assert.AreEqual(expectedSqlType, castOperation.SqlType.Kind);
 
             if (assertType != null)
@@ -220,12 +173,6 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransfromCastOtherTypedRecord()
         {
-            // Arrange
-            const string ADD_INFO_TABLE_NAME = "add_info";
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<AdditionalInfo>(ADD_INFO_TABLE_NAME)
-                .End();
-
             // Act & Assert
             TestTransfromCast<AdditionalInfo>(
                 SqlTypeKind.Table,
@@ -237,39 +184,17 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 });
         }
 
-        private SqlExpression ArrangeAndActForTestTransfromSqlFunctionsTo<T>(
-            string infoFieldName,
-            Expression<Func<SomeData, T>> sortKeyExpression)
-        {
-            // Arrange
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.AddInfo, infoFieldName)
-                .End();
-
-            sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
-
-            // Act
-            return ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
-        }
-
         private SqlTypeDescription TestTransfromSqlFunctionsTo<T>(
-            Expression<Func<SomeData, T>> sortKeyExpression,
+            Expression<Func<SomeData, T>> testedExpression,
             SqlTypeKind expectedTypeKind)
         {
-            const string INFO_FIELD_NAME = "value";
-
-            // Arrange & Act
-            var result = ArrangeAndActForTestTransfromSqlFunctionsTo(
-                INFO_FIELD_NAME, sortKeyExpression);
+            // Act
+            var result = Transform(testedExpression);
 
             // Assert
             var castOperation = AssertEx.IsInstanceAndCastOf<SqlCastExpression>(result);
 
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(castOperation.Operand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(INFO_FIELD_NAME, operand.FieldName);
-
+            AssertField(ADD_INFO_FIELD_NAME, castOperation.Operand);
             Assert.AreEqual(expectedTypeKind, castOperation.SqlType.Kind);
 
             return castOperation.SqlType;
@@ -343,26 +268,18 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransfromSqlFunctionsToDataRecord()
         {
-            // Arrange
-            const string INFO_FIELD_NAME = "value";
             const string TABLE_NAME = "ref_data";
-            const string NAME_FIELD_NAME = "name";
+            const string FIELD_NAME = "some_field";
 
-            // Arrange & Act
-            var result = ArrangeAndActForTestTransfromSqlFunctionsTo(
-                INFO_FIELD_NAME,
-                d => OneSSqlFunctions.ToDataRecord(d.AddInfo, TABLE_NAME).GetString(NAME_FIELD_NAME));
+            // Act
+            var result = Transform(d => OneSSqlFunctions.ToDataRecord(d.AddInfo, TABLE_NAME).GetString(FIELD_NAME));
 
             // Assert
             var field = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(result);
-            Assert.AreEqual(NAME_FIELD_NAME, field.FieldName);
+            Assert.AreEqual(FIELD_NAME, field.FieldName);
 
             var castOperation = AssertEx.IsInstanceAndCastOf<SqlCastExpression>(field.Table);
-
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(castOperation.Operand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(INFO_FIELD_NAME, operand.FieldName);
-
+            AssertField(ADD_INFO_FIELD_NAME, castOperation.Operand);
             Assert.AreEqual(SqlTypeKind.Table, castOperation.SqlType.Kind);
 
             var tableType = AssertEx.IsInstanceAndCastOf<SqlTableTypeDescription>(castOperation.SqlType);
@@ -375,21 +292,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformSubstring()
         {
-            const string NAME_FIELD_NAME = "name";
             const int LENGTH = 2;
             const int POSITION = 5;
 
-            // Arrange
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
-                .End();
-
-            Expression<Func<SomeData, string>> sortKeyExpression = d => d.Name.Substring(LENGTH, POSITION);
-            sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = Transform(d => d.Name.Substring(LENGTH, POSITION));
 
             // Assert
             var function = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(result);
@@ -397,57 +304,34 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             Assert.AreEqual(SqlEmbeddedFunction.Substring, function.Function);
             Assert.AreEqual(3, function.Arguments.Count);
 
-            var str = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(function.Arguments[0]);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(str.Table);
-            Assert.AreEqual(NAME_FIELD_NAME, str.FieldName);
-
-            var lengthLiteral = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(function.Arguments[1]);
-            Assert.AreEqual(LENGTH, lengthLiteral.Value);
-
-            var positionLiteral = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(function.Arguments[2]);
-            Assert.AreEqual(POSITION, positionLiteral.Value);
+            AssertField(NAME_FIELD_NAME, function.Arguments[0]);
+            AssertLiteral(LENGTH, function.Arguments[1]);
+            AssertLiteral(POSITION, function.Arguments[2]);
         }
 
         private ReadOnlyCollection<SqlExpression> BeginTestTransformCallDateTimeFunction<T>(
-            Expression<Func<SomeData, T>> sortKeyExpression,
+            Expression<Func<SomeData, T>> testedExpression,
             SqlEmbeddedFunction expectedFunction)
         {
-            const string DATE_FIELD_NAME = "birthdate";
-
-            // Arrange
-            _mappingProviderMock
-                .Setup(p => p.IsDataType(It.IsAny<Type>()))
-                .Returns(false);
-
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.BirthDate, DATE_FIELD_NAME)
-                .End();
-
-            sortKeyExpression = PreEvaluator.Evaluate(sortKeyExpression);
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), sortKeyExpression);
+            var result = Transform(testedExpression);
 
             // Assert
             var function = AssertEx.IsInstanceAndCastOf<SqlEmbeddedFunctionExpression>(result);
 
             Assert.AreEqual(expectedFunction, function.Function);
             Assert.Greater(function.Arguments.Count, 0);
-
-            var date = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(function.Arguments[0]);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(date.Table);
-            Assert.AreEqual(DATE_FIELD_NAME, date.FieldName);
+            AssertField(CREATED_DATE_FIELD_NAME, function.Arguments[0]);
 
             return function.Arguments;
         }
 
         private void TestTransformCallDateTimeFunction(
-            Expression<Func<SomeData, int>> sortKeyExpression,
+            Expression<Func<SomeData, int>> testedExpression,
             SqlEmbeddedFunction expectedFunction)
         {
 
-            var args = BeginTestTransformCallDateTimeFunction(sortKeyExpression, expectedFunction);
+            var args = BeginTestTransformCallDateTimeFunction(testedExpression, expectedFunction);
             Assert.AreEqual(1, args.Count);
         }
         
@@ -457,7 +341,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformYear()
         {
-            TestTransformCallDateTimeFunction(d => d.BirthDate.Year, SqlEmbeddedFunction.Year);
+            TestTransformCallDateTimeFunction(d => d.CreatedDate.Year, SqlEmbeddedFunction.Year);
         }
 
         /// <summary>
@@ -466,7 +350,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformGetQuarter()
         {
-            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetQuarter(d.BirthDate), SqlEmbeddedFunction.Quarter);
+            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetQuarter(d.CreatedDate), SqlEmbeddedFunction.Quarter);
         }
 
         /// <summary>
@@ -475,7 +359,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformMonth()
         {
-            TestTransformCallDateTimeFunction(d => d.BirthDate.Month, SqlEmbeddedFunction.Month);
+            TestTransformCallDateTimeFunction(d => d.CreatedDate.Month, SqlEmbeddedFunction.Month);
         }
 
         /// <summary>
@@ -484,7 +368,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformDayOfYear()
         {
-            TestTransformCallDateTimeFunction(d => d.BirthDate.DayOfYear, SqlEmbeddedFunction.DayOfYear);
+            TestTransformCallDateTimeFunction(d => d.CreatedDate.DayOfYear, SqlEmbeddedFunction.DayOfYear);
         }
 
         /// <summary>
@@ -493,7 +377,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformDay()
         {
-            TestTransformCallDateTimeFunction(d => d.BirthDate.Day, SqlEmbeddedFunction.Day);
+            TestTransformCallDateTimeFunction(d => d.CreatedDate.Day, SqlEmbeddedFunction.Day);
         }
 
         /// <summary>
@@ -502,7 +386,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformGetWeek()
         {
-            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetWeek(d.BirthDate), SqlEmbeddedFunction.Week);
+            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetWeek(d.CreatedDate), SqlEmbeddedFunction.Week);
         }
 
         /// <summary>
@@ -511,7 +395,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformGetDayWeek()
         {
-            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetDayWeek(d.BirthDate), SqlEmbeddedFunction.DayWeek);
+            TestTransformCallDateTimeFunction(d => OneSSqlFunctions.GetDayWeek(d.CreatedDate), SqlEmbeddedFunction.DayWeek);
         }
 
         /// <summary>
@@ -520,7 +404,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformHour()
         {
-            TestTransformCallDateTimeFunction(d => d.BirthDate.Hour, SqlEmbeddedFunction.Hour);
+            TestTransformCallDateTimeFunction(d => d.CreatedDate.Hour, SqlEmbeddedFunction.Hour);
         }
 
         /// <summary>
@@ -529,7 +413,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformMinute()
         {
-            TestTransformCallDateTimeFunction(d => d.BirthDate.Minute, SqlEmbeddedFunction.Minute);
+            TestTransformCallDateTimeFunction(d => d.CreatedDate.Minute, SqlEmbeddedFunction.Minute);
         }
 
         /// <summary>
@@ -538,14 +422,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformSecond()
         {
-            TestTransformCallDateTimeFunction(d => d.BirthDate.Second, SqlEmbeddedFunction.Second);
+            TestTransformCallDateTimeFunction(d => d.CreatedDate.Second, SqlEmbeddedFunction.Second);
         }
 
-        private void TestTransformCallPeriodFunction(Expression<Func<SomeData, DateTime>> sortKeyExpression,
+        private void TestTransformCallPeriodFunction(Expression<Func<SomeData, DateTime>> testedExpression,
                                                      SqlEmbeddedFunction expectedFunction,
                                                      OneSTimePeriodKind expectedKind)
         {
-            var args = BeginTestTransformCallDateTimeFunction(sortKeyExpression, expectedFunction);
+            var args = BeginTestTransformCallDateTimeFunction(testedExpression, expectedFunction);
 
             Assert.AreEqual(2, args.Count);
             var periodKind = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(args[1]);
@@ -559,7 +443,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void TestTransformBeginOfPeriod()
         {
             TestTransformCallPeriodFunction(
-                d => OneSSqlFunctions.BeginOfPeriod(d.BirthDate, OneSTimePeriodKind.Quarter),
+                d => OneSSqlFunctions.BeginOfPeriod(d.CreatedDate, OneSTimePeriodKind.Quarter),
                 SqlEmbeddedFunction.BeginOfPeriod,
                 OneSTimePeriodKind.Quarter
                 );
@@ -572,7 +456,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         public void TestTransformEndOfPeriod()
         {
             TestTransformCallPeriodFunction(
-                d => OneSSqlFunctions.EndOfPeriod(d.BirthDate, OneSTimePeriodKind.Month),
+                d => OneSSqlFunctions.EndOfPeriod(d.CreatedDate, OneSTimePeriodKind.Month),
                 SqlEmbeddedFunction.EndOfPeriod,
                 OneSTimePeriodKind.Month
                 );
@@ -584,19 +468,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformCoalesce()
         {
-            const string NAME_FIELD_NAME = "name";
-
-            // Arrange
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
-                .End();
-
-            Expression<Func<SomeData, string>> expression = d => d.Name ?? "Test";
-            expression = PreEvaluator.Evaluate(expression);
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), expression);
+            var result = Transform(d => d.Name ?? "Test");
 
             // Assert
             var caseExpression = AssertEx.IsInstanceAndCastOf<SqlCaseExpression>(result);
@@ -605,15 +478,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             var condition = AssertEx.IsInstanceAndCastOf<SqlIsNullCondition>(caseExpression.Cases[0].Condition);
             Assert.IsTrue(condition.IsNull);
+            AssertField(NAME_FIELD_NAME, condition.Expression);
+            
+            AssertLiteral("Test", caseExpression.Cases[0].Value);
 
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(condition.Expression);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(NAME_FIELD_NAME, operand.FieldName);
-
-            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(caseExpression.Cases[0].Value);
-            Assert.AreEqual("Test", literal.Value);
-
-            Assert.IsTrue(operand.Equals(caseExpression.DefaultValue));
+            Assert.IsTrue(condition.Expression.Equals(caseExpression.DefaultValue));
         }
 
         /// <summary>
@@ -622,21 +491,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformConditional()
         {
-            const string NAME_FIELD_NAME = "name";
-            const string PRICE_FIELD_NAME = "price";
-
-            // Arrange
-            _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("X")
-                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
-                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
-                .End();
-
-            Expression<Func<SomeData, string>> expression = d => d.Price > 20.5 ? d.Name : "Test";
-            expression = PreEvaluator.Evaluate(expression);
-
             // Act
-            var result = ExpressionTransformer.Transform(_mappingProviderMock.Object, new QueryParseContext(), expression);
+            var result = Transform(d => d.Price > 20.5m ? d.Name : "Test");
 
             // Assert
             var caseExpression = AssertEx.IsInstanceAndCastOf<SqlCaseExpression>(result);
@@ -646,41 +502,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             var condition = AssertEx.IsInstanceAndCastOf<SqlBinaryRelationCondition>(caseExpression.Cases[0].Condition);
 
             Assert.AreEqual(SqlBinaryRelationType.Greater, condition.RelationType);
+
+            AssertField(PRICE_FIELD_NAME, condition.FirstOperand);
+            AssertLiteral(20.5m, condition.SecondOperand);
+
+            AssertField(NAME_FIELD_NAME, caseExpression.Cases[0].Value);
             
-            var leftOperand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(condition.FirstOperand);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(leftOperand.Table);
-            Assert.AreEqual(PRICE_FIELD_NAME, leftOperand.FieldName);
-
-            var rightOperand = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(condition.SecondOperand);
-            Assert.AreEqual(20.5, rightOperand.Value);
-
-            var operand = AssertEx.IsInstanceAndCastOf<SqlFieldExpression>(caseExpression.Cases[0].Value);
-            Assert.IsInstanceOf<SqlDefaultTableExpression>(operand.Table);
-            Assert.AreEqual(NAME_FIELD_NAME, operand.FieldName);
-
-            var literal = AssertEx.IsInstanceAndCastOf<SqlLiteralExpression>(caseExpression.DefaultValue);
-            Assert.AreEqual("Test", literal.Value);
+            AssertLiteral("Test", caseExpression.DefaultValue);
         }
-
-        /// <summary>
-        /// Тип тестовой типизированной записи.
-        /// </summary>
-        public sealed class SomeData
-        {
-            public int Id;
-
-            public double Price;
-
-            public double Value;
-
-            public string Name;
-
-            public DateTime BirthDate;
-
-            public object AddInfo;
-        }
-
-        public sealed class AdditionalInfo
-        {}
     }
 }
+
