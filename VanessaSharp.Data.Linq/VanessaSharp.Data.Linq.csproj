@@ -119,9 +119,12 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ColumnExpressionBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformService.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\ISqlObject.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformService.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\SqlObjectBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionToSqlObjectTransformer.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBuildOptions.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlObjectExtensions.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformerBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionTransformMethods.cs" />

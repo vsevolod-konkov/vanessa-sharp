@@ -69,12 +69,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>Генерация SQL-кода.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
             Contract.Requires<ArgumentNullException>(sqlBuilder != null);
 
             var subSqlBuilder = new StringBuilder();
-            Table.BuildSql(subSqlBuilder);
+            Table.AppendSqlTo(subSqlBuilder);
             var tableSql = subSqlBuilder.ToString();
             
             if (!string.IsNullOrWhiteSpace(tableSql))

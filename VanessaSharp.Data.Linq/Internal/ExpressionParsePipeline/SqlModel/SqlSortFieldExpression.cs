@@ -39,7 +39,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <summary>Генерация кода SQL-запроса.</summary>
         public void BuildSql(StringBuilder sqlBuilder)
         {
-            Expression.BuildSql(sqlBuilder);
+            Expression.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
             if (SortKind == SortKind.Descending)
                 sqlBuilder.Append(" DESC");
         }

@@ -46,9 +46,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly string _dataSourceName;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            Operand.BuildSql(sqlBuilder);
+            Operand.AppendSqlTo(sqlBuilder);
             sqlBuilder.Append(" REFS ");
             sqlBuilder.Append(DataSourceName);
         }

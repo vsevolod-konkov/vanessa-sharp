@@ -31,7 +31,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             Contract.Requires<ArgumentNullException>(sqlBuilder != null);
 
             sqlBuilder.Append("WHERE ");
-            Condition.BuildSql(sqlBuilder);
+            Condition.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
         }
     }
 }

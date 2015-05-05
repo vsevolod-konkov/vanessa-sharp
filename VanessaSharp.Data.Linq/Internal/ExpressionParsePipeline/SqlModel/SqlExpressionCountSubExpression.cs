@@ -48,7 +48,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
                 sqlBuilder.Append(" ");
             }
 
-            Expression.BuildSql(sqlBuilder);
+            Expression.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
         }
 
         /// <summary>

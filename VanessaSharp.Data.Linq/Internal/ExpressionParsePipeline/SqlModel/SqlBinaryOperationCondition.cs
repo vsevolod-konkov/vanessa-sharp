@@ -64,11 +64,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly SqlCondition _secondOperand;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            BuildOperandSql(FirstOperand, sqlBuilder);
+            FirstOperand.AppendSqlTo(sqlBuilder);
+
+            sqlBuilder.Append(" ");
             sqlBuilder.Append(GetSqlSymbolForOperation(OperationType));
-            BuildOperandSql(SecondOperand, sqlBuilder);
+            sqlBuilder.Append(" ");
+
+            SecondOperand.AppendSqlTo(sqlBuilder);
         }
 
         /// <summary>
@@ -97,16 +101,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
                    ^ OperationType.GetHashCode()
                    ^ FirstOperand.GetHashCode()
                    ^ SecondOperand.GetHashCode();
-        }
-
-        /// <summary>
-        /// Генерация SQL-кода для операнда операции.
-        /// </summary>
-        private static void BuildOperandSql(SqlCondition operand, StringBuilder sqlBuilder)
-        {
-            sqlBuilder.Append(" ( ");
-            operand.BuildSql(sqlBuilder);
-            sqlBuilder.Append(" ) ");
         }
 
         /// <summary>Получение SQL-символа для бинарной операции.</summary>

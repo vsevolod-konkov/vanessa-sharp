@@ -50,17 +50,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly bool _isNull;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            Expression.BuildSql(sqlBuilder);
+            Expression.AppendSqlTo(sqlBuilder);
 
-            if (IsNull)
+            if (!IsNull)
             {
                 sqlBuilder.Append(" ");
                 sqlBuilder.Append(SqlKeywords.NOT);
             }
 
-            sqlBuilder.Append(" NULL");
+            sqlBuilder.Append(" IS NULL");
         }
 
         /// <summary>

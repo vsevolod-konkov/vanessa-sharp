@@ -66,12 +66,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>Генерация SQL-кода.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
             sqlBuilder.Append(GetAggregateFunctionSql(Function));
             sqlBuilder.Append("(");
 
-            Argument.BuildSql(sqlBuilder);
+            Argument.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
 
             sqlBuilder.Append(")");
         }

@@ -4,10 +4,10 @@ using System.Text;
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
 {
     /// <summary>SQL-предикат.</summary>
-    internal abstract class SqlCondition : IEquatable<SqlCondition>
+    internal abstract class SqlCondition : IEquatable<SqlCondition>, ISqlObject
     {
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public abstract void BuildSql(StringBuilder sqlBuilder);
+        protected abstract void BuildSql(StringBuilder sqlBuilder);
 
         /// <summary>
         /// Указывает, равен ли текущий объект другому объекту того же типа.
@@ -58,5 +58,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// </returns>
         /// <filterpriority>2</filterpriority>
         public abstract override int GetHashCode();
+
+        /// <summary>Построение SQL-строки.</summary>
+        void ISqlObject.BuildSql(StringBuilder sqlBuilder)
+        {
+            BuildSql(sqlBuilder);
+        }
+
+        /// <summary>Имеются ли пробелы в SQL.</summary>
+        bool ISqlObject.HasSpaces
+        {
+            get { return true; }
+        }
     }
 }

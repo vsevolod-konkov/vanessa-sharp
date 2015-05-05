@@ -41,7 +41,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             foreach (var column in Columns)
             {
                 sqlBuilder.Append(separator);
-                column.BuildSql(sqlBuilder);
+                column.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
 
                 separator = COLUMN_SEPARATOR;
             }

@@ -71,11 +71,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>Генерация SQL-кода.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            sqlBuilder.Append("CAST ( ");
+            sqlBuilder.Append("CAST( ");
             
-            Operand.BuildSql(sqlBuilder);
+            Operand.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
 
             sqlBuilder.Append(" AS ");
 

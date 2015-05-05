@@ -213,7 +213,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>Генерация SQL-кода.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
             sqlBuilder.Append(GetSqlForEmbeddedFunction(Function));
             sqlBuilder.Append("(");
@@ -222,7 +222,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             foreach (var argument in Arguments)
             {
                 sqlBuilder.Append(separator);
-                argument.BuildSql(sqlBuilder);
+                argument.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
 
                 separator = ", ";
             }

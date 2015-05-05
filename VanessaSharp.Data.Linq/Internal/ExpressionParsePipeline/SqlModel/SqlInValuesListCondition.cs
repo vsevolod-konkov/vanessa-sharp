@@ -66,9 +66,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly bool _isHierarchy;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            Operand.BuildSql(sqlBuilder);
+            Operand.AppendSqlTo(sqlBuilder);
 
             if (!IsIn)
             {
@@ -88,7 +88,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             foreach (var value in ValuesList)
             {
                 sqlBuilder.Append(separator);
-                value.BuildSql(sqlBuilder);
+                value.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
 
                 separator = ", ";
             }

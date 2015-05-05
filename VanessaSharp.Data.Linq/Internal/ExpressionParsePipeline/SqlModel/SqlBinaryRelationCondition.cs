@@ -44,15 +44,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly SqlBinaryRelationType _relationType;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
             Contract.Requires<ArgumentNullException>(sqlBuilder != null);
 
-            FirstOperand.BuildSql(sqlBuilder);
+            FirstOperand.AppendSqlTo(sqlBuilder);
             sqlBuilder.Append(" ");
             sqlBuilder.Append(GetSqlSymbolForRelation(RelationType));
             sqlBuilder.Append(" ");
-            SecondOperand.BuildSql(sqlBuilder);
+            SecondOperand.AppendSqlTo(sqlBuilder);
         }
 
         /// <summary>

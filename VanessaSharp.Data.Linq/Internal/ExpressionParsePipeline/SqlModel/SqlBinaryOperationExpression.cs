@@ -89,25 +89,21 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>Генерация SQL-кода.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            BuildSqlOperand(Left, sqlBuilder);
+            Left.AppendSqlTo(sqlBuilder);
             
             sqlBuilder.Append(" ");
             sqlBuilder.Append(GetSqlArithmeticOperatorSymbol(OperationType));
             sqlBuilder.Append(" ");
 
-            BuildSqlOperand(Right, sqlBuilder);
+            Right.AppendSqlTo(sqlBuilder);
         }
 
-        /// <summary>
-        /// Построение SQL для операнда.
-        /// </summary>
-        private static void BuildSqlOperand(SqlExpression operand, StringBuilder sqlBuilder)
+        /// <summary>Имеются ли пробелы в SQL.</summary>
+        protected override bool HasSpaces
         {
-            sqlBuilder.Append("( ");
-            operand.BuildSql(sqlBuilder);
-            sqlBuilder.Append(" )");
+            get { return true; }
         }
 
         /// <summary>

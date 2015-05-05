@@ -35,11 +35,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly SqlCondition _condition;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            sqlBuilder.Append("NOT ( ");
-            Condition.BuildSql(sqlBuilder);
-            sqlBuilder.Append(" )");
+            sqlBuilder.Append("NOT ");
+            Condition.AppendSqlTo(sqlBuilder);
         }
 
         /// <summary>

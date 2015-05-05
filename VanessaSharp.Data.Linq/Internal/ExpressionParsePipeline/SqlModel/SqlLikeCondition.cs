@@ -80,9 +80,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly SqlLiteralExpression _escapeSymbol;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            _operand.BuildSql(sqlBuilder);
+            _operand.AppendSqlTo(sqlBuilder);
 
             if (!IsLike)
             {
@@ -91,12 +91,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             }
 
             sqlBuilder.Append(" LIKE ");
-            _pattern.BuildSql(sqlBuilder);
+            _pattern.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
 
             if (_escapeSymbol != null)
             {
                 sqlBuilder.Append(" ESCAPE ");
-                _escapeSymbol.BuildSql(sqlBuilder);
+                _escapeSymbol.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
             }
         }
 

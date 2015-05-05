@@ -52,11 +52,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>Генерация SQL-кода.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            sqlBuilder.Append("-( ");
-            Operand.BuildSql(sqlBuilder);
-            sqlBuilder.Append(" )");
+            sqlBuilder.Append("-");
+            Operand.AppendSqlTo(sqlBuilder);
+        }
+
+        /// <summary>Имеются ли пробелы в SQL.</summary>
+        protected override bool HasSpaces
+        {
+            get { return true; }
         }
     }
 }

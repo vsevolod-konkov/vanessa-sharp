@@ -94,19 +94,25 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         }
 
         /// <summary>Генерация SQL-кода.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
             sqlBuilder.Append("CASE");
 
             foreach (var sqlCase in Cases)
             {
                 sqlBuilder.Append(" WHEN ");
-                sqlCase.Condition.BuildSql(sqlBuilder);
+                sqlCase.Condition.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
                 sqlBuilder.Append(" THEN ");
-                sqlCase.Value.BuildSql(sqlBuilder);
+                sqlCase.Value.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
             }
 
             sqlBuilder.Append(" END");
+        }
+
+        /// <summary>Имеются ли пробелы в SQL.</summary>
+        protected override bool HasSpaces
+        {
+            get { return true; }
         }
     }
 }

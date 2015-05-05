@@ -78,9 +78,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly SqlExpression _end;
 
         /// <summary>Генерация кода SQL-запроса.</summary>
-        public override void BuildSql(StringBuilder sqlBuilder)
+        protected override void BuildSql(StringBuilder sqlBuilder)
         {
-            Operand.BuildSql(sqlBuilder);
+            Operand.AppendSqlTo(sqlBuilder);
             
             if (!IsBetween)
             {
@@ -90,13 +90,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
 
             sqlBuilder.Append(" BETWEEN ");
 
-            Start.BuildSql(sqlBuilder);
+            Start.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
 
             sqlBuilder.Append(" ");
             sqlBuilder.Append(SqlKeywords.AND);
             sqlBuilder.Append(" ");
 
-            End.BuildSql(sqlBuilder);
+            End.AppendSqlTo(sqlBuilder, SqlBuildOptions.IgnoreSpaces);
         }
 
         /// <summary>
