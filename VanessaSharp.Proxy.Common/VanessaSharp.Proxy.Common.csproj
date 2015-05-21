@@ -120,6 +120,7 @@
     <Compile Include="IGlobalContextBoundContract.cs" />
     <Compile Include="IGlobalContextContract.cs" />
     <Compile Include="IGlobalContextService.cs" />
+    <Compile Include="Interop\IV8ComConnector2.cs" />
     <Compile Include="IOneSArrayOfT.cs" />
     <Compile Include="IOneSArray.cs" />
     <Compile Include="IOneSConnector.cs" />
@@ -141,8 +142,10 @@
     <Compile Include="IQueryResultSelection.cs" />
     <Compile Include="ITypeDescription.cs" />
     <Compile Include="IOneSType.cs" />
+    <Compile Include="Interop\IV8ComConnector.cs" />
     <Compile Include="OneSArray.cs" />
     <Compile Include="OneSArrayOfT.cs" />
+    <Compile Include="OneSConnector.cs" />
     <Compile Include="OneSConnectorBase.cs" />
     <Compile Include="OneSConnectorFactory.cs" />
     <Compile Include="OneSContextBoundObject.cs" />
@@ -167,6 +170,7 @@
     <Compile Include="OneSType.cs" />
     <Compile Include="OneSObjectMappingAttribute.cs" />
     <Compile Include="OneSTypeDescription.cs" />
+    <Compile Include="OneSVersion.cs" />
     <Compile Include="OneSWrapFactory.cs" />
     <Compile Include="OneSWrapMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

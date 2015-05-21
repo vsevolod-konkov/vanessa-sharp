@@ -6,9 +6,6 @@ namespace VanessaSharp.Proxy.Common
     /// <summary>Стандартная реализация фабрики соединителей к информационной БД 1С.</summary>
     public sealed class OneSConnectorFactory : IOneSConnectorFactory
     {
-        /// <summary>Версия 8.2</summary>
-        private const string VERSION_8_2 = "8.2";
-
         /// <summary>Фабрика по умолчанию.</summary>
         public static IOneSConnectorFactory Default
         {
@@ -16,36 +13,30 @@ namespace VanessaSharp.Proxy.Common
         }
         private static readonly IOneSConnectorFactory _default = new OneSConnectorFactory();
 
-        /// <summary>Версия 1С по умолчанию.</summary>
-        public static string DefaultVersion
-        {
-            get { return VERSION_8_2; }
-        }
-
         /// <summary>Создание коннектора.</summary>
         /// <param name="creationParams">Параметры-рекомендации создания коннектора.</param>
         /// <returns>Возвращает объект коннектора к информационной БД определенной версии.</returns>
         /// <exception cref="InvalidOperationException">В случае, если фабрика не смогла создать экземпляр коннектора.</exception>
         public IOneSConnector Create(ConnectorCreationParams creationParams)
         {
-            var typeName = GetConnectorTypeName(creationParams);
+            if (creationParams != null)
+            {
+                if (creationParams.Version.HasValue)
+                    return OneSConnector.CreateFromVersion(creationParams.Version.Value);
 
-            try
-            {
-                return CreateByTypeName(typeName);
+                if (creationParams.ConnectorProgId != null)
+                    return OneSConnector.CreateFromProgId(creationParams.ConnectorProgId);
+
+                if (creationParams.TypeName != null)
+                    return CreateByTypeName(creationParams.TypeName);
             }
-            catch (Exception e)
-            {
-                throw new InvalidOperationException(
-                    string.Format(
-                        "Ошибка при создании соединителя типа \"{0}\" к информационной БД 1C. Подробности: {1}",
-                        typeName, e.Message), e);
-            }
+
+            return CreateForAnyVersions();
         }
 
         /// <summary>Создание коннектора по имени типа его реализации.</summary>
         /// <param name="typeName">Имя типа.</param>
-        private IOneSConnector CreateByTypeName(string typeName)
+        private static IOneSConnector CreateByTypeName(string typeName)
         {
             var type = GetTypeByName(typeName);
             var typeIOneSConnector = typeof(IOneSConnector);
@@ -57,39 +48,17 @@ namespace VanessaSharp.Proxy.Common
                     typeName, typeIOneSConnector));
             }
 
-            return (IOneSConnector)Activator.CreateInstance(type);
-        }
-
-        private string GetConnectorTypeName(ConnectorCreationParams creationParams)
-        {
-            string version = null;
-            
-            if (creationParams != null)
+            try
             {
-                var result = creationParams.TypeName;
-                if (result != null)
-                    return result;
-
-                version = creationParams.Version;
+                return (IOneSConnector)Activator.CreateInstance(type);
             }
-
-            if (version == null)
-                version = DefaultVersion;
-
-            var typeName = GetConnectorTypeNameByVersion(version);
-            Contract.Assert(typeName != null);
-
-            return typeName;
-        }
-
-        private string GetConnectorTypeNameByVersion(string version)
-        {
-            if (version == VERSION_8_2)
-                return "VanessaSharp.Proxy.V82.OneSConnector, VanessaSharp.Proxy.V82";
-
-            throw new InvalidOperationException(string.Format(
-                "Для версии \"{0}\" не найден тип реализации коннектора.",
-                version));
+            catch (Exception e)
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                        "Ошибка при создании соединителя типа \"{0}\" к информационной БД 1C. Подробности: {1}",
+                        typeName, e.Message), e);
+            }
         }
 
         /// <summary>Получение типа коннектора.</summary>
@@ -106,6 +75,22 @@ namespace VanessaSharp.Proxy.Common
             }
 
             return result;
+        }
+
+        private static IOneSConnector CreateForAnyVersions()
+        {
+            var versions = Enum.GetValues(typeof(OneSVersion));
+            Array.Reverse(versions);
+
+            foreach (OneSVersion version in versions)
+            {
+                var connector = OneSConnector.TryCreateFromVersion(version);
+                if (connector != null)
+                    return connector;
+            }
+
+            throw new InvalidOperationException(
+                "Невозможно создать экземпляр 1С-соединителя. Не найден co-класс COM-соединителя 1С к информационной базе.");
         }
     }
 }

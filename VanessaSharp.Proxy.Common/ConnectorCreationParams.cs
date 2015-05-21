@@ -8,10 +8,15 @@
         /// <summary>
         /// Рекомендуемая версия коннектора.
         /// </summary>
-        public string Version { get; set; }
+        public OneSVersion? Version { get; set; }
 
         /// <summary>
-        /// Имя рекомендуемый типа реализации коннектора.
+        /// Рекомендуемый ProgId коннектора.
+        /// </summary>
+        public string ConnectorProgId { get; set; }
+
+        /// <summary>
+        /// Имя рекомендуемого типа реализации коннектора.
         /// </summary>
         public string TypeName { get; set; }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace VanessaSharp.Proxy.Common
@@ -92,6 +93,31 @@ namespace VanessaSharp.Proxy.Common
                 throw new InvalidOperationException("Соединитель к 1С вернул null при соединении.");
 
             return new OneSGlobalContext(result);
+        }
+
+        /// <summary>
+        /// Свойства позднего связывания COM-коннектора.
+        /// </summary>
+        /// <param name="propertyName">Имя свойства.</param>
+        public object this[string propertyName]
+        {
+            get
+            {
+                var type = ComConnector.GetType();
+
+                return type.InvokeMember(propertyName,
+                                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty, null,
+                                         ComConnector, null);
+            }
+
+            set
+            {
+                var type = ComConnector.GetType();
+
+                type.InvokeMember(propertyName,
+                                  BindingFlags.Instance | BindingFlags.Public | BindingFlags.PutDispProperty | BindingFlags.IgnoreReturn,
+                                  null, ComConnector, new[] { value });
+            }
         }
 
         /// <summary>Время ожидания подключения.</summary>
