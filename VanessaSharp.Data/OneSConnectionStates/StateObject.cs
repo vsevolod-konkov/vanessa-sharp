@@ -51,6 +51,10 @@ namespace VanessaSharp.Data
             /// <summary>Строка подключения к 1С.</summary>
             public abstract string ConnectionString { get; set; }
 
+            /// <summary>Инициализатор подключения.</summary>
+            /// <remarks>Объект с одноименными свойствами для инициализации коннектора 1С.</remarks>
+            public object Initializer { get; set; }
+
             /// <summary>Время ожидания соединения.</summary>
             public abstract int PoolTimeout { get; set; }
 
@@ -120,6 +124,7 @@ namespace VanessaSharp.Data
                     {
                         ConnectorFactory = ConnectorFactory,
                         ConnectionString = ConnectionString,
+                        Initializer = Initializer,
                         PoolCapacity = PoolCapacity,
                         PoolTimeout = PoolTimeout
                     };

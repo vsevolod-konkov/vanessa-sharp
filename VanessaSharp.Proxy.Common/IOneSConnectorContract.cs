@@ -15,6 +15,9 @@ namespace VanessaSharp.Proxy.Common
             return null;
         }
 
+        void IOneSConnector.Init(object initializer)
+        {}
+
         uint IOneSConnector.PoolTimeout
         {
             get { return 0; }

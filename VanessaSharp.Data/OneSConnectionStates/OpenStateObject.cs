@@ -29,6 +29,7 @@ namespace VanessaSharp.Data
 
                 using (var connector = connectorFactory.Create(creationParams))
                 {
+                    connector.Init(parameters.Initializer);
                     connector.PoolTimeout = (uint)parameters.PoolTimeout;
                     connector.PoolCapacity = (uint)parameters.PoolCapacity;
                     version = connector.Version;

@@ -99,7 +99,7 @@ namespace VanessaSharp.Proxy.Common
         /// Свойства позднего связывания COM-коннектора.
         /// </summary>
         /// <param name="propertyName">Имя свойства.</param>
-        public object this[string propertyName]
+        public virtual object this[string propertyName]
         {
             get
             {
@@ -118,6 +118,38 @@ namespace VanessaSharp.Proxy.Common
                                   BindingFlags.Instance | BindingFlags.Public | BindingFlags.PutDispProperty | BindingFlags.IgnoreReturn,
                                   null, ComConnector, new[] { value });
             }
+        }
+
+        /// <summary>Инициализация свойств коннектора.</summary>
+        /// <param name="initializer">
+        /// Объект с одноименными свойствами коннектора.
+        /// </param>
+        public virtual void Init(object initializer)
+        {
+            if (initializer == null)
+                return;
+
+            var type = initializer.GetType();
+
+            foreach (var propertyInfo in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                SetProperty(
+                    propertyInfo,
+                    propertyInfo.GetValue(initializer, null));
+            }
+
+            foreach (var fieldInfo in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                SetProperty(
+                    fieldInfo,
+                    fieldInfo.GetValue(initializer));
+            }
+        }
+
+        private void SetProperty(MemberInfo memberInfo, object value)
+        {
+            if (value != null)
+                this[memberInfo.Name] = value;
         }
 
         /// <summary>Время ожидания подключения.</summary>

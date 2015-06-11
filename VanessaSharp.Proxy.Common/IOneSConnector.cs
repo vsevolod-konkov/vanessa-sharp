@@ -11,7 +11,13 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="connectString">Строка соединения.</param>
         /// <returns>Возвращает объект глобального контекста.</returns>
         IGlobalContext Connect(string connectString);
-        
+
+        /// <summary>Инициализация свойств коннектора.</summary>
+        /// <param name="initializer">
+        /// Объект с одноименными свойствами коннектора.
+        /// </param>
+        void Init(object initializer);
+
         /// <summary>Время ожидания подключения.</summary>
         uint PoolTimeout { get; set; }
 

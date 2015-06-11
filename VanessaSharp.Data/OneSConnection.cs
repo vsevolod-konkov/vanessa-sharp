@@ -229,6 +229,13 @@ namespace VanessaSharp.Data
             get { return PoolTimeout; }
         }
 
+        /// <summary>Инициализатор соединения.</summary>
+        public object Initializer
+        {
+            get { return _state.Initializer; }
+            set { _state.Initializer = value; }
+        }
+
         /// <summary>Время ожидания соединения.</summary>
         public int PoolTimeout
         {
@@ -305,6 +312,9 @@ namespace VanessaSharp.Data
             
             /// <summary>Строка соединения.</summary>
             public string ConnectionString { get; set; }
+
+            /// <summary>Инициализатор соединения.</summary>
+            public object Initializer { get; set; }
 
             /// <summary>Время ожидания подключения.</summary>
             public int PoolTimeout { get; set; }
