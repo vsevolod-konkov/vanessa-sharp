@@ -103,7 +103,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Moq">
-      <HintPath>..\VanessaSharp.Proxy.V82.Tests\bin\Debug\Moq.dll</HintPath>
+      <HintPath>..\externals\Moq.4.0.10827\NET40\Moq.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\externals\NUnit\framework\nunit.framework.dll</HintPath>
@@ -161,10 +161,6 @@
     <ProjectReference Include="..\VanessaSharp.Proxy.Common\VanessaSharp.Proxy.Common.csproj">
       <Project>{F584A6A1-469D-4755-9BE0-26241F56E452}</Project>
       <Name>VanessaSharp.Proxy.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\VanessaSharp.Proxy.V82\VanessaSharp.Proxy.V82.csproj">
-      <Project>{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}</Project>
-      <Name>VanessaSharp.Proxy.V82</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

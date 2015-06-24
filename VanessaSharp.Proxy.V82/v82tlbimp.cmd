@@ -1,1 +1,0 @@
-tlbimp "C:\Program Files (x86)\1cv82t\8.2.9.356\bin\comcntrt.dll" /namespace: VanessaSharp.Interop.V82 /out: VanessaSharp.Interop.V82.dll

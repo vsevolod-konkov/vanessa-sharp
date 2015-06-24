@@ -75,10 +75,6 @@
       <Project>{F584A6A1-469D-4755-9BE0-26241F56E452}</Project>
       <Name>VanessaSharp.Proxy.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\VanessaSharp.Proxy.V82\VanessaSharp.Proxy.V82.csproj">
-      <Project>{200FB3E2-C92B-43C8-A944-4CD4BE5A233B}</Project>
-      <Name>VanessaSharp.Proxy.V82</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
