@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 
 namespace VanessaSharp.Proxy.Common.Tests.Integration
@@ -34,9 +35,9 @@ namespace VanessaSharp.Proxy.Common.Tests.Integration
         [Ignore("На учебной БД нельзя протестировать многопользовательский режим")]
         public void TestIsExclusiveMode()
         {
-            const string connectionStringFormat = "File=\"{0}\";Usr=\"{1}\"";
+            const string CONNECTION_STRING_FORMAT = "File=\"{0}\";Usr=\"{1}\"";
 
-            var connectString = string.Format(connectionStringFormat, Constants.TestCatalog, Constants.TestUser);
+            var connectString = string.Format(CONNECTION_STRING_FORMAT, Constants.TestCatalog, Constants.TestUser);
 
             using (var globalContext = _connector.Connect(connectString))
             {
@@ -44,7 +45,7 @@ namespace VanessaSharp.Proxy.Common.Tests.Integration
                 globalContext.SetExclusiveMode(true);
                 Assert.IsTrue(globalContext.ExclusiveMode());
 
-                var alternativeConnectString = string.Format(connectionStringFormat, Constants.TestCatalog, Constants.AlternativeTestUser);
+                var alternativeConnectString = string.Format(CONNECTION_STRING_FORMAT, Constants.TestCatalog, Constants.AlternativeTestUser);
                 Assert.Throws<InvalidOperationException>(() =>
                 {
                     using(var globalContext2 = _connector.Connect(alternativeConnectString)) {}
@@ -93,25 +94,54 @@ namespace VanessaSharp.Proxy.Common.Tests.Integration
 
             using (var globalContextProxy = _connector.Connect(connectString))
             {
-                dynamic globalContext = ((IOneSProxy)globalContextProxy).Unwrap();
-                Assert.IsNotNull(globalContext);
-                dynamic byGroups = globalContext.QueryResultIteration.ByGroups;
-                
                 IOneSProxy queryProxy = globalContextProxy.NewObject("Query");
                 dynamic queryCom = queryProxy.Unwrap();
 
                 Assert.IsNotNull(queryCom);
-                var sql = "ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты";
-                queryCom.Text = sql;
+                const string SQL = "ВЫБРАТЬ Справочник.Валюты.Код КАК Код, Справочник.Валюты.Наименование КАК Наименование ИЗ Справочник.Валюты";
+                queryCom.Text = SQL;
                 dynamic result = queryCom.Execute();
-                dynamic selection = result.Choose(byGroups);
-                
-                while ((bool)selection.Next())
+                try
                 {
-                    const string format = "Код \"{0}\"; Наименование \"{1}\"";
-                    object code = selection.Get(0);
-                    object name = selection.Get(1);
-                    Trace.WriteLine(string.Format(format, code, name));
+                    dynamic globalContext = ((IOneSProxy)globalContextProxy).Unwrap();
+                    Assert.IsNotNull(globalContext);
+
+                    dynamic queryResultIteration = globalContext.QueryResultIteration;
+                    try
+                    {
+                        dynamic byGroups = queryResultIteration.ByGroups;
+                        try
+                        {
+                            dynamic selection = result.Choose(byGroups);
+                            try
+                            {
+                                while ((bool)selection.Next())
+                                {
+                                    const string FORMAT = "Код \"{0}\"; Наименование \"{1}\"";
+
+                                    object code = selection.Get(0);
+                                    object name = selection.Get(1);
+                                    Trace.WriteLine(string.Format(FORMAT, code, name));
+                                }
+                            }
+                            finally
+                            {
+                                Marshal.FinalReleaseComObject(selection);
+                            }
+                        }
+                        finally
+                        {
+                            Marshal.FinalReleaseComObject(byGroups);
+                        }
+                    }
+                    finally
+                    {
+                        Marshal.FinalReleaseComObject(queryResultIteration);
+                    }
+                }
+                finally
+                {
+                    Marshal.FinalReleaseComObject(result);
                 }
             }
         }

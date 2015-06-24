@@ -52,6 +52,9 @@ namespace VanessaSharp.AcceptanceTests.Utility.Mocks
                 return new GlobalContextMock(_newObjectDelegate);
             }
 
+            public void Init(object initializer)
+            {}
+
             public uint PoolTimeout { get; set; }
             public uint PoolCapacity { get; set; }
             public string Version { get { return "2.0"; } }

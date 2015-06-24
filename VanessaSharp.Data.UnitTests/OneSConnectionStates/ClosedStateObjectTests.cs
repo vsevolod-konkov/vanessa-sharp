@@ -79,6 +79,9 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
                 .SetupSet(c => c.PoolCapacity = It.IsAny<uint>())
                 .Verifiable();
             connectorMock
+                .Setup(c => c.Init(null))
+                .Verifiable();
+            connectorMock
                 .Setup(c => c.Connect(It.IsAny<string>()))
                 .Returns(globalContext)
                 .Verifiable();
@@ -107,6 +110,7 @@ namespace VanessaSharp.Data.UnitTests.OneSConnectionStates
 
             connectorMock.VerifySet(f => f.PoolTimeout = (uint)TEST_POOL_TIMEOUT, Times.Once());
             connectorMock.VerifySet(f => f.PoolCapacity = (uint)TEST_POOL_CAPACITY, Times.Once());
+            connectorMock.Verify(f => f.Init(null), Times.Once());
             connectorMock.Verify(f => f.Connect(TEST_CONNECTION_STRING), Times.Once());
             connectorMock.VerifyGet(f => f.Version, Times.Once());
             connectorMock.Verify(f => f.Dispose(), Times.Once());

@@ -77,6 +77,8 @@
     <Compile Include="Integration\Constants.cs" />
     <Compile Include="Integration\GlobalContextTests.cs" />
     <Compile Include="OneSConnectorFactoryTests.cs" />
+    <Compile Include="Integration\OneSConnectorIntegrationTests.cs" />
+    <Compile Include="OneSConnectorTests.cs" />
     <Compile Include="OneSEnumMapInfoProviderTests.cs" />
     <Compile Include="OneSEnumMapperTests.cs" />
     <Compile Include="OneSObjectMappingProviderTests.cs" />

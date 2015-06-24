@@ -97,7 +97,7 @@ namespace VanessaSharp.Proxy.Common
         /// RCW-обертка соединителя к информационной БД 1С.
         /// </param>
         /// <param name="version">Строка версии 1С.</param>
-        private OneSConnector(object comConnector, string version)
+        internal OneSConnector(object comConnector, string version)
             : base(comConnector)
         {
             _version = version;
