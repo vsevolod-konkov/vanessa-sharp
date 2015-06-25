@@ -81,6 +81,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     GetColumnAccessExpression(columnExpression, typeof(int)));
             }
 
+            if (columnType == typeof(Guid))
+            {
+                return Expression.Convert(
+                    GetValueExpression(columnExpression), typeof(Guid)
+                    );
+            }
+
             return GetColumnAccessAndConvertExpression(
                 columnExpression,
                 OneSQueryExpressionHelper.GetValueConvertMethod(columnType));

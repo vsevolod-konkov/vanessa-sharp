@@ -487,6 +487,13 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _dataRecordGetDateTimeMethod = GetDataRecordMethod(r => r.GetDateTime(""));
 
+        /// <summary>Метод <see cref="OneSDataRecord.GetGuid(string)"/>.</summary>
+        public static MethodInfo DataRecordGetGuidMethod
+        {
+            get { return _dataRecordGetGuidMethod; }
+        }
+        private static readonly MethodInfo _dataRecordGetGuidMethod = GetDataRecordMethod(r => r.GetGuid(""));
+
         public static MethodInfo DataRecordGetValueMethod
         {
             get {  return _dataRecordGetValueMethod; }

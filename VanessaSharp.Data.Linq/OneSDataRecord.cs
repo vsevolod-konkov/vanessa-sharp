@@ -272,6 +272,28 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Получение значения <see cref="Guid"/> по имени колонки.
+        /// </summary>
+        /// <param name="columnName">Имя колонка.</param>
+        public Guid GetGuid(string columnName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(columnName));
+
+            return (Guid)GetValue(columnName);
+        }
+
+        /// <summary>
+        /// Получение значения <see cref="Guid"/> по индексу.
+        /// </summary>
+        /// <param name="index">Индекс колонки.</param>
+        public Guid GetGuid(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+
+            return (Guid)GetValue(index);
+        }
+
+        /// <summary>
         /// Получение значения по имени колонки.
         /// </summary>
         /// <param name="columnName">Имя колонки.</param>

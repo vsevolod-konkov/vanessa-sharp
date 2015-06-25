@@ -511,5 +511,65 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
 
             .Run();
         }
+
+        /// <summary>
+        /// Тестирование запроса выборки записей данных из словаря с UUID.
+        /// </summary>
+        [Test]
+        public void TestSelectDataRecordUidDictionary()
+        {
+            Test
+                .Query(dataContext =>
+                    
+                    from d in dataContext.GetRecords("Справочник.СправочникUID")
+                    select d.GetGuid("UID")
+                
+                )
+
+                .ExpectedSql("SELECT UID FROM Справочник.СправочникUID")
+
+                .AssertItem<ExpectedUidTestDictionary>((expected, actual) => 
+                    Assert.AreEqual(expected.GuidField, actual))
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.GuidField)
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
+        /// Тестирование запроса выборки записей данных из словаря с UUID.
+        /// </summary>
+        [Test]
+        public void TestSelectTypedRecordUidDictionary()
+        {
+            Test
+                .Query(dataContext =>
+
+                    from d in dataContext.Get<UidTestDictionary>()
+                    select d.UidField
+
+                )
+
+                .ExpectedSql("SELECT UID FROM Справочник.СправочникUID")
+
+                .AssertItem<ExpectedUidTestDictionary>((expected, actual) =>
+                    Assert.AreEqual(expected.GuidField, actual))
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.GuidField)
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
     }
 }

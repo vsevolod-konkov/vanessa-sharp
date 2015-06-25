@@ -136,6 +136,15 @@ namespace VanessaSharp.Data.Linq
             return value.ConvertTo((c, v) => c.ToDateTime(v));
         }
 
+        /// <summary>Приведение к <see cref="Guid"/>.</summary>
+        /// <param name="value">Приводимое значение.</param>
+        public static explicit operator Guid(OneSValue value)
+        {
+            Contract.Requires<ArgumentNullException>(value != null);
+
+            return (Guid)value.RawValue;
+        }
+
         /// <summary>
         /// Является ли объект <c>null</c>.
         /// </summary>

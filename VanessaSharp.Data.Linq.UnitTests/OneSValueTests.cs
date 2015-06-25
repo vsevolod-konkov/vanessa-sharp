@@ -191,5 +191,20 @@ namespace VanessaSharp.Data.Linq.UnitTests
         {
             TestConvertTo(DateTime.Now, c => c.ToDateTime(It.IsAny<object>()), v => (DateTime)v);
         }
+
+        /// <summary>Тестирование конвертации в <see cref="Guid"/>.</summary>
+        [Test]
+        public void TestConvertGuid()
+        {
+            // Arrange
+            var expectedGuid = Guid.NewGuid();
+            var testedInstance = new OneSValue(expectedGuid, _valueConverterMock.Object);
+
+            // Act
+            var actualGuid = (Guid)testedInstance;
+
+            // Assert
+            Assert.AreEqual(expectedGuid, actualGuid);
+        }
     }
 }
