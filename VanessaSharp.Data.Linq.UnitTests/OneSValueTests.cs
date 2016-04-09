@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Moq;
 using NUnit.Framework;
@@ -35,7 +36,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
         private void CreateTestedInstance(object rawValue)
         {
             _rawValue = rawValue;
-            _testedInstance = new OneSValue(rawValue, _valueConverterMock.Object);
+            _testedInstance = OneSValue.Create(rawValue, _valueConverterMock.Object);
         }
 
         /// <summary>
@@ -198,13 +199,30 @@ namespace VanessaSharp.Data.Linq.UnitTests
         {
             // Arrange
             var expectedGuid = Guid.NewGuid();
-            var testedInstance = new OneSValue(expectedGuid, _valueConverterMock.Object);
+            var testedInstance = OneSValue.Create(expectedGuid, _valueConverterMock.Object);
 
             // Act
             var actualGuid = (Guid)testedInstance;
 
             // Assert
             Assert.AreEqual(expectedGuid, actualGuid);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSValue.GetTablePartRecords"/>.
+        /// </summary>
+        [Test]
+        public void TestGetTablePartRecords()
+        {
+            // Arrange
+            var expectedRecords = new Mock<IEnumerable<OneSDataRecord>>(MockBehavior.Strict).Object;
+            var testedInstance = OneSValue.Create(expectedRecords, _valueConverterMock.Object);
+
+            // Act
+            var actualRecords = testedInstance.GetTablePartRecords();
+
+            // Assert
+            Assert.AreSame(expectedRecords, actualRecords);
         }
     }
 }

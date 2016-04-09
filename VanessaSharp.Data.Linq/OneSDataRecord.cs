@@ -402,5 +402,25 @@ namespace VanessaSharp.Data.Linq
             throw new KeyNotFoundException(string.Format(
                 "Колонки с именем \"{0}\" нет в записи.", columnName));
         }
+
+        /// <summary>Получение записей табличной части по индексу.</summary>
+        /// <param name="index">Индекс.</param>
+        public IEnumerable<OneSDataRecord> GetTablePartRecords(int index)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(index >= 0 && index < Fields.Count);
+            Contract.Ensures(Contract.Result<IEnumerable<OneSDataRecord>>() != null);
+
+            return GetValue(index).GetTablePartRecords();
+        }
+
+        /// <summary>Получение записей табличной части по имени.</summary>
+        /// <param name="tablePartName">Имя табличной части.</param>
+        public IEnumerable<OneSDataRecord> GetTablePartRecords(string tablePartName)
+        {
+            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(tablePartName));
+            Contract.Ensures(Contract.Result<IEnumerable<OneSDataRecord>>() != null);
+
+            return GetValue(tablePartName).GetTablePartRecords();
+        }
     }
 }

@@ -68,7 +68,7 @@ namespace VanessaSharp.Data.Linq.Internal
                 return new OneSDataRecord(
                     _fieldNames, 
                     new ReadOnlyCollection<OneSValue>(
-                        buffer.Select(o => new OneSValue(o, _valueConverter)).ToArray()));
+                        buffer.Select(v => OneSValue.Create(v, _valueConverter)).ToArray()));
             }
         }
     }

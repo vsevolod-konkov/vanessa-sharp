@@ -162,11 +162,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             // Обход узла
             var handledNode = Visit(node);
 
+            var isTablePart = _expressionBuilder.IsTablePart;
+            _expressionBuilder.ClearIsTablePart();
+
             return new HandledNodeInfo(
                 _columnExpressionBuilder,
                 handledNode,
                 node.Type,
-                _hasSql ? _expressionBuilder.PeekExpression() : null);
+                _hasSql ? _expressionBuilder.PeekExpression() : null,
+                isTablePart);
         }
 
         /// <summary>
@@ -466,11 +470,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// <remarks>Может быть <c>null</c>, если выражение нельзя построить.</remarks>
             private readonly SqlObjectBuilder.ISqlExpressionProvider _sqlExpressionProvider;
 
+            private readonly bool _isTablePart;
+
             public HandledNodeInfo(
                 ColumnExpressionBuilderWrapper columnExpressionBuilder,
                 Expression handledNode,
                 Type type,
-                SqlObjectBuilder.ISqlExpressionProvider sqlExpressionProvider)
+                SqlObjectBuilder.ISqlExpressionProvider sqlExpressionProvider,
+                bool isTablePart)
             {
                 Contract.Requires<ArgumentNullException>(columnExpressionBuilder != null);
                 Contract.Requires<ArgumentNullException>(handledNode != null);
@@ -480,6 +487,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 _handledNode = handledNode;
                 _type = type;
                 _sqlExpressionProvider = sqlExpressionProvider;
+                _isTablePart = isTablePart;
             }
 
             public bool HasSql { get { return _sqlExpressionProvider != null; } }
@@ -489,8 +497,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             /// </summary>
             private Expression GetColumnAccessExpression()
             {
-                return _columnExpressionBuilder.GetColumnAccessExpression(
-                    _sqlExpressionProvider.GetExpression(), _type);
+                return _isTablePart
+                           ? _columnExpressionBuilder.GetTablePartColumnAccessExpression(_sqlExpressionProvider.GetExpression())
+                           : _columnExpressionBuilder.GetColumnAccessExpression(_sqlExpressionProvider.GetExpression(), _type);
             }
 
             /// <summary>
@@ -534,7 +543,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 Contract.Requires<ArgumentNullException>(type != null);
                 Contract.Ensures(Contract.Result<Expression>() != null);
 
-                if (type == typeof (OneSDataRecord))
+                if (type == typeof(OneSDataRecord))
                 {
                     throw new InvalidOperationException(
                         "Недопустимо использовать запись данных в качестве члена в выходной структуре. Можно использовать в выражении запись только для доступа к ее полям.");
@@ -543,6 +552,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return _mappingProvider.IsDataType(type)
                     ? _typedRecordParseProductBuilder.GetReaderExpression(column, _columnExpressionBuilder, type)
                     : _columnExpressionBuilder.GetColumnAccessExpression(column, type);
+            }
+
+            public Expression GetTablePartColumnAccessExpression(SqlExpression column)
+            {
+                Contract.Requires<ArgumentNullException>(column != null);
+                Contract.Ensures(Contract.Result<Expression>() != null);
+
+                return _columnExpressionBuilder
+                    .GetTablePartColumnAccessExpression(column, OneSDataRecordReaderFactory.Default);
             }
 
             /// <summary>Вычитываемые колонки.</summary>

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using VanessaSharp.Data.Linq.Internal;
 
 namespace VanessaSharp.Data.Linq
 {
@@ -9,22 +11,44 @@ namespace VanessaSharp.Data.Linq
     [Serializable]
     public sealed class OneSValue
     {
-        /// <summary>Сырое значение из 1С.</summary>
-        private readonly object _rawValue;
+        /// <summary>Создание экземпляра значения.</summary>
+        /// <param name="rawValue">Сырое значение получаемое из 1С.</param>
+        /// <param name="valueConverter">Конвертер значений.</param>
+        internal static OneSValue Create(object rawValue, IValueConverter valueConverter)
+        {
+            Contract.Requires<ArgumentNullException>(valueConverter != null);
+            Contract.Ensures(Contract.Result<OneSValue>() != null);
 
-        /// <summary>Конвертер значений.</summary>
-        private readonly IValueConverter _valueConverter;
+            return new OneSValue(TransformRawValue(rawValue), valueConverter);
+        }
 
+        /// <summary>Преобразование сырого значения.</summary>
+        private static object TransformRawValue(object rawValue)
+        {
+            var sqlResultReader = rawValue as ISqlResultReader;
+            
+            return (sqlResultReader == null)
+                ? rawValue
+                : new ItemEnumerable<OneSDataRecord>(sqlResultReader, OneSDataRecordReaderFactory.Default);
+        }
+        
         /// <summary>Конструктор.</summary>
         /// <param name="rawValue">Сырое значение получаемое из 1С.</param>
         /// <param name="valueConverter">Конвертер значений.</param>
-        internal OneSValue(object rawValue, IValueConverter valueConverter)
+        private OneSValue(object rawValue, IValueConverter valueConverter)
         {
             Contract.Requires<ArgumentNullException>(valueConverter != null);
 
             _rawValue = rawValue;
             _valueConverter = valueConverter;
         }
+
+        /// <summary>Конвертер значений.</summary>
+        internal IValueConverter ValueConverter
+        {
+            get { return _valueConverter; }
+        }
+        private readonly IValueConverter _valueConverter;
 
         /// <summary>Конвертация значения к типу <typeparamref name="T"/>.</summary>
         /// <typeparam name="T">Тип к которому конвертируется значение.</typeparam>
@@ -159,6 +183,26 @@ namespace VanessaSharp.Data.Linq
         public object RawValue
         {
             get { return _rawValue; }
+        }
+        private readonly object _rawValue;
+
+        /// <summary>
+        /// Получение записей табличной части.
+        /// </summary>
+        public IEnumerable<OneSDataRecord> GetTablePartRecords()
+        {
+            Contract.Ensures(Contract.Result<IEnumerable<OneSDataRecord>>() != null);
+
+            try
+            {
+                return (IEnumerable<OneSDataRecord>)RawValue;
+            }
+            catch (InvalidCastException e)
+            {
+                throw new InvalidOperationException(
+                    string.Format("Значение \"{0}\" не является записями табличной части.", RawValue), 
+                    e);
+            }
         }
 
         /// <summary>

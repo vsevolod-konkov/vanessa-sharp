@@ -494,11 +494,19 @@ namespace VanessaSharp.Data.Linq
         }
         private static readonly MethodInfo _dataRecordGetGuidMethod = GetDataRecordMethod(r => r.GetGuid(""));
 
+        /// <summary>Метод <see cref="OneSDataRecord.GetValue(string)"/>.</summary>
         public static MethodInfo DataRecordGetValueMethod
         {
             get {  return _dataRecordGetValueMethod; }
         }
         private static readonly MethodInfo _dataRecordGetValueMethod = GetDataRecordMethod(r => r.GetValue(""));
+
+        /// <summary>Метод <see cref="OneSDataRecord.GetTablePartRecords(string)"/>.</summary>
+        public static MethodInfo DataRecordGetTablePartRecords
+        {
+            get { return _dataRecordGetTablePartRecords; }
+        }
+        private static readonly MethodInfo _dataRecordGetTablePartRecords = GetDataRecordMethod(r => r.GetTablePartRecords(""));
 
         #endregion
 
@@ -661,19 +669,18 @@ namespace VanessaSharp.Data.Linq
 
         #region Конструктор OneSValue
 
-        /// <summary>Конструктор <see cref="OneSValue"/>.</summary>
-        public static ConstructorInfo OneSValueConstructor
+        /// <summary>Метод <see cref="OneSValue.Create"/>.</summary>
+        public static MethodInfo OneSValueCreateMethod
         {
-            get { return _oneSValueConstructor; }
+            get { return _oneSValueCreateMethod; }
         }
+        private static readonly MethodInfo _oneSValueCreateMethod = GetOneSValueCreateMethod();
 
-        private static readonly ConstructorInfo _oneSValueConstructor = GetOneSValueConstructor();
-
-        private static ConstructorInfo GetOneSValueConstructor()
+        private static MethodInfo GetOneSValueCreateMethod()
         {
-            Expression<Func<OneSValue>> lambda = () => new OneSValue(null, null);
+            Expression<Func<OneSValue>> lambda = () => OneSValue.Create(null, null);
 
-            return ((NewExpression)lambda.Body).Constructor;
+            return ((MethodCallExpression)lambda.Body).Method;
         }
 
         #endregion

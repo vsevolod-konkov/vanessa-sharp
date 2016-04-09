@@ -20,7 +20,7 @@ namespace VanessaSharp.Data.Linq.UnitTests
 
         private OneSValue _(object value)
         {
-            return new OneSValue(value, _valueConverter);
+            return OneSValue.Create(value, _valueConverter);
         }
 
         /// <summary>Создание записи.</summary>

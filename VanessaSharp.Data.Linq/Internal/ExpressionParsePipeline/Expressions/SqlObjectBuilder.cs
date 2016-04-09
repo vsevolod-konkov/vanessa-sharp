@@ -31,7 +31,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 OneSQueryExpressionHelper.DataRecordGetDateTimeMethod,
                 OneSQueryExpressionHelper.DataRecordGetBooleanMethod,
                 OneSQueryExpressionHelper.DataRecordGetGuidMethod,
-                OneSQueryExpressionHelper.DataRecordGetValueMethod
+                OneSQueryExpressionHelper.DataRecordGetValueMethod,
+                
             };
             
 
@@ -49,6 +50,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// Стековая машина.
         /// </summary>
         private readonly StackEngine _stackEngine;
+
+        public bool IsTablePart { get; private set; }
+
+        public void ClearIsTablePart()
+        {
+            IsTablePart = false;
+        }
 
         /// <summary>
         /// Конструктор.
@@ -112,6 +120,15 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 var fieldName = _stackEngine.PopValue<string>();
                 _stackEngine.Field(fieldName);
                 
+                return true;
+            }
+
+            if (node.Method == OneSQueryExpressionHelper.DataRecordGetTablePartRecords)
+            {
+                var fieldName = _stackEngine.PopValue<string>();
+                _stackEngine.Field(fieldName);
+                IsTablePart = true;
+
                 return true;
             }
 

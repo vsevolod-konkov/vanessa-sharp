@@ -423,6 +423,109 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         }
 
         /// <summary>
+        /// Тестирование выборки записей табличной части.
+        /// </summary>
+        [Test]
+        public void TestSelectTablePartRecords()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.GetRecords("Справочник.СправочникСТабличнойЧастью") 
+                       select new { Name = r.GetString("Наименование"), TablePartRecords = r.GetTablePartRecords("Состав")}
+                )
+
+                .ExpectedSql("SELECT Наименование, Состав FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+
+                    var index = 0;
+                    foreach (var actualRecord in actual.TablePartRecords)
+                    {
+                        Assert.Less(index, expected.Composition.Length);
+                        var expectedRecord = expected.Composition[index++];
+
+                        Assert.AreEqual(expectedRecord.Name, actualRecord.GetString("Наименование"));
+                        Assert.AreEqual(expectedRecord.Price, actualRecord.GetDecimal("Цена"));
+                        Assert.AreEqual(expectedRecord.Quantity, actualRecord.GetInt32("Количество"));
+                    }
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+
+                    .BeginTablePartField(d => d.Composition)
+                        
+                        .Field(d => d.Name)
+                        .Field(d => d.Price)
+                        .Field(d => d.Quantity)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
+        /// Тестирование выборки полей записей табличной части.
+        /// </summary>
+        [Test]
+        public void TestSelectFieldTablePartRecords()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.GetRecords("Справочник.СправочникСТабличнойЧастью")
+                       select new
+                           {
+                               Name = r.GetString("Наименование"), 
+                               TablePartRecords = from r2 in r.GetTablePartRecords("Состав")
+                                                  select new { Name = r2.GetString("Наименование"), Price = r2.GetDecimal("Цена") }
+                           }
+                )
+
+                .ExpectedSql("SELECT Наименование, Состав.(Наименование, Цена) FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+
+                    var index = 0;
+                    foreach (var actualRecord in actual.TablePartRecords)
+                    {
+                        Assert.Less(index, expected.Composition.Length);
+                        var expectedRecord = expected.Composition[index++];
+
+                        Assert.AreEqual(expectedRecord.Name, actualRecord.Name);
+                        Assert.AreEqual(expectedRecord.Price, actualRecord.Price);
+                    }
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+
+                    .BeginTablePartField(d => d.Composition)
+
+                        .Field(d => d.Name)
+                        .Field(d => d.Price)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
         /// Тестовая типизированная запись с полями имеющие слаботипизированные типы,
         /// такие как <see cref="object"/> и <see cref="OneSValue"/>.
         /// </summary>

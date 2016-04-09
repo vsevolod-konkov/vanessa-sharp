@@ -82,15 +82,63 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             if (columnType == typeof(Guid))
-            {
-                return Expression.Convert(
-                    GetValueExpression(columnExpression), typeof(Guid)
-                    );
-            }
+                return GetSimpleConvertExpression(columnExpression, columnType);
+
+            //if (columnType == typeof(IEnumerable<OneSDataRecord>))
+            //{
+            //    var sqlResultReaderType = typeof(ISqlResultReader);
+
+            //    return Expression.Convert(
+            //            Expression.New(
+            //                typeof(ItemEnumerable<OneSDataRecord>).GetConstructor(new[] { sqlResultReaderType, typeof(IItemReaderFactory<OneSDataRecord>) }),
+            //                GetSimpleConvertExpression(columnExpression, sqlResultReaderType),
+            //                Expression.Constant(OneSDataRecordReaderFactory.Default, typeof(IItemReaderFactory<OneSDataRecord>))),
+            //            columnType);
+            //}
 
             return GetColumnAccessAndConvertExpression(
                 columnExpression,
                 OneSQueryExpressionHelper.GetValueConvertMethod(columnType));
+        }
+
+        public Expression GetTablePartColumnAccessExpression(
+            SqlExpression tablePartExpression, Type itemType, object itemReaderFactory)
+        {
+            Contract.Requires<ArgumentNullException>(tablePartExpression != null);
+            Contract.Requires<ArgumentNullException>(itemType != null);
+            Contract.Requires<ArgumentNullException>(itemReaderFactory != null);
+            Contract.Requires<ArgumentException>(
+                typeof(IItemReaderFactory<>).MakeGenericType(itemType).IsAssignableFrom(itemReaderFactory.GetType()));
+            Contract.Ensures(Contract.Result<Expression>() != null);
+
+            var sqlResultReaderType = typeof(ISqlResultReader);
+            var enumerableType = typeof(ItemEnumerable<>).MakeGenericType(itemType);
+            var itemReaderFactoryType = typeof(IItemReaderFactory<>).MakeGenericType(itemType);
+
+            return Expression.New(
+                enumerableType.GetConstructor(new[] {sqlResultReaderType, itemReaderFactoryType}),
+                GetSimpleConvertExpression(tablePartExpression, sqlResultReaderType),
+                Expression.Constant(itemReaderFactory, itemReaderFactoryType));
+        }
+
+        public Expression GetTablePartColumnAccessExpression<TItem>(
+            SqlExpression tablePartExpression, IItemReaderFactory<TItem> itemReaderFactory)
+        {
+            Contract.Requires<ArgumentNullException>(tablePartExpression != null);
+            Contract.Requires<ArgumentNullException>(itemReaderFactory != null);
+            Contract.Ensures(Contract.Result<Expression>() != null);
+
+            return GetTablePartColumnAccessExpression(tablePartExpression, typeof(TItem), itemReaderFactory);
+        }
+
+        /// <summary>Получение выражения простой конвертации значения.</summary>
+        /// <param name="columnExpression">SQL-выражение.</param>
+        /// <param name="columnType">Тип колонки.</param>
+        private Expression GetSimpleConvertExpression(SqlExpression columnExpression, Type columnType)
+        {
+            return Expression.Convert(
+                    GetValueExpression(columnExpression), columnType
+                    );
         }
 
         /// <summary>
@@ -112,8 +160,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="columnExpression">Выражение колонки.</param>
         private Expression GetColumnAccessAndOneSValueExpression(SqlExpression columnExpression)
         {
-            return Expression.New(
-                OneSQueryExpressionHelper.OneSValueConstructor,
+            return Expression.Call(
+                null,
+                OneSQueryExpressionHelper.OneSValueCreateMethod,
                 GetValueExpression(columnExpression),
                 ConverterParameter);
         }

@@ -56,6 +56,14 @@
         public void GetValues(object[] buffer)
         {
             _dataReader.GetValues(buffer);
+
+            for (var index = 0; index < buffer.Length; index++)
+            {
+                var dataReader = buffer[index] as OneSDataReader;
+
+                if (dataReader != null)
+                    buffer[index] = new SqlResultReader(dataReader);
+            }
         }
     }
 }

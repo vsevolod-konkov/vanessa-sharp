@@ -135,6 +135,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformerTestsBase.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ConditionTransformerTests.cs" />
     <Compile Include="Internal\ItemEnumeratorTests.cs" />
+    <Compile Include="Internal\ItemEnumerableTests.cs" />
     <Compile Include="Internal\OneSMappingProviderTests.cs" />
     <Compile Include="OneSDataContextTests.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactoryTests.cs" />

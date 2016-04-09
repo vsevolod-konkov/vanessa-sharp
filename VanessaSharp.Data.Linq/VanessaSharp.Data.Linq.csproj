@@ -124,6 +124,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\SqlObjectBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ExpressionToSqlObjectTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlBuildOptions.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlFieldsGroupExpression.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\SqlObjectExtensions.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\TypedRecordParseProductBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\ExpressionTransformerBase.cs" />
@@ -209,6 +210,7 @@
     <Compile Include="Internal\ISqlCommandExecuter.cs" />
     <Compile Include="Internal\ISqlResultReader.cs" />
     <Compile Include="Internal\ItemEnumerator.cs" />
+    <Compile Include="Internal\ItemEnumerable.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactory.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionVisitor.cs" />
     <Compile Include="Internal\OneSFieldMapping.cs" />
@@ -235,6 +237,7 @@
     <Compile Include="OneSQueryMethods.cs" />
     <Compile Include="OneSQueryProvider.cs" />
     <Compile Include="OneSSqlFunctions.cs" />
+    <Compile Include="OneSTablePartAttribute.cs" />
     <Compile Include="OneSTimePeriodKind.cs" />
     <Compile Include="OneSTypeMapperBuilder.cs" />
     <Compile Include="OneSValue.cs" />
