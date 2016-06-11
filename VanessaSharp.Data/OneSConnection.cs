@@ -78,6 +78,12 @@ namespace VanessaSharp.Data
             : this((IOneSConnectorFactory)null, connectorCreationParams)
         { }
 
+        /// <summary>Конструктор принимающий только номер версии 1С.</summary>
+        /// <param name="oneSVersion">Версия 1С, к платформе которой надо подключиться.</param>
+        public OneSConnection(OneSVersion oneSVersion)
+            : this(new ConnectorCreationParams {Version = oneSVersion})
+        { }
+
         /// <summary>Конструктор без аргументов.</summary>
         public OneSConnection()
             : this((ConnectorCreationParams)null)
