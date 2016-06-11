@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>VanessaSharp</id>
-        <version>0.3.0</version>
+        <version>0.3.1</version>
         <title>Vanessa Sharp - .Net Data Access to 1C</title>
         <authors>Vsevolod Konkov</authors>
         <owners>Vsevolod Konkov</owners>
@@ -12,7 +12,7 @@
         <developmentDependency>true</developmentDependency>
         <description>Vanessa Sharp - .Net library for data access to 1C:Enterprise. Supports standard software interfaces for data access. Vanessa Sharp contains 1C ADO.Net Provider and LinqTo1C (LINQ Provider).</description>
         <summary>Vanessa Sharp - .Net library for data access to 1C:Enterprise. Supports standard software interfaces for data access. Vanessa Sharp contains 1C ADO.Net Provider and LinqTo1C (LINQ Provider).</summary>
-        <copyright>Copyright 2015</copyright>
+        <copyright>Copyright 2016</copyright>
         <tags>1С ADO.Net LINQ</tags>
         <frameworkAssemblies>
             <frameworkAssembly assemblyName="System" targetFramework="" />
@@ -28,10 +28,8 @@
         </references>
     </metadata>
     <files>
-        <file src="build\VanessaSharp.targets" target="build\VanessaSharp.targets" />
         <file src="lib\VanessaSharp.Data.dll" target="lib\VanessaSharp.Data.dll" />
         <file src="lib\VanessaSharp.Data.Linq.dll" target="lib\VanessaSharp.Data.Linq.dll" />
         <file src="lib\VanessaSharp.Proxy.Common.dll" target="lib\VanessaSharp.Proxy.Common.dll" />
-        <file src="lib\VanessaSharp.Proxy.V82.dll" target="lib\VanessaSharp.Proxy.V82.dll" />
     </files>
 </package>
