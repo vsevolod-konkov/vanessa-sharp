@@ -84,18 +84,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             if (columnType == typeof(Guid))
                 return GetSimpleConvertExpression(columnExpression, columnType);
 
-            //if (columnType == typeof(IEnumerable<OneSDataRecord>))
-            //{
-            //    var sqlResultReaderType = typeof(ISqlResultReader);
-
-            //    return Expression.Convert(
-            //            Expression.New(
-            //                typeof(ItemEnumerable<OneSDataRecord>).GetConstructor(new[] { sqlResultReaderType, typeof(IItemReaderFactory<OneSDataRecord>) }),
-            //                GetSimpleConvertExpression(columnExpression, sqlResultReaderType),
-            //                Expression.Constant(OneSDataRecordReaderFactory.Default, typeof(IItemReaderFactory<OneSDataRecord>))),
-            //            columnType);
-            //}
-
             return GetColumnAccessAndConvertExpression(
                 columnExpression,
                 OneSQueryExpressionHelper.GetValueConvertMethod(columnType));
@@ -119,6 +107,20 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 enumerableType.GetConstructor(new[] {sqlResultReaderType, itemReaderFactoryType}),
                 GetSimpleConvertExpression(tablePartExpression, sqlResultReaderType),
                 Expression.Constant(itemReaderFactory, itemReaderFactoryType));
+        }
+
+        public Expression GetTablePartColumnAccessExpression<TItem>(
+            SqlExpression tablePartExpression, SelectionPartParseProduct<TItem> selectionPartParseProduct)
+        {
+            Contract.Requires<ArgumentNullException>(tablePartExpression != null);
+            Contract.Requires<ArgumentNullException>(selectionPartParseProduct != null);
+            Contract.Ensures(Contract.Result<Expression>() != null);
+
+            var fieldsGroupExpression = new SqlFieldsGroupExpression(tablePartExpression,
+                                                                        selectionPartParseProduct.Columns);
+            var itemReaderFactory = new NoSideEffectItemReaderFactory<TItem>(selectionPartParseProduct.SelectionFunc);
+
+            return GetTablePartColumnAccessExpression(fieldsGroupExpression, itemReaderFactory);
         }
 
         public Expression GetTablePartColumnAccessExpression<TItem>(

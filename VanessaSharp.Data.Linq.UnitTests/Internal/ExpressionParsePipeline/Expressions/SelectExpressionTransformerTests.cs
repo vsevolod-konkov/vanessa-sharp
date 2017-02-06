@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using Moq;
 using NUnit.Framework;
+using VanessaSharp.Data.Linq.Internal;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
@@ -371,6 +374,74 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                     .Field(0, i => i.HasOverDraft, c => c.ToBoolean(null), true)
                     .Field(1, i => i.Value, c => c.ToInt32(null), 45)
                 .Test();
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выборки нескольких столбцов из табличной части.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectTablePartWithSelectFewFields()
+        {
+            // Arrange
+            var valueConverterMock = new Mock<IValueConverter>(MockBehavior.Strict);
+
+            valueConverterMock
+                .Setup(c => c.ToInt32(It.IsAny<object>()))
+                .Returns<object>(o => (int)o);
+            valueConverterMock
+                .Setup(c => c.ToString(It.IsAny<object>()))
+                .Returns<object>(o => (string)o);
+
+            var sqlResultReaderMock = new Mock<ISqlResultReader>(MockBehavior.Strict);
+
+            sqlResultReaderMock
+                .Setup(r => r.Dispose());
+
+            sqlResultReaderMock
+                .Setup(r => r.Read())
+                .Returns(true);
+
+            sqlResultReaderMock
+                .Setup(r => r.FieldCount)
+                .Returns(2);
+
+            sqlResultReaderMock
+                .Setup(r => r.ValueConverter)
+                .Returns(valueConverterMock.Object);
+
+            const int expectedId = 1;
+            const string expectedName = "Test";
+
+            sqlResultReaderMock
+                .Setup(r => r.GetValues(It.IsAny<object[]>()))
+                .Callback<object[]>(b =>
+                {
+                    b[0] = expectedId;
+                    b[1] = expectedName;
+                });
+            
+            // Act
+            var result =
+                Transform(
+                    r =>
+                    r.GetTablePartRecords("TablePart")
+                     .Select(p => new {Id = p.GetInt32("Id"), Name = p.GetString("Name")}));
+
+            // Assert
+            Assert.AreEqual(1, result.Columns.Count);
+
+            var fieldsGroup = AssertEx.IsInstanceAndCastOf<SqlFieldsGroupExpression>(result.Columns[0]);
+
+            AssertField("TablePart", fieldsGroup.Table);
+
+            Assert.AreEqual(2, fieldsGroup.Fields.Count);
+            AssertFields(fieldsGroup.Fields, "Id", "Name");
+
+            var items = result.SelectionFunc(valueConverterMock.Object, new object[] {sqlResultReaderMock.Object});
+            var item = items.First();
+
+            Assert.AreEqual(expectedId, item.Id);
+            Assert.AreEqual(expectedName, item.Name);
         }
     }
 }

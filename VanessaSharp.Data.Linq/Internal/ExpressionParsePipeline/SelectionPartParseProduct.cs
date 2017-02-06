@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
+using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
@@ -9,7 +11,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
     /// Часть результата парсинга выражения,
     /// отвечающая за выборку полей.
     /// </summary>
-    internal sealed class SelectionPartParseProduct<T>
+    internal sealed class SelectionPartParseProduct<T> : ISelectionPartParseProduct
     {
         /// <summary>Конструктор.</summary>
         /// <param name="columns">Коллекция полей.</param>
@@ -37,5 +39,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline
             get { return _selectionFunc; }
         }
         private readonly Func<IValueConverter, object[], T> _selectionFunc;
+
+
+        Expression ISelectionPartParseProduct.GetTablePartColumnAccessExpression(SqlExpression tablePartExpression, ColumnExpressionBuilder builder)
+        {
+            return builder.GetTablePartColumnAccessExpression(tablePartExpression, this);
+        }
     }
 }

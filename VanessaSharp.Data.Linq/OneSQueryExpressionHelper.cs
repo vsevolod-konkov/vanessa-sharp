@@ -406,6 +406,15 @@ namespace VanessaSharp.Data.Linq
                    && method.GetParameters().Length == 2;
         }
 
+        public static bool IsEnumerableSelectMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return method.DeclaringType == typeof(Enumerable)
+                   && method.Name == "Select"
+                   && method.GetParameters().Length == 2;
+        }
+
         #endregion
 
         #region Методы OneSDataRecord

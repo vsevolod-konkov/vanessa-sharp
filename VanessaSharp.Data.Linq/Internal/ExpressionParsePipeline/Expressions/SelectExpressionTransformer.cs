@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
@@ -16,6 +17,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>
         private SelectExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression, IOneSMappingProvider mappingProvider)
         {
+            _mappingProvider = mappingProvider;
+            _queryParseContext = context;
             _expressionBuilder = new SqlObjectBuilder(context, recordExpression, mappingProvider);
             _columnExpressionBuilder = new ColumnExpressionBuilderWrapper(mappingProvider);
         }
@@ -38,6 +41,38 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 
                 .TransformLambdaBody<TOutput>(expression.Body);
         }
+
+        /// <summary>Преобразование LINQ-выражения метода Select.</summary>
+        /// <param name="mappingProvider">Поставщик соответствий типов источникам данных 1С.</param>
+        /// <param name="context">Контекст разбора запроса.</param>
+        /// <param name="expression">Преобразуемое выражение.</param>
+        private static ISelectionPartParseProduct Transform(IOneSMappingProvider mappingProvider, QueryParseContext context, LambdaExpression expression)
+        {
+            Contract.Requires<ArgumentNullException>(mappingProvider != null);
+            Contract.Requires<ArgumentNullException>(context != null);
+            Contract.Requires<ArgumentNullException>(expression != null);
+            Contract.Requires<ArgumentException>(expression.Parameters.Count == 1);
+            Contract.Requires<ArgumentException>(expression.ReturnType != typeof(void));
+
+            Contract.Ensures(Contract.Result<ISelectionPartParseProduct>() != null);
+
+            var method = typeof (SelectExpressionTransformer).GetMethod("Transform",
+                                                                        BindingFlags.Static | BindingFlags.Public);
+            Contract.Assert(method != null);
+            Contract.Assert(method.IsGenericMethodDefinition);
+
+            var inputType = expression.Parameters[0].Type;
+            var outputType = expression.ReturnType;
+
+            var genericMethod = method.MakeGenericMethod(new[] {inputType, outputType });
+
+            return (ISelectionPartParseProduct)
+                genericMethod.Invoke(null, new object[] {mappingProvider, context, expression});
+        }
+
+        private readonly IOneSMappingProvider _mappingProvider;
+
+        private readonly QueryParseContext _queryParseContext;
 
         /// <summary>Построитель SQL-выражений.</summary>
         private readonly SqlObjectBuilder _expressionBuilder;
@@ -101,7 +136,30 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             if (node.Object != null)
                 obj = HandleNode(node.Object);
 
-            var args = node.Arguments.Select(HandleNode).ToArray();
+            HandledNodeInfo[] args;
+
+            if (OneSQueryExpressionHelper.IsEnumerableSelectMethod(node.Method))
+            {
+                // Linq-запрос
+                var source = HandleNode(node.Arguments[0]);
+                
+                if (source.IsTablePart)
+                {
+                    var selectExpression = (LambdaExpression)node.Arguments[1];
+                    var selectionParseProduct = Transform(_mappingProvider, _queryParseContext, selectExpression);
+
+                    _hasSql = false;
+                    return source.GetTablePartTransformedNode(selectionParseProduct);
+                }
+                else
+                {
+                    args = new[] {source, HandleNode(node.Arguments[1])};
+                }
+            }
+            else
+            {
+                args = node.Arguments.Select(HandleNode).ToArray();    
+            }
 
             if(_expressionBuilder.HandleMethodCall(node))
             {
@@ -491,6 +549,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
 
             public bool HasSql { get { return _sqlExpressionProvider != null; } }
+
+            public bool IsTablePart { get { return _isTablePart; } }
             
             /// <summary>
             /// Получение преобразованного выражения, считвыающего данные из колонки запроса.
@@ -509,6 +569,17 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             public Expression GetTransformedNode()
             {
                 return HasSql ? GetColumnAccessExpression() : _handledNode;
+            }
+
+            public Expression GetTablePartTransformedNode(ISelectionPartParseProduct selectionPartParseProduct)
+            {
+                Contract.Requires<ArgumentNullException>(selectionPartParseProduct != null);
+                Contract.Requires<InvalidOperationException>(IsTablePart);
+                Contract.Ensures(Contract.Result<Expression>() != null);
+
+                return _columnExpressionBuilder.GetTablePartColumnAccessExpression(
+                    _sqlExpressionProvider.GetExpression(),
+                    selectionPartParseProduct);
             }
         }
 
@@ -561,6 +632,16 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
                 return _columnExpressionBuilder
                     .GetTablePartColumnAccessExpression(column, OneSDataRecordReaderFactory.Default);
+            }
+
+            public Expression GetTablePartColumnAccessExpression(SqlExpression column, ISelectionPartParseProduct selectionPartParseProduct)
+            {
+                Contract.Requires<ArgumentNullException>(column != null);
+                Contract.Requires<ArgumentNullException>(selectionPartParseProduct != null);
+                Contract.Ensures(Contract.Result<Expression>() != null);
+
+                return selectionPartParseProduct
+                    .GetTablePartColumnAccessExpression(column, _columnExpressionBuilder);
             }
 
             /// <summary>Вычитываемые колонки.</summary>

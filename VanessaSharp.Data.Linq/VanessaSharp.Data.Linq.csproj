@@ -119,6 +119,7 @@
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\ColumnExpressionBuilder.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformer.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\IQueryTransformService.cs" />
+    <Compile Include="Internal\ExpressionParsePipeline\ISelectionPartParseProduct.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\SqlModel\ISqlObject.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\QueryTransformService.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Expressions\SqlObjectBuilder.cs" />

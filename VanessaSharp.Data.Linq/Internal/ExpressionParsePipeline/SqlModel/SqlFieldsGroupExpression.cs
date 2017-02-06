@@ -15,13 +15,13 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         /// <summary>Конструктор.</summary>
         /// <param name="table">Выражение таблицы.</param>
         /// <param name="fields">Список имен полей в группе.</param>
-        public SqlFieldsGroupExpression(SqlExpression table, ICollection<string> fields)
+        public SqlFieldsGroupExpression(SqlExpression table, ICollection<SqlExpression> fields)
         {
             Contract.Requires<ArgumentNullException>(table != null);
             Contract.Requires<ArgumentNullException>(fields != null && fields.Count > 0);
             
             _table = table;
-            _fields = new ReadOnlyCollection<string>(fields.ToArray());
+            _fields = new ReadOnlyCollection<SqlExpression>(fields.ToArray());
         }
 
         /// <summary>Выражение таблицы.</summary>
@@ -32,11 +32,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
         private readonly SqlExpression _table;
 
         /// <summary>Список имен полей в группе.</summary>
-        public ReadOnlyCollection<string> Fields
+        public ReadOnlyCollection<SqlExpression> Fields
         {
             get { return _fields; }
         }
-        private readonly ReadOnlyCollection<string> _fields;
+        private readonly ReadOnlyCollection<SqlExpression> _fields;
 
         /// <summary>
         /// Указывает, равен ли текущий объект другому объекту того же типа.
@@ -52,7 +52,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
             return !ReferenceEquals(otherGroup, null)
                    && Table.Equals(otherGroup.Table)
                    && Fields.Count == otherGroup.Fields.Count
-                   && Enumerable.Range(0, Fields.Count).All(i => Fields[i] == otherGroup.Fields[i]);
+                   && Enumerable.Range(0, Fields.Count).All(i => Fields[i].Equals(otherGroup.Fields[i]));
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
 
             if (Fields.Count == 1)
             {
-                sqlBuilder.Append(Fields.Single());    
+                Fields.Single().AppendSqlTo(sqlBuilder);
             }
             else
             {
@@ -96,7 +96,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel
                 foreach (var field in Fields)
                 {
                     sqlBuilder.Append(separator);
-                    sqlBuilder.Append(field);
+                    field.AppendSqlTo(sqlBuilder);
 
                     separator = ", ";
                 }
