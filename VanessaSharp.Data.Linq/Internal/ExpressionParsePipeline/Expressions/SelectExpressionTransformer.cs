@@ -136,30 +136,19 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             if (node.Object != null)
                 obj = HandleNode(node.Object);
 
-            HandledNodeInfo[] args;
+            // Обработка дочерних узлов зависит от метода и его аргументов,
+            var args = new HandledNodeInfo[node.Arguments.Count];
+            
+            // Проведем обработку специальных методов
+            Expression result;
+            int handledArgsCount;
+            if (HandleCallSpecialMethod(node, args, out result, out handledArgsCount))
+                return result;
 
-            if (OneSQueryExpressionHelper.IsEnumerableSelectMethod(node.Method))
-            {
-                // Linq-запрос
-                var source = HandleNode(node.Arguments[0]);
-                
-                if (source.IsTablePart)
-                {
-                    var selectExpression = (LambdaExpression)node.Arguments[1];
-                    var selectionParseProduct = Transform(_mappingProvider, _queryParseContext, selectExpression);
+            // Дообработаем оставшиеся узлы
+            for (var argIndex = handledArgsCount; argIndex < node.Arguments.Count; argIndex++)
+                args[argIndex] = HandleNode(node.Arguments[argIndex]);
 
-                    _hasSql = false;
-                    return source.GetTablePartTransformedNode(selectionParseProduct);
-                }
-                else
-                {
-                    args = new[] {source, HandleNode(node.Arguments[1])};
-                }
-            }
-            else
-            {
-                args = node.Arguments.Select(HandleNode).ToArray();    
-            }
 
             if(_expressionBuilder.HandleMethodCall(node))
             {
@@ -170,6 +159,69 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             return node.Update(
                 obj == null ? null: obj.GetTransformedNode(),
                 args.Select(a => a.GetTransformedNode()));
+        }
+
+        /// <summary>Обработка специальных методов в выражении.</summary>
+        /// <param name="node">Узел вызова метода.</param>
+        /// <param name="handledArgs">Список обработанных узлов аргументов. Размер должен быть равен количеству аргументов.</param>
+        /// <param name="result">Результрующие выражение.</param>
+        /// <param name="handledArgsCount">Количество обработанных аргументов.</param>
+        /// <returns>
+        /// Возвращает <c>true</c>, если результирующее выражение было получено.
+        /// </returns>
+        private bool HandleCallSpecialMethod(MethodCallExpression node, IList<HandledNodeInfo> handledArgs,
+                                             out Expression result, out int handledArgsCount)
+        {
+            handledArgsCount = 0;
+
+            if (OneSQueryExpressionHelper.IsEnumerableMethod(node.Method) && node.Arguments.Count > 0)
+            {
+                // Специальная обработка Linq-запросов
+                var source = HandleNode(node.Arguments[handledArgsCount]);
+                handledArgs[handledArgsCount++] = source;
+
+                if (source.IsTablePart)
+                {
+                    result = TransformLinqTablePartExpression(source, node.Method, node.Arguments.Skip(handledArgsCount));
+                    return true;
+                }
+            }
+
+            result = null;
+            return false;
+        }
+
+        /// <summary>Преобразование LINQ-запроса к табличной части.</summary>
+        /// <param name="tablePartNode">Обработанный узел табличной части.</param>
+        /// <param name="linqMethod">LINQ-метод.</param>
+        /// <param name="args">Аргументы LINQ-метода.</param>
+        private Expression TransformLinqTablePartExpression(
+            HandledNodeInfo tablePartNode, MethodInfo linqMethod, IEnumerable<Expression> args)
+        {
+            // Преобразование в SQL-запрос поддерживается только для Select-выражение
+            if (OneSQueryExpressionHelper.IsEnumerableSelectMethod(linqMethod))
+            {
+                return TransformSelectFromTablePartExpression(
+                    tablePartNode, (LambdaExpression)args.Single());
+            }
+
+            throw new NotSupportedException(string.Format(
+                "Не поддерживается вызов linq-метода \"{0}\" для табличной части \"{1}\". Аргументы: \"{2}\".",
+                linqMethod,
+                tablePartNode,
+                args.Select(a => a.ToString()).Aggregate("[", (r, a) => r + ", " + a, r => r + "]")));
+        }
+
+        /// <summary>Преобразование выражения выборки из табличной части.</summary>
+        /// <param name="tablePartNode">Обработанный узел табличной части.</param>
+        /// <param name="selectExpression">Выражение выборки.</param>
+        private Expression TransformSelectFromTablePartExpression(
+            HandledNodeInfo tablePartNode, LambdaExpression selectExpression)
+        {
+            var selectionParseProduct = Transform(_mappingProvider, _queryParseContext, selectExpression);
+
+            _hasSql = false;
+            return tablePartNode.GetTablePartTransformedNode(selectionParseProduct);
         }
 
         /// <summary>
@@ -580,6 +632,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return _columnExpressionBuilder.GetTablePartColumnAccessExpression(
                     _sqlExpressionProvider.GetExpression(),
                     selectionPartParseProduct);
+            }
+
+            public override string ToString()
+            {
+                return _handledNode.ToString();
             }
         }
 

@@ -395,22 +395,37 @@ namespace VanessaSharp.Data.Linq
         #region Методы Enumerable
 
         /// <summary>
+        /// Является ли linq-методом <see cref="Enumerable" />.
+        /// </summary>
+        public static bool IsEnumerableMethod(MethodInfo method)
+        {
+            Contract.Requires<ArgumentNullException>(method != null);
+
+            return method.DeclaringType == typeof(Enumerable)
+                   && method.IsPublic
+                   && method.IsStatic;
+        }
+
+        /// <summary>
         /// Является ли методом <see cref="Enumerable.Contains{TSource}(System.Collections.Generic.IEnumerable{TSource},TSource)"/>
         /// </summary>
         public static bool IsEnumerableContainsMethod(MethodInfo method)
         {
             Contract.Requires<ArgumentNullException>(method != null);
 
-            return method.DeclaringType == typeof(Enumerable)
+            return IsEnumerableMethod(method)
                    && method.Name == "Contains"
                    && method.GetParameters().Length == 2;
         }
 
+        /// <summary>
+        /// Является ли методом <see cref="Enumerable.Select{TSource,TResult}(System.Collections.Generic.IEnumerable{TSource},System.Func{TSource,TResult})"/>
+        /// </summary>
         public static bool IsEnumerableSelectMethod(MethodInfo method)
         {
             Contract.Requires<ArgumentNullException>(method != null);
 
-            return method.DeclaringType == typeof(Enumerable)
+            return IsEnumerableMethod(method)
                    && method.Name == "Select"
                    && method.GetParameters().Length == 2;
         }
