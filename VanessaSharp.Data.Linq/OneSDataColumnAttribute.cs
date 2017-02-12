@@ -11,9 +11,11 @@ namespace VanessaSharp.Data.Linq
     {
         /// <summary>Конструктор принимающий имя колонки источника данных 1С.</summary>
         /// <param name="columnName">Имя колонки источника данных 1С.</param>
-        public OneSDataColumnAttribute(string columnName)
+        /// <param name="kind">Вид колонки источника данных 1С.</param>
+        public OneSDataColumnAttribute(string columnName, OneSDataColumnKind kind = OneSDataColumnKind.Default)
         {
             _columnName = columnName;
+            _kind = kind;
         }
 
         /// <summary>Имя колонки источника данных 1С.</summary>
@@ -22,5 +24,12 @@ namespace VanessaSharp.Data.Linq
             get { return _columnName; }
         }
         private readonly string _columnName;
+
+        /// <summary>Вид колонки источника данных 1С.</summary>
+        public OneSDataColumnKind Kind
+        {
+            get { return _kind; }
+        }
+        private readonly OneSDataColumnKind _kind;
     }
 }

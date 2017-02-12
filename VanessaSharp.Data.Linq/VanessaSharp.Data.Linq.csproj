@@ -230,6 +230,7 @@
     <Compile Include="OneSCatalogDataContext.cs" />
     <Compile Include="OneSDataColumnAttribute.cs" />
     <Compile Include="OneSDataContext.cs" />
+    <Compile Include="OneSDataColumnKind.cs" />
     <Compile Include="OneSDataRecord.cs" />
     <Compile Include="OneSDataSourceAttribute.cs" />
     <Compile Include="OneSQueryable.cs" />

@@ -526,6 +526,58 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         }
 
         /// <summary>
+        /// Тестирование выборки объекта с табличной частью.
+        /// </summary>
+        [Test]
+        public void TestSelectTypeWithTablePart()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.Get<WithTablePartDictionary>()
+                       select r
+                )
+
+                .ExpectedSql("SELECT Наименование, Сумма, Состав.(Наименование, Цена, Количество) FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+                    Assert.AreEqual(expected.Summa, actual.Summa);
+
+                    var index = 0;
+                    foreach (var actualRecord in actual.Composite)
+                    {
+                        Assert.Less(index, expected.Composition.Length);
+                        var expectedRecord = expected.Composition[index++];
+
+                        Assert.AreEqual(expectedRecord.Name, actualRecord.Name);
+                        Assert.AreEqual(expectedRecord.Price, actualRecord.Price);
+                        Assert.AreEqual(expectedRecord.Quantity, actualRecord.Quantity);
+                    }
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+                    .Field(d => d.Summa)
+
+                    .BeginTablePartField(d => d.Composition)
+
+                        .Field(d => d.Name)
+                        .Field(d => d.Price)
+                        .Field(d => d.Quantity)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
         /// Тестовая типизированная запись с полями имеющие слаботипизированные типы,
         /// такие как <see cref="object"/> и <see cref="OneSValue"/>.
         /// </summary>
