@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
 
 namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
@@ -25,7 +26,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <typeparam name="T">Тип записи.</typeparam>
         public string GetTypedRecordSourceName<T>()
         {
-            return _mappingProvider.GetTypeMapping(typeof(T)).SourceName;
+            return _mappingProvider.GetRootTypeMapping(typeof(T)).SourceName;
         }
 
         /// <summary>Преобразование получения типизированных записей.</summary>
@@ -35,7 +36,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             var columnBuilder = new ColumnExpressionBuilder();
 
             var readerLambda = Expression.Lambda<Func<IValueConverter, object[], T>>(
-                GetReaderExpression(SqlDefaultTableExpression.Instance, columnBuilder, typeof(T)), 
+                GetRootReaderExpression(SqlDefaultTableExpression.Instance, columnBuilder, typeof(T)), 
                 columnBuilder.ConverterParameter, 
                 columnBuilder.ValuesParameter);
 
@@ -44,16 +45,32 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 readerLambda.Compile());
         }
 
+        private ISelectionPartParseProduct GetSelectPartParseProductForTypedRecord(Type type, OneSDataLevel level)
+        {
+            _mappingProvider.CheckDataType(level, type);
+
+            var delegateType = typeof(Func<,,>).MakeGenericType(typeof(IValueConverter), typeof(object[]), type);
+
+            var columnBuilder = new ColumnExpressionBuilder();
+
+            var readerLambda = Expression.Lambda(
+                delegateType,
+                GetReaderExpression(SqlDefaultTableExpression.Instance, columnBuilder, type, level),
+                columnBuilder.ConverterParameter,
+                columnBuilder.ValuesParameter);
+
+            var resultType = typeof(SelectionPartParseProduct<>).MakeGenericType(type);
+
+            return (ISelectionPartParseProduct)Activator.CreateInstance(resultType, columnBuilder.Columns, readerLambda.Compile());
+        }
+
         /// <summary>
         /// Получение выражения читателя объекта данных.
         /// </summary>
         /// <param name="table">Выражение определяющее таблицу.</param>
         /// <param name="columnBuilder">Построитель выражений доступа к колонкам читателя данных.</param>
         /// <param name="dataObjectType">Тип объекта данных.</param>
-        public Expression GetReaderExpression(
-            SqlExpression table,
-            ColumnExpressionBuilder columnBuilder,
-            Type dataObjectType)
+        public Expression GetRootReaderExpression(SqlExpression table, ColumnExpressionBuilder columnBuilder, Type dataObjectType)
         {
             Contract.Requires<ArgumentNullException>(table != null);
             Contract.Requires<ArgumentNullException>(columnBuilder != null);
@@ -64,11 +81,26 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 table,
                 columnBuilder,
                 dataObjectType,
-                _mappingProvider.GetTypeMapping(dataObjectType).FieldMappings);
+                OneSDataLevel.Root);
         }
 
+        private IEnumerable<OneSFieldMapping> GetFieldMappings(OneSDataLevel level, Type dataObjectType)
+        {
+            return (level == OneSDataLevel.Root)
+                       ? _mappingProvider.GetRootTypeMapping(dataObjectType).FieldMappings
+                       : _mappingProvider.GetTablePartTypeMappings(dataObjectType);
+        }
 
-        private static Expression GetReaderExpression(
+        private Expression GetReaderExpression(
+            SqlExpression table,
+            ColumnExpressionBuilder columnBuilder,
+            Type type,
+            OneSDataLevel level)
+        {
+            return GetReaderExpression(table, columnBuilder, type, GetFieldMappings(level, type));
+        }
+
+        private Expression GetReaderExpression(
             SqlExpression table,
             ColumnExpressionBuilder columnBuilder,
             Type type,
@@ -81,18 +113,43 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                     .ToArray());
         }
 
-        private static MemberBinding GetMemberBinding(
+        private MemberBinding GetMemberBinding(
             SqlExpression table,
             ColumnExpressionBuilder columnBuilder,
             OneSFieldMapping fieldMapping)
         {
-            var fieldExpression = new SqlFieldExpression(table, fieldMapping.FieldName);
-            
+            var field = new SqlFieldExpression(table, fieldMapping.FieldName);
+            var columnExpression = GetColumnAccessExpression(
+                field, fieldMapping.MemberInfo, fieldMapping.DataColumnKind, columnBuilder);
+
             return Expression.Bind(
-                fieldMapping.MemberInfo,
-                columnBuilder.GetColumnAccessExpression(
-                    fieldExpression,
-                    fieldMapping.MemberInfo.GetMemberType()));
+                    fieldMapping.MemberInfo,
+                    columnExpression);    
+        }
+
+        private Expression GetColumnAccessExpression(
+            SqlFieldExpression field, MemberInfo memberInfo, OneSDataColumnKind kind, ColumnExpressionBuilder columnBuilder)
+        {
+            if (kind == OneSDataColumnKind.TablePart)
+            {
+                var memberType = memberInfo.GetMemberType();
+                Type itemType;
+                if (!OneSQueryExpressionHelper.IsEnumerable(memberType, out itemType))
+                {
+                    throw new NotSupportedException(string.Format(
+                        "{0} является членом вида табличной части. Для данного вида тип {1} не поддерживается. Поддерживается только обобщенный тип {2}",
+                        memberInfo, memberType, typeof(IEnumerable<>)));
+                }
+
+                var parseProduct = GetSelectPartParseProductForTypedRecord(itemType, OneSDataLevel.TablePart);
+                return parseProduct.GetTablePartColumnAccessExpression(field, columnBuilder);
+            }
+            else
+            {
+                return columnBuilder.GetColumnAccessExpression(
+                        field,
+                        memberInfo.GetMemberType());
+            }
         }
     }
 }

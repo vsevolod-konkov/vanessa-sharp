@@ -212,6 +212,7 @@
     <Compile Include="Internal\ISqlResultReader.cs" />
     <Compile Include="Internal\ItemEnumerator.cs" />
     <Compile Include="Internal\ItemEnumerable.cs" />
+    <Compile Include="Internal\OneSDataLevel.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactory.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionVisitor.cs" />
     <Compile Include="Internal\OneSFieldMapping.cs" />

@@ -270,10 +270,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 }
             }
 
-            if (_mappingProvider.IsDataType(node.Expression.Type))
+            if (_mappingProvider.IsDataType(OneSDataLevel.Root, node.Expression.Type))
             {
                 var fieldName = _mappingProvider
-                    .GetTypeMapping(node.Expression.Type)
+                    .GetRootTypeMapping(node.Expression.Type)
                     .GetFieldNameByMemberInfo(node.Member);
 
                 if (fieldName != null)
@@ -462,9 +462,9 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return true;
             }
 
-            if (_mappingProvider.IsDataType(type))
+            if (_mappingProvider.IsDataType(OneSDataLevel.Root, type))
             {
-                var mapping = _mappingProvider.GetTypeMapping(type);
+                var mapping = _mappingProvider.GetRootTypeMapping(type);
                 result = SqlTypeDescription.Table(mapping.SourceName);
                 return true;
             }
@@ -489,7 +489,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             if (node.NodeType == ExpressionType.TypeIs)
             {
                 var dataSourceName = _mappingProvider
-                    .GetTypeMapping(node.TypeOperand)
+                    .GetRootTypeMapping(node.TypeOperand)
                     .SourceName;
 
                 _stackEngine.Refs(dataSourceName);

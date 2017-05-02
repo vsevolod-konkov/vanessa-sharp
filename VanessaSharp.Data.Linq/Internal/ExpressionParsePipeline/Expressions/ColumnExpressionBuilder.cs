@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.SqlModel;
@@ -41,21 +43,6 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private readonly ParameterExpression _valuesParameter = Expression.Parameter(typeof(object[]), "values");
 
         /// <summary>
-        /// Получение выражения получения значения колонки, которое является полем записи.
-        /// </summary>
-        /// <param name="fieldName">Имя поля.</param>
-        /// <param name="columnType">Тип, который требуется для колонки.</param>
-        public Expression GetColumnAccessExpression(string fieldName, Type columnType)
-        {
-            Contract.Requires<ArgumentNullException>(!string.IsNullOrWhiteSpace(fieldName));
-            Contract.Requires<ArgumentNullException>(columnType != null);
-
-            return GetColumnAccessExpression(
-                new SqlFieldExpression(SqlDefaultTableExpression.Instance, fieldName),
-                columnType);
-        }
-
-        /// <summary>
         /// Получение выражения получения значения колонки записи.
         /// </summary>
         /// <param name="columnExpression">Выражение колонки.</param>
@@ -64,6 +51,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             Contract.Requires<ArgumentNullException>(columnExpression != null);
             Contract.Requires<ArgumentNullException>(columnType != null);
+            Contract.Ensures(Contract.Result<Expression>() != null);
 
             if (columnType.IsAssignableFrom(typeof(OneSValue)))
             {

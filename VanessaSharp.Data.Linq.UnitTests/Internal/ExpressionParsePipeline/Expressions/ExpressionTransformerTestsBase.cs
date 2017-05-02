@@ -42,11 +42,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
 
             _mappingProviderMock
-                .Setup(p => p.IsDataType(It.IsAny<Type>()))
+                .Setup(p => p.IsDataType(OneSDataLevel.Root, It.IsAny<Type>()))
                 .Returns(false);
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("?")
                     .FieldMap(d => d.Id, ID_FIELD_NAME)
                     .FieldMap(d => d.Name, NAME_FIELD_NAME)
                     .FieldMap(d => d.Price, PRICE_FIELD_NAME)
@@ -58,17 +58,17 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .End();
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<AdditionalInfo>(ADD_INFO_TABLE_NAME)
+                .BeginSetupGetTypeMappingForRoot<AdditionalInfo>(ADD_INFO_TABLE_NAME)
                 .End();
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<RefData>(REFERENCE_TABLE)
+                .BeginSetupGetTypeMappingForRoot<RefData>(REFERENCE_TABLE)
                     .FieldMap(d => d.Name, NAME_FIELD_NAME)
                     .FieldMap(d => d.Price, PRICE_FIELD_NAME)
                 .End();
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeDataWithWeakTyping>("?")
+                .BeginSetupGetTypeMappingForRoot<SomeDataWithWeakTyping>("?")
                     .FieldMap(d => d.Id, ID_FIELD_NAME)
                     .FieldMap(d => d.Name, NAME_FIELD_NAME)
                 .End();

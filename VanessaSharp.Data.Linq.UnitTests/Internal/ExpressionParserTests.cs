@@ -84,14 +84,14 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
         {
             // Arrange
             _mappingProviderMock
-                .Setup(p => p.CheckDataType(typeof(SomeData)));
+                .Setup(p => p.CheckDataType(OneSDataLevel.Root, typeof(SomeData)));
 
             // Act
             _testedInstance.CheckDataType(typeof(SomeData));
 
             // Assert
             _mappingProviderMock
-                .Verify(p => p.CheckDataType(typeof(SomeData)), Times.Once());
+                .Verify(p => p.CheckDataType(OneSDataLevel.Root, typeof(SomeData)), Times.Once());
         }
 
         /// <summary>Вспомогательный тип данных для тестирования.</summary>

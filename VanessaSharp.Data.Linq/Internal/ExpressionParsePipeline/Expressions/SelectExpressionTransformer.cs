@@ -677,8 +677,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                         "Недопустимо использовать запись данных в качестве члена в выходной структуре. Можно использовать в выражении запись только для доступа к ее полям.");
                 }
 
-                return _mappingProvider.IsDataType(type)
-                    ? _typedRecordParseProductBuilder.GetReaderExpression(column, _columnExpressionBuilder, type)
+                return _mappingProvider.IsDataType(OneSDataLevel.Root, type)
+                    ? _typedRecordParseProductBuilder.GetRootReaderExpression(column, _columnExpressionBuilder, type)
                     : _columnExpressionBuilder.GetColumnAccessExpression(column, type);
             }
 

@@ -66,7 +66,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
             _mappingProviderMock
-                .Setup(p => p.IsDataType(It.IsAny<Type>()))
+                .Setup(p => p.IsDataType(OneSDataLevel.Root, It.IsAny<Type>()))
                 .Returns(false);
 
             _testedInstance = new QueryTransformer(_mappingProviderMock.Object);
@@ -170,7 +170,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("ТестовыйИсточник")
                     .FieldMap(d => d.Id, "Идентификатор")
                     .FieldMap(d => d.Name, "Наименование")
                     .FieldMap(d => d.Price, "Цена")
@@ -246,7 +246,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("ТестовыйИсточник")
                     .FieldMap(d => d.Id, "Идентификатор")
                     .FieldMap(d => d.Price, "Цена")
                 .End();
@@ -306,7 +306,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("ТестовыйИсточник")
                     .FieldMap(d => d.Price, "Цена")
                 .End();
 
@@ -336,7 +336,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("ТестовыйИсточник")
                     .FieldMap(d => d.Price, "Цена")
                 .End();
 
@@ -366,7 +366,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("ТестовыйИсточник")
                     .FieldMap(d => d.Price, "Цена")
                 .End();
 
@@ -397,7 +397,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("ТестовыйИсточник")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("ТестовыйИсточник")
                     .FieldMap(d => d.Price, "Цена")
                 .End();
 
