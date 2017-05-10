@@ -577,6 +577,63 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
             .Run();
         }
 
+
+        /// <summary>
+        /// Тестирование выборки объекта с выборкой данных из табличной части.
+        /// </summary>
+        [Test]
+        public void TestSelectTypeWithSelectedTablePartItems()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.Get<WithTablePartDictionary>()
+                       select new
+                       {
+                            r.Name,
+                            r.Summa,
+                            Items = from i in r.Composite
+                                          select new { i.Name, i.Quantity }
+                       }
+                )
+
+                .ExpectedSql("SELECT Наименование, Сумма, Состав.(Наименование, Количество) FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+                    Assert.AreEqual(expected.Summa, actual.Summa);
+
+                    var index = 0;
+                    foreach (var actualRecord in actual.Items)
+                    {
+                        Assert.Less(index, expected.Composition.Length);
+                        var expectedRecord = expected.Composition[index++];
+
+                        Assert.AreEqual(expectedRecord.Name, actualRecord.Name);
+                        Assert.AreEqual(expectedRecord.Quantity, actualRecord.Quantity);
+                    }
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+                    .Field(d => d.Summa)
+
+                    .BeginTablePartField(d => d.Composition)
+
+                        .Field(d => d.Name)
+                        .Field(d => d.Quantity)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
         /// <summary>
         /// Тестовая типизированная запись с полями имеющие слаботипизированные типы,
         /// такие как <see cref="object"/> и <see cref="OneSValue"/>.
