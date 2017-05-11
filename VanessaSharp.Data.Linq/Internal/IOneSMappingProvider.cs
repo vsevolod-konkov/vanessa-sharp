@@ -33,7 +33,7 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>Получение соответствия для типа уровня табличной части.</summary>
         /// <param name="dataType">Тип.</param>
-        ReadOnlyCollection<OneSFieldMapping> GetTablePartTypeMappings(Type dataType);
+        OneSTablePartTypeMapping GetTablePartTypeMappings(Type dataType);
     }
 
     [ContractClassFor(typeof(IOneSMappingProvider))]
@@ -75,10 +75,10 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>Получение соответствия для типа уровня табличной части.</summary>
         /// <param name="dataType">Тип.</param>
-        ReadOnlyCollection<OneSFieldMapping> IOneSMappingProvider.GetTablePartTypeMappings(Type dataType)
+        OneSTablePartTypeMapping IOneSMappingProvider.GetTablePartTypeMappings(Type dataType)
         {
             Contract.Requires<ArgumentNullException>(dataType != null);
-            Contract.Ensures(Contract.Result<ReadOnlyCollection<OneSFieldMapping>>() != null);
+            Contract.Ensures(Contract.Result<OneSTablePartTypeMapping>() != null);
             
             return null;
         }

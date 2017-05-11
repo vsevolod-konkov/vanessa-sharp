@@ -88,7 +88,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             return (level == OneSDataLevel.Root)
                        ? _mappingProvider.GetRootTypeMapping(dataObjectType).FieldMappings
-                       : _mappingProvider.GetTablePartTypeMappings(dataObjectType);
+                       : _mappingProvider.GetTablePartTypeMappings(dataObjectType).FieldMappings;
         }
 
         private Expression GetReaderExpression(

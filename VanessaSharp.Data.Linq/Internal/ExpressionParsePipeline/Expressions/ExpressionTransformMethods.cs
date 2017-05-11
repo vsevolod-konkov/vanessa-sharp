@@ -43,7 +43,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         public SelectionPartParseProduct<TOutput> TransformSelectExpression<TInput, TOutput>(
             QueryParseContext context, Expression<Func<TInput, TOutput>> selectExpression)
         {
-            return SelectExpressionTransformer.Transform(_mappingProvider, context, selectExpression);
+            return SelectExpressionTransformer.Transform(_mappingProvider, context, selectExpression, OneSDataLevel.Root);
         }
 
         /// <summary>Преобразование выражения в SQL-условие WHERE.</summary>

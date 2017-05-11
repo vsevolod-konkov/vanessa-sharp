@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
@@ -34,6 +35,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         protected const string ADD_INFO_TABLE_NAME = "add_info_table";
         protected const string REFERENCE_TABLE = "some_table";
 
+        protected const string COMPOSITE_FIELD_NAME = "composite";
+
         [SetUp]
         public void SetUpMappingProvider()
         {
@@ -55,6 +58,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                     .FieldMap(d => d.CreatedDate, CREATED_DATE_FIELD_NAME)
                     .FieldMap(d => d.AddInfo, ADD_INFO_FIELD_NAME)
                     .FieldMap(d => d.Reference, REF_FIELD_NAME)
+                    .FieldMap(d => d.Composite, COMPOSITE_FIELD_NAME, OneSDataColumnKind.TablePart)
                 .End();
 
             _mappingProviderMock
@@ -71,6 +75,13 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .BeginSetupGetTypeMappingForRoot<SomeDataWithWeakTyping>("?")
                     .FieldMap(d => d.Id, ID_FIELD_NAME)
                     .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                .End();
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingForTablePart<SomeTablePartData>()
+                    .FieldMap(d => d.Id, ID_FIELD_NAME)
+                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
                 .End();
         }
 
@@ -118,6 +129,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public object AddInfo;
 
             public object Reference;
+
+            public IEnumerable<SomeTablePartData> Composite;
         }
 
         public sealed class AdditionalInfo
@@ -141,6 +154,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public object Id;
 
             public OneSValue Name;
+
+            public decimal Price;
+        }
+
+        public sealed class SomeTablePartData
+        {
+            public int Id;
+
+            public string Name;
 
             public decimal Price;
         }

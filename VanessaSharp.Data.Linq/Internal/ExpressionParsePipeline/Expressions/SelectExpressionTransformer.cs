@@ -15,11 +15,11 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
     internal sealed class SelectExpressionTransformer : ExpressionVisitorBase
     {
         /// <summary>Приватный конструктор для инициализаии параметра метода.</summary>
-        private SelectExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression, IOneSMappingProvider mappingProvider)
+        private SelectExpressionTransformer(QueryParseContext context, ParameterExpression recordExpression, IOneSMappingProvider mappingProvider, OneSDataLevel level)
         {
             _mappingProvider = mappingProvider;
             _queryParseContext = context;
-            _expressionBuilder = new SqlObjectBuilder(context, recordExpression, mappingProvider);
+            _expressionBuilder = new SqlObjectBuilder(context, recordExpression, mappingProvider, level);
             _columnExpressionBuilder = new ColumnExpressionBuilderWrapper(mappingProvider);
         }
 
@@ -29,7 +29,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="mappingProvider">Поставщик соответствий типов источникам данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="expression">Преобразуемое выражение.</param>
-        public static SelectionPartParseProduct<TOutput> Transform<TInput, TOutput>(IOneSMappingProvider mappingProvider, QueryParseContext context, Expression<Func<TInput, TOutput>> expression)
+        /// <param name="level">Уровень преобразуемого запроса.</param>
+        public static SelectionPartParseProduct<TOutput> Transform<TInput, TOutput>(
+            IOneSMappingProvider mappingProvider, 
+            QueryParseContext context, 
+            Expression<Func<TInput, TOutput>> expression,
+            OneSDataLevel level)
         {
             Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
@@ -37,7 +42,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Ensures(Contract.Result<SelectionPartParseProduct<TOutput>>() != null);
 
             return new SelectExpressionTransformer(
-                context, expression.Parameters[0], mappingProvider)
+                context, expression.Parameters[0], mappingProvider, level)
                 
                 .TransformLambdaBody<TOutput>(expression.Body);
         }
@@ -46,7 +51,8 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="mappingProvider">Поставщик соответствий типов источникам данных 1С.</param>
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="expression">Преобразуемое выражение.</param>
-        private static ISelectionPartParseProduct Transform(IOneSMappingProvider mappingProvider, QueryParseContext context, LambdaExpression expression)
+        /// <param name="level">Уровень преобразуемого запроса.</param>
+        private static ISelectionPartParseProduct Transform(IOneSMappingProvider mappingProvider, QueryParseContext context, LambdaExpression expression, OneSDataLevel level)
         {
             Contract.Requires<ArgumentNullException>(mappingProvider != null);
             Contract.Requires<ArgumentNullException>(context != null);
@@ -67,7 +73,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             var genericMethod = method.MakeGenericMethod(new[] {inputType, outputType });
 
             return (ISelectionPartParseProduct)
-                genericMethod.Invoke(null, new object[] {mappingProvider, context, expression});
+                genericMethod.Invoke(null, new object[] {mappingProvider, context, expression, level});
         }
 
         private readonly IOneSMappingProvider _mappingProvider;
@@ -218,7 +224,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         private Expression TransformSelectFromTablePartExpression(
             HandledNodeInfo tablePartNode, LambdaExpression selectExpression)
         {
-            var selectionParseProduct = Transform(_mappingProvider, _queryParseContext, selectExpression);
+            var selectionParseProduct = Transform(_mappingProvider, _queryParseContext, selectExpression, OneSDataLevel.TablePart);
 
             _hasSql = false;
             return tablePartNode.GetTablePartTransformedNode(selectionParseProduct);

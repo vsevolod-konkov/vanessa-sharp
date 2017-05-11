@@ -189,9 +189,16 @@ namespace VanessaSharp.Data.Linq.Internal
 
         /// <summary>Получение соответствия для типа уровня табличной части.</summary>
         /// <param name="dataType">Тип.</param>
-        public ReadOnlyCollection<OneSFieldMapping> GetTablePartTypeMappings(Type dataType)
+        public OneSTablePartTypeMapping GetTablePartTypeMappings(Type dataType)
         {
-            return GetTypeMappings(dataType);
+            var ownerAttr = typeof(OneSTablePartOwnerAttribute);
+
+            var ownerType = dataType.IsDefined(ownerAttr, true)
+                ? ((OneSTablePartOwnerAttribute)dataType.GetCustomAttributes(ownerAttr, true)[0]).OwnerType
+                : null;
+
+            return new OneSTablePartTypeMapping(ownerType,
+                GetTypeMappings(dataType));
         }
     }
 }

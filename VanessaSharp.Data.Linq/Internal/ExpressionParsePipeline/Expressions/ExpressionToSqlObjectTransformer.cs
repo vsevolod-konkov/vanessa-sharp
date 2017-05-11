@@ -28,7 +28,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             Contract.Requires<ArgumentNullException>(recordExpression != null);
             Contract.Requires<ArgumentNullException>(mappingProvider != null);
             
-            _sqlConditionBuilder = new SqlObjectBuilder(context, recordExpression, mappingProvider);
+            _sqlConditionBuilder = new SqlObjectBuilder(context, recordExpression, mappingProvider, OneSDataLevel.Root);
         }
 
         /// <summary>

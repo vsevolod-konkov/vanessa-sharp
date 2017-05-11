@@ -50,6 +50,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             public int Count { get; set; }
         }
 
+        [OneSTablePartOwner(typeof(CorrectDataType))]
+        public class TablePartDefinedOwner
+        {}
+
         /// <summary>
         /// Тестирование <see cref="OneSMappingProvider.CheckDataType"/>
         /// в случае если проверяемый тип полностью корректен.
@@ -175,7 +179,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var result = _testedInstance.GetTablePartTypeMappings(typeof(CorrectDataType));
 
             // Assert
-            AssertFieldMappingsForCorrectType(result);
+            AssertFieldMappingsForCorrectType(result.FieldMappings);
+            Assert.IsNull(result.OwnerType);
         }
 
         /// <summary>
@@ -189,11 +194,29 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal
             var result = _testedInstance.GetTablePartTypeMappings(typeof(CorrectTablePartType));
 
             // Assert
+            Assert.IsNull(result.OwnerType);
 
-            Assert.AreEqual(2, result.Count);
+            var actualFieldMappings = result.FieldMappings;
+            Assert.AreEqual(2, actualFieldMappings.Count);
 
-            AssertFieldMapping(result, "Name", "Наименование", OneSDataColumnKind.Property);
-            AssertFieldMapping(result, "Count", "Количество", OneSDataColumnKind.Property);
+            AssertFieldMapping(actualFieldMappings, "Name", "Наименование", OneSDataColumnKind.Property);
+            AssertFieldMapping(actualFieldMappings, "Count", "Количество", OneSDataColumnKind.Property);
+        }
+
+        /// <summary>
+        /// Тестирование <see cref="OneSMappingProvider.GetTablePartTypeMappings"/>
+        /// для получение типа владельца табличной части.
+        /// </summary>
+        [Test]
+        public void TestGetTablePartOwnerType()
+        {
+            Assert.IsTrue(_testedInstance.IsDataType(OneSDataLevel.TablePart, typeof(TablePartDefinedOwner)));
+            
+            // Act
+            var result = _testedInstance.GetTablePartTypeMappings(typeof(TablePartDefinedOwner));
+
+            // Assert
+            Assert.AreSame(typeof(CorrectDataType), result.OwnerType);
         }
 
         /// <summary>

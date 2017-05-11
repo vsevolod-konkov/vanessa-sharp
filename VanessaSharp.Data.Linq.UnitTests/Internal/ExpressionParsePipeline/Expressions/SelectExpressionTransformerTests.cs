@@ -22,7 +22,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             testedExpression = PreEvaluator.Evaluate(testedExpression);
 
-            return SelectExpressionTransformer.Transform(MappingProvider, Context, testedExpression);
+            return SelectExpressionTransformer.Transform(MappingProvider, Context, testedExpression, OneSDataLevel.Root);
         }
 
         private SelectionPartParseProduct<TResult> Transform<TResult>(Expression<Func<OneSDataRecord, TResult>> testedExpression)
@@ -442,6 +442,36 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Assert.AreEqual(expectedId, item.Id);
             Assert.AreEqual(expectedName, item.Name);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выборки нескольких столбцов из типизированной табличной части.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectTypedTablePartWithSelectFewFields()
+        {
+            // Act
+            var result = Transform(d => new { d.Name, Items = from line in d.Composite select new { line.Id, line.Name } });
+
+            // Assert
+            Assert.AreEqual(2, result.Columns.Count);
+
+            AssertField(NAME_FIELD_NAME, result.Columns[0]);
+
+            var groupExpression = AssertEx.IsInstanceAndCastOf<SqlFieldsGroupExpression>(result.Columns[1]);
+
+            AssertField(COMPOSITE_FIELD_NAME, groupExpression.Table);
+            AssertFields(groupExpression.Fields, ID_FIELD_NAME, NAME_FIELD_NAME);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, i => i.Name, c => c.ToString(null), "Test")
+                    .BeginTablePart(1, i => i.Items, 2)
+                        .Field(0, l => l.Id, c => c.ToInt32(null), 3)
+                        .Field(1, l => l.Name, c => c.ToString(null), "Test2")
+                    .EndTablePart
+                .Test();
         }
     }
 }

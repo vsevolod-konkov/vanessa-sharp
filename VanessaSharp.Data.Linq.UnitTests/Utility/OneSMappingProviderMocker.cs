@@ -127,7 +127,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
         /// <summary>Построитель для уровня табличной части.</summary>
         /// <typeparam name="T">Тип данных табличной части.</typeparam>
         public sealed class TablePartBuilder<T>
-            : BuilderBase<T, OneSTypeMapper.TablePartBuilder<T>, ReadOnlyCollection<OneSFieldMapping>>
+            : BuilderBase<T, OneSTypeMapper.TablePartBuilder<T>, OneSTablePartTypeMapping>
         {
             public TablePartBuilder(Mock<IOneSMappingProvider> mock, OneSTypeMapper.TablePartBuilder<T> builder)
                 : base(mock, builder)
@@ -152,7 +152,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             /// <summary>
             /// Получение выражение для получения результата построения метаданных.
             /// </summary>
-            protected override Expression<Func<IOneSMappingProvider, ReadOnlyCollection<OneSFieldMapping>>> GetResultExpression()
+            protected override Expression<Func<IOneSMappingProvider, OneSTablePartTypeMapping>> GetResultExpression()
             {
                 return p => p.GetTablePartTypeMappings(typeof(T));
             }

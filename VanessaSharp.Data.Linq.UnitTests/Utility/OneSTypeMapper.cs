@@ -34,9 +34,9 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
 
         /// <summary>Начало описания маппинга типизированной записи к источнику данных 1С уровня табличной части.</summary>
         /// <typeparam name="T">Тип типизированной записи.</typeparam>
-        public static TablePartBuilder<T> BeginForTablePart<T>()
+        public static TablePartBuilder<T> BeginForTablePart<T>(Type ownerType = null)
         {
-            return new TablePartBuilder<T>();
+            return new TablePartBuilder<T>(ownerType);
         }
 
         /// <summary>
@@ -126,8 +126,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
         /// Билдер маппинга верхнего уровня.
         /// </summary>
         /// <typeparam name="T">Тип записи, для которой строится маппинг.</typeparam>
-        public sealed class TablePartBuilder<T> : BuilderBase<T, ReadOnlyCollection<OneSFieldMapping>>
+        public sealed class TablePartBuilder<T> : BuilderBase<T, OneSTablePartTypeMapping>
         {
+            private readonly Type _ownerType;
+
+            public TablePartBuilder(Type ownerType)
+            {
+                _ownerType = ownerType;
+            }
+
             /// <summary>
             /// Установление соответствия между членом типа полю источника данных 1С.
             /// </summary>
@@ -151,9 +158,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Utility
             }
 
             /// <summary>Завершение описания.</summary>
-            public override ReadOnlyCollection<OneSFieldMapping> End
+            public override OneSTablePartTypeMapping End
             {
-                get { return GetFieldMappings(); }
+                get
+                {
+                    return new OneSTablePartTypeMapping(_ownerType, GetFieldMappings());
+                }
             }
         }
     }
