@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 
 namespace VanessaSharp.Data.Linq.Internal
@@ -14,19 +15,25 @@ namespace VanessaSharp.Data.Linq.Internal
         /// Проверка типа на корректность использования его в виде 
         /// типа записи данных из 1С.
         /// </summary>
+        /// <param name="level">Уровень данных.</param>
         /// <param name="dataType">Тип данных.</param>
-        void CheckDataType(Type dataType);
+        void CheckDataType(OneSDataLevel level, Type dataType);
 
         /// <summary>
         /// Является ли тип, типом данных который имеет соответствие объекту 1С.
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        bool IsDataType(Type type);
+        /// <param name="level">Уровень данных.</param>
+        /// <param name="type">Тип данных.</param>
+        /// <returns>Возвращает <c>true</c> если тип соответствует типу данных заданного уровня.</returns>
+        bool IsDataType(OneSDataLevel level, Type type);
 
-        /// <summary>Получения соответствия для типа.</summary>
+        /// <summary>Получение соответствия для типа верхнего уровня.</summary>
         /// <param name="dataType">Тип.</param>
-        OneSTypeMapping GetTypeMapping(Type dataType);
+        OneSTypeMapping GetRootTypeMapping(Type dataType);
+
+        /// <summary>Получение соответствия для типа уровня табличной части.</summary>
+        /// <param name="dataType">Тип.</param>
+        OneSTablePartTypeMapping GetTablePartTypeMappings(Type dataType);
     }
 
     [ContractClassFor(typeof(IOneSMappingProvider))]
@@ -36,8 +43,9 @@ namespace VanessaSharp.Data.Linq.Internal
         /// Проверка типа на корректность использования его в виде 
         /// типа записи данных из 1С.
         /// </summary>
+        /// <param name="level">Уровень данных.</param>
         /// <param name="dataType">Тип данных.</param>
-        void IOneSMappingProvider.CheckDataType(Type dataType)
+        void IOneSMappingProvider.CheckDataType(OneSDataLevel level, Type dataType)
         {
             Contract.Requires<ArgumentNullException>(dataType != null);
         }
@@ -45,22 +53,33 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>
         /// Является ли тип, типом данных который имеет соответствие объекту 1С.
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public bool IsDataType(Type type)
+        /// <param name="level">Уровень данных.</param>
+        /// <param name="type">Тип данных.</param>
+        /// <returns>Возвращает <c>true</c> если тип соответствует типу данных заданного уровня.</returns>
+        bool IOneSMappingProvider.IsDataType(OneSDataLevel level, Type type)
         {
             Contract.Requires<ArgumentNullException>(type != null);
 
             return false;
         }
 
-        /// <summary>Получения соответствия для типа.</summary>
+        /// <summary>Получение соответствия для типа верхнего уровня.</summary>
         /// <param name="dataType">Тип.</param>
-        OneSTypeMapping IOneSMappingProvider.GetTypeMapping(Type dataType)
+        OneSTypeMapping IOneSMappingProvider.GetRootTypeMapping(Type dataType)
         {
             Contract.Requires<ArgumentNullException>(dataType != null);
             Contract.Ensures(Contract.Result<OneSTypeMapping>() != null);
 
+            return null;
+        }
+
+        /// <summary>Получение соответствия для типа уровня табличной части.</summary>
+        /// <param name="dataType">Тип.</param>
+        OneSTablePartTypeMapping IOneSMappingProvider.GetTablePartTypeMappings(Type dataType)
+        {
+            Contract.Requires<ArgumentNullException>(dataType != null);
+            Contract.Ensures(Contract.Result<OneSTablePartTypeMapping>() != null);
+            
             return null;
         }
     }

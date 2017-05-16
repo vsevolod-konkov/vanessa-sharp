@@ -526,6 +526,161 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         }
 
         /// <summary>
+        /// Тестирование выборки объекта с табличной частью.
+        /// </summary>
+        [Test]
+        public void TestSelectTypeWithTablePart()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.Get<WithTablePartDictionary>()
+                       select r
+                )
+
+                .ExpectedSql("SELECT Наименование, Сумма, Состав.(Наименование, Цена, Количество) FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+                    Assert.AreEqual(expected.Summa, actual.Summa);
+
+                    var index = 0;
+                    foreach (var actualRecord in actual.Composite)
+                    {
+                        Assert.Less(index, expected.Composition.Length);
+                        var expectedRecord = expected.Composition[index++];
+
+                        Assert.AreEqual(expectedRecord.Name, actualRecord.Name);
+                        Assert.AreEqual(expectedRecord.Price, actualRecord.Price);
+                        Assert.AreEqual(expectedRecord.Quantity, actualRecord.Quantity);
+                    }
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+                    .Field(d => d.Summa)
+
+                    .BeginTablePartField(d => d.Composition)
+
+                        .Field(d => d.Name)
+                        .Field(d => d.Price)
+                        .Field(d => d.Quantity)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+
+        /// <summary>
+        /// Тестирование выборки объекта с выборкой данных из табличной части.
+        /// </summary>
+        [Test]
+        public void TestSelectTypeWithSelectedTablePartItems()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.Get<WithTablePartDictionary>()
+                       select new
+                       {
+                            r.Name,
+                            r.Summa,
+                            Items = from i in r.Composite
+                                          select new { i.Name, i.Quantity }
+                       }
+                )
+
+                .ExpectedSql("SELECT Наименование, Сумма, Состав.(Наименование, Количество) FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+                    Assert.AreEqual(expected.Summa, actual.Summa);
+
+                    var index = 0;
+                    foreach (var actualRecord in actual.Items)
+                    {
+                        Assert.Less(index, expected.Composition.Length);
+                        var expectedRecord = expected.Composition[index++];
+
+                        Assert.AreEqual(expectedRecord.Name, actualRecord.Name);
+                        Assert.AreEqual(expectedRecord.Quantity, actualRecord.Quantity);
+                    }
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+                    .Field(d => d.Summa)
+
+                    .BeginTablePartField(d => d.Composition)
+
+                        .Field(d => d.Name)
+                        .Field(d => d.Quantity)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
+        /// Тестирование поддержки на sql выборки объекта с аггрегируемой функцией над полем табличной части.
+        /// </summary>
+        [Test]
+        [Ignore("Issue#3")]
+        public void TestSelectSumByTablePartItems()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.Get<WithTablePartDictionary>()
+                       select new
+                       {
+                           r.Name,
+                           r.Summa,
+                           TotalQuantity = r.Composite.Select(i => i.Quantity).Sum()
+                       }
+                )
+
+                .ExpectedSql("SELECT Наименование, Сумма, SUM(Состав.Количество) FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+                    Assert.AreEqual(expected.Summa, actual.Summa);
+                    Assert.AreEqual(expected.Composition.Sum(i => i.Quantity), actual.TotalQuantity);
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+                    .Field(d => d.Summa)
+
+                    .BeginTablePartField(d => d.Composition)
+
+                        .Field(d => d.Quantity)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
         /// Тестовая типизированная запись с полями имеющие слаботипизированные типы,
         /// такие как <see cref="object"/> и <see cref="OneSValue"/>.
         /// </summary>

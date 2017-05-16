@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
@@ -34,6 +35,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         protected const string ADD_INFO_TABLE_NAME = "add_info_table";
         protected const string REFERENCE_TABLE = "some_table";
 
+        protected const string COMPOSITE_FIELD_NAME = "composite";
+
         [SetUp]
         public void SetUpMappingProvider()
         {
@@ -42,11 +45,11 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             _mappingProviderMock = new Mock<IOneSMappingProvider>(MockBehavior.Strict);
 
             _mappingProviderMock
-                .Setup(p => p.IsDataType(It.IsAny<Type>()))
+                .Setup(p => p.IsDataType(OneSDataLevel.Root, It.IsAny<Type>()))
                 .Returns(false);
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("?")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("?")
                     .FieldMap(d => d.Id, ID_FIELD_NAME)
                     .FieldMap(d => d.Name, NAME_FIELD_NAME)
                     .FieldMap(d => d.Price, PRICE_FIELD_NAME)
@@ -55,22 +58,32 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                     .FieldMap(d => d.CreatedDate, CREATED_DATE_FIELD_NAME)
                     .FieldMap(d => d.AddInfo, ADD_INFO_FIELD_NAME)
                     .FieldMap(d => d.Reference, REF_FIELD_NAME)
+                    .FieldMap(d => d.Composite, COMPOSITE_FIELD_NAME, OneSDataColumnKind.TablePart)
+                    .FieldMap(d => d.CompositeRecords, COMPOSITE_FIELD_NAME, OneSDataColumnKind.TablePart)
+                    .FieldMap(d => d.CompositeValue, COMPOSITE_FIELD_NAME)
                 .End();
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<AdditionalInfo>(ADD_INFO_TABLE_NAME)
+                .BeginSetupGetTypeMappingForRoot<AdditionalInfo>(ADD_INFO_TABLE_NAME)
                 .End();
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<RefData>(REFERENCE_TABLE)
+                .BeginSetupGetTypeMappingForRoot<RefData>(REFERENCE_TABLE)
                     .FieldMap(d => d.Name, NAME_FIELD_NAME)
                     .FieldMap(d => d.Price, PRICE_FIELD_NAME)
                 .End();
 
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeDataWithWeakTyping>("?")
+                .BeginSetupGetTypeMappingForRoot<SomeDataWithWeakTyping>("?")
                     .FieldMap(d => d.Id, ID_FIELD_NAME)
                     .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                .End();
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingForTablePart<SomeTablePartData>()
+                    .FieldMap(d => d.Id, ID_FIELD_NAME)
+                    .FieldMap(d => d.Name, NAME_FIELD_NAME)
+                    .FieldMap(d => d.Price, PRICE_FIELD_NAME)
                 .End();
         }
 
@@ -118,6 +131,12 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public object AddInfo;
 
             public object Reference;
+
+            public IEnumerable<SomeTablePartData> Composite;
+
+            public IEnumerable<OneSDataRecord> CompositeRecords;
+
+            public OneSValue CompositeValue;
         }
 
         public sealed class AdditionalInfo
@@ -141,6 +160,15 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public object Id;
 
             public OneSValue Name;
+
+            public decimal Price;
+        }
+
+        public sealed class SomeTablePartData
+        {
+            public int Id;
+
+            public string Name;
 
             public decimal Price;
         }

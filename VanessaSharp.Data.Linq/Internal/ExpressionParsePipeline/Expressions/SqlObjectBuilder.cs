@@ -44,7 +44,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <summary>
         /// Поставщик карт соответствия типов CLR структурам 1С.
         /// </summary>
-        private readonly IOneSMappingProvider _mappingProvider;
+        private readonly TypeMappingProvider _mappingProvider;
 
         /// <summary>
         /// Стековая машина.
@@ -64,10 +64,12 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         /// <param name="context">Контекст разбора запроса.</param>
         /// <param name="recordExpression">Выражение записи.</param>
         /// <param name="mappingProvider">Поставщик соответствий типам CLR источников данных 1С.</param>
+        /// <param name="level">Уровень данных</param>
         public SqlObjectBuilder(
             QueryParseContext context,
             ParameterExpression recordExpression,
-            IOneSMappingProvider mappingProvider)
+            IOneSMappingProvider mappingProvider,
+            OneSDataLevel level)
         {
             Contract.Requires<ArgumentNullException>(context != null);
             Contract.Requires<ArgumentNullException>(recordExpression != null);
@@ -75,7 +77,7 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             
             _stackEngine = new StackEngine(context);
             _recordExpression = recordExpression;
-            _mappingProvider = mappingProvider;
+            _mappingProvider = TypeMappingProvider.Create(mappingProvider, level);
         }
 
         /// <summary>
@@ -272,13 +274,14 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
 
             if (_mappingProvider.IsDataType(node.Expression.Type))
             {
-                var fieldName = _mappingProvider
-                    .GetTypeMapping(node.Expression.Type)
-                    .GetFieldNameByMemberInfo(node.Member);
-
-                if (fieldName != null)
+                var fieldMapping = _mappingProvider
+                    .GetFieldMapping(node.Expression.Type, node.Member);
+                    
+                if (fieldMapping != null)
                 {
-                    _stackEngine.Field(fieldName);
+                    _stackEngine.Field(fieldMapping.FieldName);
+                    IsTablePart = (fieldMapping.DataColumnKind == OneSDataColumnKind.TablePart);
+
                     return true;
                 }
             }
@@ -462,10 +465,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
                 return true;
             }
 
-            if (_mappingProvider.IsDataType(type))
+            if (_mappingProvider.IsTypeTableSource(type))
             {
-                var mapping = _mappingProvider.GetTypeMapping(type);
-                result = SqlTypeDescription.Table(mapping.SourceName);
+                var sourceName = _mappingProvider.GetTableSourceName(type);
+                result = SqlTypeDescription.Table(sourceName);
                 return true;
             }
 
@@ -486,11 +489,10 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
         {
             Contract.Requires<ArgumentNullException>(node != null);
 
-            if (node.NodeType == ExpressionType.TypeIs)
+            if (node.NodeType == ExpressionType.TypeIs && _mappingProvider.IsTypeTableSource(node.TypeOperand))
             {
                 var dataSourceName = _mappingProvider
-                    .GetTypeMapping(node.TypeOperand)
-                    .SourceName;
+                    .GetTableSourceName(node.TypeOperand);
 
                 _stackEngine.Refs(dataSourceName);
                 return true;
@@ -1285,8 +1287,119 @@ namespace VanessaSharp.Data.Linq.Internal.ExpressionParsePipeline.Expressions
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Поставщик карт соответствия типов CLR на данные 1С с учетом уровня данных.
+        /// </summary>
+        private abstract class TypeMappingProvider
+        {
+            /// <summary>
+            /// Исходный поставщик карт соответствия.
+            /// </summary>
+            protected readonly IOneSMappingProvider _nakedProvider;
 
-        
+            protected TypeMappingProvider(IOneSMappingProvider nakedProvider)
+            {
+                Contract.Requires<ArgumentNullException>(nakedProvider != null);
+
+                _nakedProvider = nakedProvider;
+            }
+
+            /// <summary>Создание экземпляра.</summary>
+            /// <param name="nakedProvider">Исходный поставщик карт соответствия.</param>
+            /// <param name="level">Уровень данных.</param>
+            public static TypeMappingProvider Create(IOneSMappingProvider nakedProvider, OneSDataLevel level)
+            {
+                Contract.Requires<ArgumentNullException>(nakedProvider != null);
+                Contract.Ensures(Contract.Result<TypeMappingProvider>() != null);
+
+                return (level == OneSDataLevel.Root)
+                           ? (TypeMappingProvider)new RootTypeMappingProvider(nakedProvider)
+                           : new TablePartTypeMappingProvider(nakedProvider);
+            }
+
+            /// <summary>Уровень данных.</summary>
+            protected abstract OneSDataLevel Level { get; }
+
+            /// <summary>Получение карт соответствия полям источника данных 1С.</summary>
+            /// <param name="type">Тип для которого надо получить карту соответствия.</param>
+            protected abstract IEnumerable<OneSFieldMapping> GetFieldMappings(Type type);
+
+            /// <summary>Является ли уровнем соответствующего уровня.</summary>
+            /// <param name="type">Тип.</param>
+            public bool IsDataType(Type type)
+            {
+                return _nakedProvider.IsDataType(Level, type);
+            }
+
+            /// <summary>Получение карты соответствия поля 1С.</summary>
+            public OneSFieldMapping GetFieldMapping(Type type, MemberInfo member)
+            {
+                return GetFieldMappings(type).SingleOrDefault(m => m.MemberInfo.MetadataToken == member.MetadataToken);
+            }
+
+            /// <summary>Является ли тип табличным источником 1С.</summary>
+            public bool IsTypeTableSource(Type type)
+            {
+                if (_nakedProvider.IsDataType(OneSDataLevel.Root, type))
+                    return true;
+
+                if (_nakedProvider.IsDataType(OneSDataLevel.TablePart, type))
+                {
+                    var mapping = _nakedProvider.GetTablePartTypeMappings(type);
+                    if (mapping.OwnerType != null)
+                        return _nakedProvider.IsDataType(OneSDataLevel.Root, mapping.OwnerType);
+                }
+
+                return false;
+            }
+
+            /// <summary>Получение имени табличного источника данных 1С.</summary>
+            public string GetTableSourceName(Type type)
+            {
+                if (_nakedProvider.IsDataType(OneSDataLevel.Root, type))
+                    return _nakedProvider.GetRootTypeMapping(type).SourceName;
+
+                var mapping = _nakedProvider.GetTablePartTypeMappings(type);
+                Contract.Assert(mapping.OwnerType != null);
+
+                return _nakedProvider.GetRootTypeMapping(mapping.OwnerType).SourceName;
+            }
+
+            private sealed class RootTypeMappingProvider : TypeMappingProvider
+            {
+                public RootTypeMappingProvider(IOneSMappingProvider nakedProvider)
+                    : base(nakedProvider)
+                {}
+
+                protected override OneSDataLevel Level
+                {
+                    get { return OneSDataLevel.Root; }
+                }
+
+                protected override IEnumerable<OneSFieldMapping> GetFieldMappings(Type type)
+                {
+                    return _nakedProvider.GetRootTypeMapping(type).FieldMappings;
+                }
+            }
+
+            private sealed class TablePartTypeMappingProvider : TypeMappingProvider
+            {
+                public TablePartTypeMappingProvider(IOneSMappingProvider nakedProvider)
+                    : base(nakedProvider)
+                { }
+
+                protected override OneSDataLevel Level
+                {
+                    get { return OneSDataLevel.TablePart; }
+                }
+
+                protected override IEnumerable<OneSFieldMapping> GetFieldMappings(Type type)
+                {
+                    return _nakedProvider.GetTablePartTypeMappings(type).FieldMappings;
+                }
+            }
+        }
+
+        #endregion
     }
 }

@@ -30,29 +30,26 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Карты соответствия полей источника данных 1С членам типа.</summary>
         public ReadOnlyCollection<OneSFieldMapping> FieldMappings
         {
-            get { return _fieldMappings; }
+            get
+            {
+                Contract.Ensures(Contract.Result<ReadOnlyCollection<OneSFieldMapping>>() != null);
+                
+                return _fieldMappings;
+            }
         }
         private readonly ReadOnlyCollection<OneSFieldMapping> _fieldMappings;
-
-        /// <summary>Получение имени поля в источнике данных, соответствующего члену типа.</summary>
-        /// <param name="memberInfo">Член типа.</param>
-        public string GetFieldNameByMemberInfo(MemberInfo memberInfo)
-        {
-            Contract.Requires<ArgumentNullException>(memberInfo != null);
-
-            var fieldMapping = _fieldMappings.SingleOrDefault(m => m.MemberInfo.MetadataToken == memberInfo.MetadataToken);
-
-            return fieldMapping == null
-                       ? null
-                       : fieldMapping.FieldName;
-        }
 
         /// <summary>
         /// Имя источника данных 1С соответсвующего данному типу.
         /// </summary>
         public string SourceName
         {
-            get { return _sourceName; }
+            get
+            {
+                Contract.Ensures(!string.IsNullOrWhiteSpace(Contract.Result<string>()));
+
+                return _sourceName;
+            }
         }
         private readonly string _sourceName;
     }

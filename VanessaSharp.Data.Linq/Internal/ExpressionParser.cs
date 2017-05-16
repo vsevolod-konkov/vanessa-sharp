@@ -78,7 +78,7 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <param name="dataType">Тип данных.</param>
         public void CheckDataType(Type dataType)
         {
-            _mappingProvider.CheckDataType(dataType);
+            _mappingProvider.CheckDataType(OneSDataLevel.Root, dataType);
         }
     }
 }

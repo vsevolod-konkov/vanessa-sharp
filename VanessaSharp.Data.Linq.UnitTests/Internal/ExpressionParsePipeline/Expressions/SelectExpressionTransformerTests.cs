@@ -22,7 +22,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             testedExpression = PreEvaluator.Evaluate(testedExpression);
 
-            return SelectExpressionTransformer.Transform(MappingProvider, Context, testedExpression);
+            return SelectExpressionTransformer.Transform(MappingProvider, Context, testedExpression, OneSDataLevel.Root);
         }
 
         private SelectionPartParseProduct<TResult> Transform<TResult>(Expression<Func<OneSDataRecord, TResult>> testedExpression)
@@ -442,6 +442,97 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
 
             Assert.AreEqual(expectedId, item.Id);
             Assert.AreEqual(expectedName, item.Name);
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выборки нескольких столбцов из типизированной табличной части.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectTypedTablePartWithSelectFewFields()
+        {
+            TestTransformSelectTablePartWithSelectFewFields(
+                d => new TestDataProjection
+                    {
+                        Name = d.Name, 
+                        Items = from line in d.Composite select new TestTablePartProjection { Id = line.Id, Name = line.Name }
+                    });
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выборки нескольких столбцов из нетипизированной табличной части.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectNonTypedTablePartWithSelectFewFields()
+        {
+            TestTransformSelectTablePartWithSelectFewFields(
+                d => new TestDataProjection
+                {
+                    Name = d.Name,
+                    Items = from line in d.CompositeRecords select new TestTablePartProjection { Id = line.GetInt32(ID_FIELD_NAME), Name = line.GetString(NAME_FIELD_NAME) }
+                });
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выборки нескольких столбцов табличной части из нетипизированного значения <see cref="OneSValue"/>.
+        /// </summary>
+        [Test]
+        [Ignore("Issue#2")]
+        public void TestTransformSelectTablePartWithSelectFewFieldsFromOneSValue()
+        {
+            TestTransformSelectTablePartWithSelectFewFields(
+                d => new TestDataProjection
+                {
+                    Name = d.Name,
+                    Items = from line in d.CompositeValue.GetTablePartRecords() select new TestTablePartProjection { Id = line.GetInt32(ID_FIELD_NAME), Name = line.GetString(NAME_FIELD_NAME) }
+                });
+        }
+
+        /// <summary>Тестирование преобразования выборки с табличной частью.</summary>
+        /// <param name="selector">Тестируемое выражение.</param>
+        private void TestTransformSelectTablePartWithSelectFewFields(Expression<Func<SomeData, TestDataProjection>> selector)
+        {
+            // Act
+            var result = Transform(selector);
+
+            // Assert
+            Assert.AreEqual(2, result.Columns.Count);
+
+            AssertField(NAME_FIELD_NAME, result.Columns[0]);
+
+            var groupExpression = AssertEx.IsInstanceAndCastOf<SqlFieldsGroupExpression>(result.Columns[1]);
+
+            AssertField(COMPOSITE_FIELD_NAME, groupExpression.Table);
+            AssertFields(groupExpression.Fields, ID_FIELD_NAME, NAME_FIELD_NAME);
+
+            // Тестирование полученного делегата чтения кортежа
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, i => i.Name, c => c.ToString(null), "Test")
+                    .BeginTablePart(1, i => i.Items, 2)
+                        .Field(0, l => l.Id, c => c.ToInt32(null), 3)
+                        .Field(1, l => l.Name, c => c.ToString(null), "Test2")
+                    .EndTablePart
+                .Test();
+        }
+
+        /// <summary>
+        /// Корневой тип для тестирования в методе <see cref="TestTransformSelectTablePartWithSelectFewFields"/>.
+        /// </summary>
+        public sealed class TestTablePartProjection
+        {
+            public int Id;
+
+            public string Name;
+        }
+
+        /// <summary>
+        /// Тип табличной части для тестирования в методе <see cref="TestTransformSelectTablePartWithSelectFewFields"/>.
+        /// </summary>
+        public sealed class TestDataProjection
+        {
+            public string Name;
+
+            public IEnumerable<TestTablePartProjection> Items;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Moq;
 using NUnit.Framework;
 using VanessaSharp.Data.Linq.Internal;
@@ -35,7 +36,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             // Arrange
             const string SOURCE_NAME = "Тест";
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>(SOURCE_NAME)
+                .BeginSetupGetTypeMappingForRoot<SomeData>(SOURCE_NAME)
                 .End();
 
             // Act
@@ -53,7 +54,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeData>("???")
+                .BeginSetupGetTypeMappingForRoot<SomeData>("???")
                     .FieldMap(d => d.Name, "Наименование")
                     .FieldMap(d => d.Id, "Идентификатор")
                     .FieldMap(d => d.Price, "Цена")
@@ -85,7 +86,7 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         {
             // Arrange
             _mappingProviderMock
-                .BeginSetupGetTypeMappingFor<SomeDataWithWeakTyping>("???")
+                .BeginSetupGetTypeMappingForRoot<SomeDataWithWeakTyping>("???")
                     .FieldMap(d => d.Name, "Наименование")
                     .FieldMap(d => d.Price, "Цена")
                 .End();
@@ -103,6 +104,53 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                 .For(result.SelectionFunc, 2)
                     .Field(0, d => (string)(OneSValue)d.Name, c => c.ToString(null), "Тест")
                     .Field(1, d => (decimal)d.Price, c => c.ToDecimal(null), 454.56m)
+                .Test();
+        }
+
+        /// <summary>
+        /// Тестирование метода <see cref="TypedRecordParseProductBuilder.GetSelectPartParseProductForTypedRecord{T}"/>
+        /// с полем типизированной табличной части.
+        /// </summary>
+        [Test]
+        public void TestGetSelectPartParseProductForTypeWithTableParts()
+        {
+            // Arrange
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingForRoot<SomeComplexData>("???")
+                    .FieldMap(d => d.Name, "Наименование")
+                    .FieldMap(d => d.EnumerableTablePart, "Перечисление", OneSDataColumnKind.TablePart)
+                .End();
+
+            _mappingProviderMock
+                .BeginSetupGetTypeMappingForTablePart<SomeData>()
+                    .FieldMap(d => d.Id, "Идентификатор")
+                    .FieldMap(d => d.Price, "Цена")
+                .End();
+
+            // Act
+            var result = _testedInstance.GetSelectPartParseProductForTypedRecord<SomeComplexData>();
+
+            // Assert
+            Assert.AreEqual(2, result.Columns.Count);
+
+            Assert.AreEqual(
+                new SqlFieldExpression(SqlDefaultTableExpression.Instance, "Наименование"),
+                result.Columns[0]
+                );
+            
+            Assert.AreEqual(
+                new SqlFieldsGroupExpression(new SqlFieldExpression(SqlDefaultTableExpression.Instance, "Перечисление"), 
+                    new[]{ "Идентификатор", "Цена" }.Select(name => new SqlFieldExpression(SqlDefaultTableExpression.Instance, name)).ToArray()),
+                result.Columns[1]
+                );
+
+            ItemReaderTester
+                .For(result.SelectionFunc, 2)
+                    .Field(0, d => d.Name, c => c.ToString(null), "Тест")
+                    .BeginTablePart(1, d => d.EnumerableTablePart, 2)
+                        .Field(0, d => d.Id, c => c.ToInt32(null), 4)
+                        .Field(1, d => d.Price, c => c.ToDecimal(null), 454.56m)
+                    .EndTablePart
                 .Test();
         }
 
@@ -127,6 +175,16 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public object Name { get; set; }
 
             public OneSValue Price { get; set; }
+        }
+
+        /// <summary>
+        /// Тип тестовой записи с перечислением типизированной табличной частью.
+        /// </summary>
+        public sealed class SomeComplexData
+        {
+            public string Name { get; set; }
+
+            public IEnumerable<SomeData> EnumerableTablePart { get; set; } 
         }
     }
 }

@@ -212,10 +212,12 @@
     <Compile Include="Internal\ISqlResultReader.cs" />
     <Compile Include="Internal\ItemEnumerator.cs" />
     <Compile Include="Internal\ItemEnumerable.cs" />
+    <Compile Include="Internal\OneSDataLevel.cs" />
     <Compile Include="Internal\OneSDataRecordReaderFactory.cs" />
     <Compile Include="Internal\ExpressionParsePipeline\Queryable\QueryableExpressionVisitor.cs" />
     <Compile Include="Internal\OneSFieldMapping.cs" />
     <Compile Include="Internal\OneSMappingProvider.cs" />
+    <Compile Include="Internal\OneSTablePartTypeMapping.cs" />
     <Compile Include="Internal\OneSTypeMapping.cs" />
     <Compile Include="Internal\ReflectionHelper.cs" />
     <Compile Include="Internal\ScalarReadExpressionParseProduct.cs" />
@@ -230,6 +232,7 @@
     <Compile Include="OneSCatalogDataContext.cs" />
     <Compile Include="OneSDataColumnAttribute.cs" />
     <Compile Include="OneSDataContext.cs" />
+    <Compile Include="OneSDataColumnKind.cs" />
     <Compile Include="OneSDataRecord.cs" />
     <Compile Include="OneSDataSourceAttribute.cs" />
     <Compile Include="OneSQueryable.cs" />
@@ -239,6 +242,7 @@
     <Compile Include="OneSQueryProvider.cs" />
     <Compile Include="OneSSqlFunctions.cs" />
     <Compile Include="OneSTablePartAttribute.cs" />
+    <Compile Include="OneSTablePartOwnerAttribute.cs" />
     <Compile Include="OneSTimePeriodKind.cs" />
     <Compile Include="OneSTypeMapperBuilder.cs" />
     <Compile Include="OneSValue.cs" />

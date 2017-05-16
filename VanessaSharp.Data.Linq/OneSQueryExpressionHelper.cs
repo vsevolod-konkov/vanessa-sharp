@@ -81,6 +81,30 @@ namespace VanessaSharp.Data.Linq
         }
 
         /// <summary>
+        /// Определяет является ли проверяемый тип <see cref="IEnumerable{T}"/>.
+        /// </summary>
+        /// <param name="testedType">Проверяемый тип.</param>
+        /// <param name="itemType">Тип элемента данных.</param>
+        /// <returns>
+        /// Возвращает <c>true</c> если проверяемый тип является <see cref="IEnumerable{T}"/>,
+        /// в ином случае возвращает <c>false</c>.
+        /// </returns>
+        public static bool IsEnumerable(Type testedType, out Type itemType)
+        {
+            Contract.Requires<ArgumentNullException>(testedType != null);
+
+            if (testedType.IsInterface && testedType.IsGenericType &&
+                testedType.GetGenericTypeDefinition() == typeof (IEnumerable<>))
+            {
+                itemType = GetSingleParameterType(testedType);
+                return true;
+            }
+
+            itemType = default(Type);
+            return false;
+        }
+
+        /// <summary>
         /// Определение, является ли метод методом <see cref="IEnumerable{T}.GetEnumerator"/>.
         /// </summary>
         /// <param name="method">Проверяемый метод.</param>
@@ -96,12 +120,12 @@ namespace VanessaSharp.Data.Linq
             const string GET_ENUMERATOR_METHOD_NAME = "GetEnumerator";
 
             var declaringType = method.DeclaringType;
-            if (declaringType != null && declaringType.IsInterface && declaringType.IsGenericType &&
-                declaringType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            if (declaringType != null)
             {
-                if (method.Name == GET_ENUMERATOR_METHOD_NAME)
+                Type probeItemType;
+                if (IsEnumerable(declaringType, out probeItemType) && method.Name == GET_ENUMERATOR_METHOD_NAME)
                 {
-                    itemType = GetSingleParameterType(declaringType);
+                    itemType = probeItemType;
                     return true;
                 }
             }

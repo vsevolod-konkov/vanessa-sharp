@@ -10,10 +10,12 @@ namespace VanessaSharp.Data.Linq.Internal
         /// <summary>Конструктор.</summary>
         /// <param name="memberInfo">Член типа, которому соответствует поле табличного источника данных в 1С.</param>
         /// <param name="fieldName">Имя поля табличного источника данных в 1С.</param>
-        public OneSFieldMapping(MemberInfo memberInfo, string fieldName)
+        /// <param name="dataColumnKind">Тип колонки: реквизит или табличная часть.</param>
+        public OneSFieldMapping(MemberInfo memberInfo, string fieldName, OneSDataColumnKind dataColumnKind)
         {
             _memberInfo = memberInfo;
             _fieldName = fieldName;
+            _dataColumnKind = dataColumnKind;
         }
 
         /// <summary>
@@ -33,5 +35,14 @@ namespace VanessaSharp.Data.Linq.Internal
             get { return _fieldName; }
         }
         private readonly string _fieldName;
+
+        /// <summary>
+        /// Тип колонки: реквизит или табличная часть.
+        /// </summary>
+        public OneSDataColumnKind DataColumnKind
+        {
+            get { return _dataColumnKind; }
+        }
+        private readonly OneSDataColumnKind _dataColumnKind;
     }
 }

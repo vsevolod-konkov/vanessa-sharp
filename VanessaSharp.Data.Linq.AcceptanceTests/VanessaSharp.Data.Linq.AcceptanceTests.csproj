@@ -58,6 +58,7 @@
     <Compile Include="ScalarTests.cs" />
     <Compile Include="TestDictionary.cs" />
     <Compile Include="UidTestDictionary.cs" />
+    <Compile Include="WithTablePartDictionary.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VanessaSharp.AcceptanceTests.Utility\VanessaSharp.AcceptanceTests.Utility.csproj">
