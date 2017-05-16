@@ -59,6 +59,8 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                     .FieldMap(d => d.AddInfo, ADD_INFO_FIELD_NAME)
                     .FieldMap(d => d.Reference, REF_FIELD_NAME)
                     .FieldMap(d => d.Composite, COMPOSITE_FIELD_NAME, OneSDataColumnKind.TablePart)
+                    .FieldMap(d => d.CompositeRecords, COMPOSITE_FIELD_NAME, OneSDataColumnKind.TablePart)
+                    .FieldMap(d => d.CompositeValue, COMPOSITE_FIELD_NAME)
                 .End();
 
             _mappingProviderMock
@@ -131,6 +133,10 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
             public object Reference;
 
             public IEnumerable<SomeTablePartData> Composite;
+
+            public IEnumerable<OneSDataRecord> CompositeRecords;
+
+            public OneSValue CompositeValue;
         }
 
         public sealed class AdditionalInfo

@@ -450,8 +450,49 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
         [Test]
         public void TestTransformSelectTypedTablePartWithSelectFewFields()
         {
+            TestTransformSelectTablePartWithSelectFewFields(
+                d => new TestDataProjection
+                    {
+                        Name = d.Name, 
+                        Items = from line in d.Composite select new TestTablePartProjection { Id = line.Id, Name = line.Name }
+                    });
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выборки нескольких столбцов из нетипизированной табличной части.
+        /// </summary>
+        [Test]
+        public void TestTransformSelectNonTypedTablePartWithSelectFewFields()
+        {
+            TestTransformSelectTablePartWithSelectFewFields(
+                d => new TestDataProjection
+                {
+                    Name = d.Name,
+                    Items = from line in d.CompositeRecords select new TestTablePartProjection { Id = line.GetInt32(ID_FIELD_NAME), Name = line.GetString(NAME_FIELD_NAME) }
+                });
+        }
+
+        /// <summary>
+        /// Тестирование преобразования выборки нескольких столбцов табличной части из нетипизированного значения <see cref="OneSValue"/>.
+        /// </summary>
+        [Test]
+        [Ignore("Issue#2")]
+        public void TestTransformSelectTablePartWithSelectFewFieldsFromOneSValue()
+        {
+            TestTransformSelectTablePartWithSelectFewFields(
+                d => new TestDataProjection
+                {
+                    Name = d.Name,
+                    Items = from line in d.CompositeValue.GetTablePartRecords() select new TestTablePartProjection { Id = line.GetInt32(ID_FIELD_NAME), Name = line.GetString(NAME_FIELD_NAME) }
+                });
+        }
+
+        /// <summary>Тестирование преобразования выборки с табличной частью.</summary>
+        /// <param name="selector">Тестируемое выражение.</param>
+        private void TestTransformSelectTablePartWithSelectFewFields(Expression<Func<SomeData, TestDataProjection>> selector)
+        {
             // Act
-            var result = Transform(d => new { d.Name, Items = from line in d.Composite select new { line.Id, line.Name } });
+            var result = Transform(selector);
 
             // Assert
             Assert.AreEqual(2, result.Columns.Count);
@@ -472,6 +513,26 @@ namespace VanessaSharp.Data.Linq.UnitTests.Internal.ExpressionParsePipeline.Expr
                         .Field(1, l => l.Name, c => c.ToString(null), "Test2")
                     .EndTablePart
                 .Test();
+        }
+
+        /// <summary>
+        /// Корневой тип для тестирования в методе <see cref="TestTransformSelectTablePartWithSelectFewFields"/>.
+        /// </summary>
+        public sealed class TestTablePartProjection
+        {
+            public int Id;
+
+            public string Name;
+        }
+
+        /// <summary>
+        /// Тип табличной части для тестирования в методе <see cref="TestTransformSelectTablePartWithSelectFewFields"/>.
+        /// </summary>
+        public sealed class TestDataProjection
+        {
+            public string Name;
+
+            public IEnumerable<TestTablePartProjection> Items;
         }
     }
 }
