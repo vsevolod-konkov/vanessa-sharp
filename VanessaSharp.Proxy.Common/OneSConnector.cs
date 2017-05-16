@@ -109,7 +109,7 @@ namespace VanessaSharp.Proxy.Common
         /// <param name="connectString">Строка соединения.</param>
         protected override object ComConnect(string connectString)
         {
-            var comConnector = (IV8ComConnector)ComConnector;
+            dynamic comConnector = ComConnector;
 
             return comConnector.Connect(connectString);
         }
