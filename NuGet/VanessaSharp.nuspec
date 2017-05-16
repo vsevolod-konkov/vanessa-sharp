@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>VanessaSharp</id>
-        <version>0.3.2</version>
+        <version>0.4.0</version>
         <title>Vanessa Sharp - .Net Data Access to 1C</title>
         <authors>Vsevolod Konkov</authors>
         <owners>Vsevolod Konkov</owners>
