@@ -22,3 +22,5 @@ VanessaSharp.AcceptanceTests.Utility/bin/
 Db/1Cv8Log/
 VanessaSharp.sln.DotSettings.user
 VanessaSharp.suo
+*.dll
+*.nupkg
