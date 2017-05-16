@@ -635,6 +635,52 @@ namespace VanessaSharp.Data.Linq.AcceptanceTests
         }
 
         /// <summary>
+        /// Тестирование поддержки на sql выборки объекта с аггрегируемой функцией над полем табличной части.
+        /// </summary>
+        [Test]
+        [Ignore("Issue#3")]
+        public void TestSelectSumByTablePartItems()
+        {
+            Test
+                .Query(dataContext =>
+
+                       from r in dataContext.Get<WithTablePartDictionary>()
+                       select new
+                       {
+                           r.Name,
+                           r.Summa,
+                           TotalQuantity = r.Composite.Select(i => i.Quantity).Sum()
+                       }
+                )
+
+                .ExpectedSql("SELECT Наименование, Сумма, SUM(Состав.Количество) FROM Справочник.СправочникСТабличнойЧастью")
+
+                .AssertItem<ExpectedWithTablePartDictionary>((expected, actual) =>
+                {
+                    Assert.AreEqual(expected.Name, actual.Name);
+                    Assert.AreEqual(expected.Summa, actual.Summa);
+                    Assert.AreEqual(expected.Composition.Sum(i => i.Quantity), actual.TotalQuantity);
+                })
+
+                .BeginDefineExpectedData
+
+                    .Field(d => d.Name)
+                    .Field(d => d.Summa)
+
+                    .BeginTablePartField(d => d.Composition)
+
+                        .Field(d => d.Quantity)
+
+                    .EndTablePartField
+
+                    .AllRows
+
+                .EndDefineExpectedData
+
+            .Run();
+        }
+
+        /// <summary>
         /// Тестовая типизированная запись с полями имеющие слаботипизированные типы,
         /// такие как <see cref="object"/> и <see cref="OneSValue"/>.
         /// </summary>
